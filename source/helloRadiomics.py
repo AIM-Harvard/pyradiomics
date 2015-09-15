@@ -11,12 +11,21 @@ maskName = '/Users/fedorov/github/radiomics-platform/Testing/Data/prostate_phant
 image = sitk.ReadImage(imageName)
 mask = sitk.ReadImage(maskName)
 
-imageArray = sitk.GetArrayFromImage(image)
-maskArray = sitk.GetArrayFromImage(mask)
+firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
+firstOrderFeatures.setBinWidth(10)
 
-(matrix, matrixCoordinates) = preprocessing.RadiomicsHelpers.padTumorMaskToCube(imageArray,maskArray)
+firstOrderFeatures.enableFeatureByName('MeanIntensity', True)
+firstOrderFeatures.enableAllFeatures()
 
-f = firstorder.RadiomicsFirstOrder(matrix, matrixCoordinates, 10, (1,1,1) )
-print f.getFeatureNames()
+print 'Will calculate the following features: '
+for f in firstOrderFeatures.enabledFeatures.keys():
+  print '  ',f
+  print eval('firstOrderFeatures.get'+f+'FeatureValue.__doc__')
 
-#f.getAllFeatureNames()
+print 'Calculating...',
+firstOrderFeatures.calculateFeatures()
+print 'done'
+
+print 'Calculated features: '
+for (key,val) in firstOrderFeatures.featureValues.iteritems():
+  print '  ',key,':',val

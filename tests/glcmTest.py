@@ -1,5 +1,5 @@
 # to run this test, from directory above:
-# setenv PYTHONPATH /Users/nicole/Radiomics/github/pyradiomics/source:/Users/nicole/Slicer4-svn/Slicer-build-debug/SimpleITK-build/Wrapping
+# setenv PYTHONPATH /Users/nicole/Radiomics/github/pyradiomics/radiomics:/Users/nicole/Slicer4-svn/Slicer-build-debug/SimpleITK-build/Wrapping
 # setenv DYLD_LIBRARY_PATH /Users/nicole/Slicer4-svn/Slicer-build-debug/python-install/lib:/Users/nicole/Slicer4-svn/Slicer-build-debug/SimpleITK-build/lib
 # nosetests --nocapture -v tests/glcmTest.py
 

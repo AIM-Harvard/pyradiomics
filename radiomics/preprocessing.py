@@ -43,15 +43,15 @@ class RadiomicsHelpers:
     return(matrix, matrixCoordinates)
 
   @staticmethod
-  def InterpolateImage(imageNode, resampledPixelSpacing, interpolator=2):
+  def InterpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
     """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
     
     'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing. 
     Enumerator references for interpolator:
-    0 - Nearest Neighbor interpolation
-    1 - N-D linear
-    2 - Bspline of Order 3
-    3 - Gaussian
+    0 - sitkNearestNeighbor
+    1 - sitkLinear
+    2 - sitkBSpline
+    3 - sitkGaussian
     """ 
     rif = sitk.ResampleImageFilter()
     rif.SetOutputSpacing(resampledPixelSpacing)

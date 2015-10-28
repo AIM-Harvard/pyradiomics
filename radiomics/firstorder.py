@@ -27,7 +27,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
         # TODO: add an option to instantiate the class that reuses initialization
 
     def _moment(self, a, moment=1, axis=0):
-    """Calculate n-order moment of an array for a given axis"""
+      """Calculate n-order moment of an array for a given axis"""
       if moment == 1:
         return numpy.float64(0.0)
       else:

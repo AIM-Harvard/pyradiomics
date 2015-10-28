@@ -11,8 +11,7 @@ class RadiomicsFeaturesBase(object):
     self.inputMask = inputMask
 
     # all features are disabled by default
-    self.enabledFeatures = {}
-    self.featureValues = {}
+    self.disableAllFeatures()
 
     self.featureNames = self.getFeatureNames()
 
@@ -29,14 +28,18 @@ class RadiomicsFeaturesBase(object):
   def setPadFillValue(self, padFillValue):
     self.padFillValue = padFillValue
 
-  def enableFeatureByName(self, featureName, enable):
+  def enableFeatureByName(self, featureName, enable=True):
     if not featureName in self.featureNames:
       raise LookupError('Feature not found: '+featureName)
-    self.enabledFeatures[featureName] = True
+    self.enabledFeatures[featureName] = enable
 
   def enableAllFeatures(self):
     for featureName in self.featureNames:
       self.enableFeatureByName(featureName, True)
+
+  def disableAllFeatures(self):
+    self.enabledFeatures = {}
+    self.featureValues = {}
 
   def getFeatureNames(self):
     allMembers = dir(self)

@@ -18,6 +18,10 @@ class RadiomicsFeaturesBase(object):
 
   def setBinWidth(self, binWidth):
     self.binWidth = binWidth
+    
+  def setResampledPixelSpacing(self, resampledPixelSpacing, interpolator=2):
+    self.resampledPixelSpacing = resampledPixelSpacing
+    self.interpolator = interpolator
 
   def setPadDistance(self, padDistance):
     self.padDistance = padDistance

@@ -16,21 +16,16 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     self.imageArray = sitk.GetArrayFromImage(inputImage)
     self.maskArray = sitk.GetArrayFromImage(inputMask)
-
+        
+    # Generate a cuboid matrix of the tumor region and pad by 10 voxels in three directions 
+    # for surface area calculation
     (self.matrix, self.matrixCoordinates) = \
-      preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray,self.maskArray)
-
+      preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray, self.maskArray, padDistance=10)
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
-    # Pad and center the inputMask matrix by 10 voxels in three directions.
-    self.padding = ([10,10,10])
-    self.maxDimsSA = tuple(map(operator.add, self.matrix.shape, self.padding))
-    self.matrixSA, self.matrixSACoordinates = \
-      preprocessing.RadiomicsHelpers.padCubicMatrix(self.matrix, self.matrixCoordinates, self.maxDimsSA)
-
     # Volume and Surface Area are pre-calculated
-    self.Volume = self.volumeMM3(self.targetVoxelArray, self.cubicMMPerVoxel)
-    self.SurfaceArea = self.surfaceArea(self.matrixSA, self.matrixSACoordinates, self.targetVoxelArray, self.pixelSpacing)
+    self.Volume = self.getVolumeMM3FeatureValue(self.targetVoxelArray, self.cubicMMPerVoxel)
+    self.SurfaceArea = self.getSurfaceAreaFeatureValue(self.matrix, self.matrixCoordinates, self.targetVoxelArray, self.pixelSpacing)
 
     #self.InitializeFeatureVector()
     #for f in self.getFeatureNames():
@@ -38,70 +33,64 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     # TODO: add an option to instantiate the class that reuses initialization
        
-  def getVoxelNumberFeatureValue(targetVoxelArray):
-    return (targetVoxelArray.size)
-    
-  def getVolumeMM3FeatureValue(matrixSA, cubicMMPerVoxel):      
-    return (matrixSA.size * cubicMMPerVoxel)
-    
-  """
-  def getSurfaceAreaFeatureValueNew(a, matrixSACoordinates, matrixSAValues, pixelSpacing):
-    x, y, z = pixelSpacing 
-    p, q, r = numpy.meshgrid(y*numpy.arange(a.shape[2]), x*numpy.arange(a.shape[1]), z*numpy.arange(a.shape[0]))
-    faces, vertices = calculateIsosurface(p,q,r,a,0.5)
-    
-    a = vertices[faces[:, 2], :] - vertices[faces[:, 1], :];
-    b = vertices[faces[:, 3], :] - vertices[faces[:, 1], :];
-    c = cross(a, b, 2);
+  def getVolumeMM3FeatureValue(self, matrix, cubicMMPerVoxel):
+    """Calculate the volume of the tumor region in cubic millimeters."""
+    return (matrix.size * cubicMMPerVoxel)
 
-    return( 0.5 * numpy.sum(numpy.sqrt(numpy.sum(numpy.float(c)**2, axis=2))))
-
-  def _calculateIsosurface(x,y,z,v,f):
-    pass
-  """  
-
-  def getSurfaceAreaFeatureValue(matrixSA, matrixSACoordinates, matrixSAValues, pixelSpacing):
+  def getSurfaceAreaFeatureValue(self, matrix, matrixCoordinates, matrixValues, pixelSpacing):
+    """Calculate the surface area of the tumor region in square millimeters."""
     x, y, z = pixelSpacing
     xz = x*z
     yz = y*z
     xy = x*y
     voxelTotalSA = (2*xy + 2*xz + 2*yz)
-    totalSA = matrixSAValues.size * voxelTotalSA
+    totalSA = matrixValues.size * voxelTotalSA
     
-    # in matrixSACoordinates:
+    # in matrixCoordinates:
     # i corresponds to height (z)
     # j corresponds to vertical (y)
     # k corresponds to horizontal (x)
     
     i, j, k = 0, 0, 0
     surfaceArea = 0   
-    for voxel in xrange(0, matrixSAValues.size):
-      i, j, k = matrixSACoordinates[0][voxel], matrixSACoordinates[1][voxel], matrixSACoordinates[2][voxel]      
-      fxy = (numpy.array([ matrixSA[i+1,j,k], matrixSA[i-1,j,k] ]) == 0) # evaluate to 1 if true, 0 if false
-      fyz = (numpy.array([ matrixSA[i,j+1,k], matrixSA[i,j-1,k] ]) == 0) # evaluate to 1 if true, 0 if false
-      fxz = (numpy.array([ matrixSA[i,j,k+1], matrixSA[i,j,k-1] ]) == 0) # evaluate to 1 if true, 0 if false  
+    for voxel in xrange(0, matrixValues.size):
+      i, j, k = matrixCoordinates[0][voxel], matrixCoordinates[1][voxel], matrixCoordinates[2][voxel]      
+      fxy = (numpy.array([ matrix[i+1,j,k], matrix[i-1,j,k] ]) == 0) # evaluate to 1 if true, 0 if false
+      fyz = (numpy.array([ matrix[i,j+1,k], matrix[i,j-1,k] ]) == 0) # evaluate to 1 if true, 0 if false
+      fxz = (numpy.array([ matrix[i,j,k+1], matrix[i,j,k-1] ]) == 0) # evaluate to 1 if true, 0 if false  
       surface = (numpy.sum(fxz) * xz) + (numpy.sum(fyz) * yz) + (numpy.sum(fxy) * xy)     
       surfaceArea += surface
       
     return (surfaceArea)
      
-  def getSurfaceVolumeRatioFeatureValue(surfaceArea, volumeMM3):      
-    return (surfaceArea/volumeMM3)
+  def getSurfaceVolumeRatioFeatureValue(self):
+    """Calculate the surface area to volume ratio of the tumor region"""
+    return (self.SurfaceArea/self.Volume)
            
-  def getCompactness1FeatureValue(surfaceArea, volumeMM3):      
-    return ( (volumeMM3) / ((surfaceArea)**(2.0/3.0) * math.sqrt(math.pi)) )
+  def getCompactness1FeatureValue(self):
+    """
+    Calculate the compactness (1) of the tumor region.
+    
+    Compactness 1 is a measure of how compact the shape of the tumor is relative to a sphere (most compact).
+    """
+    return ( (self.Volume) / ((self.SurfaceArea)**(2.0/3.0) * math.sqrt(math.pi)) )
      
-  def getCompactness2FeatureValue(surfaceArea, volumeMM3):      
-    return ((36.0 * math.pi) * ((volumeMM3)**2.0)/((surfaceArea)**3.0)) 
+  def getCompactness2FeatureValue(self):
+    """
+    Calculate the Compactness (2) of the tumor region.
+    
+    Compactness 2 is a measure of how compact the shape of the tumor is relative to a sphere (most compact).
+    """  
+    return ((36.0 * math.pi) * ((self.Volume)**2.0)/((self.SurfaceArea)**3.0)) 
 
-  def getMaximum3DDiameterFeatureValue(matrixSA, matrixSACoordinates, pixelSpacing):
-    # largest pairwise euclidean distance between tumor surface voxels   
+  def getMaximum3DDiameterFeatureValue(self, matrix, matrixCoordinates, pixelSpacing):
+    """Calculate the largest pairwise euclidean distance between tumor surface voxels"""   
     x, y, z = pixelSpacing
     
-    minBounds = numpy.array([numpy.min(matrixSACoordinates[0]), numpy.min(matrixSACoordinates[1]), numpy.min(matrixSACoordinates[2])])
-    maxBounds = numpy.array([numpy.max(matrixSACoordinates[0]), numpy.max(matrixSACoordinates[1]), numpy.max(matrixSACoordinates[2])])
+    minBounds = numpy.array([numpy.min(matrixCoordinates[0]), numpy.min(matrixCoordinates[1]), numpy.min(matrixCoordinates[2])])
+    maxBounds = numpy.array([numpy.max(matrixCoordinates[0]), numpy.max(matrixCoordinates[1]), numpy.max(matrixCoordinates[2])])
     
-    a = numpy.array(zip(*matrixSACoordinates))
+    a = numpy.array(zip(*matrixCoordinates))
     edgeVoxelsMinCoords = numpy.vstack([a[a[:,0]==minBounds[0]], a[a[:,1]==minBounds[1]], a[a[:,2]==minBounds[2]]]) * [z,y,x]
     edgeVoxelsMaxCoords = numpy.vstack([(a[a[:,0]==maxBounds[0]]+1), (a[a[:,1]==maxBounds[1]]+1), (a[a[:,2]==maxBounds[2]]+1)]) * [z,y,x]
     
@@ -113,9 +102,22 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       
     return(maxDiameter)     
       
-  def getSphericalDisproportionFeatureValue(surfaceArea, volumeMM3):
-    R = ( (3.0*volumeMM3)/(4.0*math.pi) )**(1.0/3.0)   
-    return ( (surfaceArea)/(4.0*math.pi*(R**2.0)) )
+  def getSphericalDisproportionFeatureValue(self):
+    """
+    Calculate the Spherical Disproportion of the tumor region.
+    
+    Spherical Disproportion is the ratio of the surface area of the
+    tumor region to the surface area of a sphere with the same 
+    volume as the tumor region.
+    """ 
+    R = ( (3.0*self.Volume)/(4.0*math.pi) )**(1.0/3.0)   
+    return ( (self.SurfaceArea)/(4.0*math.pi*(R**2.0)) )
       
-  def getSphericityFeatureValue(surfaceArea, volumeMM3):      
-    return ( ((math.pi)**(1.0/3.0) * (6.0 * volumeMM3)**(2.0/3.0)) / (surfaceArea) ) 
+  def getSphericityFeatureValue(self):
+    """
+    Calculate the Sphericity of the tumor region.
+    
+    Sphericity is a measure of the roundness of the shape of the tumor region
+    relative to a sphere. This is another measure of the compactness of a tumor.
+    """   
+    return ( ((math.pi)**(1.0/3.0) * (6.0 * self.Volume)**(2.0/3.0)) / (self.SurfaceArea) ) 

@@ -24,7 +24,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
     # Volume and Surface Area are pre-calculated
-    self.Volume = self.getVolumeMM3FeatureValue(self.targetVoxelArray, self.cubicMMPerVoxel)
+    self.Volume = self.getVolumeFeatureValue(self.targetVoxelArray, self.cubicMMPerVoxel)
     self.SurfaceArea = self.getSurfaceAreaFeatureValue(self.matrix, self.matrixCoordinates, self.targetVoxelArray, self.pixelSpacing)
 
     #self.InitializeFeatureVector()
@@ -33,9 +33,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     # TODO: add an option to instantiate the class that reuses initialization
        
-  def getVolumeMM3FeatureValue(self, matrix, cubicMMPerVoxel):
+  def getVolumeFeatureValue(self, matrix, matrixCoordinates):
     """Calculate the volume of the tumor region in cubic millimeters."""
-    return (matrix.size * cubicMMPerVoxel)
+    return (matrix[matrixCoordinates].size * self.cubicMMPerVoxel)
 
   def getSurfaceAreaFeatureValue(self, matrix, matrixCoordinates, matrixValues, pixelSpacing):
     """Calculate the surface area of the tumor region in square millimeters."""

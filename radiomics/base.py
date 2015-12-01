@@ -22,9 +22,6 @@ class RadiomicsFeaturesBase(object):
     self.resampledPixelSpacing = resampledPixelSpacing
     self.interpolator = interpolator
 
-  def setPadDistance(self, padDistance):
-    self.padDistance = padDistance
-
   def setPadFillValue(self, padFillValue):
     self.padFillValue = padFillValue
 

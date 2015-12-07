@@ -78,26 +78,6 @@ print 'Calculated GLCM features: '
 for (key,val) in glcmFeatures.featureValues.iteritems():
   print '  ',key,':',val
 
-
-#
-# Show Shape features
-#
-shapeFeatures = shape.RadiomicsShape(image, mask, 10)
-shapeFeatures.enableAllFeatures()
-
-print 'Will calculate the following Shape features: '
-for f in shapeFeatures.enabledFeatures.keys():
-  print '  ',f
-  print eval('shapeFeatures.get'+f+'FeatureValue.__doc__')
-
-print 'Calculating Shape features...',
-shapeFeatures.calculateFeatures()
-print 'done'
-
-print 'Calculated Shape features: '
-for (key,val) in shapeFeatures.featureValues.iteritems():
-  print '  ',key,':',val
-
 #
 # Show RLGL features
 #

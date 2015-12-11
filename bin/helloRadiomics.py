@@ -1,9 +1,12 @@
-from radiomics import firstorder, glcm, preprocessing
+from radiomics import firstorder, glcm, preprocessing, shape
 import SimpleITK as sitk
 import sys, os
 
 #imageName = sys.argv[1]
 #maskName = sys.argv[2]
+
+testBinWidth = 25
+#testResampledPixelSpacing = (3,3,3) no resampling for now.
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
 imageName = dataDir + os.path.sep + 'prostate_phantom-subvolume.nrrd'
@@ -16,7 +19,7 @@ mask = sitk.ReadImage(maskName)
 # Show the first order feature calculations
 #
 firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
-firstOrderFeatures.setBinWidth(10)
+firstOrderFeatures.setBinWidth(testBinWidth)
 
 firstOrderFeatures.enableFeatureByName('MeanIntensity', True)
 # firstOrderFeatures.enableAllFeatures()
@@ -34,11 +37,32 @@ print 'Calculated first order features: '
 for (key,val) in firstOrderFeatures.featureValues.iteritems():
   print '  ',key,':',val
 
+#
+# Show Shape features
+#
+shapeFeatures = shape.RadiomicsShape(image, mask)
+shapeFeatures.setBinWidth(testBinWidth)
+shapeFeatures.enableAllFeatures()
+
+print 'Will calculate the following Shape features: '
+for f in shapeFeatures.enabledFeatures.keys():
+  print '  ',f
+  print eval('shapeFeatures.get'+f+'FeatureValue.__doc__')
+
+print 'Calculating Shape features...',
+shapeFeatures.calculateFeatures()
+print 'done'
+
+print 'Calculated Shape features: '
+for (key,val) in shapeFeatures.featureValues.iteritems():
+  print '  ',key,':',val  
+
 
 #
 # Show GLCM features
 #
-glcmFeatures = glcm.RadiomicsGLCM(image, mask, 10)
+glcmFeatures = glcm.RadiomicsGLCM(image, mask)
+glcmFeatures.setBinWidth(testBinWidth)
 glcmFeatures.enableAllFeatures()
 
 print 'Will calculate the following GLCM features: '

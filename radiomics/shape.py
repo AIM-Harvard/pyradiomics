@@ -7,7 +7,7 @@ import SimpleITK as sitk
 class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def __init__(self, inputImage, inputMask):
-    super(RadiomicsFirstOrder,self).__init__(inputImage,inputMask)
+    super(RadiomicsShape,self).__init__(inputImage,inputMask)
 
     self.pixelSpacing = inputImage.GetSpacing()
     self.cubicMMPerVoxel = reduce(lambda x,y: x*y , self.pixelSpacing)
@@ -24,8 +24,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
     # Volume and Surface Area are pre-calculated
-    self.Volume = self.getVolumeFeatureValue(self.targetVoxelArray, self.cubicMMPerVoxel)
-    self.SurfaceArea = self.getSurfaceAreaFeatureValue(self.matrix, self.matrixCoordinates, self.targetVoxelArray, self.pixelSpacing)
+    self.Volume = self.getVolumeFeatureValue()
+    self.SurfaceArea = self.getSurfaceAreaFeatureValue()
 
     #self.InitializeFeatureVector()
     #for f in self.getFeatureNames():
@@ -73,7 +73,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     
     Compactness 1 is a measure of how compact the shape of the tumor is relative to a sphere (most compact).
     """
-    return ( (self.Volume) / ((self.SurfaceArea)**(2.0/3.0) * math.sqrt(math.pi)) )
+    return ( (self.Volume) / ((self.SurfaceArea)**(2.0/3.0) * numpy.sqrt(numpy.pi)) )
      
   def getCompactness2FeatureValue(self):
     """
@@ -81,7 +81,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     
     Compactness 2 is a measure of how compact the shape of the tumor is relative to a sphere (most compact).
     """  
-    return ((36.0 * math.pi) * ((self.Volume)**2.0)/((self.SurfaceArea)**3.0)) 
+    return ((36.0 * numpy.pi) * ((self.Volume)**2.0)/((self.SurfaceArea)**3.0)) 
 
   def getMaximum3DDiameterFeatureValue(self):
     """Calculate the largest pairwise euclidean distance between tumor surface voxels"""   
@@ -97,8 +97,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     maxDiameter = 1   
     for voxel1 in edgeVoxelsMaxCoords:
       voxelDistances = numpy.sqrt(numpy.sum((edgeVoxelsMinCoords-voxel1)**2))
-      if voxelDistance.max() > maxDiameter: 
-        maxDiameter = voxelDistance.max()
+      if voxelDistances.max() > maxDiameter: 
+        maxDiameter = voxelDistances.max()
       
     return(maxDiameter)     
       
@@ -110,8 +110,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     tumor region to the surface area of a sphere with the same 
     volume as the tumor region.
     """ 
-    R = ( (3.0*self.Volume)/(4.0*math.pi) )**(1.0/3.0)   
-    return ( (self.SurfaceArea)/(4.0*math.pi*(R**2.0)) )
+    R = ( (3.0*self.Volume)/(4.0*numpy.pi) )**(1.0/3.0)   
+    return ( (self.SurfaceArea)/(4.0*numpy.pi*(R**2.0)) )
       
   def getSphericityFeatureValue(self):
     """
@@ -120,4 +120,4 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Sphericity is a measure of the roundness of the shape of the tumor region
     relative to a sphere. This is another measure of the compactness of a tumor.
     """   
-    return ( ((math.pi)**(1.0/3.0) * (6.0 * self.Volume)**(2.0/3.0)) / (self.SurfaceArea) ) 
+    return ( ((numpy.pi)**(1.0/3.0) * (6.0 * self.Volume)**(2.0/3.0)) / (self.SurfaceArea) ) 

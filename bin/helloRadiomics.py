@@ -1,4 +1,4 @@
-from radiomics import firstorder, glcm, preprocessing, shape
+from radiomics import firstorder, glcm, preprocessing, shape, rlgl
 import SimpleITK as sitk
 import sys, os
 
@@ -61,8 +61,7 @@ for (key,val) in shapeFeatures.featureValues.iteritems():
 #
 # Show GLCM features
 #
-glcmFeatures = glcm.RadiomicsGLCM(image, mask)
-glcmFeatures.setBinWidth(testBinWidth)
+glcmFeatures = glcm.RadiomicsGLCM(image, mask, testBinWidth)
 glcmFeatures.enableAllFeatures()
 
 print 'Will calculate the following GLCM features: '
@@ -76,4 +75,23 @@ print 'done'
 
 print 'Calculated GLCM features: '
 for (key,val) in glcmFeatures.featureValues.iteritems():
+  print '  ',key,':',val
+
+#
+# Show RLGL features
+#
+rlglFeatures = rlgl.RadiomicsRLGL(image, mask, 10)
+rlglFeatures.enableAllFeatures()
+
+print 'Will calculate the following RLGL features: '
+for f in rlglFeatures.enabledFeatures.keys():
+  print '  ',f
+  print eval('rlglFeatures.get'+f+'FeatureValue.__doc__')
+
+print 'Calculating RLGL features...',
+rlglFeatures.calculateFeatures()
+print 'done'
+
+print 'Calculated RLGL features: '
+for (key,val) in rlglFeatures.featureValues.iteritems():
   print '  ',key,':',val

@@ -1,6 +1,5 @@
 # to run this test, from directory above:
-# setenv PYTHONPATH /Users/nicole/Radiomics/github/pyradiomics/radiomics:/Users/nicole/Slicer4-svn/Slicer-build-debug/SimpleITK-build/Wrapping
-# setenv DYLD_LIBRARY_PATH /Users/nicole/Slicer4-svn/Slicer-build-debug/python-install/lib:/Users/nicole/Slicer4-svn/Slicer-build-debug/SimpleITK-build/lib
+# setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/firstorderTest.py
 
 from radiomics import firstorder, preprocessing
@@ -118,9 +117,10 @@ class TestFirstOrder:
         print 'Undefined key',key,' Value =',value
         return
       baseline = self.baselineFeatures[index]
-      diff = abs(float(baseline) - value)
-      print 'index = ', index, ', baseline value = ', baseline, ', calculated = ', value, ', diff = ', diff
-      assert(diff < 0.1)
+      percentDiff = abs(1.0 - (value / float(baseline)))
+      print('index = %s, baseline value = %f, calculated = %f, diff = %f%%' % (index, float(baseline), value, percentDiff * 100))
+      # check for a less than one percent difference
+      assert(percentDiff < 0.01)
 
     def test_energy_10(self):
         self.firstOrderFeatures.enableFeatureByName('Energy')

@@ -1,3 +1,5 @@
+import SimpleITK as sitk
+
 class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask):
     '''

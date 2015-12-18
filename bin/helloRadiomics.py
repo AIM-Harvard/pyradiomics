@@ -61,8 +61,7 @@ for (key,val) in shapeFeatures.featureValues.iteritems():
 #
 # Show GLCM features
 #
-glcmFeatures = glcm.RadiomicsGLCM(image, mask)
-glcmFeatures.setBinWidth(testBinWidth)
+glcmFeatures = glcm.RadiomicsGLCM(image, mask, testBinWidth)
 glcmFeatures.enableAllFeatures()
 
 print 'Will calculate the following GLCM features: '

@@ -5,12 +5,11 @@ from radiomics import base, preprocessing
 
 class RadiomicsRLGL(base.RadiomicsFeaturesBase):
   """RLGL feature calculation."""
-  def __init__(self, inputImage, inputMask, binWidth):
-      super(RadiomicsRLGL,self).__init__(inputImage, inputMask)
+  def __init__(self, inputImage, inputMask, **kwargs):
+      super(RadiomicsRLGL,self).__init__(inputImage, inputMask, **kwargs)
 
       self.imageArray = sitk.GetArrayFromImage(inputImage)
       self.maskArray = sitk.GetArrayFromImage(inputMask)
-      self.binWidth = binWidth
 
       (self.matrix, self.matrixCoordinates) = \
         preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray,self.maskArray)

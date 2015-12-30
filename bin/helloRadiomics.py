@@ -2,15 +2,20 @@ from radiomics import firstorder, glcm, preprocessing, shape, rlgl
 import SimpleITK as sitk
 import sys, os
 
-#imageName = sys.argv[1]
-#maskName = sys.argv[2]
-
-testBinWidth = 25
+#testBinWidth = 25 this is the default bin size
 #testResampledPixelSpacing = (3,3,3) no resampling for now.
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
-imageName = dataDir + os.path.sep + 'prostate_phantom-subvolume.nrrd'
-maskName = dataDir + os.path.sep + 'prostate_phantom_label-subvolume.nrrd'
+imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
+maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
+
+
+if not os.path.exists(imageName):
+  print 'Error: problem finding input image',imageName
+  os.exit()
+if not os.path.exists(maskName):
+  print 'Error: problem finding input image',maskName
+  os.exit()
 
 image = sitk.ReadImage(imageName)
 mask = sitk.ReadImage(maskName)
@@ -19,7 +24,6 @@ mask = sitk.ReadImage(maskName)
 # Show the first order feature calculations
 #
 firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
-firstOrderFeatures.setBinWidth(testBinWidth)
 
 firstOrderFeatures.enableFeatureByName('MeanIntensity', True)
 # firstOrderFeatures.enableAllFeatures()
@@ -41,7 +45,6 @@ for (key,val) in firstOrderFeatures.featureValues.iteritems():
 # Show Shape features
 #
 shapeFeatures = shape.RadiomicsShape(image, mask)
-shapeFeatures.setBinWidth(testBinWidth)
 shapeFeatures.enableAllFeatures()
 
 print 'Will calculate the following Shape features: '
@@ -55,13 +58,13 @@ print 'done'
 
 print 'Calculated Shape features: '
 for (key,val) in shapeFeatures.featureValues.iteritems():
-  print '  ',key,':',val  
+  print '  ',key,':',val
 
 
 #
 # Show GLCM features
 #
-glcmFeatures = glcm.RadiomicsGLCM(image, mask, testBinWidth)
+glcmFeatures = glcm.RadiomicsGLCM(image, mask, binWidth=25)
 glcmFeatures.enableAllFeatures()
 
 print 'Will calculate the following GLCM features: '
@@ -80,7 +83,7 @@ for (key,val) in glcmFeatures.featureValues.iteritems():
 #
 # Show RLGL features
 #
-rlglFeatures = rlgl.RadiomicsRLGL(image, mask, 10)
+rlglFeatures = rlgl.RadiomicsRLGL(image, mask, binWidth=10)
 rlglFeatures.enableAllFeatures()
 
 print 'Will calculate the following RLGL features: '

@@ -5,8 +5,8 @@ import SimpleITK as sitk
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
-  def __init__(self, inputImage, inputMask):
-    super(RadiomicsFirstOrder,self).__init__(inputImage,inputMask)
+  def __init__(self, inputImage, inputMask, **kwargs):
+    super(RadiomicsFirstOrder,self).__init__(inputImage,inputMask,**kwargs)
 
     self.pixelSpacing = inputImage.GetSpacing()
 

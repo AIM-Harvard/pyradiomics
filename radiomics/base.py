@@ -1,7 +1,7 @@
 import SimpleITK as sitk
 
 class RadiomicsFeaturesBase(object):
-  def __init__(self, inputImage, inputMask):
+  def __init__(self, inputImage, inputMask, **kwargs):
     '''
     Initialization
 
@@ -12,23 +12,30 @@ class RadiomicsFeaturesBase(object):
     self.inputImage = inputImage
     self.inputMask = inputMask
 
+    self.binWidth = 25
+    self.resampledPixelSpacing = (,,) # no resampling
+    self.interpolator = sitk.sitkBSpline
+    self.padDistance = 5 # no padding
+    self.padFillValue = 0
+
+    for key,value in kwargs.iteritems():
+      if key == 'binWidth':
+        self.binWidth = value
+      elif key == 'resampledPixelSpacing':
+        self.resampledPixelSpacing = value
+      elif key == 'interpolator':
+        self.interpolator = value
+      elif key == 'padDistance':
+        self.padDistance = value
+      elif key == 'padFillValue':
+        self.padFillValue = value
+      else:
+        print 'Warning: unknown parameter:',key
+
     # all features are disabled by default
     self.disableAllFeatures()
 
     self.featureNames = self.getFeatureNames()
-
-  def setBinWidth(self, binWidth):
-    self.binWidth = binWidth
-    
-  def setResampledPixelSpacing(self, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
-    self.resampledPixelSpacing = resampledPixelSpacing
-    self.interpolator = interpolator
-
-  def setPadDistance(self, padDistance):
-    self.padDistance = padDistance
-
-  def setPadFillValue(self, padFillValue):
-    self.padFillValue = padFillValue
 
   def enableFeatureByName(self, featureName, enable=True):
     if not featureName in self.featureNames:

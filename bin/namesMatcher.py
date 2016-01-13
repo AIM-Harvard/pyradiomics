@@ -25,7 +25,7 @@ outputDir = os.path.join(dataDir,'mapping')
 # names. Note that Matlab implementation does not name feature classes
 # consistently, thus multiple Matlab feature classes may map into the same
 # pyradiomics feature class (at least this was the assumption of @fedorov)
-classMap = {"stats":"firstorder","Shape":"shape","RLGL":"rlgl","GLCM":"glcm","rlgl":"rlgl","glcm":"glcm","Stats":"firstorder"}
+classMap = {"firstorder":"firstorder","Shape":"shape","RLGL":"rlgl","GLCM":"glcm","rlgl":"rlgl","glcm":"glcm","Stats":"firstorder","shape":"shape"}
 
 matlabFeaturesNamesList = open(matlabFeaturesFile,'r').readline()[:-1].split(',')
 
@@ -68,10 +68,20 @@ for k,v in matlabNames.iteritems():
   i = 0
   featureListFile = os.path.join(outputDir,'matlab_'+k+'.txt')
   f = open(featureListFile,'w')
+  mappingFile = os.path.join(outputDir,'matlab2pyradiomics_'+k+'.txt')
+  m = open(mappingFile,'w')
   for fn in v:
     f.write(str(i)+":"+fn+"\n")
     i = i+1
-f.close()
+    # if there is an exact match, save the mapping
+    if fn in pyradiomicsNames[k]:
+      m.write(str(list(matlabNames[k]).index(fn)))
+      m.write(':')
+      m.write(str(list(pyradiomicsNames[k]).index(fn)))
+      m.write('\n')
+
+  m.close()
+  f.close()
 
 for k,v in pyradiomicsNames.iteritems():
   i = 0

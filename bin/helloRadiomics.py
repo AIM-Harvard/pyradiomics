@@ -1,4 +1,4 @@
-from radiomics import preprocessing, firstorder, shape, glcm, rlgl
+from radiomics import preprocessing, firstorder, shape, glcm, rlgl, laplacian
 import SimpleITK as sitk
 import sys, os
 
@@ -6,9 +6,10 @@ import sys, os
 #testResampledPixelSpacing = (3,3,3) no resampling for now.
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
-imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
-maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
-
+#imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
+#maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
+imageName = os.path.join(dataDir, 'TestPatient1_BreastMRI', 'TestPatient1_BreastMRI-Pre-subvolume.nrrd')
+maskName = os.path.join(dataDir, 'TestPatient1_BreastMRI', 'TestPatient1_BreastMRI-Pre_labelMap-subvolume.nrrd')
 
 if not os.path.exists(imageName):
   print 'Error: problem finding input image',imageName
@@ -40,6 +41,7 @@ print 'done'
 print 'Calculated first order features: '
 for (key,val) in firstOrderFeatures.featureValues.iteritems():
   print '  ',key,':',val
+
 
 #
 # Show Shape features
@@ -83,7 +85,7 @@ for (key,val) in glcmFeatures.featureValues.iteritems():
 #
 # Show RLGL features
 #
-rlglFeatures = rlgl.RadiomicsRLGL(image, mask, binWidth=10)
+rlglFeatures = rlgl.RadiomicsRLGL(image, mask, binWidth=25)
 rlglFeatures.enableAllFeatures()
 
 print 'Will calculate the following RLGL features: '
@@ -98,3 +100,24 @@ print 'done'
 print 'Calculated RLGL features: '
 for (key,val) in rlglFeatures.featureValues.iteritems():
   print '  ',key,':',val
+
+  
+#
+# Show Laplacian Of Gaussian features 
+#
+
+laplacianFeatures = laplacian.RadiomicsLaplacian(image, mask, binWidth=25, padDistance=5)
+laplacianFeatures.enableAllFeatures()
+
+print 'Will calculate the following Laplacian features: '
+for f in laplacianFeatures.enabledFeatures.keys():
+  print '  ',f
+  print eval('laplacianFeatures.get'+f+'FeatureValue.__doc__')
+
+print 'Calculating Laplacian features...',
+laplacianFeatures.calculateFeatures()
+print 'done'
+
+print 'Calculated Laplacian features: '
+for (key,val) in laplacianFeatures.featureValues.iteritems():
+  print '  ',key,':',val  

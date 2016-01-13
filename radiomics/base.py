@@ -1,4 +1,5 @@
 import SimpleITK as sitk
+import inspect
 
 class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -13,7 +14,7 @@ class RadiomicsFeaturesBase(object):
     self.inputMask = inputMask
 
     self.binWidth = 25
-    self.resampledPixelSpacing = (,,) # no resampling
+    self.resampledPixelSpacing = None # no resampling
     self.interpolator = sitk.sitkBSpline
     self.padDistance = 5 # no padding
     self.padFillValue = 0
@@ -50,10 +51,11 @@ class RadiomicsFeaturesBase(object):
     self.enabledFeatures = {}
     self.featureValues = {}
 
-  def getFeatureNames(self):
-    allMembers = dir(self)
-    allFeatureNames = [f[3:-12] for f in allMembers if f.endswith('FeatureValue') and f.startswith('get')]
-    return allFeatureNames
+  @classmethod
+  def getFeatureNames(c):
+    attributes = inspect.getmembers(c)
+    features = [a[0][3:-12] for a in attributes if a[0].startswith('get') and a[0].endswith('FeatureValue')]
+    return features
 
   def calculateFeatures(self):
     for feature in self.enabledFeatures.keys():

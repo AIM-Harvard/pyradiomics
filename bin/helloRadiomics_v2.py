@@ -1,8 +1,9 @@
-from radiomics import firstorder, glcm, preprocessing, shape, rlgl
+from radiomics import firstorder, glcm, preprocessing, shape, rlgl, wavelet
+
 import SimpleITK as sitk
 import sys, os
 import inspect
-
+import pdb
 
 def getImageAndMask():
   dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
@@ -29,24 +30,41 @@ def getRadiomicsParameters():
     parameters['resampledPixelSpacing'] = None
     parameters['interpolator'] = sitk.sitkBSpline
     parameters['padDistance'] = 5
-    parameters['padValue'] = 0 # TODO: update features so default can be NaN
+    parameters['padFillValue'] = 0 # TODO: update features so default can be NaN
     #parameters['laplacian_sigmaStart'] = 0
     #parameters['laplacian_sigmaEnd'] = 5
     #parameters['laplacian_sigmaStep'] = 0.5
-    #parameters['wavelet_waveletType'] = 'haar'   
+    #parameters['laplacian_applyHUThreshold'] = -1000
+    #parameters['wavelet_waveletType'] = 'coif1'   
     return parameters
   
-def printDocstrings(featureClassName, featureClass_instance):
+def printDocstrings_inspect(featureClassName, featureClass_instance):
+  # Not Used
   print 'Will calculate the following %s features: ' % featureClassName
   featureMethods = [method for method in inspect.getmembers(featureClass_instance, inspect.ismethod) \
               if (method[0].startswith('get')) \
               and (method[0].endswith('FeatureValue'))]
+  
   enabledFeatures = featureClass_instance.enabledFeatures.keys()
   for featureName, featureFunction in featureMethods:
-    featureName = featureName.lstrip('get').rstrip('FeatureValue')
+    featureName = featureName[3:-12]
     if featureName in enabledFeatures:
       print "\t%s" % featureName
       print featureFunction.__doc__
+
+def printDocstrings(featureClassName, featureClass_instance):
+  print 'Will calculate the following %s features: ' % featureClassName
+  featureMethods = [method for method in dir(featureClass_instance) \
+            if (method.startswith('get')) \
+            and (method.endswith('FeatureValue'))]
+            
+  for feature in featureClass_instance.enabledFeatures.keys():
+    try:
+      featureFunctionName = [f for f in featureMethods if feature in f][0]
+    except:
+      pdb.set_trace()
+    print '\t', feature
+    print eval('featureClass_instance.%s.__doc__' % featureFunctionName)
       
 def calculateFeatures(featureClassName, featureClass_instance):
   print 'Calculating %s features...' % featureClassName
@@ -62,13 +80,12 @@ def printFeatureValues(featureClassName, featureClass_instance):
 def main():
   image, mask = getImageAndMask()
   kwargs = getRadiomicsParameters()
-  
+  """
   #
   # Show firstorder features
   #
   firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask,**kwargs)
-  firstOrderFeatures.enableFeatureByName('MeanIntensity', True)
-  # firstOrderFeatures.enableAllFeatures()
+  firstOrderFeatures.enableAllFeatures()
   printDocstrings('firstorder', firstOrderFeatures)
   calculateFeatures('firstorder', firstOrderFeatures)
   printFeatureValues('firstorder', firstOrderFeatures)
@@ -99,11 +116,16 @@ def main():
   printDocstrings('rlgl', rlglFeatures)
   calculateFeatures('rlgl', rlglFeatures)
   printFeatureValues('rlgl', rlglFeatures)
+  """
   
   #
   # Show Wavelet features
   #
-  
+  waveletFeatures = wavelet.RadiomicsWavelet(image, mask, **kwargs)
+  waveletFeatures.enableAllFeatures()
+  printDocstrings('wavelet', waveletFeatures)
+  calculateFeatures('wavelet', waveletFeatures)
+  printFeatureValues('wavelet', waveletFeatures)
 
 if __name__=="__main__":
   main()

@@ -1,0 +1,11 @@
+0:ShortRunLowGrayLevelEmphasis
+1:LowGrayLevelRunEmphasis
+2:GrayLevelNonuniformity
+3:LongRunEmphasis
+4:ShortRunHighGrayLevelEmphasis
+5:RunLengthNonuniformity
+6:ShortRunEmphasis
+7:LongRunHighGrayLevelEmphasis
+8:RunPercentage
+9:LongRunLowGrayLevelEmphasis
+10:HighGrayLevelRunEmphasis

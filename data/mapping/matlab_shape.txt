@@ -1,0 +1,14 @@
+0:SphericalDisproportion
+1:Compactness2
+2:VolumeNumber
+3:MaximumDiameter3D
+4:Sphericity
+5:Compactness1
+6:SurfaceVolumeRatio
+7:Volume
+8:MaximumDiameter3D_pdist
+9:VoxelNumber
+10:SurfaceArea
+11:MaximumDiameter2Dy
+12:MaximumDiameter2Dx
+13:MaximumDiameter2Dz

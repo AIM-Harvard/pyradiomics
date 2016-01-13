@@ -23,6 +23,7 @@ class RadiomicsFeaturesBase(object):
         self.binWidth = value
       elif key == 'resampledPixelSpacing':
         self.resampledPixelSpacing = value
+        #call resampling function on self.inputImage and self.inputMask here
       elif key == 'interpolator':
         self.interpolator = value
       elif key == 'padDistance':
@@ -33,6 +34,8 @@ class RadiomicsFeaturesBase(object):
         print 'Warning: unknown parameter:',key
 
     # all features are disabled by default
+    self.enabledFeatures = {}
+    self.featureValues = {}
     self.disableAllFeatures()
 
     self.featureNames = self.getFeatureNames()

@@ -55,10 +55,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           height = h + angle[0]
 
           if row >= 0 and row < maxrows and col >= 0 and col < maxcols:
-            if tuple((height, col, row)) in indices:
+            if tuple((height, col, row)) in indices:            
               j = self.matrix[height, col, row]
               j_idx = int(j-1)
-              self.P_glcm[i_idx, j_idx, distances_idx, angles_idx] += 1
+              try:
+                self.P_glcm[i_idx, j_idx, distances_idx, angles_idx] += 1
+              except IndexError:
+                continue
 
   def createGLCM(self):
     """
@@ -90,7 +93,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     # Normalize each glcm
     for q in xrange(int(angles.shape[0])):
       self.P_glcm[:,:,0,q] = self.P_glcm[:,:,0,q]/(self.P_glcm[:,:,0,q].sum())
-
+  
   # check if ivector and jvector can be replaced
   def calculateCoefficients(self):
     """Calculate and fill in the coefficients dict"""

@@ -121,7 +121,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     return (numpy.std(self.targetVoxelArray))
 
-  def getSkewnessValueFeatureValue(self, axis=0):
+  def getSkewnessFeatureValue(self, axis=0):
     """
     Calculate the Skewness of the image array.
 

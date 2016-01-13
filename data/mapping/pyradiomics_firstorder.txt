@@ -1,0 +1,15 @@
+0:Energy
+1:Entropy
+2:Kurtosis
+3:Maximum
+4:MeanDeviation
+5:Mean
+6:Median
+7:Minimum
+8:Range
+9:RootMeanSquared
+10:SkewnessValue
+11:StandardDeviation
+12:TotalEnergy
+13:Uniformity
+14:Variance

@@ -84,11 +84,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """Calculate the Mean Value for the image array."""
     return (numpy.mean(self.targetVoxelArray))
 
-  def getMedianFeatureValue (self):
+  def getMedianFeatureValue(self):
     """Calculate the Median Value for the image array."""
     return (numpy.median(self.targetVoxelArray))
 
-  def getRangeFeatureValue (self):
+  def getRangeFeatureValue(self):
     """Calculate the Range of Values in the image array."""
     return (numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))
 

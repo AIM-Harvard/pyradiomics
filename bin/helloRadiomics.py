@@ -25,7 +25,7 @@ mask = sitk.ReadImage(maskName)
 #
 firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
 
-firstOrderFeatures.enableFeatureByName('MeanIntensity', True)
+firstOrderFeatures.enableFeatureByName('Mean', True)
 # firstOrderFeatures.enableAllFeatures()
 
 print 'Will calculate the following first order features: '

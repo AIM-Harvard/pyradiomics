@@ -1,14 +1,16 @@
-from radiomics import firstorder, glcm, preprocessing, shape, rlgl
+from radiomics import preprocessing, firstorder, shape, glcm, rlgl, laplacian
 import SimpleITK as sitk
 import sys, os
+import pdb
 
 #testBinWidth = 25 this is the default bin size
 #testResampledPixelSpacing = (3,3,3) no resampling for now.
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
-imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
-maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
-
+#imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
+#maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
+imageName = os.path.join(dataDir, 'breast1_image.nrrd')
+maskName = os.path.join(dataDir, 'breast1_label.nrrd')
 
 if not os.path.exists(imageName):
   print 'Error: problem finding input image',imageName
@@ -25,8 +27,8 @@ mask = sitk.ReadImage(maskName)
 #
 firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
 
-firstOrderFeatures.enableFeatureByName('MeanIntensity', True)
-# firstOrderFeatures.enableAllFeatures()
+#firstOrderFeatures.enableFeatureByName('MeanIntensity', True)
+firstOrderFeatures.enableAllFeatures()
 
 print 'Will calculate the following first order features: '
 for f in firstOrderFeatures.enabledFeatures.keys():
@@ -40,6 +42,7 @@ print 'done'
 print 'Calculated first order features: '
 for (key,val) in firstOrderFeatures.featureValues.iteritems():
   print '  ',key,':',val
+
 
 #
 # Show Shape features
@@ -64,7 +67,7 @@ for (key,val) in shapeFeatures.featureValues.iteritems():
 #
 # Show GLCM features
 #
-glcmFeatures = glcm.RadiomicsGLCM(image, mask, binWidth=25)
+glcmFeatures = glcm.RadiomicsGLCM(image, mask)
 glcmFeatures.enableAllFeatures()
 
 print 'Will calculate the following GLCM features: '
@@ -83,7 +86,7 @@ for (key,val) in glcmFeatures.featureValues.iteritems():
 #
 # Show RLGL features
 #
-rlglFeatures = rlgl.RadiomicsRLGL(image, mask, binWidth=10)
+rlglFeatures = rlgl.RadiomicsRLGL(image, mask)
 rlglFeatures.enableAllFeatures()
 
 print 'Will calculate the following RLGL features: '
@@ -98,3 +101,24 @@ print 'done'
 print 'Calculated RLGL features: '
 for (key,val) in rlglFeatures.featureValues.iteritems():
   print '  ',key,':',val
+
+  
+#
+# Show Laplacian Of Gaussian features 
+#
+
+laplacianFeatures = laplacian.RadiomicsLaplacian(image, mask)
+laplacianFeatures.enableAllFeatures()
+
+print 'Will calculate the following Laplacian features: '
+for f in laplacianFeatures.enabledFeatures.keys():
+  print '  ',f
+  print eval('laplacianFeatures.get'+f+'FeatureValue.__doc__')
+
+print 'Calculating Laplacian features...',
+laplacianFeatures.calculateFeatures()
+print 'done'
+
+print 'Calculated Laplacian features: '
+for (key,val) in laplacianFeatures.featureValues.iteritems():
+  print '  ',key,':',val  

@@ -92,17 +92,15 @@ class RadiomicsHelpers:
 
   @staticmethod
   def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
-    print 'Threshold:',lowerThreshold,upperThreshold
+    # this mode is useful to generate the mask of thresholded voxels
     if insideValue:
       tif = sitk.BinaryThresholdImageFilter()
       tif.SetInsideValue(insideValue)
       tif.SetLowerThreshold(lowerThreshold)
       tif.SetUpperThreshold(upperThreshold)
-      tif.SetOutsideValue(outsideValue)
-      return sitk.Cast(tif.Execute(inputImage),inputImage.GetPixelID())
     else:
       tif = sitk.ThresholdImageFilter()
       tif.SetLower(lowerThreshold)
       tif.SetUpper(upperThreshold)
-      tif.SetOutsideValue(outsideValue)
-      return tif.Execute(inputImage)
+    tif.SetOutsideValue(outsideValue)
+    return tif.Execute(inputImage)

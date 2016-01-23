@@ -35,10 +35,10 @@ class RadiomicsHelpers:
   @staticmethod
   def padTumorMaskToCube(imageNodeArray, labelNodeArray, padDistance=0):
     """
-    Create a 3D matrix of the segmented region of the image based on the input label. 
-    
+    Create a 3D matrix of the segmented region of the image based on the input label.
+
     Create a 3D matrix of the labelled region of the image, padded to have a
-    cuboid shape equal to the ijk boundaries of the label. 
+    cuboid shape equal to the ijk boundaries of the label.
     """
     targetVoxelsCoordinates = numpy.where(labelNodeArray != 0)
     ijkMinBounds = numpy.min(targetVoxelsCoordinates, 1)
@@ -47,38 +47,62 @@ class RadiomicsHelpers:
     matrixCoordinates = tuple(map(operator.sub, targetVoxelsCoordinates, tuple(ijkMinBounds)))
     matrix[matrixCoordinates] = imageNodeArray[targetVoxelsCoordinates].astype('int64')
     if padDistance > 0:
-      matrix, matrixCoordinates = RadiomicsHelpers.padCubicMatrix(matrix, matrixCoordinates, padDistance) 
+      matrix, matrixCoordinates = RadiomicsHelpers.padCubicMatrix(matrix, matrixCoordinates, padDistance)
     return(matrix, matrixCoordinates)
-    
+
   @staticmethod
   def padCubicMatrix(a, matrixCoordinates, padDistance):
     """
-    Pad a 3D matrix in all dimensions with unit length equal to padDistance. 
-    
-    Pads matrix 'a' with zeros and resizes 'a' to a cube with dimensions increased to 
+    Pad a 3D matrix in all dimensions with unit length equal to padDistance.
+
+    Pads matrix 'a' with zeros and resizes 'a' to a cube with dimensions increased to
     the next greatest power of 2 and centers coordinates onto the padded matrix.
     """
     dims = tuple(map(operator.add, a.shape, tuple(numpy.tile(padDistance,3))))
     pad = tuple(map(operator.div, tuple(map(operator.sub, dims, a.shape)), ([2,2,2])))
-    
+
     matrixCoordinatesPadded = tuple(map(operator.add, matrixCoordinates, pad))
     matrix2 = numpy.zeros(dims)
     matrix2[matrixCoordinatesPadded] = a[matrixCoordinates]
     return (matrix2, matrixCoordinatesPadded)
 
   @staticmethod
-  def InterpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
+  def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
     """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
-    
-    'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing. 
+
+    'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.
     Enumerator references for interpolator:
     0 - sitkNearestNeighbor
     1 - sitkLinear
     2 - sitkBSpline
     3 - sitkGaussian
-    """ 
+    """
     rif = sitk.ResampleImageFilter()
     rif.SetOutputSpacing(resampledPixelSpacing)
     rif.SetInterpolator(interpolator)
     resampledImageNode = rif.Execute(imageNode)
     return resampledImageNode
+
+  @staticmethod
+  def applyLoG(inputImage, sigmaValue=0.5):
+    lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
+    lrgif.SetNormalizeAcrossScale(True)
+    lrgif.SetSigma(sigmaValue)
+    return lrgif.Execute(inputImage)
+
+  @staticmethod
+  def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
+    print 'Threshold:',lowerThreshold,upperThreshold
+    if insideValue:
+      tif = sitk.BinaryThresholdImageFilter()
+      tif.SetInsideValue(insideValue)
+      tif.SetLowerThreshold(lowerThreshold)
+      tif.SetUpperThreshold(upperThreshold)
+      tif.SetOutsideValue(outsideValue)
+      return sitk.Cast(tif.Execute(inputImage),inputImage.GetPixelID())
+    else:
+      tif = sitk.ThresholdImageFilter()
+      tif.SetLower(lowerThreshold)
+      tif.SetUpper(upperThreshold)
+      tif.SetOutsideValue(outsideValue)
+      return tif.Execute(inputImage)

@@ -41,6 +41,31 @@ print 'Calculated first order features: '
 for (key,val) in firstOrderFeatures.featureValues.iteritems():
   print '  ',key,':',val
 
+  # now calculate the LoG features, following
+  # steps and parameters as specified by @vnarayan13 in #22
+  # 1. Get the LoG filtered image
+  mmif = sitk.MinimumMaximumImageFilter()
+  mmif.Execute(image)
+  lowerThreshold = 0
+  upperThreshold = mmif.GetMaximum()
+
+  threshImage = preprocessing.RadiomicsHelpers.applyThreshold(image,lowerThreshold=lowerThreshold, upperThreshold=upperThreshold,outsideValue=0)
+  # get the mask of the thresholded pixels
+  threshImageMask = preprocessing.RadiomicsHelpers.applyThreshold(image,lowerThreshold=lowerThreshold, upperThreshold=upperThreshold,outsideValue=0,insideValue=1)
+  # only include the voxels that are within the threshold
+  threshMask = sitk.Cast(mask,1) & sitk.Cast(threshImageMask,1)
+  import numpy
+  sigmaValues = numpy.arange(5.,0.,-.5)[::1]
+  for sigma in sigmaValues:
+    logImage = preprocessing.RadiomicsHelpers.applyLoG(image,sigmaValue=sigma)
+    logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage,threshMask)
+    logFirstorderFeatures.enableAllFeatures()
+    logFirstorderFeatures.calculateFeatures()
+    print 'Calculated firstorder features with LoG sigma ',sigma
+    for (key,val) in logFirstorderFeatures.featureValues.iteritems():
+      laplacianFeatureName = 'LoG_sigma_%s_%s' %(str(sigma),key)
+      print '  ',laplacianFeatureName,':',val
+
 #
 # Show Shape features
 #

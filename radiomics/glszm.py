@@ -1,5 +1,6 @@
 import numpy
 import SimpleITK as sitk
+from scipy import ndimage
 from radiomics import base, preprocessing
 
 
@@ -25,53 +26,65 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       self.coefficients['Nr'] = numpy.max(self.matrix.shape)
       self.coefficients['Np'] = self.targetVoxelArray.size
 
-      self.calculateGLSZM(13)
+      self.calculateGLSZM(angles=13)
 
       self.calculateCoefficients()
 
-  def calculateGLSZM(self, angles):
-  def calculate_glszm(grayLevels, matrix, matrixCoordinates, angles, P_rlgl):
+      
+  def calculateGLSZM(self, angles=13):
+    """
+    Number of times a 26-connected region with a 
+    gray level and voxel count occurs in an image. P_glszm[level, voxel_count] = # occurrences
+    """
+    
     # Kernel for 26-connected neighborhood
     B = numpy.ones((3,3,3))
-    maxSize = matrix[matrixCoordinates].size
     
-    P_glszm = numpy.zeros((grayLevels, maxSize))
+    # Maximum size of a zone is the total volume of the image
+    maxSize = self.matrix[self.matrixCoordinates].size
     
-    for i in xrange(grayLevels):
-      level = i + 1
-      grayLevelCoordinates = zip(*numpy.where(matrix==level))
-      dataTemp = matrix[numpy.where(matrix==level)]
-      labels = numpy.zeros(len(grayLevelCoordinates))
+    # Empty GLSZ matrix
+    self.P_glszm = numpy.zeros((self.coefficients['grayLevels'], maxSize))
+    
+    # Iterate over all gray levels in the image
+    for i in xrange(1, self.coefficients['grayLevels']+1):
+      #dataTemp = self.matrix[numpy.where(self.matrix==i)] #should this be 3D?
+      dataTemp = numpy.where(self.matrix==i, 1, 0)
+      ind = zip(*numpy.where(self.matrix==i))  
+      labels = numpy.zeros(dataTemp.shape)
       n = 0
-      while len(grayLevelCoordinates) > 0:
+      while len(ind) > 0: # check if ind is not empty
+        # Current label number and first coordinate
         n = n+1
-        ind = grayLevelCoordinates[0]
-        X = numpy.zeros(dataTemp.size)
-        """
-        #Matlab
-        X(ind) = 1;
-        %   Iterative dilating with kernel
-        Y = dataTemp&(convn(X,B,'same')>=1);
-        while ~isequal(X,Y)
+        ind = ind[0]
+        X = numpy.zeros(dataTemp.shape)
+        X[ind] = 1
+        
+        # Iterative dilating with kernel       
+        Y = dataTemp and (ndimage.convolve(X,B,mode='constant') >= 1) # what is this output?
+        while X != Y:
             X = Y;
-            Y = dataTemp&(convn(X,B,'same')>=1);
-        end
-        %   Set already processed indices to zero
-        dataTemp(Y) = 0;        
-        %   Assign the label n
-        labels(Y) = n;
-        %   Size of the region
-        regionSize = length(find(Y));
-        %   Update the gray level size zone matrix
-        glszMat(i,regionSize) = glszMat(i,regionSize)+1;
-        %   Find unprocessed nonzero positions for current gray level
-        ind = find(dataTemp==i);
-        end
-        %   Now we have a labeled image with n 26-neighborhood connected
-        %   components, having a gray level of i.
-        %   For now "labels" is not used, but maybe something for the future.
-        end
-      """      
+            Y = dataTemp and (ndimage.convolve(X,B,mode='constant') >= 1)
+        # Y appears to be a boolean array. the final "region".
+        # intersection of convolution and dataTemp until it equals X?
+        
+        # Set already processed indices to zero
+        dataTemp[Y] = 0 #is Y a set of coordinates now? 
+        # or [dataTemp[pos] = 0 for pos in Y]
+        
+        # Assign the label n
+        labels[Y] = n #is Y a label value?
+        # or [labels[pos] = n for pos in Y]
+        
+        # Size of the region (# of voxels in region)
+        regionSize = len(zip(*numpy.where(Y!=0)))
+        
+        # Update the gray level size zone matrix
+        self.P_glszm[i,regionSize] = self.P_glszm[i,regionSize] += 1
+        
+        # Find unprocessed nonzero positions for current gray level
+        ind = numpy.where(dataTemp==i)
+              
   def calculateCoefficients(self):
       sumP_glszm = numpy.sum( numpy.sum(self.P_rlgl, 0), 0 )
       sumP_glszm[sumP_glszm==0] = 1

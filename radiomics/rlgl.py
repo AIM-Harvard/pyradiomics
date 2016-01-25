@@ -1,3 +1,4 @@
+from itertools import chain
 import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
@@ -29,16 +30,16 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       self.coefficients['Nr'] = numpy.max(self.matrix.shape)
       self.coefficients['Np'] = self.targetVoxelArray.size
 
-      self.calculateRLGL(13)
+      self.calculateRLGL()
 
       self.calculateCoefficients()
 
-  def calculateRLGL(self, angles):
+  def calculateRLGL(self):
       Ng = self.coefficients['Ng']
       Nr = self.coefficients['Nr']
       grayLevels = self.coefficients['grayLevels']
 
-      self.P_rlgl = numpy.zeros((Ng, Nr, angles))
+      self.P_rlgl = numpy.zeros((Ng, Nr, 13))
 
       padVal = -1000   #use eps or NaN to pad matrix
       padMask = numpy.zeros(self.matrix.shape,dtype=bool)
@@ -46,86 +47,92 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       self.matrix[~padMask] = padVal
       matrixDiagonals = list()
 
-      #(1,0,0), #(-1,0,0),
-      aDiags = reduce(lambda x,y: x+y, [a.tolist() for a in numpy.transpose(self.matrix,(1,2,0))])
+      #(1,0,0), (-1,0,0)
+      aDiags = chain.from_iterable(numpy.transpose(self.matrix,(1,2,0)))
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, aDiags) )
 
-      #(0,1,0), #(0,-1,0),
-      bDiags = reduce(lambda x,y: x+y, [a.tolist() for a in numpy.transpose(self.matrix,(0,2,1))])
+      #(0,1,0), (0,-1,0)
+      bDiags = chain.from_iterable(numpy.transpose(self.matrix,(0,2,1)))
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, bDiags) )
 
-      #(0,0,1), #(0,0,-1),
-      cDiags = reduce(lambda x,y: x+y, [a.tolist() for a in numpy.transpose(self.matrix,(0,1,2))])
+      #(0,0,1), (0,0,-1)
+      cDiags = chain.from_iterable(numpy.transpose(self.matrix,(0,1,2)))
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, cDiags) )
 
-      #(1,1,0),#(-1,-1,0),
+      #(1,1,0), (-1,-1,0)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[1]
-
-      dDiags = reduce(lambda x,y: x+y, [self.matrix.diagonal(a,0,1).tolist() for a in xrange(lowBound, highBound)])
+      dDiags = chain.from_iterable([self.matrix.diagonal(a,0,1) for a in xrange(lowBound, highBound)])
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, dDiags) )
 
-      #(1,0,1), #(-1,0-1),
+      #(1,0,1), (-1,0-1)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[2]
-
-      eDiags = reduce(lambda x,y: x+y, [self.matrix.diagonal(a,0,2).tolist() for a in xrange(lowBound, highBound)])
+      eDiags = chain.from_iterable([self.matrix.diagonal(a,0,2) for a in xrange(lowBound, highBound)])
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, eDiags) )
 
-      #(0,1,1), #(0,-1,-1),
+      #(0,1,1), (0,-1,-1)
       lowBound = -self.matrix.shape[1]+1
       highBound = self.matrix.shape[2]
-
-      fDiags = reduce(lambda x,y: x+y, [self.matrix.diagonal(a,1,2).tolist() for a in xrange(lowBound, highBound)])
+      fDiags = chain.from_iterable([self.matrix.diagonal(a,1,2) for a in xrange(lowBound, highBound)])
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, fDiags) )
 
-      #(1,-1,0), #(-1,1,0),
+      #(1,-1,0), (-1,1,0)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[1]
-
-      gDiags = reduce(lambda x,y: x+y, [self.matrix[:,::-1,:].diagonal(a,0,1).tolist() for a in xrange(lowBound, highBound)])
+      gDiags = chain.from_iterable([self.matrix[:,::-1,:].diagonal(a,0,1) for a in xrange(lowBound, highBound)])
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, gDiags) )
 
-      #(-1,0,1), #(1,0,-1),
+      #(-1,0,1), (1,0,-1)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[2]
-
-      hDiags = reduce(lambda x,y: x+y, [self.matrix[:,:,::-1].diagonal(a,0,2).tolist() for a in xrange(lowBound, highBound)])
+      hDiags = chain.from_iterable([self.matrix[:,:,::-1].diagonal(a,0,2) for a in xrange(lowBound, highBound)])
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, hDiags) )
 
-      #(0,1,-1), #(0,-1,1),
+      #(0,1,-1), (0,-1,1)
       lowBound = -self.matrix.shape[1]+1
       highBound = self.matrix.shape[2]
-
-      iDiags = reduce(lambda x,y: x+y, [self.matrix[:,:,::-1].diagonal(a,1,2).tolist() for a in xrange(lowBound, highBound)])
+      iDiags = chain.from_iterable([self.matrix[:,:,::-1].diagonal(a,1,2) for a in xrange(lowBound, highBound)])
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, iDiags) )
 
-      #(1,1,1), #(-1,-1,-1)
+      #(1,1,1), (-1,-1,-1)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[1]
-
-      jDiags = [ numpy.diagonal(h,x,0,1).tolist() for h in [self.matrix.diagonal(a,0,1) for a in xrange(lowBound, highBound)] for x in xrange(-h.shape[0]+1, h.shape[1]) ]
+      jDiags = []
+      for h in [self.matrix.diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
+        for x in xrange(-h.shape[0]+1, h.shape[1]):
+          jDiags.append(numpy.diagonal(h,x,0,1))   
+      #jDiags = chain.from_iterable(jDiags)    
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, jDiags) )
 
       #(-1,1,-1), #(1,-1,1),
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[1]
-
-      kDiags = [ numpy.diagonal(h,x,0,1).tolist() for h in [self.matrix[:,::-1,:].diagonal(a,0,1) for a in xrange(lowBound, highBound)] for x in xrange(-h.shape[0]+1, h.shape[1]) ]
+      kDiags = []
+      for h in [self.matrix[:,::-1,:].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
+        for x in xrange(-h.shape[0]+1, h.shape[1]):
+          kDiags.append(numpy.diagonal(h,x,0,1))
+      #kDiags = chain.from_iterable(kDiags)    
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, kDiags) )
 
       #(1,1,-1), #(-1,-1,1),
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[1]
-
-      lDiags = [ numpy.diagonal(h,x,0,1).tolist() for h in [self.matrix[:,:,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)] for x in xrange(-h.shape[0]+1, h.shape[1]) ]
+      lDiags = []
+      for h in [self.matrix[:,:,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
+        for x in xrange(-h.shape[0]+1, h.shape[1]):
+          lDiags.append(numpy.diagonal(h,x,0,1))
+      #lDiags = chain.from_iterable(lDiags)    
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, lDiags) )
 
       #(-1,1,1), #(1,-1,-1),
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[1]
-
-      mDiags = [ numpy.diagonal(h,x,0,1).tolist() for h in [self.matrix[:,::-1,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)] for x in xrange(-h.shape[0]+1, h.shape[1]) ]
+      mDiags = []
+      for h in [self.matrix[:,::-1,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
+        for x in xrange(-h.shape[0]+1, h.shape[1]):
+          mDiags.append(numpy.diagonal(h,x,0,1))
+      #mDiags = chain.from_iterable(mDiags)    
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, mDiags) )
 
       # Run-Length Encoding (rle) for the 13 list of diagonals

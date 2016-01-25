@@ -1,8 +1,7 @@
 import numpy
 import SimpleITK as sitk
-from scipy import ndimage
 from radiomics import base, preprocessing
-
+import pdb
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   """GLSZM feature calculation."""
@@ -26,68 +25,79 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       self.coefficients['Nr'] = numpy.max(self.matrix.shape)
       self.coefficients['Np'] = self.targetVoxelArray.size
 
-      self.calculateGLSZM(angles=13)
+      self.calculateGLSZM()
 
       self.calculateCoefficients()
 
       
-  def calculateGLSZM(self, angles=13):
+  def calculateGLSZM(self):
     """
     Number of times a 26-connected region with a 
     gray level and voxel count occurs in an image. P_glszm[level, voxel_count] = # occurrences
     """
+    angles = numpy.array([ (0, 1, 0),
+                       (-1, 1, 0),
+                       (-1, 0, 0),
+                       (-1, -1, 0),
+                       (0, 1, -1),
+                       (0, 0, -1),
+                       (0, -1, -1),
+                       (-1, 0, -1),
+                       (1, 0, -1),
+                       (-1, 1, -1),
+                       (1, -1, -1),
+                       (-1, -1, -1),
+                       (1, 1, -1) ])
     
     # Kernel for 26-connected neighborhood
     B = numpy.ones((3,3,3))
     
-    # Maximum size of a zone is the total volume of the image
-    maxSize = self.matrix[self.matrixCoordinates].size
-    
     # Empty GLSZ matrix
-    self.P_glszm = numpy.zeros((self.coefficients['grayLevels'], maxSize))
+    self.P_glszm = numpy.zeros((self.coefficients['grayLevels'].size, self.coefficients['Np']))
     
     # Iterate over all gray levels in the image
-    for i in xrange(1, self.coefficients['grayLevels']+1):
-      #dataTemp = self.matrix[numpy.where(self.matrix==i)] #should this be 3D?
+    for i in xrange(1, self.coefficients['grayLevels'].size+1):
       dataTemp = numpy.where(self.matrix==i, 1, 0)
-      ind = zip(*numpy.where(self.matrix==i))  
+      ind = zip(*numpy.where(dataTemp==1))
+      ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))      
       labels = numpy.zeros(dataTemp.shape)
       n = 0
-      while len(ind) > 0: # check if ind is not empty
+      while ind: # check if ind is not empty
         # Current label number and first coordinate
         n = n+1
-        ind = ind[0]
-        X = numpy.zeros(dataTemp.shape)
-        X[ind] = 1
+        ind_node = ind[0]
         
-        # Iterative dilating with kernel       
-        Y = dataTemp and (ndimage.convolve(X,B,mode='constant') >= 1) # what is this output?
-        while X != Y:
-            X = Y;
-            Y = dataTemp and (ndimage.convolve(X,B,mode='constant') >= 1)
-        # Y appears to be a boolean array. the final "region".
-        # intersection of convolution and dataTemp until it equals X?
+        # get all coordinates in the 26-connected region
+        region_full = [ind_node] + [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles]
+        
+        # get coordinates in 26-connected region with same grey level
+        region_level = list(set(ind).intersection(set(region_full)))
         
         # Set already processed indices to zero
-        dataTemp[Y] = 0 #is Y a set of coordinates now? 
-        # or [dataTemp[pos] = 0 for pos in Y]
+        for pos in region_level:
+          dataTemp[pos] = 0
         
         # Assign the label n
-        labels[Y] = n #is Y a label value?
-        # or [labels[pos] = n for pos in Y]
+        for pos in region_level:
+          labels[pos] = n
         
         # Size of the region (# of voxels in region)
-        regionSize = len(zip(*numpy.where(Y!=0)))
+        #regionSize = len(zip(*numpy.where(Y!=0)))
+        regionSize = len(region_level)
         
         # Update the gray level size zone matrix
-        self.P_glszm[i,regionSize] = self.P_glszm[i,regionSize] += 1
+        self.P_glszm[i-1,regionSize-1] += 1
         
         # Find unprocessed nonzero positions for current gray level
-        ind = numpy.where(dataTemp==i)
+        ind = zip(*numpy.where(dataTemp==1))
+        ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
               
   def calculateCoefficients(self):
-      sumP_glszm = numpy.sum( numpy.sum(self.P_rlgl, 0), 0 )
-      sumP_glszm[sumP_glszm==0] = 1
+      sumP_glszm = numpy.sum( numpy.sum(self.P_glszm, 0), 0 )
+      
+      # set sum to numpy.spacing(1) if sum is 0?
+      if sumP_glszm == 0:
+        sumP_glszm = 1
 
       pr = numpy.sum(self.P_glszm, 0)
       pg = numpy.sum(self.P_glszm, 1)
@@ -101,84 +111,86 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       self.coefficients['ivector'] = ivector
       self.coefficients['jvector'] = jvector     
     
-  def smallAreaEmphasis(self):
+  def getSmallAreaEmphasisFeatureValue(self):
       try:
-        #sre = numpy.sum( numpy.sum( (self.P_glszm/(self.j[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
-        sre = numpy.sum( (self.coefficients['pr']/(self.coefficients['jvector'][:,None]**2)), 0 ) / self.coefficients['sumP_glszm']
+        #sum(pr./(j_vector.^2))/nruns
+        #sae = numpy.sum( numpy.sum( (self.P_glszm/(self.j[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
+        sae = numpy.sum(self.coefficients['pr']/(self.coefficients['jvector']**2)) / self.coefficients['sumP_glszm']
       except ZeroDivisionError:
-        sre = 0    
-      return (sre.mean())
+        sae = 0    
+      return (sae)
     
-  def largeAreaEmphasis(self):
+  def getLargeAreaEmphasisFeatureValue(self):
       try:
-        #lre = numpy.sum( numpy.sum( (self.P_glszm*(self.j[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
-        lre = numpy.sum( (self.coefficients['pr']*(self.coefficients['jvector'][:,None]**2)), 0 ) / self.coefficients['sumP_glszm']
+        #lae = numpy.sum( numpy.sum( (self.P_glszm*(self.j[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
+        lae = numpy.sum(self.coefficients['pr']*(self.coefficients['jvector']**2)) / self.coefficients['sumP_glszm']
       except ZeroDivisionError:
-        lre = 0
-      return (lre.mean())
+        lae = 0
+      return (lae)
 
-  def intensityVariability(self):
+  def getIntensityVariabilityFeatureValue(self):
       try:
-        gln = numpy.sum( (self.coefficients['pg']**2) , 0 ) / self.coefficients['sumP_glszm']   
+        iv = numpy.sum(self.coefficients['pg']**2) / self.coefficients['sumP_glszm']   
       except ZeroDivisionError:
-        gln = 0  
-      return (gln.mean())
+        iv = 0  
+      return (iv)
     
-  def sizeZoneVariability(self):
+  def getSizeZoneVariabilityFeatureValue(self):
       try:
-        rln = numpy.sum( (self.coefficients['pr']**2) , 0 ) / self.coefficients['sumP_glszm'] 
+        szv = numpy.sum(self.coefficients['pr']**2) / self.coefficients['sumP_glszm'] 
       except ZeroDivisionError:
-        rln = 0
-      return (rln.mean())
+        szv = 0
+      return (szv)
 
-  def zonePercentage(self):
+  def getZonePercentageFeatureValue(self):
       try:
-        rp = numpy.sum( numpy.sum( (self.P_glszm/(self.coefficients['Np'])) , 0 ), 0 )
+        #zp = numpy.sum( (self.P_glszm/(self.coefficients['Np'])) , 0 )
+        zp = self.coefficients['sumP_glszm'] / numpy.sum(self.coefficients['pr']*self.coefficients['jvector'])
       except ZeroDivisionError:
-        rp = 0
-      return (rp.mean())
+        zp = 0
+      return (zp)
 
-  def lowIntensityEmphasis(self):
+  def getLowIntensityEmphasisFeatureValue(self):
       try:
         #pdb.set_trace()
-        #lglre = numpy.sum( numpy.sum( (self.P_glszm/(self.i[:,:,None]**2)) , 0 ), 0 )/ (self.coefficients['sumP_glszm'][None,None,:])
-        lglre = numpy.sum( (self.coefficients['pg']/(self.coefficients['ivector'][:,None]**2)) , 0 ) / self.coefficients['sumP_glszm']
+        #lie = numpy.sum( numpy.sum( (self.P_glszm/(self.i[:,:,None]**2)) , 0 ), 0 )/ (self.coefficients['sumP_glszm'][None,None,:])
+        lie = numpy.sum( (self.coefficients['pg']/(self.coefficients['ivector']**2)) ) / self.coefficients['sumP_glszm']
       except ZeroDivisionError:
-        lglre = 0 
-      return (lglre.mean())
+        lie = 0 
+      return (lie)
       
-  def highIntensityEmphasis(self):
+  def getHighIntensityEmphasisFeatureValue(self):
     try:
-      #hglre = numpy.sum( numpy.sum( (self.P_glszm*(self.i[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
-      hglre = numpy.sum( (self.coefficients['pg']*(self.coefficients['ivector'][:,None]**2)) , 0 ) / self.coefficients['sumP_glszm']
+      #hie = numpy.sum( numpy.sum( (self.P_glszm*(self.i[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
+      hie = numpy.sum( (self.coefficients['pg']*(self.coefficients['ivector']**2)) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
-      hglre = 0 
-    return (hglre.mean())
+      hie = 0 
+    return (hie)
     
-  def lowIntensitySmallAreaEmphasis(self):
+  def getLowIntensitySmallAreaEmphasisFeatureValue(self):
     try:
-      srlgle = numpy.sum( numpy.sum( (self.P_glszm/((self.coefficients['ivector'][:,None,None]**2)*(self.coefficients['jvector'][None,:,None]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      lisae = numpy.sum( numpy.sum( (self.P_glszm/((self.coefficients['ivector'][:,None]**2)*(self.coefficients['jvector'][None,:]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
-      srlgle = 0
-    return (srlgle.mean())
+      lisae = 0
+    return (lisae)
      
-  def highIntensitySmallAreaEmphasis(self):
+  def getHighIntensitySmallAreaEmphasisFeatureValue(self):
     try:
-      srhgle = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['ivector'][:,None,None]**2)/(self.coefficients['jvector'][None,:,None]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      hisae = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['ivector'][:,None]**2)/(self.coefficients['jvector'][None,:]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
-      srhgle = 0   
-    return (srhgle.mean())
+      hisae = 0   
+    return (hisae)
         
-  def lowIntensityLargeAreaEmphasis(self):
+  def getLowIntensityLargeAreaEmphasisFeatureValue(self):
     try:
-      lrlgle = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['jvector'][None,:,None]**2)/(self.coefficients['ivector'][:,None,None]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      lilae = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['jvector'][None,:]**2)/(self.coefficients['ivector'][:,None]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
-      lrlgle = 0
-    return (lrlgle.mean())
+      lilae = 0
+    return (lilae)
             
-  def highIntensityLargeAreaEmphasis(self):
+  def getHighIntensityLargeAreaEmphasisFeatureValue(self):
     try:
-      lrhgle = numpy.sum( numpy.sum( (self.P_glszm*((self.coefficients['jvector'][None,:,None]**2)*(self.coefficients['ivector'][:,None,None]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      hilae = numpy.sum( numpy.sum( (self.P_glszm*((self.coefficients['jvector'][None,:]**2)*(self.coefficients['ivector'][:,None]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
-      lrhgle = 0 
-    return (lrhgle.mean())    
+      hilae = 0 
+    return (hilae)    

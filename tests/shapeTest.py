@@ -4,6 +4,7 @@
 
 import SimpleITK as sitk
 from radiomics import firstorder, shape
+from testUtils import RadiomicsTestUtils
 import sys, os
 import csv
 
@@ -26,12 +27,16 @@ class TestShape:
 
         # set the patient ID for these files to match the directory and
         # the patient id in the baseline file
-        self.patientID = 'TestPatient1_BreastMRI'
+        self.patientID = 'brain1'
+
+        # read in the baseline and mapping to matlab features
+        self.testUtils = RadiomicsTestUtils('glcm')
+        self.testUtils.setPatientID(self.patientID)
 
         dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data" + os.path.sep
 
-        imageName = dataDir + self.patientID + os.path.sep + 'TestPatient1_BreastMRI-Pre-subvolume.nrrd'
-        maskName = dataDir + self.patientID + os.path.sep + 'TestPatient1_BreastMRI-Pre_labelMap-subvolume.nrrd'
+        imageName = dataDir + self.patientID + '_image.nrrd'
+        maskName = dataDir + self.patientID + '_label.nrrd'
 
         print("Reading the image and mask.")
         self.image = sitk.ReadImage(imageName)
@@ -40,33 +45,6 @@ class TestShape:
         print("Instantiating Shape.")
         self.shapeFeatures = shape.RadiomicsShape(self.image, self.mask)
 
-        print("Reading expected results")
-        baselineFileName = dataDir + 'MatlabFeatures.csv'
-        self.foundPatientBaseline = False
-        if (os.path.exists(baselineFileName)):
-          self.baselineFeatures = {}
-          csvFile = open(baselineFileName, 'rb')
-          csvFileReader = csv.reader(csvFile)
-          # get the column headers
-          self.headerRow = csvFileReader.next()
-          # search for the patient in the file
-          for patientRow in csvFileReader:
-            if patientRow[0] == self.patientID:
-              print 'Found row for patient ',self.patientID
-              # print ', '.join(patientRow)
-              self.foundPatientBaseline = True
-              columnIndex = 0
-              for val in patientRow:
-                self.baselineFeatures[self.headerRow[columnIndex]] = val
-                columnIndex += 1
-              break
-            else:
-              print 'Not the right patient ID:', patientRow[0]
-          # print 'baselineFeatures for ', self.patientID, ' = ',self.baselineFeatures
-          if self.foundPatientBaseline == False:
-            print 'Unable to find the baseline for patient', patientID, ', conducting the test without evaluating the results.'
-        else:
-           print 'Unable to find baseline features file ',baselineFileName
 
     @classmethod
     def teardown_class(self):
@@ -74,32 +52,10 @@ class TestShape:
         print ("teardown_class() after any methods in this class")
 
     def checkResult(self, key, value):
-      if self.foundPatientBaseline == False:
-        print 'Unable to evaluate calculated feature ', key, ' of value ', value
-        return
-      index = -1
-      if key == 'Volume':
-        index = 'Shape_volume'
-      elif key == 'SurfaceArea':
-        index = 'Shape_surface'
-      elif key == 'SurfaceVolumeRatio':
-          index = 'Shape_surfVolRatio'
-      elif key == 'Compactness1':
-        index = 'Shape_compactness'
-      elif key == 'Compactness2':
-        index = 'Shape_compactness2'
-      elif key == 'Maximum3DDiameter':
-        index = 'Shape_maxDiameter3D'
-      elif key == 'SphericalDisproportion':
-        index = 'Shape_spherDisprop'
-      elif key == 'Sphericity':
-        index = 'Shape_sphericity'
-      if index == -1:
-        print 'Unable to find index for key ',key
-        return
-      baseline = self.baselineFeatures[index]
+      # use the mapping from the utils
+      baseline = self.testUtils.getMatlabValue(key)
       percentDiff = abs(1.0 - (value / float(baseline)))
-      print('index = %s, baseline value = %f, calculated = %f, diff = %f%%' % (index, float(baseline), value, percentDiff * 100))
+      print('baseline value = %f, calculated = %f, diff = %f%%' % (float(baseline), value, percentDiff * 100))
       # check for a less than one percent difference
       assert(percentDiff < 0.01)
 

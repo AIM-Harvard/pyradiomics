@@ -3,6 +3,7 @@
 # nosetests --nocapture -v tests/glcmTest.py
 
 from radiomics import firstorder, glcm, preprocessing
+from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os
 import csv
@@ -26,47 +27,23 @@ class TestGLCM:
 
         # set the patient ID for these files to match the directory and
         # the patient id in the baseline file
-        self.patientID = 'TCGA-02-0003_BrainMRI'
+        self.patientID = 'brain1'
+
+        # read in the baseline and mapping to matlab features
+        self.testUtils = RadiomicsTestUtils('glcm')
+        self.testUtils.setPatientID(self.patientID)
 
         dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data" + os.path.sep
 
-        imageName = dataDir + self.patientID + os.path.sep + 'AXIAL-T1-POST-GD_TCGA-02-0003_TCGA-02-0003_PREOP_SCAN13_Background.nrrd'
-        maskName = dataDir + self.patientID + os.path.sep + 'AXIAL-T1-POST-GD_TCGA-02-0003_TCGA-02-0003_PREOP_SCAN13_FSL-Clustered-labelMap_binarized_labelMap.nrrd'
+        imageName = dataDir + self.patientID + '_image.nrrd'
+        maskName = dataDir + self.patientID + '_label.nrrd'
 
         print("Reading the image and mask.")
         self.image = sitk.ReadImage(imageName)
         self.mask = sitk.ReadImage(maskName)
 
         print("Instantiating GLCM.")
-        self.glcmFeatures = glcm.RadiomicsGLCM(self.image, self.mask, 10)
-
-        print("Reading expected results")
-        baselineFileName = dataDir + 'MatlabFeatures.csv'
-        self.foundPatientBaseline = False
-        if (os.path.exists(baselineFileName)):
-          self.baselineFeatures = {}
-          csvFile = open(baselineFileName, 'rb')
-          csvFileReader = csv.reader(csvFile)
-          # get the column headers
-          self.headerRow = csvFileReader.next()
-          # search for the patient in the file
-          for patientRow in csvFileReader:
-            if patientRow[0] == self.patientID:
-              print 'Found row for patient ',self.patientID
-              # print ', '.join(patientRow)
-              self.foundPatientBaseline = True
-              columnIndex = 0
-              for val in patientRow:
-                self.baselineFeatures[self.headerRow[columnIndex]] = val
-                columnIndex += 1
-              break
-            else:
-              print 'Not the right patient ID:', patientRow[0]
-          # print 'baselineFeatures for ', self.patientID, ' = ',self.baselineFeatures
-          if self.foundPatientBaseline == False:
-            print 'Unable to find the baseline for patient', patientID, ', conducting the test without evaluating the results.'
-        else:
-           print 'Unable to find baseline features file ',baselineFileName
+        self.glcmFeatures = glcm.RadiomicsGLCM(self.image, self.mask)
 
     @classmethod
     def teardown_class(self):
@@ -74,58 +51,18 @@ class TestGLCM:
         print ("teardown_class() after any methods in this class")
 
     def checkResult(self, key, value):
-      if self.foundPatientBaseline == False:
-        print 'Unable to evaluate calculated feature ', key, ' of value ', value
-        return
-      index = -1
-      if key == 'Autocorrelation':
-        index = 'GLCM_autocorr'
-      elif key == 'ClusterProminence':
-        index = 'GLCM_clusProm'
-      elif key == 'ClusterShade':
-          index = 'GLCM_clusShade'
-      elif key == 'ClusterTendency':
-        index = 'GLCM_clusTend'
-      elif key == 'Contrast':
-        index = 'GLCM_contrast'
-      elif key == 'Correlation':
-        index = 'GLCM_correl1'
-      elif key == 'DifferenceEntropy':
-        index = 'GLCM_diffEntro'
-      elif key == 'Dissimilarity':
-        index = 'GLCM_dissimilar'
-      elif key == 'Energy':
-        index = 'GLCM_energy'
-      elif key == 'Entropy':
-        index = 'GLCM_entrop2'
-      elif key == 'Homogeneity1':
-        index = 'GLCM_homogeneity1'
-      elif key == 'Homogeneity2':
-        index = 'GLCM_homogeneity2'
-      elif key == 'Imc1':
-        index = 'GLCM_infoCorr1'
-      elif key == 'Idmn':
-        index = 'GLCM_invDiffmomnor'
-      elif key == 'Idn':
-        index = 'GLCM_invDiffnorm'
-      elif key == 'InverseVariance':
-        index = 'GLCM_inverseVar'
-      elif key == 'MaximumProbability':
-        index = 'GLCM_maxProb'
-      elif key == 'SumAverage':
-        index = 'GLCM_sumAvg'
-      elif key == 'SumEntropy':
-        index = 'GLCM_sumEntro'
-      elif key == 'SumVariance':
-        index = 'GLCM_sumVar'
-      elif key == 'SumSquares':
-        index = 'GLCM_sumSquares'
-      if index == -1:
-        print 'Unable to find index for key ',key
-        return
-      baseline = self.baselineFeatures[index]
-      percentDiff = abs(1.0 - (value / float(baseline)))
-      print('index = %s, baseline value = %f, calculated = %f, diff = %f%%' % (index, float(baseline), value, percentDiff * 100))
+      # use the mapping from the utils
+      baseline = self.testUtils.getMatlabValue(key)
+      print('checkResults: for key %s, got baseline = %f' % (key, baseline))
+      if baseline == 0.0:
+        # avoid divide by zero, the difference is either 0% if the value is also zero, or 100%
+        if value - baseline == 0.0:
+          percentDiff = 0.0
+        else:
+          percentDiff = 1.0
+      else:
+        percentDiff = abs(1.0 - (value / baseline))
+      print('baseline value = %f, calculated = %f, diff = %f%%' % (baseline, value, percentDiff * 100))
       # check for a less than one percent difference
       assert(percentDiff < 0.01)
 

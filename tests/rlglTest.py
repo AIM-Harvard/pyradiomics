@@ -30,7 +30,7 @@ class TestRLGL:
         self.patientID = 'brain1'
 
         # read in the baseline and mapping to matlab features
-        self.testUtils = RadiomicsTestUtils('glcm')
+        self.testUtils = RadiomicsTestUtils('rlgl')
         self.testUtils.setPatientID(self.patientID)
 
         dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data" + os.path.sep

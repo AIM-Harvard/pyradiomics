@@ -1,5 +1,6 @@
 dependencies:
   pre:
+    - pip install numpy
     - easy_install -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK
 test:
   override:

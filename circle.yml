@@ -1,7 +1,7 @@
 dependencies:
   pre:
     - pip install numpy
-    - easy_install -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK
+    - pip install -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK
 test:
   override:
     - nosetests --logging-level=DEBUG --verbosity=3 tests

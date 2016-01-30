@@ -1,0 +1,3 @@
+test:
+  override:
+      - nosetests --logging-level=DEBUG --verbosity=3 tests

@@ -1,6 +1,6 @@
 dependencies:
   pre:
-    easy_install -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK
+    - easy_install -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK
 test:
   override:
-      - nosetests --logging-level=DEBUG --verbosity=3 tests
+    - nosetests --logging-level=DEBUG --verbosity=3 tests

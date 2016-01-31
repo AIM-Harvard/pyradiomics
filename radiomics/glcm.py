@@ -1,6 +1,6 @@
 import numpy
 import collections
-from radiomics import base, preprocessing
+from radiomics import base, imageoperations
 import SimpleITK as sitk
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):
@@ -10,16 +10,16 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     self.imageArray = sitk.GetArrayFromImage(inputImage)
     self.maskArray = sitk.GetArrayFromImage(inputMask)
-    
+
     (self.matrix, self.matrixCoordinates) = \
-      preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray,self.maskArray)
+      imageoperations.padTumorMaskToCube(self.imageArray,self.maskArray)
 
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
     self.coefficients = {}
     self.P_glcm = {}
 
     # binning
-    self.matrix, self.histogram = preprocessing.RadiomicsHelpers.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = len(self.histogram[0])
 
     self.createGLCM()

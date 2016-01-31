@@ -1,6 +1,6 @@
 import numpy
 import collections
-from radiomics import base, preprocessing
+from radiomics import base, imageoperations
 import SimpleITK as sitk
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
@@ -16,7 +16,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     self.maskArray = sitk.GetArrayFromImage(inputMask)
 
     (self.matrix, self.matrixCoordinates) = \
-      preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray,self.maskArray)
+      imageoperations.padTumorMaskToCube(self.imageArray,self.maskArray)
 
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 

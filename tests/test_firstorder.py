@@ -2,7 +2,7 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/firstorderTest.py
 
-from radiomics import firstorder, preprocessing
+from radiomics import firstorder, imageoperations
 from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os

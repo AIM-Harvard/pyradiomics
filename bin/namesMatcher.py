@@ -14,7 +14,7 @@ matlab2pyradiomics_<feature_class>.txt with the content structured as
 '''
 
 
-from radiomics import base, firstorder, glcm, preprocessing, shape, rlgl
+from radiomics import base, firstorder, glcm, imageoperations, shape, rlgl
 import sys, os
 
 dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","data")

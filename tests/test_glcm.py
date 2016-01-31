@@ -2,7 +2,7 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/glcmTest.py
 
-from radiomics import firstorder, glcm, preprocessing
+from radiomics import firstorder, glcm, imageoperations
 from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os

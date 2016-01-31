@@ -1,4 +1,4 @@
-from radiomics import firstorder, glcm, preprocessing, shape, rlgl
+from radiomics import firstorder, glcm, imageoperations, shape, rlgl
 import SimpleITK as sitk
 import sys, os
 
@@ -49,15 +49,15 @@ for (key,val) in firstOrderFeatures.featureValues.iteritems():
   lowerThreshold = 0
   upperThreshold = mmif.GetMaximum()
 
-  threshImage = preprocessing.RadiomicsHelpers.applyThreshold(image,lowerThreshold=lowerThreshold, upperThreshold=upperThreshold,outsideValue=0)
+  threshImage = imageoperations.applyThreshold(image,lowerThreshold=lowerThreshold, upperThreshold=upperThreshold,outsideValue=0)
   # get the mask of the thresholded pixels
-  threshImageMask = preprocessing.RadiomicsHelpers.applyThreshold(image,lowerThreshold=lowerThreshold, upperThreshold=upperThreshold,outsideValue=0,insideValue=1)
+  threshImageMask = imageoperations.applyThreshold(image,lowerThreshold=lowerThreshold, upperThreshold=upperThreshold,outsideValue=0,insideValue=1)
   # only include the voxels that are within the threshold
   threshMask = sitk.Cast(mask,1) & sitk.Cast(threshImageMask,1)
   import numpy
   sigmaValues = numpy.arange(5.,0.,-.5)[::1]
   for sigma in sigmaValues:
-    logImage = preprocessing.RadiomicsHelpers.applyLoG(image,sigmaValue=sigma)
+    logImage = imageoperations.applyLoG(image,sigmaValue=sigma)
     logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage,threshMask)
     logFirstorderFeatures.enableAllFeatures()
     logFirstorderFeatures.calculateFeatures()

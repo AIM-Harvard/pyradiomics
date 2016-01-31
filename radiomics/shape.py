@@ -1,7 +1,7 @@
 import numpy
 import operator
 import collections
-from radiomics import base, preprocessing
+from radiomics import base, imageoperations
 import SimpleITK as sitk
 
 class RadiomicsShape(base.RadiomicsFeaturesBase):
@@ -20,7 +20,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     # Generate a cuboid matrix of the tumor region and pad by 10 voxels in three directions
     # for surface area calculation
     (self.matrix, self.matrixCoordinates) = \
-      preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray, self.maskArray, padDistance=10)
+      imageoperations.padTumorMaskToCube(self.imageArray, self.maskArray, padDistance=10)
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
     # Volume and Surface Area are pre-calculated

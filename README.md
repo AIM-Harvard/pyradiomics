@@ -1,4 +1,5 @@
-![circleci status](https://circleci.com/gh/Radiomics/pyradiomics.png)
+
+[![Circle CI](https://circleci.com/gh/Radiomics/pyradiomics.svg?style=svg)](https://circleci.com/gh/Radiomics/pyradiomics)
 
 Unless otherwise stated, the features in the this module have been derived from the following publication:
 

@@ -1,6 +1,6 @@
 # to run this test, from directory above:
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/firstorderTest.py
+# nosetests --nocapture -v tests/test_firstorder.py
 
 from radiomics import firstorder, imageoperations
 from testUtils import RadiomicsTestUtils

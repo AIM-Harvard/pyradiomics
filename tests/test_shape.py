@@ -1,6 +1,6 @@
 # to run this test, from directory above:
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/shapeTest.py
+# nosetests --nocapture -v tests/test_shape.py
 
 import SimpleITK as sitk
 from radiomics import firstorder, shape

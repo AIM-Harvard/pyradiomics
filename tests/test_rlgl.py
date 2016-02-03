@@ -1,6 +1,6 @@
 # to run this test, from directory above:
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/rlglTest.py
+# nosetests --nocapture -v tests/test_rlgl.py
 
 import SimpleITK as sitk
 from radiomics import firstorder, rlgl

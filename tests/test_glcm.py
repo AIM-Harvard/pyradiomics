@@ -1,6 +1,6 @@
 # to run this test, from directory above:
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/glcmTest.py
+# nosetests --nocapture -v tests/test_glcm.py
 
 from radiomics import firstorder, glcm, imageoperations
 from testUtils import RadiomicsTestUtils

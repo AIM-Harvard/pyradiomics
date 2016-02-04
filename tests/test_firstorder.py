@@ -6,24 +6,23 @@ from radiomics import firstorder, imageoperations
 from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os
-import csv
 
 def setup_module(module):
+    # runs before anything in this file
     print ("") # this is to get a newline after the dots
-    print ("setup_module before anything in this file")
     return
 
 class TestFirstOrder:
 
     def setup(self):
+        # setup before each test method
         print ("") # this is to get a newline after the dots
-        # print ("setup before each test method, disabling all features")
         self.firstOrderFeatures.disableAllFeatures()
 
     @classmethod
     def setup_class(self):
+        # called before any methods in this class
         print ("") # this is to get a newline after the dots
-        print ("setup_class() before any methods in this class")
 
         # set the patient ID for these files to match the directory and
         # the patient id in the baseline file
@@ -47,146 +46,140 @@ class TestFirstOrder:
 
     @classmethod
     def teardown_class(self):
+        # run after any methods in this class
         print ("") # this is to get a newline after the dots
-        print ("teardown_class() after any methods in this class")
-
-    def checkResult(self, key, value):
-      # use the mapping from the utils
-      baseline = self.testUtils.getMatlabValue(key)
-
-      percentDiff = abs(1.0 - (value / float(baseline)))
-      print('baseline value = %f, calculated = %f, diff = %f%%' % (float(baseline), value, percentDiff * 100))
-      # check for a less than one percent difference
-      assert(percentDiff < 0.01)
 
     def test_energy_10(self):
-        self.firstOrderFeatures.enableFeatureByName('Energy')
-        print 'Will calculate the following first order features: '
-        for f in self.firstOrderFeatures.enabledFeatures.keys():
-            print '  ',f
-            print eval('self.firstOrderFeatures.get'+f+'FeatureValue.__doc__')
-
+        testString = 'Energy'
+        if self.testUtils.getVerbose():
+          print 'Test', testString
+        self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
-
-        print 'Calculated first order features: '
-        for (key,val) in self.firstOrderFeatures.featureValues.iteritems():
-            print '  ',key,':',val
-            if key == 'Energy':
-                energy = val
-
-        self.checkResult('Energy', energy)
+        val = self.firstOrderFeatures.featureValues[testString]
+        self.testUtils.checkResult(testString, val)
 
     def test_totalEnergy_10(self):
-        self.firstOrderFeatures.enableFeatureByName('TotalEnergy')
+        testString = 'TotalEnergy'
+        if self.testUtils.getVerbose():
+          print 'Test', testString
+        self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
-        print 'Calculated first order features: '
-        for (key,val) in self.firstOrderFeatures.featureValues.iteritems():
-            print '  ',key,':',val
-            if key == 'TotalEnergy':
-                totalEnergy = val
-
-        self.checkResult('TotalEnergy', totalEnergy)
+        val = self.firstOrderFeatures.featureValues[testString]
+        self.testUtils.checkResult(testString, val)
 
     def test_entropy_10(self):
         testString = 'Entropy'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
-    def test_minIntensity_10(self):
+    def test_minimum_10(self):
         testString = 'Minimum'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
-    def test_maxIntensity_10(self):
+    def test_maximum_10(self):
         testString = 'Maximum'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
-    def test_meanIntensity_10(self):
+    def test_mean_10(self):
         testString = 'Mean'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
-    def test_medianIntensity_10(self):
+    def test_median_10(self):
         testString = 'Median'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
-    def test_rangeIntensity_10(self):
+    def test_range_10(self):
         testString = 'Range'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_meanDeviation_10(self):
         testString = 'MeanDeviation'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_rootMeanSquared_10(self):
         testString = 'RootMeanSquared'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_standardDeviation_10(self):
         testString = 'StandardDeviation'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
-    def test_skewnessValue_10(self):
+    def test_skewness_10(self):
         testString = 'Skewness'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_kurtosis_10(self):
         testString = 'Kurtosis'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_variance_10(self):
         testString = 'Variance'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_uniformity_10(self):
         testString = 'Uniformity'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.firstOrderFeatures.enableFeatureByName(testString)
         self.firstOrderFeatures.calculateFeatures()
         val = self.firstOrderFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)

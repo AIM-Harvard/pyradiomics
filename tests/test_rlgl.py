@@ -6,24 +6,24 @@ import SimpleITK as sitk
 from radiomics import firstorder, rlgl
 from testUtils import RadiomicsTestUtils
 import sys, os
-import csv
 
 def setup_module(module):
+    # run before anything in this file"
     print ("") # this is to get a newline after the dots
-    print ("setup_module before anything in this file")
     return
 
 class TestRLGL:
 
     def setup(self):
+        # setup before each test method
         print ("") # this is to get a newline after the dots
-        # print ("setup before each test method, disabling all features")
+        # disabling all features
         self.rlglFeatures.disableAllFeatures()
 
     @classmethod
     def setup_class(self):
+        # before any methods in this class"
         print ("") # this is to get a newline after the dots
-        print ("setup_class() before any methods in this class")
 
         # set the patient ID for these files to match the directory and
         # the patient id in the baseline file
@@ -47,94 +47,95 @@ class TestRLGL:
 
     @classmethod
     def teardown_class(self):
+        # after any methods in this class
         print ("") # this is to get a newline after the dots
-        print ("teardown_class() after any methods in this class")
-
-    def checkResult(self, key, value):
-      # use the mapping from the utils
-      baseline = self.testUtils.getMatlabValue(key)
-
-      percentDiff = abs(1.0 - (value / float(baseline)))
-      print('baseline value = %f, calculated = %f, diff = %f%%' % (float(baseline), value, percentDiff * 100))
-      # check for a less than one percent difference
-      assert(percentDiff < 0.01)
 
     def test_shortRunEmphasis_10(self):
         testString = 'ShortRunEmphasis'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_longRunEmphasis_10(self):
         testString = 'LongRunEmphasis'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_grayLevelNonUniformity_10(self):
         testString = 'GrayLevelNonUniformity'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_runLengthNonUniformity_10(self):
         testString = 'RunLengthNonUniformity'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_runPercentage_10(self):
         testString = 'RunPercentage'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_lowGrayLevelRunEmphasis_10(self):
         testString = 'LowGrayLevelRunEmphasis'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_highGrayLevelRunEmphasis_10(self):
         testString = 'HighGrayLevelRunEmphasis'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_shortRunHighGrayLevelEmphasis_10(self):
         testString = 'ShortRunHighGrayLevelEmphasis'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_longRunLowGrayLevelEmphasis_10(self):
         testString = 'LongRunLowGrayLevelEmphasis'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)
 
     def test_longRunHighGrayLevelEmphasis_10(self):
         testString = 'LongRunHighGrayLevelEmphasis'
-        print 'Test', testString
+        if self.testUtils.getVerbose():
+          print 'Test', testString
         self.rlglFeatures.enableFeatureByName(testString)
         self.rlglFeatures.calculateFeatures()
         val = self.rlglFeatures.featureValues[testString]
-        self.checkResult(testString, val)
+        self.testUtils.checkResult(testString, val)

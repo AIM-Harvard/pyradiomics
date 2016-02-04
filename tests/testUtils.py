@@ -13,8 +13,14 @@ import csv
 class RadiomicsTestUtils:
 
   def __init__(self, featureClassName):
-    print 'RadiomicsTestUtils for ',featureClassName
+    # flag if output should be verbose for debugging
+    self.verbose = False
 
+    if self.verbose:
+      print 'RadiomicsTestUtils for ',featureClassName
+
+
+    # set up file paths
     self.dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","data")
     self.mappingDir = os.path.join(self.dataDir,'mapping')
 
@@ -42,6 +48,11 @@ class RadiomicsTestUtils:
   def getPatientID(self):
     return self.patientID
 
+  def setVerbose(self, flag):
+    self.verbose = flag
+  def getVerbose(self):
+    return self.verbose
+
   #
   # Read in the matlab features file and store the baseline information
   # for the patients.
@@ -59,7 +70,8 @@ class RadiomicsTestUtils:
     for patientRow in csvFileReader:
       patientID = patientRow[0]
       self.baselineFeatures[patientID] = {}
-      print 'Reading baseline for patient',patientID
+      if self.verbose:
+        print 'Reading baseline for patient',patientID
       columnIndex = 0
       for val in patientRow:
         self.baselineFeatures[patientID][headerRow[columnIndex]] = val
@@ -80,7 +92,8 @@ class RadiomicsTestUtils:
       index = int(indexFeature[0])
       feature = indexFeature[1]
       self.matlabIndices[index] = feature
-    print 'matlabIndices = ',self.matlabIndices
+    if self.verbose:
+      print 'readMatlabIndices: matlabIndices = ',self.matlabIndices
 
   #
   # Read in the file that maps radiomics feature indices to radiomics feature names
@@ -96,7 +109,8 @@ class RadiomicsTestUtils:
       index = int(indexFeature[0])
       feature = indexFeature[1]
       self.pyradiomicsIndices[feature] = index
-    print 'pyradiomicsIndices = ',self.pyradiomicsIndices
+    if self.verbose:
+      print 'readRadiomicsIndices: pyradiomicsIndices = ',self.pyradiomicsIndices
 
   #
   # Read and parse the file that gives the mapping between matlab feature
@@ -115,8 +129,10 @@ class RadiomicsTestUtils:
        pyradIndex = int(m2pyrad[1])
        self.pyradiomics2MatlabIndices[pyradIndex] = matlabIndex
        self.matlab2PyradiomicsIndices[matlabIndex] = pyradIndex
-    print 'pyradiomcs 2 matlab indices = ',self.pyradiomics2MatlabIndices
-    print 'matlab 2 pyradiomics indices =',self.matlab2PyradiomicsIndices
+    if self.verbose:
+      print 'readMatlab2Pyradiomics:'
+      print '\tpyradiomcs 2 matlab indices = ',self.pyradiomics2MatlabIndices
+      print '\tmatlab 2 pyradiomics indices =',self.matlab2PyradiomicsIndices
 
   #
   # Search the pyradiomicsIndices for the passed in pyradiomicsKey
@@ -125,7 +141,8 @@ class RadiomicsTestUtils:
   def getPyradiomicsIndex(self, pyradiomicsKey):
     pyradiomicsIndex = -1
     if pyradiomicsKey in self.pyradiomicsIndices:
-      print 'key is in the indices list: ',pyradiomicsKey
+      if self.verbose:
+        print 'getPyradiomicsIndex: key is in the indices list: ',pyradiomicsKey
       pyradiomicsIndex = self.pyradiomicsIndices[pyradiomicsKey]
     return pyradiomicsIndex
 
@@ -156,10 +173,12 @@ class RadiomicsTestUtils:
   #
   def getBaselineFeature(self, matlabFeatureName):
     assert(self.getPatientID() in self.baselineFeatures)
-    print('Patient %s has baseline information' % self.getPatientID())
+    if self.verbose:
+      print('getBaselineFeature: Patient %s has baseline information' % self.getPatientID())
     featureName = self.featureClass + '_' + matlabFeatureName
     assert(featureName in self.baselineFeatures[self.getPatientID()])
-    print('Matlab feature %s is in the baseline for this patient' % featureName)
+    if self.verbose:
+      print('getBaselineFeature: Matlab feature %s is in the baseline for this patient' % featureName)
     return float(self.baselineFeatures[self.getPatientID()][featureName])
 
   #
@@ -168,24 +187,52 @@ class RadiomicsTestUtils:
   # ID.
   #
   def getMatlabValue(self, pyradiomicsKey):
-    print('getMatlabValue: pyrad key = %s' % (pyradiomicsKey))
+    if self.verbose:
+      print('getMatlabValue: pyradiomicsKey key = %s' % (pyradiomicsKey))
 
     # get the index of this pyradoimics feature name
     pyradIndex = self.getPyradiomicsIndex(pyradiomicsKey)
-    print('getMatlabValue: got pyradindex %d' % pyradIndex)
+    if self.verbose:
+      print('getMatlabValue: got pyradindex %d' % pyradIndex)
     assert(pyradIndex != -1)
 
     # now map that index to a matlab index
     matlabIndex = self.getMatlabIndexFromPyradIndex(pyradIndex)
-    print('getMatlabValue: got matlab index %d' % matlabIndex)
-    assert(matlabIndex != 1)
+    if self.verbose:
+      print('getMatlabValue: got matlab index %d' % matlabIndex)
+    assert(matlabIndex != -1)
 
     # now get the matlab feature name for that index
     matlabFeatureName = self.getMatlabFeatureName(matlabIndex)
-    print('getMatlabValue: got matlab feature name %s' % matlabFeatureName)
+    if self.verbose:
+      print('getMatlabValue: got matlab feature name %s' % matlabFeatureName)
     assert(matlabFeatureName != None)
 
     # now get the baseline for this feature for this patient
     return self.getBaselineFeature(matlabFeatureName)
+
+  #
+  # Use utility methods to get and test the results against the expected baseline value for this key.
+  #
+  def checkResult(self, key, value):
+    assert(value != None)
+    # use the mapping from the utils
+    baseline = self.getMatlabValue(key)
+    if self.getVerbose():
+      print('checkResults: for key %s, got baseline = %f' % (key, baseline))
+    if baseline == 0.0:
+      # avoid divide by zero, the difference is either 0% if the value is also zero, or 100%
+      if value - baseline == 0.0:
+        percentDiff = 0.0
+      else:
+        percentDiff = 1.0
+    else:
+      percentDiff = abs(1.0 - (value / baseline))
+
+    if self.getVerbose():
+      print('checkResult: %s, baseline value = %f, calculated = %f, diff = %f%%' % (key, float(baseline), value, percentDiff * 100))
+
+    # check for a less than one percent difference
+    assert(percentDiff < 0.01)
 
 # testUtils = RadiomicsTestUtils('glcm')

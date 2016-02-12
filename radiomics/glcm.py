@@ -360,6 +360,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       #return (homo2.mean())
     #else:
       #return homo2
+    return float('nan')
 
   def getIdmnFeatureValue(self):
     """

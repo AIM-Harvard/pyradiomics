@@ -6,6 +6,7 @@ from radiomics import firstorder, glcm, imageoperations
 from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os
+import logging
 
 def setup_module(module):
     # run before anything in this file
@@ -24,24 +25,22 @@ class TestGLCM:
         # run before any methods in this class
         print ("") # this is to get a newline after the dots
 
-        # set the patient ID for these files to match the directory and
-        # the patient id in the baseline file
-        self.patientID = 'brain1'
-
         # read in the baseline and mapping to matlab features
         self.testUtils = RadiomicsTestUtils('glcm')
-        self.testUtils.setPatientID(self.patientID)
+        # set the test case for these files to match the directory and
+        # the id in the baseline file
+        self.testUtils.setTestCase('brain1')
 
         dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data" + os.path.sep
 
-        imageName = dataDir + self.patientID + '_image.nrrd'
-        maskName = dataDir + self.patientID + '_label.nrrd'
+        imageName = dataDir + self.testUtils.getTestCase() + '_image.nrrd'
+        maskName = dataDir + self.testUtils.getTestCase() + '_label.nrrd'
 
-        print("Reading the image and mask.")
+        logging.info("Reading the image and mask.")
         self.image = sitk.ReadImage(imageName)
         self.mask = sitk.ReadImage(maskName)
 
-        print("Instantiating GLCM.")
+        logging.info("Instantiating GLCM.")
         self.glcmFeatures = glcm.RadiomicsGLCM(self.image, self.mask)
 
     @classmethod
@@ -49,190 +48,169 @@ class TestGLCM:
         # run after any methods in this class
         print ("") # this is to get a newline after the dots
 
-    def test_autocorrelation_10(self):
+    def test_autocorrelation(self):
         testString = 'Autocorrelation'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_clusterProminence_10(self):
+    def test_clusterProminence(self):
         testString = 'ClusterProminence'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_clusterShade_10(self):
+    def test_clusterShade(self):
         testString = 'ClusterShade'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_clusterTendency_10(self):
+    def test_clusterTendency(self):
         testString = 'ClusterTendency'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_contrast_10(self):
+    def test_contrast(self):
         testString = 'Contrast'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_correlation_10(self):
+    def test_correlation(self):
         testString = 'Correlation'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_differenceEntropy_10(self):
+    def test_differenceEntropy(self):
         testString = 'DifferenceEntropy'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_dissimilarity_10(self):
+    def test_dissimilarity(self):
         testString = 'Dissimilarity'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_energy_10(self):
+    def test_energy(self):
         testString = 'Energy'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_entropy_10(self):
+    def test_entropy(self):
         testString = 'Entropy'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_homogeneity1_10(self):
+    def test_homogeneity1(self):
         testString = 'Homogeneity1'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_homogeneity2_10(self):
+    def test_homogeneity2(self):
         testString = 'Homogeneity2'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_imc1_10(self):
+    def test_imc1(self):
         testString = 'Imc1'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_imc2_10(self):
+    def test_imc2(self):
         testString = 'Imc2'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_idmn_10(self):
+    def test_idmn(self):
         testString = 'Idmn'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_idn_10(self):
+    def test_idn(self):
         testString = 'Idn'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_inverseVariance_10(self):
+    def test_inverseVariance(self):
         testString = 'InverseVariance'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_maximumProbability_10(self):
+    def test_maximumProbability(self):
         testString = 'MaximumProbability'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_sumAverage_10(self):
+    def test_sumAverage(self):
         testString = 'SumAverage'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_sumVariance_10(self):
+    def test_sumVariance(self):
         testString = 'SumVariance'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]
         self.testUtils.checkResult(testString, val)
 
-    def test_sumSquares_10(self):
+    def test_sumSquares(self):
         testString = 'SumSquares'
-        if self.testUtils.getVerbose():
-          print 'Test', testString
+        logging.info('Test %s', testString)
         self.glcmFeatures.enableFeatureByName(testString)
         self.glcmFeatures.calculateFeatures()
         val = self.glcmFeatures.featureValues[testString]

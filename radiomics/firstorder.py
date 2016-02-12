@@ -8,6 +8,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsFirstOrder,self).__init__(inputImage,inputMask,**kwargs)
 
+    if inputImage == None or inputMask == None:
+      print ('ERROR FirstOrder: missing input image or mask')
+      return
+
     self.pixelSpacing = inputImage.GetSpacing()
 
     #self.featureNames = self.getFeatureNames()

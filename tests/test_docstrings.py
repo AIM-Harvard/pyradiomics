@@ -24,22 +24,6 @@ class TestDocStrings:
         # called before any methods in this class
         print ("") # this is to get a newline after the dots
 
-        # read in the baseline and mapping to matlab features
-        self.testUtils = RadiomicsTestUtils('testing')
-        # set the test case for these files to match the directory and
-        # the id in the baseline file
-        self.testUtils.setTestCase('brain1')
-
-        dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data" + os.path.sep
-
-        imageName = dataDir + self.testUtils.getTestCase() + '_image.nrrd'
-        maskName = dataDir + self.testUtils.getTestCase() + '_label.nrrd'
-
-        logging.info("Reading the image and mask.")
-        self.image = sitk.ReadImage(imageName)
-        self.mask = sitk.ReadImage(maskName)
-
-
 
     @classmethod
     def teardown_class(self):
@@ -49,7 +33,7 @@ class TestDocStrings:
 
     def test_firstOrder(self):
        logging.info("Instantiating first order features.")
-       self.features = firstorder.RadiomicsFirstOrder(self.image, self.mask)
+       self.features = firstorder.RadiomicsFirstOrder(None, None)
        self.featureNames = firstorder.RadiomicsFirstOrder.getFeatureNames()
        for f in self.featureNames:
            logging.info('  %s', f)
@@ -60,7 +44,7 @@ class TestDocStrings:
 
     def test_glcm(self):
        logging.info("Instantiating GLCM features.")
-       self.features = glcm.RadiomicsGLCM(self.image, self.mask)
+       self.features = glcm.RadiomicsGLCM(None, None)
        self.featureNames = glcm.RadiomicsGLCM.getFeatureNames()
        for f in self.featureNames:
            logging.info('  %s', f)
@@ -70,7 +54,7 @@ class TestDocStrings:
 
     def test_rlgl(self):
        logging.info("Instantiating RLGL features.")
-       self.features = rlgl.RadiomicsRLGL(self.image, self.mask)
+       self.features = rlgl.RadiomicsRLGL(None, None)
        self.featureNames = rlgl.RadiomicsRLGL.getFeatureNames()
        for f in self.featureNames:
            logging.info('  %s', f)
@@ -80,7 +64,7 @@ class TestDocStrings:
 
     def test_shape(self):
        logging.info("Instantiating Shape features.")
-       self.features = shape.RadiomicsShape(self.image, self.mask)
+       self.features = shape.RadiomicsShape(None, None)
        self.featureNames = shape.RadiomicsShape.getFeatureNames()
        for f in self.featureNames:
            logging.info('  %s', f)

@@ -9,12 +9,21 @@ feature class.
 
 import sys, os
 import csv
+import logging
+import math
 
 class RadiomicsTestUtils:
 
   def __init__(self, featureClassName):
-    print 'RadiomicsTestUtils for ',featureClassName
+    # set if output should be verbose for debugging
+    self.logger = logging.getLogger('testUtils')
+    self.logger.setLevel(logging.ERROR)
+    # self.logger.setLevel(logging.DEBUG)
 
+    self.logger.debug('RadiomicsTestUtils for %s',featureClassName)
+
+
+    # set up file paths
     self.dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","data")
     self.mappingDir = os.path.join(self.dataDir,'mapping')
 
@@ -30,39 +39,39 @@ class RadiomicsTestUtils:
     self.matlabIndices = {}
     self.pyradiomicsIndices = {}
 
-    self.patientID = None
+    self.testCase = None
 
     self.readMatlabFeatures()
     self.readMatlabIndices()
     self.readRadiomicsIndices()
     self.readMatlab2Pyradiomics()
 
-  def setPatientID(self, patientID):
-    self.patientID = patientID
-  def getPatientID(self):
-    return self.patientID
+  def setTestCase(self, testCase):
+    self.testCase = testCase
+  def getTestCase(self):
+    return self.testCase
 
   #
   # Read in the matlab features file and store the baseline information
-  # for the patients.
+  # for the test cases.
   #
   def readMatlabFeatures(self):
     if (not os.path.exists(self.matlabFeaturesFile)):
-      print 'Matlab features file not found:',self.matlabFeaturesFile
+      self.logger.error('Matlab features file not found %s:',self.matlabFeaturesFile)
       return
     self.baselineFeatures = {}
     csvFile = open(self.matlabFeaturesFile, 'rb')
     csvFileReader = csv.reader(csvFile)
     # get the column headers
     headerRow = csvFileReader.next()
-    # iterate over the patient in the file
-    for patientRow in csvFileReader:
-      patientID = patientRow[0]
-      self.baselineFeatures[patientID] = {}
-      print 'Reading baseline for patient',patientID
+    # iterate over the test cases in the file
+    for testRow in csvFileReader:
+      testCase = testRow[0]
+      self.baselineFeatures[testCase] = {}
+      self.logger.debug('Reading baseline for test case %s',testCase)
       columnIndex = 0
-      for val in patientRow:
-        self.baselineFeatures[patientID][headerRow[columnIndex]] = val
+      for val in testRow:
+        self.baselineFeatures[testCase][headerRow[columnIndex]] = val
         columnIndex += 1
 
 
@@ -71,7 +80,7 @@ class RadiomicsTestUtils:
   #
   def readMatlabIndices(self):
     if (not os.path.exists(self.matlabIndicesFile)):
-      print 'Matlab indices to feature names file not found:',self.matlabIndicesFile
+      self.logger.error('Matlab indices to feature names file not found: %s',self.matlabIndicesFile)
       return
     self.matlabIndices = {}
     mappingFile = open(self.matlabIndicesFile, 'rb')
@@ -80,14 +89,14 @@ class RadiomicsTestUtils:
       index = int(indexFeature[0])
       feature = indexFeature[1]
       self.matlabIndices[index] = feature
-    print 'matlabIndices = ',self.matlabIndices
+    self.logger.debug('readMatlabIndices: matlabIndices = %s',self.matlabIndices)
 
   #
   # Read in the file that maps radiomics feature indices to radiomics feature names
   #
   def readRadiomicsIndices(self):
     if (not os.path.exists(self.pyradiomicsIndicesFile)):
-      print 'Radiomics indices to feature names file not found:',self.pyradiomicsIndicesFile
+      self.logger.error('Radiomics indices to feature names file not found: %s',self.pyradiomicsIndicesFile)
       return
     self.pyradiomicsIndices = {}
     mappingFile = open(self.pyradiomicsIndicesFile, 'rb')
@@ -96,7 +105,7 @@ class RadiomicsTestUtils:
       index = int(indexFeature[0])
       feature = indexFeature[1]
       self.pyradiomicsIndices[feature] = index
-    print 'pyradiomicsIndices = ',self.pyradiomicsIndices
+    self.logger.debug('readRadiomicsIndices: pyradiomicsIndices = %s',self.pyradiomicsIndices)
 
   #
   # Read and parse the file that gives the mapping between matlab feature
@@ -104,7 +113,7 @@ class RadiomicsTestUtils:
   #
   def readMatlab2Pyradiomics(self):
     if (not os.path.exists(self.matlab2PyradiomicsFile)):
-      print 'Matlab to pyradiomics feature indices mapping file not found:',self.matlab2PyradiomicsFile
+      self.logger.error('Matlab to pyradiomics feature indices mapping file not found: %s',self.matlab2PyradiomicsFile)
       return
     self.matlab2PyradiomicsIndices = {}
     self.pyradiomics2MatlabIndices = {}
@@ -115,8 +124,9 @@ class RadiomicsTestUtils:
        pyradIndex = int(m2pyrad[1])
        self.pyradiomics2MatlabIndices[pyradIndex] = matlabIndex
        self.matlab2PyradiomicsIndices[matlabIndex] = pyradIndex
-    print 'pyradiomcs 2 matlab indices = ',self.pyradiomics2MatlabIndices
-    print 'matlab 2 pyradiomics indices =',self.matlab2PyradiomicsIndices
+    self.logger.debug('readMatlab2Pyradiomics:')
+    self.logger.debug('\tpyradiomcs 2 matlab indices = %s',self.pyradiomics2MatlabIndices)
+    self.logger.debug('\tmatlab 2 pyradiomics indices = %s',self.matlab2PyradiomicsIndices)
 
   #
   # Search the pyradiomicsIndices for the passed in pyradiomicsKey
@@ -125,7 +135,7 @@ class RadiomicsTestUtils:
   def getPyradiomicsIndex(self, pyradiomicsKey):
     pyradiomicsIndex = -1
     if pyradiomicsKey in self.pyradiomicsIndices:
-      print 'key is in the indices list: ',pyradiomicsKey
+      self.logger.debug('getPyradiomicsIndex: key is in the indices list: %s',pyradiomicsKey)
       pyradiomicsIndex = self.pyradiomicsIndices[pyradiomicsKey]
     return pyradiomicsIndex
 
@@ -151,41 +161,64 @@ class RadiomicsTestUtils:
 
   #
   # From the given matlabFeatureName, check that the currently set
-  # patientID has an entry in the baseline features dictionary. If so,
+  # testCase has an entry in the baseline features dictionary. If so,
   # return the value of the feature named.
   #
   def getBaselineFeature(self, matlabFeatureName):
-    assert(self.getPatientID() in self.baselineFeatures)
-    print('Patient %s has baseline information' % self.getPatientID())
+    assert(self.getTestCase() in self.baselineFeatures)
+    self.logger.debug('getBaselineFeature: Test case %s has baseline information', self.getTestCase())
     featureName = self.featureClass + '_' + matlabFeatureName
-    assert(featureName in self.baselineFeatures[self.getPatientID()])
-    print('Matlab feature %s is in the baseline for this patient' % featureName)
-    return float(self.baselineFeatures[self.getPatientID()][featureName])
+    assert(featureName in self.baselineFeatures[self.getTestCase()])
+    self.logger.debug('getBaselineFeature: Matlab feature %s is in the baseline for this test case', featureName)
+    return float(self.baselineFeatures[self.getTestCase()][featureName])
 
   #
   # From the given pyradiomics key, find the matching matlab key
-  # and return the baseline feature value for the currently set patient
+  # and return the baseline feature value for the currently set test case
   # ID.
   #
   def getMatlabValue(self, pyradiomicsKey):
-    print('getMatlabValue: pyrad key = %s' % (pyradiomicsKey))
+    self.logger.debug('getMatlabValue: pyradiomicsKey key = %s', pyradiomicsKey)
 
     # get the index of this pyradoimics feature name
     pyradIndex = self.getPyradiomicsIndex(pyradiomicsKey)
-    print('getMatlabValue: got pyradindex %d' % pyradIndex)
+    self.logger.debug('getMatlabValue: got pyradindex %d', pyradIndex)
     assert(pyradIndex != -1)
 
     # now map that index to a matlab index
     matlabIndex = self.getMatlabIndexFromPyradIndex(pyradIndex)
-    print('getMatlabValue: got matlab index %d' % matlabIndex)
-    assert(matlabIndex != 1)
+    self.logger.debug('getMatlabValue: got matlab index %d', matlabIndex)
+    assert(matlabIndex != -1)
 
     # now get the matlab feature name for that index
     matlabFeatureName = self.getMatlabFeatureName(matlabIndex)
-    print('getMatlabValue: got matlab feature name %s' % matlabFeatureName)
+    self.logger.debug('getMatlabValue: got matlab feature name %s', matlabFeatureName)
     assert(matlabFeatureName != None)
 
-    # now get the baseline for this feature for this patient
+    # now get the baseline for this feature for this test case
     return self.getBaselineFeature(matlabFeatureName)
+
+  #
+  # Use utility methods to get and test the results against the expected baseline value for this key.
+  #
+  def checkResult(self, key, value):
+    assert(value != None)
+    assert(not math.isnan(value))
+    # use the mapping from the utils
+    baseline = self.getMatlabValue(key)
+    self.logger.debug('checkResults: for key %s, got baseline = %f', key, baseline)
+    if baseline == 0.0:
+      # avoid divide by zero, the difference is either 0% if the value is also zero, or 100%
+      if value - baseline == 0.0:
+        percentDiff = 0.0
+      else:
+        percentDiff = 1.0
+    else:
+      percentDiff = abs(1.0 - (value / baseline))
+
+    self.logger.debug('checkResult: %s, baseline value = %f, calculated = %f, diff = %f%%', key, float(baseline), value, percentDiff * 100)
+
+    # check for a less than one percent difference
+    assert(percentDiff < 0.01)
 
 # testUtils = RadiomicsTestUtils('glcm')

@@ -8,6 +8,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLCM,self).__init__(inputImage, inputMask, **kwargs)
 
+    if inputImage == None or inputMask == None:
+      print('ERROR GLCM: missing input image or mask')
+      return
+
     self.imageArray = sitk.GetArrayFromImage(inputImage)
     self.maskArray = sitk.GetArrayFromImage(inputMask)
 
@@ -360,6 +364,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       #return (homo2.mean())
     #else:
       #return homo2
+    return float('nan')
 
   def getIdmnFeatureValue(self):
     """

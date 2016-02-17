@@ -8,7 +8,7 @@
 7:Minimum
 8:Range
 9:RootMeanSquared
-10:SkewnessValue
+10:Skewness
 11:StandardDeviation
 12:TotalEnergy
 13:Uniformity

@@ -7,6 +7,7 @@ from radiomics import firstorder, shape
 from testUtils import RadiomicsTestUtils
 import sys, os
 import logging
+from nose_parameterized import parameterized
 
 def setup_module(module):
     # run before anything in this file
@@ -49,66 +50,17 @@ class TestShape:
         # run after any methods in this class
         print ("") # this is to get a newline after the dots
 
-    def test_volume_BreastMRI(self):
-        testString = 'Volume'
-        logging.info('Test %s', testString)
-        self.shapeFeatures.enableFeatureByName(testString)
-        self.shapeFeatures.calculateFeatures()
-        val = self.shapeFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
+    def generate_scenarios():
+      # get the feature names
+      featureNames = shape.RadiomicsShape.getFeatureNames()
+      logging.info('generate_scenarios: featureNames = %s', featureNames)
+      for f in featureNames:
+        yield (f)
 
-    def test_surfaceArea_BreastMRI(self):
-        testString = 'SurfaceArea'
-        logging.info('Test %s', testString)
-        self.shapeFeatures.enableFeatureByName(testString)
-        self.shapeFeatures.calculateFeatures()
-        val = self.shapeFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_surfaceVolumeRatio_BreastMRI(self):
-        testString = 'SurfaceVolumeRatio'
-        logging.info('Test %s', testString)
-        self.shapeFeatures.enableFeatureByName(testString)
-        self.shapeFeatures.calculateFeatures()
-        val = self.shapeFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_compactness1_BreastMRI(self):
-        testString = 'Compactness1'
-        logging.info('Test %s', testString)
-        self.shapeFeatures.enableFeatureByName(testString)
-        self.shapeFeatures.calculateFeatures()
-        val = self.shapeFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_compactness2_BreastMRI(self):
-        testString = 'Compactness2'
-        logging.info('Test %s', testString)
-        self.shapeFeatures.enableFeatureByName(testString)
-        self.shapeFeatures.calculateFeatures()
-        val = self.shapeFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_maximum3DDiameter_BreastMRI(self):
-        testString = 'Maximum3DDiameter'
-        logging.info('Test %s', testString)
-        self.shapeFeatures.enableFeatureByName(testString)
-        self.shapeFeatures.calculateFeatures()
-        val = self.shapeFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_sphericalDisproportion_BreastMRI(self):
-        testString = 'SphericalDisproportion'
-        logging.info('Test %s', testString)
-        self.shapeFeatures.enableFeatureByName(testString)
-        self.shapeFeatures.calculateFeatures()
-        val = self.shapeFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_sphericity_BreastMRI(self):
-        testString = 'Sphericity'
-        logging.info('Test %s', testString)
-        self.shapeFeatures.enableFeatureByName(testString)
-        self.shapeFeatures.calculateFeatures()
-        val = self.shapeFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
+    @parameterized.expand(generate_scenarios())
+    def test_scenario_BreastMRI(self, featureName):
+      logging.info('test_scenario: featureName = %s', featureName)
+      self.shapeFeatures.enableFeatureByName(featureName)
+      self.shapeFeatures.calculateFeatures()
+      val = self.shapeFeatures.featureValues[featureName]
+      self.testUtils.checkResult(featureName, val)

@@ -2,11 +2,12 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_glcm.py
 
-from radiomics import firstorder, glcm, imageoperations
+from radiomics import glcm, imageoperations
 from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os
 import logging
+from nose_parameterized import parameterized
 
 def setup_module(module):
     # run before anything in this file
@@ -48,170 +49,17 @@ class TestGLCM:
         # run after any methods in this class
         print ("") # this is to get a newline after the dots
 
-    def test_autocorrelation(self):
-        testString = 'Autocorrelation'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
+    def generate_scenarios():
+      # get the feature names
+      featureNames = glcm.RadiomicsGLCM.getFeatureNames()
+      logging.info('generate_scenarios: featureNames = %s', featureNames)
+      for f in featureNames:
+        yield (f)
 
-    def test_clusterProminence(self):
-        testString = 'ClusterProminence'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_clusterShade(self):
-        testString = 'ClusterShade'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_clusterTendency(self):
-        testString = 'ClusterTendency'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_contrast(self):
-        testString = 'Contrast'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_correlation(self):
-        testString = 'Correlation'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_differenceEntropy(self):
-        testString = 'DifferenceEntropy'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_dissimilarity(self):
-        testString = 'Dissimilarity'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_energy(self):
-        testString = 'Energy'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_entropy(self):
-        testString = 'Entropy'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_homogeneity1(self):
-        testString = 'Homogeneity1'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_homogeneity2(self):
-        testString = 'Homogeneity2'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_imc1(self):
-        testString = 'Imc1'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_imc2(self):
-        testString = 'Imc2'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_idmn(self):
-        testString = 'Idmn'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_idn(self):
-        testString = 'Idn'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_inverseVariance(self):
-        testString = 'InverseVariance'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_maximumProbability(self):
-        testString = 'MaximumProbability'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_sumAverage(self):
-        testString = 'SumAverage'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_sumVariance(self):
-        testString = 'SumVariance'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_sumSquares(self):
-        testString = 'SumSquares'
-        logging.info('Test %s', testString)
-        self.glcmFeatures.enableFeatureByName(testString)
-        self.glcmFeatures.calculateFeatures()
-        val = self.glcmFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
+    @parameterized.expand(generate_scenarios())
+    def test_scenario(self, featureName):
+      logging.info('test_scenario: featureName = %s', featureName)
+      self.glcmFeatures.enableFeatureByName(featureName)
+      self.glcmFeatures.calculateFeatures()
+      val = self.glcmFeatures.featureValues[featureName]
+      self.testUtils.checkResult(featureName, val)

@@ -3,10 +3,11 @@
 # nosetests --nocapture -v tests/test_rlgl.py
 
 import SimpleITK as sitk
-from radiomics import firstorder, rlgl
+from radiomics import rlgl
 from testUtils import RadiomicsTestUtils
 import sys, os
 import logging
+from nose_parameterized import parameterized
 
 def setup_module(module):
     # run before anything in this file"
@@ -49,82 +50,17 @@ class TestRLGL:
         # after any methods in this class
         print ("") # this is to get a newline after the dots
 
-    def test_shortRunEmphasis(self):
-        testString = 'ShortRunEmphasis'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
+    def generate_scenarios():
+      # get the feature names
+      featureNames = rlgl.RadiomicsRLGL.getFeatureNames()
+      logging.info('generate_scenarios: featureNames = %s', featureNames)
+      for f in featureNames:
+        yield (f)
 
-    def test_longRunEmphasis(self):
-        testString = 'LongRunEmphasis'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_grayLevelNonUniformity(self):
-        testString = 'GrayLevelNonUniformity'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_runLengthNonUniformity(self):
-        testString = 'RunLengthNonUniformity'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_runPercentage(self):
-        testString = 'RunPercentage'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_lowGrayLevelRunEmphasis(self):
-        testString = 'LowGrayLevelRunEmphasis'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_highGrayLevelRunEmphasis(self):
-        testString = 'HighGrayLevelRunEmphasis'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_shortRunHighGrayLevelEmphasis(self):
-        testString = 'ShortRunHighGrayLevelEmphasis'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_longRunLowGrayLevelEmphasis(self):
-        testString = 'LongRunLowGrayLevelEmphasis'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_longRunHighGrayLevelEmphasis(self):
-        testString = 'LongRunHighGrayLevelEmphasis'
-        logging.info('Test %s', testString)
-        self.rlglFeatures.enableFeatureByName(testString)
-        self.rlglFeatures.calculateFeatures()
-        val = self.rlglFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
+    @parameterized.expand(generate_scenarios())
+    def test_scenario(self, featureName):
+      logging.info('test_scenario: featureName = %s', featureName)
+      self.rlglFeatures.enableFeatureByName(featureName)
+      self.rlglFeatures.calculateFeatures()
+      val = self.rlglFeatures.featureValues[featureName]
+      self.testUtils.checkResult(featureName, val)

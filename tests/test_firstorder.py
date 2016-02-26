@@ -7,6 +7,7 @@ from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os
 import logging
+from nose_parameterized import parameterized
 
 def setup_module(module):
     # runs before anything in this file
@@ -48,122 +49,17 @@ class TestFirstOrder:
         # run after any methods in this class
         print ("") # this is to get a newline after the dots
 
-    def test_energy(self):
-        testString = 'Energy'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
+    def generate_scenarios():
+      # get the feature names
+      featureNames = firstorder.RadiomicsFirstOrder.getFeatureNames()
+      logging.info('generate_scenarios: featureNames = %s', featureNames)
+      for f in featureNames:
+        yield (f)
 
-    def test_totalEnergy(self):
-        testString = 'TotalEnergy'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_entropy(self):
-        testString = 'Entropy'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_minimum(self):
-        testString = 'Minimum'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_maximum(self):
-        testString = 'Maximum'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_mean(self):
-        testString = 'Mean'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_median(self):
-        testString = 'Median'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_range(self):
-        testString = 'Range'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_meanDeviation(self):
-        testString = 'MeanDeviation'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_rootMeanSquared(self):
-        testString = 'RootMeanSquared'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_standardDeviation(self):
-        testString = 'StandardDeviation'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_skewness(self):
-        testString = 'Skewness'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_kurtosis(self):
-        testString = 'Kurtosis'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_variance(self):
-        testString = 'Variance'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
-
-    def test_uniformity(self):
-        testString = 'Uniformity'
-        logging.info('Test %s', testString)
-        self.firstOrderFeatures.enableFeatureByName(testString)
-        self.firstOrderFeatures.calculateFeatures()
-        val = self.firstOrderFeatures.featureValues[testString]
-        self.testUtils.checkResult(testString, val)
+    @parameterized.expand(generate_scenarios())
+    def test_scenario(self, featureName):
+      logging.info('test_scenario: featureName = %s', featureName)
+      self.firstOrderFeatures.enableFeatureByName(featureName)
+      self.firstOrderFeatures.calculateFeatures()
+      val = self.firstOrderFeatures.featureValues[featureName]
+      self.testUtils.checkResult(featureName, val)

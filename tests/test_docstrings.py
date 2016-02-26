@@ -7,6 +7,7 @@ from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os
 import logging
+from nose_parameterized import parameterized
 
 def setup_module(module):
     # runs before anything in this file
@@ -30,44 +31,42 @@ class TestDocStrings:
         # run after any methods in this class
         print ("") # this is to get a newline after the dots
 
+    def generate_scenarios(featureClass):
+      logging.info('generate_scenarios %s', featureClass)
+      featureNames = featureClass.getFeatureNames()
+      for f in featureNames:
+        yield (f)
 
-    def test_firstOrder(self):
-       logging.info("Instantiating first order features.")
-       self.features = firstorder.RadiomicsFirstOrder(None, None)
-       self.featureNames = firstorder.RadiomicsFirstOrder.getFeatureNames()
-       for f in self.featureNames:
-           logging.info('  %s', f)
-           doc = eval('self.features.get'+f+'FeatureValue.__doc__')
-           logging.info('%s', doc)
-           assert(doc != None)
+    @parameterized.expand(generate_scenarios(firstorder.RadiomicsFirstOrder))
+    def test_firstOrder(self, featureName):
+      logging.info('%s', featureName)
+      features = firstorder.RadiomicsFirstOrder(None, None)
+      doc = eval('features.get'+featureName+'FeatureValue.__doc__')
+      logging.info('%s', doc)
+      assert(doc != None)
 
 
-    def test_glcm(self):
-       logging.info("Instantiating GLCM features.")
-       self.features = glcm.RadiomicsGLCM(None, None)
-       self.featureNames = glcm.RadiomicsGLCM.getFeatureNames()
-       for f in self.featureNames:
-           logging.info('  %s', f)
-           doc = eval('self.features.get'+f+'FeatureValue.__doc__')
-           logging.info('%s', doc)
-           assert(doc != None)
+    @parameterized.expand(generate_scenarios(glcm.RadiomicsGLCM))
+    def test_glcm(self, featureName):
+      logging.info('%s', featureName)
+      features = glcm.RadiomicsGLCM(None, None)
+      doc = eval('features.get'+featureName+'FeatureValue.__doc__')
+      logging.info('%s', doc)
+      assert(doc != None)
 
-    def test_rlgl(self):
-       logging.info("Instantiating RLGL features.")
-       self.features = rlgl.RadiomicsRLGL(None, None)
-       self.featureNames = rlgl.RadiomicsRLGL.getFeatureNames()
-       for f in self.featureNames:
-           logging.info('  %s', f)
-           doc = eval('self.features.get'+f+'FeatureValue.__doc__')
-           logging.info('%s', doc)
-           assert(doc != None)
 
-    def test_shape(self):
-       logging.info("Instantiating Shape features.")
-       self.features = shape.RadiomicsShape(None, None)
-       self.featureNames = shape.RadiomicsShape.getFeatureNames()
-       for f in self.featureNames:
-           logging.info('  %s', f)
-           doc = eval('self.features.get'+f+'FeatureValue.__doc__')
-           logging.info('%s', doc)
-           assert(doc != None)
+    @parameterized.expand(generate_scenarios(rlgl.RadiomicsRLGL))
+    def test_rlgl(self, featureName):
+      logging.info('%s', featureName)
+      features = rlgl.RadiomicsRLGL(None, None)
+      doc = eval('features.get'+featureName+'FeatureValue.__doc__')
+      logging.info('%s', doc)
+      assert(doc != None)
+
+    @parameterized.expand(generate_scenarios(shape.RadiomicsShape))
+    def test_shape(self, featureName):
+       logging.info('%s', featureName)
+       features = shape.RadiomicsShape(None, None)
+       doc = eval('features.get'+featureName+'FeatureValue.__doc__')
+       logging.info('%s', doc)
+       assert(doc != None)

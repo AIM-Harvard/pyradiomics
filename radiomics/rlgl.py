@@ -3,6 +3,7 @@ import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
 
+import pdb
 
 class RadiomicsRLGL(base.RadiomicsFeaturesBase):
   """RLGL feature calculation."""
@@ -32,20 +33,20 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
       self.calculateRLGL()
       self.calculateCoefficients()
+      print self.coefficients
 
   def calculateRLGL(self):
       Ng = self.coefficients['Ng']
       Nr = self.coefficients['Nr']
       grayLevels = self.coefficients['grayLevels']
 
-      self.P_rlgl = numpy.zeros((Ng, Nr, 13))
+      P_rlgl = numpy.zeros((Ng, Nr, 13))
 
       padVal = -2000   #use eps or NaN to pad matrix
       padMask = numpy.zeros(self.matrix.shape,dtype=bool)
       padMask[self.matrixCoordinates] = True
       self.matrix[~padMask] = padVal
-      #self.matrix = numpy.ma.masked_equal(self.matrix, padVal)
-      #self.matrix = numpy.ma.masked_where(numpy.ma.getmask(mask), self.matrix)
+      
       matrixDiagonals = []
 
       #(1,0,0), (-1,0,0)
@@ -102,8 +103,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       jDiags = []
       for h in [self.matrix.diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
         for x in xrange(-h.shape[0]+1, h.shape[1]):
-          jDiags.append(numpy.diagonal(h,x,0,1))   
-      #jDiags = chain.from_iterable(jDiags)    
+          jDiags.append(numpy.diagonal(h,x,0,1))    
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, jDiags) )
 
       #(-1,1,-1), #(1,-1,1),
@@ -112,8 +112,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       kDiags = []
       for h in [self.matrix[:,::-1,:].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
         for x in xrange(-h.shape[0]+1, h.shape[1]):
-          kDiags.append(numpy.diagonal(h,x,0,1))
-      #kDiags = chain.from_iterable(kDiags)    
+          kDiags.append(numpy.diagonal(h,x,0,1))   
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, kDiags) )
 
       #(1,1,-1), #(-1,-1,1),
@@ -122,8 +121,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       lDiags = []
       for h in [self.matrix[:,:,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
         for x in xrange(-h.shape[0]+1, h.shape[1]):
-          lDiags.append(numpy.diagonal(h,x,0,1))
-      #lDiags = chain.from_iterable(lDiags)    
+          lDiags.append(numpy.diagonal(h,x,0,1))    
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, lDiags) )
 
       #(-1,1,1), #(1,-1,-1),
@@ -132,30 +130,31 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       mDiags = []
       for h in [self.matrix[:,::-1,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
         for x in xrange(-h.shape[0]+1, h.shape[1]):
-          mDiags.append(numpy.diagonal(h,x,0,1))
-      #mDiags = chain.from_iterable(mDiags)    
+          mDiags.append(numpy.diagonal(h,x,0,1))    
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, mDiags) )
-
+      
+      #qw = matrixDiagonals
+      #pdb.set_trace()
+      
       # Run-Length Encoding (rle) for the 13 list of diagonals
       # (1 list per 3D direction/angle)
-      for angle in xrange(len(matrixDiagonals)):
-        P = self.P_rlgl[:,:,angle]
-        for diagonal in matrixDiagonals[angle]:
+      for angle_idx, angle in enumerate(matrixDiagonals):
+        P = P_rlgl[:,:,angle_idx]
+        for diagonal in angle:
           diagonal = numpy.array(diagonal, dtype='int')
           pos, = numpy.where(numpy.diff(diagonal) != 0)
           pos = numpy.concatenate(([0], pos+1, [len(diagonal)]))
-
           rle = zip([n for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
           for level, run_length in rle:
-            if level==padVal: continue
-            if level in grayLevels:
-              level_idx = level-1
-              run_length_idx = run_length-1
-              P[level_idx, run_length_idx] += 1
-
-  # remove angle dimension from P_glrl and update coefficients
-  # features with gray level emphasis are failing?
-  
+            if level != padVal:
+              P[level-1, run_length-1] += 1
+      
+      # Trim run-length axis of RLGL matrix to maximum observed run-length
+      #P_rlgl_bounds = numpy.argwhere(P_rlgl)
+      #(xstart, ystart, zstart), (xstop, ystop, zstop) = P_rlgl_bounds.min(0), P_rlgl_bounds.max(0) + 1
+      self.P_rlgl = P_rlgl#[:,xstart:xstop,:]
+      #print self.P_rlgl[:,:,0]
+      
   def calculateCoefficients(self):
       sumP_rlgl = numpy.sum( numpy.sum(self.P_rlgl, 0), 0 )
       sumP_rlgl[sumP_rlgl==0] = 1
@@ -173,6 +172,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       self.coefficients['jvector'] = jvector
 
   def getShortRunEmphasisFeatureValue(self):
+    """Calculate and return the mean Short Run Emphasis (SRE) value for all 13 RLGL matrices.
+    
+    A measure of the distribution of short run lengths, with a greater value indicative 
+    of shorter run lengths and more fine textural textures.
+    """
     pr = self.coefficients['pr']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -184,6 +188,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (sre.mean())
 
   def getLongRunEmphasisFeatureValue(self):
+    """Calculate and return the mean Long Run Emphasis (LRE) value for all 13 RLGL matrices.
+    
+    A measure of the distribution of long run lengths, with a greater value indicative 
+    of longer run lengths and more coarse structural textures.
+    """  
     pr =  self.coefficients['pr']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -195,6 +204,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (lre.mean())
 
   def getGrayLevelNonUniformityFeatureValue(self):
+    """Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all 13 RLGL matrices.
+    
+    Measures the similarity of gray-level intensity values in the image, where a lower GLN value 
+    correlates with a greater similarity in intensity values.
+    """
     pg = self.coefficients['pg']
     sumP_rlgl = self.coefficients['sumP_rlgl']
 
@@ -205,6 +219,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (gln.mean())
 
   def getRunLengthNonUniformityFeatureValue(self):
+    """Calculate and return the mean Run Length Non-Uniformity (RLN) value for all 13 RLGL matrices.
+    
+    Measures the similarity of run lengths throughout the image, with a lower value indicating 
+    more homogeneity among run lengths in the image.
+    """
     pr = self.coefficients['pr']
     sumP_rlgl = self.coefficients['sumP_rlgl']
 
@@ -215,6 +234,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (rln.mean())
 
   def getRunPercentageFeatureValue(self):
+    """Calculate and return the mean Run Percentage (RP) value for all 13 RLGL matrices.
+    
+    Measures the homogeneity and distribution of runs of an image for a certain direction.
+    """
     Np = self.coefficients['Np']
 
     try:
@@ -224,6 +247,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (rp.mean())
 
   def getLowGrayLevelRunEmphasisFeatureValue(self):
+    """Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all 13 RLGL matrices.
+    
+    Measures the distribution of low gray-level values, with a higher value indicating a greater 
+    concentration of low gray-level values in the image.
+    """    
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -235,6 +263,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (lglre.mean())
 
   def getHighGrayLevelRunEmphasisFeatureValue(self):
+    """Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all 13 RLGL matrices.
+    
+    Measures the distribution of the higher gray-level values, with a higher value indicating  
+    a greater concentration of high gray-level values in the image.
+    """    
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -246,6 +279,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (hglre.mean())
 
   def getShortRunLowGrayLevelEmphasisFeatureValue(self):
+    """Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all 13 RLGL matrices.
+    
+    Measures the joint distribution of shorter run lengths with lower gray-level values.
+    """    
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -257,6 +294,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (srlgle.mean())
 
   def getShortRunHighGrayLevelEmphasisFeatureValue(self):
+    """Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all 13 RLGL matrices.
+    
+    Measures the joint distribution of shorter run lengths with higher gray-level values.
+    """    
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -268,6 +309,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (srhgle.mean())
 
   def getLongRunLowGrayLevelEmphasisFeatureValue(self):
+    """Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all 13 RLGL matrices.
+    
+    Measures the joint distribution of long run lengths with lower gray-level values.
+    """    
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -279,6 +324,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     return (lrlgle.mean())
 
   def getLongRunHighGrayLevelEmphasisFeatureValue(self):
+    """Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all 13 RLGL matrices.
+    
+    Measures the joint distribution of long run lengths with higher gray-level values.
+    """    
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']

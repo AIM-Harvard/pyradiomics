@@ -6,9 +6,10 @@ import sys, os
 #testResampledPixelSpacing = (3,3,3) no resampling for now.
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
-imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
-maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
-
+#imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
+#maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
+imageName = str(dataDir + os.path.sep + 'breast1_image.nrrd')
+maskName = str(dataDir + os.path.sep + 'breast1_label.nrrd')
 
 if not os.path.exists(imageName):
   print 'Error: problem finding input image',imageName
@@ -19,7 +20,7 @@ if not os.path.exists(maskName):
 
 image = sitk.ReadImage(imageName)
 mask = sitk.ReadImage(maskName)
-
+"""
 #
 # Show the first order feature calculations
 #
@@ -104,11 +105,11 @@ print 'done'
 print 'Calculated GLCM features: '
 for (key,val) in glcmFeatures.featureValues.iteritems():
   print '  ',key,':',val
-
+"""
 #
 # Show RLGL features
 #
-rlglFeatures = rlgl.RadiomicsRLGL(image, mask, binWidth=10)
+rlglFeatures = rlgl.RadiomicsRLGL(image, mask, binWidth=25)
 rlglFeatures.enableAllFeatures()
 
 print 'Will calculate the following RLGL features: '

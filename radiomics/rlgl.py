@@ -31,7 +31,6 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       self.coefficients['Np'] = self.targetVoxelArray.size
 
       self.calculateRLGL()
-
       self.calculateCoefficients()
 
   def calculateRLGL(self):
@@ -41,11 +40,13 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
       self.P_rlgl = numpy.zeros((Ng, Nr, 13))
 
-      padVal = -1000   #use eps or NaN to pad matrix
+      padVal = -2000   #use eps or NaN to pad matrix
       padMask = numpy.zeros(self.matrix.shape,dtype=bool)
       padMask[self.matrixCoordinates] = True
       self.matrix[~padMask] = padVal
-      matrixDiagonals = list()
+      #self.matrix = numpy.ma.masked_equal(self.matrix, padVal)
+      #self.matrix = numpy.ma.masked_where(numpy.ma.getmask(mask), self.matrix)
+      matrixDiagonals = []
 
       #(1,0,0), (-1,0,0)
       aDiags = chain.from_iterable(numpy.transpose(self.matrix,(1,2,0)))
@@ -137,7 +138,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
       # Run-Length Encoding (rle) for the 13 list of diagonals
       # (1 list per 3D direction/angle)
-      for angle in xrange (len(matrixDiagonals)):
+      for angle in xrange(len(matrixDiagonals)):
         P = self.P_rlgl[:,:,angle]
         for diagonal in matrixDiagonals[angle]:
           diagonal = numpy.array(diagonal, dtype='int')
@@ -146,12 +147,15 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
           rle = zip([n for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
           for level, run_length in rle:
+            if level==padVal: continue
             if level in grayLevels:
               level_idx = level-1
               run_length_idx = run_length-1
               P[level_idx, run_length_idx] += 1
 
-
+  # remove angle dimension from P_glrl and update coefficients
+  # features with gray level emphasis are failing?
+  
   def calculateCoefficients(self):
       sumP_rlgl = numpy.sum( numpy.sum(self.P_rlgl, 0), 0 )
       sumP_rlgl[sumP_rlgl==0] = 1

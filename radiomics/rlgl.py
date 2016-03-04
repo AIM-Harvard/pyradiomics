@@ -3,8 +3,6 @@ import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
 
-import pdb
-
 class RadiomicsRLGL(base.RadiomicsFeaturesBase):
   """RLGL feature calculation."""
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -33,7 +31,6 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
       self.calculateRLGL()
       self.calculateCoefficients()
-      print self.coefficients
 
   def calculateRLGL(self):
       Ng = self.coefficients['Ng']
@@ -133,15 +130,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
           mDiags.append(numpy.diagonal(h,x,0,1))    
       matrixDiagonals.append( filter(lambda x: numpy.nonzero(x)[0].size>1, mDiags) )
       
-      #qw = matrixDiagonals
-      #pdb.set_trace()
-      
       # Run-Length Encoding (rle) for the 13 list of diagonals
       # (1 list per 3D direction/angle)
       for angle_idx, angle in enumerate(matrixDiagonals):
         P = P_rlgl[:,:,angle_idx]
         for diagonal in angle:
-          diagonal = numpy.array(diagonal, dtype='int')
           pos, = numpy.where(numpy.diff(diagonal) != 0)
           pos = numpy.concatenate(([0], pos+1, [len(diagonal)]))
           rle = zip([n for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
@@ -150,20 +143,18 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
               P[level-1, run_length-1] += 1
       
       # Trim run-length axis of RLGL matrix to maximum observed run-length
-      #P_rlgl_bounds = numpy.argwhere(P_rlgl)
-      #(xstart, ystart, zstart), (xstop, ystop, zstop) = P_rlgl_bounds.min(0), P_rlgl_bounds.max(0) + 1
-      self.P_rlgl = P_rlgl#[:,xstart:xstop,:]
-      #print self.P_rlgl[:,:,0]
+      P_rlgl_bounds = numpy.argwhere(P_rlgl)
+      (xstart, ystart, zstart), (xstop, ystop, zstop) = P_rlgl_bounds.min(0), P_rlgl_bounds.max(0) + 1
+      self.P_rlgl = P_rlgl[:,:ystop,:]
       
   def calculateCoefficients(self):
       sumP_rlgl = numpy.sum( numpy.sum(self.P_rlgl, 0), 0 )
-      sumP_rlgl[sumP_rlgl==0] = 1
 
       pr = numpy.sum(self.P_rlgl, 0)
       pg = numpy.sum(self.P_rlgl, 1)
 
-      ivector = numpy.arange(1, self.P_rlgl.shape[0] + 1)
-      jvector = numpy.arange(1, self.P_rlgl.shape[1] + 1)
+      ivector = numpy.arange(1, self.P_rlgl.shape[0] + 1, dtype=numpy.float64)
+      jvector = numpy.arange(1, self.P_rlgl.shape[1] + 1, dtype=numpy.float64)
 
       self.coefficients['sumP_rlgl'] = sumP_rlgl
       self.coefficients['pr'] = pr

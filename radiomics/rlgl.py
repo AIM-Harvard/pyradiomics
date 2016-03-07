@@ -142,10 +142,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
             if level != padVal:
               P[level-1, run_length-1] += 1
       
-      # Trim run-length axis of RLGL matrix to maximum observed run-length
+      # Crop gray-level axis of RLGL matrix to between minimum and maximum observed gray-levels
+      # Crop run-length axis of RLGL matrix up to maximum observed run-length
       P_rlgl_bounds = numpy.argwhere(P_rlgl)
       (xstart, ystart, zstart), (xstop, ystop, zstop) = P_rlgl_bounds.min(0), P_rlgl_bounds.max(0) + 1
-      self.P_rlgl = P_rlgl[:,:ystop,:]
+      self.P_rlgl = P_rlgl[xstart:xstop,:ystop,:]
       
   def calculateCoefficients(self):
       sumP_rlgl = numpy.sum( numpy.sum(self.P_rlgl, 0), 0 )

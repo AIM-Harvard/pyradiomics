@@ -105,7 +105,7 @@ print 'done'
 print 'Calculated GLCM features: '
 for (key,val) in glcmFeatures.featureValues.iteritems():
   print '  ',key,':',val
-"""
+
 #
 # Show RLGL features
 #
@@ -124,7 +124,7 @@ print 'done'
 print 'Calculated RLGL features: '
 for (key,val) in rlglFeatures.featureValues.iteritems():
   print '  ',key,':',val
-
+"""
 #
 # Show GLSZM features
 #

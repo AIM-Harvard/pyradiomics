@@ -6,28 +6,27 @@ import pdb
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   """GLSZM feature calculation."""
   def __init__(self, inputImage, inputMask, **kwargs):
-      super(RadiomicsGLSZM,self).__init__(inputImage, inputMask, **kwargs)
+    super(RadiomicsGLSZM,self).__init__(inputImage, inputMask, **kwargs)
 
-      self.imageArray = sitk.GetArrayFromImage(inputImage)
-      self.maskArray = sitk.GetArrayFromImage(inputMask)
+    self.imageArray = sitk.GetArrayFromImage(inputImage)
+    self.maskArray = sitk.GetArrayFromImage(inputMask)
 
-      (self.matrix, self.matrixCoordinates) = \
-        preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray,self.maskArray)
+    (self.matrix, self.matrixCoordinates) = \
+      preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray,self.maskArray)
 
-      self.targetVoxelArray = self.matrix[self.matrixCoordinates]
-      self.coefficients = {}
-      self.P_glszm = {}
+    self.targetVoxelArray = self.matrix[self.matrixCoordinates]
+    self.coefficients = {}
+    self.P_glszm = {}
 
-      # binning
-      self.matrix, self.histogram = preprocessing.RadiomicsHelpers.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
-      self.coefficients['Ng'] = len(self.histogram[0])
-      self.coefficients['grayLevels'] = numpy.linspace(1,self.coefficients['Ng'],num=self.coefficients['Ng'])
-      self.coefficients['Nr'] = numpy.max(self.matrix.shape)
-      self.coefficients['Np'] = self.targetVoxelArray.size
+    # binning
+    self.matrix, self.histogram = preprocessing.RadiomicsHelpers.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
+    self.coefficients['Ng'] = len(self.histogram[0])
+    self.coefficients['grayLevels'] = numpy.linspace(1,self.coefficients['Ng'],num=self.coefficients['Ng'])
+    self.coefficients['Nr'] = numpy.max(self.matrix.shape)
+    self.coefficients['Np'] = self.targetVoxelArray.size
 
-      self.calculateGLSZM()
-
-      self.calculateCoefficients()
+    self.calculateGLSZM()
+    self.calculateCoefficients()
 
       
   def calculateGLSZM(self):
@@ -53,7 +52,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     B = numpy.ones((3,3,3))
     
     # Empty GLSZ matrix
-    self.P_glszm = numpy.zeros((self.coefficients['grayLevels'].size, self.coefficients['Np']))
+    P_glszm = numpy.zeros((self.coefficients['grayLevels'].size, self.coefficients['Np']))
     
     # Iterate over all gray levels in the image
     for i in xrange(1, self.coefficients['grayLevels'].size+1):
@@ -86,88 +85,125 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
         regionSize = len(region_level)
         
         # Update the gray level size zone matrix
-        self.P_glszm[i-1,regionSize-1] += 1
+        P_glszm[i-1,regionSize-1] += 1
         
         # Find unprocessed nonzero positions for current gray level
         ind = zip(*numpy.where(dataTemp==1))
         ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
-              
+    
+    # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
+    # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area
+    P_glszm_bounds = numpy.argwhere(P_glszm)
+    (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1
+    self.P_glszm = P_glszm[xstart:xstop,:ystop]           
+  
   def calculateCoefficients(self):
-      sumP_glszm = numpy.sum( numpy.sum(self.P_glszm, 0), 0 )
-      
-      # set sum to numpy.spacing(1) if sum is 0?
-      if sumP_glszm == 0:
-        sumP_glszm = 1
+    sumP_glszm = numpy.sum( numpy.sum(self.P_glszm, 0), 0 )
+    
+    # set sum to numpy.spacing(1) if sum is 0?
+    if sumP_glszm == 0:
+      sumP_glszm = 1
 
-      pr = numpy.sum(self.P_glszm, 0)
-      pg = numpy.sum(self.P_glszm, 1)
+    pr = numpy.sum(self.P_glszm, 0)
+    pg = numpy.sum(self.P_glszm, 1)
 
-      ivector = numpy.arange(1, self.P_glszm.shape[0] + 1)
-      jvector = numpy.arange(1, self.P_glszm.shape[1] + 1)
+    ivector = numpy.arange(1, self.P_glszm.shape[0] + 1, dtype=numpy.float64)
+    jvector = numpy.arange(1, self.P_glszm.shape[1] + 1, dtype=numpy.float64)
 
-      self.coefficients['sumP_glszm'] = sumP_glszm
-      self.coefficients['pr'] = pr
-      self.coefficients['pg'] = pg
-      self.coefficients['ivector'] = ivector
-      self.coefficients['jvector'] = jvector     
+    self.coefficients['sumP_glszm'] = sumP_glszm
+    self.coefficients['pr'] = pr
+    self.coefficients['pg'] = pg
+    self.coefficients['ivector'] = ivector
+    self.coefficients['jvector'] = jvector     
     
   def getSmallAreaEmphasisFeatureValue(self):
-      try:
-        #sum(pr./(j_vector.^2))/nruns
-        #sae = numpy.sum( numpy.sum( (self.P_glszm/(self.j[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
-        sae = numpy.sum(self.coefficients['pr']/(self.coefficients['jvector']**2)) / self.coefficients['sumP_glszm']
-      except ZeroDivisionError:
-        sae = 0    
-      return (sae)
+    """Calculate and return the Small Area Emphasis (SAE) value.
+  
+    A measure of the distribution of small size zones, with a greater value indicative 
+    of more smaller size zones and more fine textures.
+    """
+    try:
+      sae = numpy.sum(self.coefficients['pr']/(self.coefficients['jvector']**2)) / self.coefficients['sumP_glszm']
+    except ZeroDivisionError:
+      sae = 0    
+    return (sae)
     
   def getLargeAreaEmphasisFeatureValue(self):
-      try:
-        #lae = numpy.sum( numpy.sum( (self.P_glszm*(self.j[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
-        lae = numpy.sum(self.coefficients['pr']*(self.coefficients['jvector']**2)) / self.coefficients['sumP_glszm']
-      except ZeroDivisionError:
-        lae = 0
-      return (lae)
+    """Calculate and return the Large Area Emphasis (LAE) value.
+    
+    A measure of the distribution of large area size zones, with a greater value indicative 
+    of more larger size zones and more coarse textures.
+    """        
+    try:
+      lae = numpy.sum(self.coefficients['pr']*(self.coefficients['jvector']**2)) / self.coefficients['sumP_glszm']
+    except ZeroDivisionError:
+      lae = 0
+    return (lae)
 
   def getIntensityVariabilityFeatureValue(self):
-      try:
-        iv = numpy.sum(self.coefficients['pg']**2) / self.coefficients['sumP_glszm']   
-      except ZeroDivisionError:
-        iv = 0  
-      return (iv)
+    """Calculate and return the Intensity Variability (IV) value.
+    
+    Measures the variability of gray-level intensity values in the image, where a lower IV value 
+    correlates with more homogeneity in intensity values.
+    """  
+    try:
+      iv = numpy.sum(self.coefficients['pg']**2) / self.coefficients['sumP_glszm']   
+    except ZeroDivisionError:
+      iv = 0  
+    return (iv)
     
   def getSizeZoneVariabilityFeatureValue(self):
-      try:
-        szv = numpy.sum(self.coefficients['pr']**2) / self.coefficients['sumP_glszm'] 
-      except ZeroDivisionError:
-        szv = 0
-      return (szv)
+    """Calculate and return the Size-Zone Variability (SZV) value.
+    
+    Measures the variability of size zone volumes in the image, where a lower SZV value 
+    correlates with more homogeneity in size zone volumes.
+    """  
+    try:
+      szv = numpy.sum(self.coefficients['pr']**2) / self.coefficients['sumP_glszm'] 
+    except ZeroDivisionError:
+      szv = 0
+    return (szv)
 
   def getZonePercentageFeatureValue(self):
-      try:
-        #zp = numpy.sum( (self.P_glszm/(self.coefficients['Np'])) , 0 )
-        zp = self.coefficients['sumP_glszm'] / numpy.sum(self.coefficients['pr']*self.coefficients['jvector'])
-      except ZeroDivisionError:
-        zp = 0
-      return (zp)
+    """Calculate and return the Zone Percentage (ZP) value.
+    
+    Measures the homogeneity of the distribution of size zones in an image among the observed gray-levels.
+    """      
+    try:
+      zp = self.coefficients['sumP_glszm'] / numpy.sum(self.coefficients['pr']*self.coefficients['jvector'])
+    except ZeroDivisionError:
+      zp = 0
+    return (zp)
 
   def getLowIntensityEmphasisFeatureValue(self):
-      try:
-        #pdb.set_trace()
-        #lie = numpy.sum( numpy.sum( (self.P_glszm/(self.i[:,:,None]**2)) , 0 ), 0 )/ (self.coefficients['sumP_glszm'][None,None,:])
-        lie = numpy.sum( (self.coefficients['pg']/(self.coefficients['ivector']**2)) ) / self.coefficients['sumP_glszm']
-      except ZeroDivisionError:
-        lie = 0 
-      return (lie)
+    """Calculate and return the Low Intensity Emphasis (LIE) value.
+    
+    Measures the distribution of lower gray-level size zones, with a higher value indicating a greater 
+    proportion of lower gray-level values and size zones in the image.
+    """       
+    try:
+      lie = numpy.sum( (self.coefficients['pg']/(self.coefficients['ivector']**2)) ) / self.coefficients['sumP_glszm']
+    except ZeroDivisionError:
+      lie = 0 
+    return (lie)
       
   def getHighIntensityEmphasisFeatureValue(self):
+    """Calculate and return the High Intensity Emphasis (HIE) value.
+    
+    Measures the distribution of the higher gray-level values, with a higher value indicating  
+    a greater proportion of higher gray-level values and size zones in the image.
+    """  
     try:
-      #hie = numpy.sum( numpy.sum( (self.P_glszm*(self.i[:,:,None]**2)) , 0 ), 0 ) / (self.coefficients['sumP_glszm'][None,None,:])
       hie = numpy.sum( (self.coefficients['pg']*(self.coefficients['ivector']**2)) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       hie = 0 
     return (hie)
     
   def getLowIntensitySmallAreaEmphasisFeatureValue(self):
+    """Calculate and return the Low Intensity Small Area Emphases (LISAE) value.
+    
+    Measures the proportion in the image of the joint distribution of smaller size zones with lower gray-level values.
+    """
     try:
       lisae = numpy.sum( numpy.sum( (self.P_glszm/((self.coefficients['ivector'][:,None]**2)*(self.coefficients['jvector'][None,:]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
@@ -175,6 +211,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     return (lisae)
      
   def getHighIntensitySmallAreaEmphasisFeatureValue(self):
+    """Calculate and return the High Intensity Small Area Emphases (HISAE) value.
+    
+    Measures the proportion in the image of the joint distribution of smaller size zones with higher gray-level values.
+    """  
     try:
       hisae = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['ivector'][:,None]**2)/(self.coefficients['jvector'][None,:]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
@@ -182,6 +222,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     return (hisae)
         
   def getLowIntensityLargeAreaEmphasisFeatureValue(self):
+    """Calculate and return the Low Intensity Large Area Emphases (LILAE) value.
+    
+    Measures the proportion in the image of the joint distribution of larger size zones with lower gray-level values.
+    """  
     try:
       lilae = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['jvector'][None,:]**2)/(self.coefficients['ivector'][:,None]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
@@ -189,8 +233,12 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     return (lilae)
             
   def getHighIntensityLargeAreaEmphasisFeatureValue(self):
+    """Calculate and return the High Intensity Large Area Emphases (HILAE) value.
+    
+    Measures the proportion in the image of the joint distribution of larger size zones with higher gray-level values.
+    """    
     try:
       hilae = numpy.sum( numpy.sum( (self.P_glszm*((self.coefficients['jvector'][None,:]**2)*(self.coefficients['ivector'][:,None]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       hilae = 0 
-    return (hilae)    
+    return (hilae)

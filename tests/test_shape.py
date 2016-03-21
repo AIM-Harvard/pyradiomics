@@ -2,12 +2,14 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_shape.py
 
-import SimpleITK as sitk
-from radiomics import firstorder, shape
+from radiomics import shape
 from testUtils import RadiomicsTestUtils
 import sys, os
 import logging
 from nose_parameterized import parameterized
+
+testUtils = RadiomicsTestUtils('shape')
+shapeFeatures = None
 
 def setup_module(module):
     # run before anything in this file
@@ -16,51 +18,49 @@ def setup_module(module):
 
 class TestShape:
 
-    def setup(self):
-        # setup before each test method
-        print ("") # this is to get a newline after the dots
-        self.shapeFeatures.disableAllFeatures()
-
-    @classmethod
-    def setup_class(self):
-        # run before any methods in this class
-        print ("") # this is to get a newline after the dots
-
-        # read in the baseline and mapping to matlab features
-        self.testUtils = RadiomicsTestUtils('shape')
-        # set the test case for these files to match the directory and
-        # the id in the baseline file
-        self.testUtils.setTestCase('breast1')
-
-        dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data" + os.path.sep
-
-        imageName = dataDir + self.testUtils.getTestCase() + '_image.nrrd'
-        maskName = dataDir + self.testUtils.getTestCase() + '_label.nrrd'
-
-        logging.info("Reading the image and mask.")
-        self.image = sitk.ReadImage(imageName)
-        self.mask = sitk.ReadImage(maskName)
-
-        logging.info("Instantiating Shape.")
-        self.shapeFeatures = shape.RadiomicsShape(self.image, self.mask)
-
-
-    @classmethod
-    def teardown_class(self):
-        # run after any methods in this class
-        print ("") # this is to get a newline after the dots
-
+    #
+    # Generate the test cases that test each feature for each test case / data
+    # set.
+    # The custom function name generation utility ensures that all the features
+    # are tested for one data set before moving on to calculating features for
+    # another data set.
+    #
     def generate_scenarios():
-      # get the feature names
+      global testUtils
+      # get the list of test cases for which we have baseline information
+      testCases = testUtils.getTestCases()
+      logging.info('generate_scenarios: testCases = %s', testCases)
+      # get the list of features we'll be testing so we can generate the
+      # tuples of testcase:feature to iterate over
       featureNames = shape.RadiomicsShape.getFeatureNames()
       logging.info('generate_scenarios: featureNames = %s', featureNames)
-      for f in featureNames:
-        yield (f)
+      test_tuples = []
+      for t in range(len(testCases)):
+        for f in range(len(featureNames)):
+          test_tuples.append((testCases[t], featureNames[f]))
+      logging.info('generate_scenarios: test_tuples = %s', test_tuples)
 
-    @parameterized.expand(generate_scenarios())
-    def test_scenario_BreastMRI(self, featureName):
-      logging.info('test_scenario: featureName = %s', featureName)
-      self.shapeFeatures.enableFeatureByName(featureName)
-      self.shapeFeatures.calculateFeatures()
-      val = self.shapeFeatures.featureValues[featureName]
-      self.testUtils.checkResult(featureName, val)
+      for p in range(len(test_tuples)):
+        yield (test_tuples[p][0], test_tuples[p][1])
+
+    global testUtils
+    @parameterized.expand(generate_scenarios(), testcase_func_name=testUtils.custom_name_func)
+    def test_scenario(self, testCase, featureName):
+      print("")
+      global testUtils
+      logging.info('test_scenario: testCase = %s, featureName = %s', testCase, featureName)
+      # set the test case and only recalculate features if changed
+      testCaseChanged = testUtils.setTestCase(testCase)
+      global shapeFeatures
+      if shapeFeatures == None or testCaseChanged:
+        logging.info("Instantiating Shape for testCase %s.", testCase)
+        shapeFeatures = shape.RadiomicsShape(testUtils.getImage(), testUtils.getMask())
+
+      shapeFeatures.disableAllFeatures()
+      shapeFeatures.enableFeatureByName(featureName)
+      shapeFeatures.calculateFeatures()
+      # get the result and test it
+      val = shapeFeatures.featureValues[featureName]
+      testUtils.checkResult(featureName, val)
+
+

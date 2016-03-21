@@ -7,10 +7,12 @@ It provides utility methods to get the baseline Matlab feature value for a
 feature class.
 '''
 
+import SimpleITK as sitk
 import sys, os
 import csv
 import logging
 import math
+from nose_parameterized import parameterized
 
 class RadiomicsTestUtils:
 
@@ -22,6 +24,9 @@ class RadiomicsTestUtils:
 
     self.logger.debug('RadiomicsTestUtils for %s',featureClassName)
 
+    # the image and mask volumes
+    self.image = None
+    self.mask = None
 
     # set up file paths
     self.dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","data")
@@ -46,11 +51,62 @@ class RadiomicsTestUtils:
     self.readRadiomicsIndices()
     self.readMatlab2Pyradiomics()
 
+  #
+  # Set up the variables for a specific test case:
+  # - set the testCase var to match the string that joins the baseline file line, the image name, the mask name
+  # - if this is a different test case from a previous valid one, read in the image and mask and return True
+  # - if no change, return False
   def setTestCase(self, testCase):
-    self.testCase = testCase
+    self.logger.debug('testUtils setTestCase: %s', testCase)
+    if self.testCase != testCase:
+      imageName = os.path.join(self.dataDir, testCase + '_image.nrrd')
+      maskName = os.path.join(self.dataDir, testCase + '_label.nrrd')
+
+      self.logger.info("Reading the image and mask for test case %s", testCase)
+      self.image = sitk.ReadImage(imageName)
+      self.mask = sitk.ReadImage(maskName)
+      self.testCase = testCase
+      return True
+    else:
+      return False
+
   def getTestCase(self):
     return self.testCase
 
+  def getImage(self):
+    return self.image
+  def getMask(self):
+    return self.mask
+
+  #
+  # Return all the test cases for which there are baseline information.
+  #
+  def getTestCases(self):
+    return self.baselineFeatures.keys()
+
+  #
+  # A custom test name function that will ensure that the tests are run
+  # such that they're batched with all tests for a given data set are run
+  # together, avoiding re-reading the data more than necessary.
+  # Tests are run in alphabetical order, so put the test case first.
+  # An alternate option is to right justify the test number (param_num)
+  # with zeroes so that the numerical and alphabetical orders are the same
+  # Not providing this method when there are more than 10 tests results in
+  # tests running in an order similar to:
+  # test_*.test_scenario_0_*
+  # test_*.test_scenario_10_*
+  # test_*.test_scenario_11_*
+  # ...
+  # test_*.test_scenario_19_*
+  # test_*.test_scenario_1_*
+  # test_*.test_scenario_20_*
+  #
+  def custom_name_func(self, testcase_func, param_num, param):
+    self.logger.debug('custom_name_func: function name = %s, param_num = {0:0>3}, param.args = %s'.format(param_num), testcase_func.__name__, param.args)
+    return "%s_%s" %(
+        testcase_func.__name__,
+        parameterized.to_safe_name("_".join(str(x) for x in param.args)),
+        )
   #
   # Read in the matlab features file and store the baseline information
   # for the test cases.

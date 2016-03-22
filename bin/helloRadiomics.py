@@ -1,4 +1,4 @@
-from radiomics import firstorder, glcm, imageoperations, shape, rlgl
+from radiomics import firstorder, glcm, imageoperations, shape, rlgl, glszm
 import SimpleITK as sitk
 import sys, os
 
@@ -105,7 +105,7 @@ print 'done'
 print 'Calculated GLCM features: '
 for (key,val) in glcmFeatures.featureValues.iteritems():
   print '  ',key,':',val
-"""
+
 #
 # Show RLGL features
 #
@@ -123,4 +123,23 @@ print 'done'
 
 print 'Calculated RLGL features: '
 for (key,val) in rlglFeatures.featureValues.iteritems():
+  print '  ',key,':',val
+"""
+#
+# Show GLSZM features
+#
+glszmFeatures = glszm.RadiomicsGLSZM(image, mask, binWidth=25)
+glszmFeatures.enableAllFeatures()
+
+print 'Will calculate the following GLSZM features: '
+for f in glszmFeatures.enabledFeatures.keys():
+  print '  ',f
+  print eval('glszmFeatures.get'+f+'FeatureValue.__doc__')
+
+print 'Calculating GLSZM features...',
+glszmFeatures.calculateFeatures()
+print 'done'
+
+print 'Calculated GLSZM features: '
+for (key,val) in glszmFeatures.featureValues.iteritems():
   print '  ',key,':',val

@@ -1,6 +1,6 @@
 import numpy
 import SimpleITK as sitk
-from radiomics import base, preprocessing
+from radiomics import base, imageoperations
 import pdb
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
@@ -12,14 +12,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.maskArray = sitk.GetArrayFromImage(inputMask)
 
     (self.matrix, self.matrixCoordinates) = \
-      preprocessing.RadiomicsHelpers.padTumorMaskToCube(self.imageArray,self.maskArray)
+      imageoperations.padTumorMaskToCube(self.imageArray,self.maskArray)
 
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
     self.coefficients = {}
     self.P_glszm = {}
 
     # binning
-    self.matrix, self.histogram = preprocessing.RadiomicsHelpers.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = len(self.histogram[0])
     self.coefficients['grayLevels'] = numpy.linspace(1,self.coefficients['Ng'],num=self.coefficients['Ng'])
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)

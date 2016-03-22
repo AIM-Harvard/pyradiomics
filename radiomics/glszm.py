@@ -55,7 +55,13 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     P_glszm = numpy.zeros((self.coefficients['grayLevels'].size, self.coefficients['Np']))
 
     # Iterate over all gray levels in the image
-    for i in xrange(1, self.coefficients['grayLevels'].size+1):
+    numGrayLevels = self.coefficients['grayLevels'].size+1
+    for i in xrange(1, numGrayLevels):
+      # give some progress
+      if i % 5 == 0:
+        percentProgress = (float(i) / float(numGrayLevels)) * 100.0
+        print('calculate GLSZM: %.2f%s' % (percentProgress, '%'))
+
       dataTemp = numpy.where(self.matrix==i, 1, 0)
       ind = zip(*numpy.where(dataTemp==1))
       ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))

@@ -14,7 +14,7 @@ matlab2pyradiomics_<feature_class>.txt with the content structured as
 '''
 
 
-from radiomics import base, firstorder, glcm, imageoperations, shape, rlgl
+from radiomics import base, firstorder, glcm, imageoperations, shape, rlgl, glszm
 import sys, os
 
 dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","data")
@@ -25,7 +25,7 @@ outputDir = os.path.join(dataDir,'mapping')
 # names. Note that Matlab implementation does not name feature classes
 # consistently, thus multiple Matlab feature classes may map into the same
 # pyradiomics feature class (at least this was the assumption of @fedorov)
-classMap = {"firstorder":"firstorder","Shape":"shape","RLGL":"rlgl","GLCM":"glcm","rlgl":"rlgl","glcm":"glcm","Stats":"firstorder","shape":"shape"}
+classMap = {"firstorder":"firstorder","Shape":"shape","RLGL":"rlgl","GLCM":"glcm","rlgl":"rlgl","glcm":"glcm","glszm":"glszm","Stats":"firstorder","shape":"shape"}
 
 matlabFeaturesNamesList = open(matlabFeaturesFile,'r').readline()[:-1].split(',')
 
@@ -59,6 +59,7 @@ for n in matlabFeaturesNamesList:
 pyradiomicsNames = {}
 pyradiomicsNames['firstorder'] = firstorder.RadiomicsFirstOrder.getFeatureNames()
 pyradiomicsNames['glcm'] = glcm.RadiomicsGLCM.getFeatureNames()
+pyradiomicsNames['glszm'] = glszm.RadiomicsGLSZM.getFeatureNames()
 pyradiomicsNames['shape'] = shape.RadiomicsShape.getFeatureNames()
 pyradiomicsNames['rlgl'] = rlgl.RadiomicsRLGL.getFeatureNames()
 

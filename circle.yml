@@ -1,7 +1,7 @@
 dependencies:
   pre:
     - pip install numpy
-    - pip install -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK
+    - pip install --trusted-host www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK
     - pip install nose-parameterized
 test:
   override:

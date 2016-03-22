@@ -2,65 +2,65 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_rlgl.py
 
-import SimpleITK as sitk
 from radiomics import rlgl
 from testUtils import RadiomicsTestUtils
 import sys, os
 import logging
 from nose_parameterized import parameterized
 
+testUtils = RadiomicsTestUtils('rlgl')
+rlglFeatures = None
+
 def setup_module(module):
-    # run before anything in this file"
+    # run before anything in this file
     print ("") # this is to get a newline after the dots
     return
 
 class TestRLGL:
 
-    def setup(self):
-        # setup before each test method
-        print ("") # this is to get a newline after the dots
-        # disabling all features
-        self.rlglFeatures.disableAllFeatures()
-
-    @classmethod
-    def setup_class(self):
-        # before any methods in this class"
-        print ("") # this is to get a newline after the dots
-
-        # read in the baseline and mapping to matlab features
-        self.testUtils = RadiomicsTestUtils('rlgl')
-        # set the test case for these files to match the directory and
-        # the id in the baseline file
-        self.testUtils.setTestCase('brain1')
-
-        dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data" + os.path.sep
-
-        imageName = dataDir + self.testUtils.getTestCase() + '_image.nrrd'
-        maskName = dataDir + self.testUtils.getTestCase() + '_label.nrrd'
-
-        logging.info("Reading the image and mask.")
-        self.image = sitk.ReadImage(imageName)
-        self.mask = sitk.ReadImage(maskName)
-
-        logging.info("Instantiating RLGL.")
-        self.rlglFeatures = rlgl.RadiomicsRLGL(self.image, self.mask)
-
-    @classmethod
-    def teardown_class(self):
-        # after any methods in this class
-        print ("") # this is to get a newline after the dots
-
+    #
+    # Generate the test cases that test each feature for each test case / data
+    # set.
+    # The custom function name generation utility ensures that all the features
+    # are tested for one data set before moving on to calculating features for
+    # another data set.
+    #
     def generate_scenarios():
-      # get the feature names
+      global testUtils
+      # get the list of test cases for which we have baseline information
+      testCases = testUtils.getTestCases()
+      logging.info('generate_scenarios: testCases = %s', testCases)
+      # get the list of features we'll be testing so we can generate the
+      # tuples of testcase:feature to iterate over
       featureNames = rlgl.RadiomicsRLGL.getFeatureNames()
       logging.info('generate_scenarios: featureNames = %s', featureNames)
-      for f in featureNames:
-        yield (f)
+      test_tuples = []
+      for t in range(len(testCases)):
+        for f in range(len(featureNames)):
+          test_tuples.append((testCases[t], featureNames[f]))
+      logging.info('generate_scenarios: test_tuples = %s', test_tuples)
 
-    @parameterized.expand(generate_scenarios())
-    def test_scenario(self, featureName):
-      logging.info('test_scenario: featureName = %s', featureName)
-      self.rlglFeatures.enableFeatureByName(featureName)
-      self.rlglFeatures.calculateFeatures()
-      val = self.rlglFeatures.featureValues[featureName]
-      self.testUtils.checkResult(featureName, val)
+      for p in range(len(test_tuples)):
+        yield (test_tuples[p][0], test_tuples[p][1])
+
+    global testUtils
+    @parameterized.expand(generate_scenarios(), testcase_func_name=testUtils.custom_name_func)
+    def test_scenario(self, testCase, featureName):
+      print("")
+      global testUtils
+      logging.info('test_scenario: testCase = %s, featureName = %s', testCase, featureName)
+      # set the test case and only recalculate features if changed
+      testCaseChanged = testUtils.setTestCase(testCase)
+      global rlglFeatures
+      if rlglFeatures == None or testCaseChanged:
+        logging.info("Instantiating RLGL for testCase %s.", testCase)
+        rlglFeatures = rlgl.RadiomicsRLGL(testUtils.getImage(), testUtils.getMask())
+
+      rlglFeatures.disableAllFeatures()
+      rlglFeatures.enableFeatureByName(featureName)
+      rlglFeatures.calculateFeatures()
+      # get the result and test it
+      val = rlglFeatures.featureValues[featureName]
+      testUtils.checkResult(featureName, val)
+
+

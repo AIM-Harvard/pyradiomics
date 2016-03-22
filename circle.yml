@@ -5,4 +5,5 @@ dependencies:
     - pip install nose-parameterized
 test:
   override:
-    - nosetests --logging-level=DEBUG --verbosity=3 tests
+    - nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests
+    - cp nosetests.xml $CIRCLE_TEST_REPORTS

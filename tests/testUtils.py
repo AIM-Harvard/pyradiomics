@@ -272,9 +272,9 @@ class RadiomicsTestUtils:
     else:
       percentDiff = abs(1.0 - (value / baseline))
 
-    self.logger.debug('checkResult: %s, baseline value = %f, calculated = %f, diff = %f%%', key, float(baseline), value, percentDiff * 100)
-
     # check for a less than one percent difference
+    if (percentDiff >= 0.01):
+      self.logger.error('checkResult %s, baseline value = %f, calculated = %f, diff = %f%%', key, float(baseline), value, percentDiff * 100)
     assert(percentDiff < 0.01)
 
 # testUtils = RadiomicsTestUtils('glcm')

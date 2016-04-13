@@ -1,5 +1,6 @@
 from itertools import chain
 import inspect, importlib
+import pdb
 
 import numpy
 import SimpleITK as sitk
@@ -23,34 +24,39 @@ class RadiomicsWavelet(base.RadiomicsFeaturesBase):
     for decompositionName, decompositionArray in self.decompositions[0].iteritems():
       decompositionImage = sitk.GetImageFromArray(decompositionArray)
       decompositionImage.CopyInformation(inputImage)
+      
+      # new binwidth will be used for each decomposition to maintain consistent bin count
+      (matrix, matrixCoordinates) = \
+        imageoperations.padTumorMaskToCube(decompositionArray,self.maskArray)
+      targetVoxelArray = matrix[matrixCoordinates]
+      matrix_binned, histogram = imageoperations.binImage(self.binWidth, targetVoxelArray, matrix, matrixCoordinates)
+      binCount = len(histogram[0])
+  
+      dec_binWidth = numpy.ptp(matrix[matrixCoordinates])/(binCount-1)
+      dec_kwargs = {}
+      dec_kwargs.update(kwargs)
+      dec_kwargs['binWidth'] = dec_binWidth
+      
+      qwe = matrix
+      print decompositionName, qwe.shape, qwe.min(), qwe.max(), self.binWidth, binCount, dec_binWidth
+      pdb.set_trace()
+        
       for featureClass in self.featureClasses:
         featureModule = importlib.import_module("radiomics.%s" % featureClass)
         featureClass_RadiomicsObj_ = inspect.getmembers(featureModule, \
                                       lambda member: (inspect.isclass(member)) \
                                       and ('Radiomics' in member.__name__))[0][1]  
         
-        # new binwidth will be used for each decomposition to maintain consistent bin count
-        (matrix, matrixCoordinates) = \
-          imageoperations.padTumorMaskToCube(decompositionArray,self.maskArray)
-        targetVoxelArray = matrix[matrixCoordinates]
-        matrix_binned, histogram = imageoperations.binImage(self.binWidth, targetVoxelArray, matrix, matrixCoordinates)
-        binCount = len(histogram[0])
-    
-        dec_binWidth = numpy.ptp(matrix[matrixCoordinates])/(binCount-1)
-        dec_kwargs = {}
-        dec_kwargs.update(kwargs)
-        dec_kwargs['binWidth'] = dec_binWidth
-        
         featureClass_instance = featureClass_RadiomicsObj_(decompositionImage, self.inputMask, **dec_kwargs)
         featureClass_instance.enableAllFeatures()
         
-        methods = [method for method in inspect.getmembers(featureClass_instance, inspect.ismethod) \
+        featureClass_methods = [method for method in inspect.getmembers(featureClass_instance, inspect.ismethod) \
                     if (method[0].startswith('get')) \
                     and (method[0].endswith('FeatureValue'))]
                     
-        for method in methods:
-          featureName = method[0].lstrip('get').rstrip('FeatureValue')
-          featureFunction = method[1]
+        for featureClass_method in featureClass_methods:
+          featureName = featureClass_method[0].lstrip('get').rstrip('FeatureValue')
+          featureFunction = featureClass_method[1]
           self.add_dynamo(decompositionName, featureClass, featureName, featureFunction)
     
     super(RadiomicsWavelet,self).__init__(inputImage,inputMask,**kwargs)
@@ -145,9 +151,9 @@ class RadiomicsWavelet(base.RadiomicsFeaturesBase):
         return featureValue 
        
     getFeatureValue_dynamo.__doc__ = \
-      """After a single-level, non-decimated, 3D discrete wavelet transform is applied on the """ \
-      """input image, the coefficients for the %s decomposition are reconstructed""" \
-      """into a new image with a inverse discrete wavelet transform and %s.%s is computed""" \
-      """on the tumor region:\n%s""" %(decName, featureClass, featureName, featureFunction.__doc__)  
+      """A single-level, non-decimated, 3D discrete wavelet transform is applied on the """ \
+      """input image using a %s wavelet filter in the i, j, and k directions. After obtaining the """ \
+      """resulting output from the %s decomposition, the %s.%s feature is computed""" \
+      """on the tumor region:\n%s""" %(self.waveletFilter, decName, featureClass, featureName, featureFunction.__doc__)  
     getFeatureValue_dynamo.__name__ = "get%sFeatureValue" % waveletFeatureName
     setattr(self, getFeatureValue_dynamo.__name__, getFeatureValue_dynamo)  

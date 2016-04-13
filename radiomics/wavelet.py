@@ -1,6 +1,5 @@
 from itertools import chain
 import inspect, importlib
-import pdb
 
 import numpy
 import SimpleITK as sitk
@@ -13,7 +12,7 @@ class RadiomicsWavelet(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsWavelet,self).__init__(inputImage,inputMask,**kwargs)
     
-    self.featureClasses = ['firstorder','glszm'] #['glcm','rlgl']
+    self.featureClasses = ['firstorder','glszm', 'glcm','rlgl']
     self.imageArray = sitk.GetArrayFromImage(inputImage)
     self.maskArray = sitk.GetArrayFromImage(inputMask)   
     
@@ -21,25 +20,24 @@ class RadiomicsWavelet(base.RadiomicsFeaturesBase):
     self.waveletFilter = 'coif1' #'haar'      
     self.approximation, self.decompositions = self.swt3(self.imageArray, self.waveletFilter, level=self.decompositionLevel)
     
+    #matrix, matrixCoordinates = imageoperations.padTumorMaskToCube(self.imageArray, self.maskArray)
+    #targetVoxelArray = matrix[matrixCoordinates]
+    #matrix_binned, histogram = imageoperations.binImage(self.binWidth, targetVoxelArray, matrix, matrixCoordinates)
+    #self.binCount = len(histogram[0])
+      
     for decompositionName, decompositionArray in self.decompositions[0].iteritems():
       decompositionImage = sitk.GetImageFromArray(decompositionArray)
       decompositionImage.CopyInformation(inputImage)
       
-      # new binwidth will be used for each decomposition to maintain consistent bin count
-      (matrix, matrixCoordinates) = \
-        imageoperations.padTumorMaskToCube(decompositionArray,self.maskArray)
-      targetVoxelArray = matrix[matrixCoordinates]
-      matrix_binned, histogram = imageoperations.binImage(self.binWidth, targetVoxelArray, matrix, matrixCoordinates)
-      binCount = len(histogram[0])
-  
-      dec_binWidth = numpy.ptp(matrix[matrixCoordinates])/(binCount-1)
+      decMatrix, decMatrixCoordinates = imageoperations.padTumorMaskToCube(decompositionArray, self.maskArray)
+      
+      # swt wavelet decomposition output is already discretized and digitized  
+      #dec_binWidth = numpy.ptp(decMatrix[decMatrixCoordinates])/(self.binCount-1)
+      
+      dec_binWidth = 1.0 
       dec_kwargs = {}
       dec_kwargs.update(kwargs)
       dec_kwargs['binWidth'] = dec_binWidth
-      
-      qwe = matrix
-      print decompositionName, qwe.shape, qwe.min(), qwe.max(), self.binWidth, binCount, dec_binWidth
-      pdb.set_trace()
         
       for featureClass in self.featureClasses:
         featureModule = importlib.import_module("radiomics.%s" % featureClass)

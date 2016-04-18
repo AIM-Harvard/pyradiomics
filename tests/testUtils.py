@@ -45,6 +45,7 @@ class RadiomicsTestUtils:
     self.pyradiomicsIndices = {}
 
     self.testCase = None
+    self.sigma = 0.0
 
     self.readMatlabFeatures()
     self.readMatlabIndices()
@@ -73,6 +74,20 @@ class RadiomicsTestUtils:
   def getTestCase(self):
     return self.testCase
 
+  #
+  # Set the LoG sigma value, returning True if it changed.
+  #
+  def setSigma(self, sigma):
+    self.logger.debug('testUtils setSigma: %f', sigma)
+    if self.sigma != sigma:
+      self.sigma = sigma
+      return True
+    else:
+      return False
+
+  def getSigma(self):
+    return self.sigma
+
   def getImage(self):
     return self.image
   def getMask(self):
@@ -83,6 +98,50 @@ class RadiomicsTestUtils:
   #
   def getTestCases(self):
     return self.baselineFeatures.keys()
+
+  #
+  # Return the sigma values that were used in the baseline calculations
+  # for the Laplacian operator
+  # For now, hard coded from 0.5 to 5.0 in steps of 0.5.
+  # To do: generate from the Matlab features list:
+  # laplacian_sigma_[?|?_?]_mm_[2|3]D_FEATURECLASS_FEATURENAME
+  #
+  def getLaplacianSigmas(self):
+    sigmas = []
+    s = 0.5
+    while s <= 5.0:
+      sigmas.append(s)
+      s += 0.5
+    return sigmas
+
+  #
+  # For the baseline column headers, the floating point sigma values
+  # are replaced as strings that use an underscore instead of a decimal
+  # point and don't include the zero. This calls getLaplacianSigmas
+  # and then iterates over the array to create an array of strings
+  # via calling getLaplacianSigmaString
+  #
+  def getLaplacianSigmaStrings(self):
+    sigmaStrings = []
+    sigmas = self.getLaplacianSigmas()
+    for i in range(len(sigmas)):
+      s = sigmas[i]
+      stringSigma = self.getLaplacianSigmaString(s)
+      sigmaStrings.append(stringSigma)
+    return sigmaStrings
+
+  #
+  # Convert floating point sigma to a string.
+  # For the baseline column headers, the floating point sigma values
+  # are replaced as strings that use an underscore instead of a decimal
+  # point and don't include the zero.
+  #
+  def getLaplacianSigmaString(self, sigma):
+    stringSigma = str(sigma).replace(".", "_")
+    # the variable names don't include the _0 on integers
+    if "_0" in stringSigma:
+      stringSigma = stringSigma[0:len(stringSigma)-2]
+    return stringSigma
 
   #
   # A custom test name function that will ensure that the tests are run
@@ -223,9 +282,21 @@ class RadiomicsTestUtils:
   def getBaselineFeature(self, matlabFeatureName):
     assert(self.getTestCase() in self.baselineFeatures)
     self.logger.debug('getBaselineFeature: Test case %s has baseline information', self.getTestCase())
-    featureName = self.featureClass + '_' + matlabFeatureName
+    if self.getSigma() > 0.0:
+      sigmaString = self.getLaplacianSigmaString(self.getSigma())
+      self.logger.debug('getBaselineFeature: using sigma of %f, string = %s',self.getSigma(), sigmaString)
+      # sitk only does 3D
+      featureName = 'laplacian_sigma_' + sigmaString + '_mm_3D_' + self.featureClass + '_' + matlabFeatureName
+    else:
+      featureName = self.featureClass + '_' + matlabFeatureName
+
+    # Check if the feature name is in the baseline
+    self.logger.debug('\tfeature name = %s', featureName)
+    if not (featureName in self.baselineFeatures[self.getTestCase()]):
+      self.logger.error('getBaselineFeature: feature %s does not appear in the Matlab baseline file for this test case', featureName)
     assert(featureName in self.baselineFeatures[self.getTestCase()])
     self.logger.debug('getBaselineFeature: Matlab feature %s is in the baseline for this test case', featureName)
+
     return float(self.baselineFeatures[self.getTestCase()][featureName])
 
   #
@@ -272,9 +343,9 @@ class RadiomicsTestUtils:
     else:
       percentDiff = abs(1.0 - (value / baseline))
 
-    # check for a less than one percent difference
-    if (percentDiff >= 0.01):
+    # check for a less than three percent difference
+    if (percentDiff >= 0.03):
       self.logger.error('checkResult %s, baseline value = %f, calculated = %f, diff = %f%%', key, float(baseline), value, percentDiff * 100)
-    assert(percentDiff < 0.01)
+    assert(percentDiff < 0.03)
 
 # testUtils = RadiomicsTestUtils('glcm')

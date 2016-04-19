@@ -72,9 +72,12 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     ##check for binning centered at 0
     bincount = numpy.ceil((numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))/float(self.binWidth))
+    
+    eps = numpy.spacing(1)
     bins = numpy.histogram(self.targetVoxelArray, bins=bincount)[0]
+    bins = bins + eps
     bins = bins/float(bins.sum())
-    return (-1.0 * numpy.sum(bins*numpy.where(bins!=0,numpy.log2(bins),0)))
+    return (-1.0 * numpy.sum(bins*numpy.log2(bins)))
 
   def getMinimumFeatureValue(self):
     """Calculate the Minimum Value in the image array."""

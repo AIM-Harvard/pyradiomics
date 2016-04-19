@@ -192,6 +192,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     greater range of discrete intensity values.
     """
     bincount = numpy.ceil((numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))/float(self.binWidth))
+    eps = numpy.spacing(1)
+    
     bins = numpy.histogram(self.targetVoxelArray, bins=bincount)[0]
     bins = bins/float(bins.sum())
+    bins = bins + eps
     return (numpy.sum(bins**2))

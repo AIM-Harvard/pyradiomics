@@ -1,5 +1,6 @@
 import SimpleITK as sitk
 import numpy, operator
+import logging
 
 def binImage(binwidth, parameterValues, parameterMatrix, parameterMatrixCoordinates):
   lowBound = min(parameterValues) - binwidth
@@ -75,11 +76,21 @@ def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSp
   resampledImageNode = rif.Execute(imageNode)
   return resampledImageNode
 
+#
+# Use the SimpleITK LaplacianRecursiveGaussianImageFilter
+# on the input image with the given sigmaValue and return
+# the filtered image.
+# If sigmaValue is not greater than zero, return the input image.
+#
 def applyLoG(inputImage, sigmaValue=0.5):
-  lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
-  lrgif.SetNormalizeAcrossScale(True)
-  lrgif.SetSigma(sigmaValue)
-  return lrgif.Execute(inputImage)
+  if sigmaValue > 0.0:
+    lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
+    lrgif.SetNormalizeAcrossScale(True)
+    lrgif.SetSigma(sigmaValue)
+    return lrgif.Execute(inputImage)
+  else:
+    logging.info('applyLoG: sigma must be greater than 0.0: %g', sigmaValue)
+    return inputImage
 
 def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
   # this mode is useful to generate the mask of thresholded voxels

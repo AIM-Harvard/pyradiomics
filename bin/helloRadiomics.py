@@ -20,7 +20,13 @@ if not os.path.exists(maskName):
 
 image = sitk.ReadImage(imageName)
 mask = sitk.ReadImage(maskName)
-"""
+
+applyWavelet = True
+if applyWavelet:
+  apporx, ret = imageoperations.swt3(image)
+
+image = ret[0].values()[0]
+sitk.WriteImage(image,"/Users/fedorov/Temp/w.nrrd")
 #
 # Show the first order feature calculations
 #
@@ -124,7 +130,7 @@ print 'done'
 print 'Calculated RLGL features: '
 for (key,val) in rlglFeatures.featureValues.iteritems():
   print '  ',key,':',val
-"""
+
 #
 # Show GLSZM features
 #

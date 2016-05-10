@@ -1,6 +1,6 @@
 import SimpleITK as sitk
-import numpy, operator
-import logging
+import numpy, operator, pywt, logging
+from itertools import chain
 
 def binImage(binwidth, parameterValues, parameterMatrix, parameterMatrixCoordinates):
   lowBound = min(parameterValues) - binwidth
@@ -105,3 +105,85 @@ def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None,
     tif.SetUpper(upperThreshold)
   tif.SetOutsideValue(outsideValue)
   return tif.Execute(inputImage)
+
+def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
+  matrix = sitk.GetArrayFromImage(inputImage)
+  matrix = numpy.asarray(matrix)
+  data = matrix.copy()
+  if data.ndim != 3:
+    raise ValueError("Expected 3D data array")
+
+  original_shape = matrix.shape
+  adjusted_shape = tuple([dim+1 if dim % 2 != 0 else dim for dim in original_shape])
+  data.resize(adjusted_shape)
+
+  if not isinstance(wavelet, pywt.Wavelet):
+    wavelet = pywt.Wavelet(wavelet)
+
+  ret = []
+  for i in range(start_level, start_level + level):
+    H, L = decompose_i(data, wavelet)
+
+    HH, HL = decompose_j(H, wavelet)
+    LH, LL = decompose_j(L, wavelet)
+
+    HHH, HHL = decompose_k(HH, wavelet)
+    HLH, HLL = decompose_k(HL, wavelet)
+    LHH, LHL = decompose_k(LH, wavelet)
+    LLH, LLL = decompose_k(LL, wavelet)
+
+    approximation = LLL.copy()
+    approximation.resize(original_shape)
+    dec = {'HHH': HHH,
+           'HHL': HHL,
+           'HLH': HLH,
+           'HLL': HLL,
+           'LHH': LHH,
+           'LHL': LHL,
+           'LLH': LLH}
+    for decName, decImage in dec.iteritems():
+      decTemp = decImage.copy()
+      decTemp.resize(original_shape)
+      sitkImage = sitk.GetImageFromArray(decTemp)
+      sitkImage.CopyInformation(inputImage)
+      dec[decName] = sitkImage
+
+    ret.append(dec)
+
+  return approximation, ret
+
+def decompose_i(data, wavelet):
+  #process in i:
+  H, L = [], []
+  i_arrays = chain.from_iterable(numpy.transpose(data,(0,1,2)))
+  for i_array in i_arrays:
+    cA, cD = pywt.swt(i_array, wavelet, level=1, start_level=0)[0]
+    H.append(cD)
+    L.append(cA)
+  H = numpy.hstack(H).reshape(data.shape)
+  L = numpy.hstack(L).reshape(data.shape)
+  return H, L
+
+def decompose_j(data, wavelet):
+  #process in j:
+  H, L = [], []
+  j_arrays = chain.from_iterable(numpy.transpose(data,(0,1,2)))
+  for j_array in j_arrays:
+    cA, cD = pywt.swt(j_array, wavelet, level=1, start_level=0)[0]
+    H.append(cD)
+    L.append(cA)
+  H = numpy.asarray( [slice.T for slice in numpy.split(numpy.vstack(H), data.shape[0])] )
+  L = numpy.asarray( [slice.T for slice in numpy.split(numpy.vstack(L), data.shape[0])] )
+  return H, L
+
+def decompose_k(data, wavelet):
+  #process in k:
+  H, L = [], []
+  k_arrays = chain.from_iterable(numpy.transpose(data,(1,2,0)))
+  for k_array in k_arrays:
+    cA, cD = pywt.swt(k_array, wavelet, level=1, start_level=0)[0]
+    H.append(cD)
+    L.append(cA)
+  H = numpy.dstack(H).reshape(data.shape)
+  L = numpy.dstack(L).reshape(data.shape)
+  return H, L

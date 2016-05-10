@@ -1,4 +1,4 @@
-from radiomics import firstorder, glcm, imageoperations, shape, rlgl, glszm
+from radiomics import firstorder, glcm, imageoperations, shape, rlgl, glszm, wavelet
 import SimpleITK as sitk
 import sys, os
 
@@ -124,7 +124,7 @@ print 'done'
 print 'Calculated RLGL features: '
 for (key,val) in rlglFeatures.featureValues.iteritems():
   print '  ',key,':',val
-"""
+
 #
 # Show GLSZM features
 #
@@ -142,4 +142,32 @@ print 'done'
 
 print 'Calculated GLSZM features: '
 for (key,val) in glszmFeatures.featureValues.iteritems():
+  print '  ',key,':',val
+"""
+
+#
+# Show Wavelet features
+#
+parameters = {}
+parameters['binWidth'] = 25
+parameters['resampledPixelSpacing'] = None
+parameters['interpolator'] = sitk.sitkBSpline
+parameters['padDistance'] = 5
+parameters['padFillValue'] = 0
+#parameters['wavelet_waveletType'] = 'coif1'
+
+waveletFeatures = wavelet.RadiomicsWavelet(image, mask, **parameters)
+waveletFeatures.enableAllFeatures()
+
+print 'Will calculate the following Wavelet features: '
+for f in waveletFeatures.enabledFeatures.keys():
+  print '  ', f
+  print eval('waveletFeatures.get'+f+'FeatureValue.__doc__')
+  
+print 'Calculating Wavelet features...',
+waveletFeatures.calculateFeatures()
+print 'done'
+
+print 'Calculated Wavelet features: '
+for (key,val) in waveletFeatures.featureValues.iteritems():
   print '  ',key,':',val

@@ -16,13 +16,13 @@ from nose_parameterized import parameterized
 
 class RadiomicsTestUtils:
 
-  def __init__(self, featureClassName):
+  def __init__(self):
     # set if output should be verbose for debugging
     self.logger = logging.getLogger('testUtils')
-    self.logger.setLevel(logging.ERROR)
-    # self.logger.setLevel(logging.DEBUG)
+    # self.logger.setLevel(logging.ERROR)
+    self.logger.setLevel(logging.DEBUG)
 
-    self.logger.debug('RadiomicsTestUtils for %s',featureClassName)
+    self.logger.debug('RadiomicsTestUtils')
 
     # the image and mask volumes
     self.image = None
@@ -33,11 +33,11 @@ class RadiomicsTestUtils:
     self.mappingDir = os.path.join(self.dataDir,'mapping')
 
     self.matlabFeaturesFile = os.path.join(self.dataDir,'MatlabFeatures.csv')
-    self.matlab2PyradiomicsFile = os.path.join(self.mappingDir,'matlab2pyradiomics_'+featureClassName+'.txt')
-    self.matlabIndicesFile = os.path.join(self.mappingDir,'matlab_'+featureClassName+'.txt')
-    self.pyradiomicsIndicesFile = os.path.join(self.mappingDir,'pyradiomics_'+featureClassName+'.txt')
+    self.matlab2PyradiomicsFile = None
+    self.matlabIndicesFile = None
+    self.pyradiomicsIndicesFile = None
 
-    self.featureClass = featureClassName
+    self.featureClassName = None
     self.baselineFeatures = {}
     self.matlab2PyradiomicsIndices = {}
     self.pyradiomics2MatlabIndices = {}
@@ -48,9 +48,30 @@ class RadiomicsTestUtils:
     self.sigma = 0.0
 
     self.readMatlabFeatures()
+
+    self.results = {}
+
+  #
+  # Set up the feature class, read in the files associated with it.
+  # Returns false if the feature class name didn't change, true if it did.
+  #
+  def setFeatureClassName(self, className):
+    if self.featureClassName == className:
+      return False
+
+    self.logger.debug('Setting feature class name to %s', className)
+
+    self.featureClassName = className
+
+    self.matlab2PyradiomicsFile = os.path.join(self.mappingDir,'matlab2pyradiomics_'+self.featureClassName+'.txt')
+    self.matlabIndicesFile = os.path.join(self.mappingDir,'matlab_'+self.featureClassName+'.txt')
+    self.pyradiomicsIndicesFile = os.path.join(self.mappingDir,'pyradiomics_'+self.featureClassName+'.txt')
+
     self.readMatlabIndices()
     self.readRadiomicsIndices()
     self.readMatlab2Pyradiomics()
+
+    return True
 
   #
   # Set up the variables for a specific test case:
@@ -66,6 +87,7 @@ class RadiomicsTestUtils:
       self.logger.info("Reading the image and mask for test case %s", testCase)
       self.image = sitk.ReadImage(imageName)
       self.mask = sitk.ReadImage(maskName)
+      self.results[testCase] = {}
       self.testCase = testCase
       return True
     else:
@@ -286,9 +308,9 @@ class RadiomicsTestUtils:
       sigmaString = self.getLaplacianSigmaString(self.getSigma())
       self.logger.debug('getBaselineFeature: using sigma of %f, string = %s',self.getSigma(), sigmaString)
       # sitk only does 3D
-      featureName = 'laplacian_sigma_' + sigmaString + '_mm_3D_' + self.featureClass + '_' + matlabFeatureName
+      featureName = 'laplacian_sigma_' + sigmaString + '_mm_3D_' + self.featureClassName + '_' + matlabFeatureName
     else:
-      featureName = self.featureClass + '_' + matlabFeatureName
+      featureName = self.featureClassName + '_' + matlabFeatureName
 
     # Check if the feature name is in the baseline
     self.logger.debug('\tfeature name = %s', featureName)
@@ -331,6 +353,14 @@ class RadiomicsTestUtils:
   def checkResult(self, key, value):
     assert(value != None)
     assert(not math.isnan(value))
+
+    # save the result
+    pyradIndex = self.getPyradiomicsIndex(key)
+    matlabIndex = self.getMatlabIndexFromPyradIndex(pyradIndex)
+    matlabFeatureName = self.getMatlabFeatureName(matlabIndex)
+    featureName = self.featureClassName + '_' + matlabFeatureName
+    self.results[self.getTestCase()][featureName] = value
+
     # use the mapping from the utils
     baseline = self.getMatlabValue(key)
     self.logger.debug('checkResults: for key %s, got baseline = %f', key, baseline)
@@ -347,5 +377,8 @@ class RadiomicsTestUtils:
     if (percentDiff >= 0.03):
       self.logger.error('checkResult %s, baseline value = %f, calculated = %f, diff = %f%%', key, float(baseline), value, percentDiff * 100)
     assert(percentDiff < 0.03)
+
+  def getResults(self):
+    return self.results
 
 # testUtils = RadiomicsTestUtils('glcm')

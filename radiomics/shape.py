@@ -75,7 +75,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     """
     Calculate the compactness (1) of the tumor region.
 
-    Compactness 1 is a measure of how compact the shape of the tumor is relative to a sphere (most compact).
+    Compactness 1 is a measure of how compact the shape of the tumor is
+    relative to a sphere (most compact). It is a dimensionless measure,
+    independent of scale and orientation. Compactness 1 is defined as the
+    ratio of volume to the (surface area)^(1.5). This is a measure of the
+    compactness of the shape of the image ROI
     """
     return ( (self.Volume) / ((self.SurfaceArea)**(2.0/3.0) * numpy.sqrt(numpy.pi)) )
 
@@ -83,7 +87,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     """
     Calculate the Compactness (2) of the tumor region.
 
-    Compactness 2 is a measure of how compact the shape of the tumor is relative to a sphere (most compact).
+    Compactness 2 is a measure of how compact the shape of the tumor is
+    relative to a sphere (most compact). It is a dimensionless measure,
+    independent of scale and orientation. This is a measure of the compactness
+    of the shape of the image ROI.
     """
     return ((36.0 * numpy.pi) * ((self.Volume)**2.0)/((self.SurfaceArea)**3.0))
 

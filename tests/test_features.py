@@ -14,6 +14,8 @@ defaultTestCases = testUtils.getTestCases()
 defaultFeatures = ["firstorder", "glcm", "rlgl", "shape", "glszm"]
 
 testCases = defaultTestCases
+# testCases = ["breast1"]
+# features = defaultFeatures
 features = ["firstorder"]
 
 featureClass = None
@@ -29,6 +31,14 @@ class TestFeatures:
         featureNames = None
         if feature == 'firstorder':
           featureNames = firstorder.RadiomicsFirstOrder.getFeatureNames()
+        elif feature == 'glcm':
+          featureNames = glcm.RadiomicsGLCM.getFeatureNames()
+        elif feature == 'rlgl':
+          featureNames = rlgl.RadiomicsRLGL.getFeatureNames()
+        elif feature == 'shape':
+          featureNames = shape.RadiomicsShape.getFeatureNames()
+        elif feature == 'glszm':
+          featureNames = glszm.RadiomicsGLSZM.getFeatureNames()
         assert(featureNames != None)
         logging.debug('generate_scenarios: featureNames = %s', featureNames)
         for featureName in featureNames:
@@ -40,15 +50,30 @@ class TestFeatures:
     print("")
     global testUtils
 
+    logging.debug('test_scenario: testCase = %s, featureClassName = %s, featureName = %s', testCase, featureClassName, featureName)
+
     testCaseChanged = testUtils.setTestCase(testCase)
     featureChanged = testUtils.setFeatureClassName(featureClassName)
 
     global featureClass
-    if featureClass is None or testCaseChanged:
+    testImage = testUtils.getImage()
+    testMask = testUtils.getMask()
+    if featureClass is None or testCaseChanged or featureChanged:
       if featureClassName == 'firstorder':
-        logging.info('making a first order')
-        print 'making a first order'
-        featureClass = firstorder.RadiomicsFirstOrder(testUtils.getImage(), testUtils.getMask())
+        logging.debug('Init First Order')
+        featureClass = firstorder.RadiomicsFirstOrder(testImage, testMask)
+      elif featureClassName == 'glcm':
+        logging.debug('Init GLCM')
+        featureClass = glcm.RadiomicsGLCM(testImage, testMask)
+      elif featureClassName == 'rlgl':
+        logging.debug('Init RLGL')
+        featureClass = rlgl.RadiomicsRLGL(testImage, testMask)
+      elif featureClassName == 'shape':
+        logging.debug('Init Shape')
+        featureClass = shape.RadiomicsShape(testImage, testMask)
+      elif featureClassName == 'glszm':
+        logging.debug('Init GLSZM')
+        featureClass = glszm.RadiomicsGLSZM(testImage, testMask)
     assert (featureClass != None)
 
     featureClass.disableAllFeatures()
@@ -60,6 +85,5 @@ class TestFeatures:
 
 def teardown_module():
   print("")
-  print("teardown")
   res = testUtils.getResults()
   print res

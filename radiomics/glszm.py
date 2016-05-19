@@ -8,6 +8,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLSZM,self).__init__(inputImage, inputMask, **kwargs)
 
+    if inputImage == None or inputMask == None:
+      print('ERROR GLSZM: missing input image or mask')
+      return
+
     self.imageArray = sitk.GetArrayFromImage(inputImage)
     self.maskArray = sitk.GetArrayFromImage(inputMask)
 

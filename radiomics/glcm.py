@@ -314,7 +314,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     Using coefficients i, j, calculate and return the mean Homogeneity 1 for all 13 GLCMs.
 
-    Homogeneity 1 is a measure of the similarity in intensity values for neighboring voxels.
+    Homogeneity 1 is a measure of the similarity in intensity values for
+    neighboring voxels. It is a measure of local homogeneity that increases
+    with less contrast in the window.
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -334,7 +336,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     return (homo2.mean())
 
   def getImc1FeatureValue(self):
-    """Using coefficients HX, HY, HXY, HXY1, HXY2, calculate and return the mean IMC1 for all 13 GLCMs."""
+    """
+    Using coefficients HX, HY, HXY, HXY1, HXY2, calculate and return the mean
+    Informal Measure of Correlation 1 for all 13 GLCMs.
+    """
     HX = self.coefficients['HX']
     HY = self.coefficients['HY']
     HXY = self.coefficients['HXY']
@@ -345,7 +350,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getImc2FeatureValue(self):
     """
-    Using coefficients HXY, HXY2, calculate and return the mean IMC2 for all 13 GLCMs.
+    Using coefficients HXY, HXY2, calculate and return the mean Informal Measure
+    of Correlation 2 for all 13 GLCMs.
 
     NOT IMPLEMENTED
     """
@@ -370,11 +376,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     Using coefficients i, j, Ng, calculate and return the mean IDMN for all 13 GLCMs.
 
-    IDMN is a measure of the local homogeneity of an image. IDMN weights
-    are the inverse of the Contrast weights (decreasing exponentially from
-    the diagonal i=j in the GLCM). Unlike Homogeneity2, IDMN normalizes the
-    square of the difference between neighboring intensity values by
-    dividing over the square of the total number of discrete intensity values.
+    IDMN (inverse difference moment normalized)  is a measure of the local
+    homogeneity of an image. IDMN weights are the inverse of the Contrast
+    weights (decreasing exponentially from the diagonal i=j in the GLCM).
+    Unlike Homogeneity2, IDMN normalizes the square of the difference between
+    neighboring intensity values by dividing over the square of the total
+    number of discrete intensity values.
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -386,9 +393,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     Using coefficients i, j, Ng, calculate and return the mean IDN for all 13 GLCMs.
 
-    IDN is another measure of the local homogeneity of an image. Unlike
-    Homogeneity1, IDN normalizes the difference between the neighboring
-    intensity values by dividing over the total number of discrete intensity values.
+    IDN (inverse difference normalized) is another measure of the local
+    homogeneity of an image. Unlike Homogeneity1, IDN normalizes the difference
+    between the neighboring intensity values by dividing over the total number
+    of discrete intensity values.
     """
     i = self.coefficients['i']
     j = self.coefficients['j']

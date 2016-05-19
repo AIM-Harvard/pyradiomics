@@ -2,7 +2,7 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_docstrings.py
 
-from radiomics import firstorder, glcm, rlgl, shape
+from radiomics import firstorder, glcm, rlgl, shape, glszm
 from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os
@@ -67,6 +67,14 @@ class TestDocStrings:
     def test_shape(self, featureName):
        logging.info('%s', featureName)
        features = shape.RadiomicsShape(None, None)
+       doc = eval('features.get'+featureName+'FeatureValue.__doc__')
+       logging.info('%s', doc)
+       assert(doc != None)
+
+    @parameterized.expand(generate_scenarios(glszm.RadiomicsGLSZM))
+    def test_shape(self, featureName):
+       logging.info('%s', featureName)
+       features = glszm.RadiomicsGLSZM(None, None)
        doc = eval('features.get'+featureName+'FeatureValue.__doc__')
        logging.info('%s', doc)
        assert(doc != None)

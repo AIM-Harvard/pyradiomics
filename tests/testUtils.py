@@ -33,12 +33,15 @@ class RadiomicsTestUtils:
     self.mappingDir = os.path.join(self.dataDir,'mapping')
 
     self.matlabFeaturesFile = os.path.join(self.dataDir,'MatlabFeatures.csv')
+    self.matlab2PyradiomicsFeaturesFile = os.path.join(self.mappingDir, 'matlab2pyradiomics_features.txt')
     self.matlab2PyradiomicsFile = None
     self.matlabIndicesFile = None
     self.pyradiomicsIndicesFile = None
 
     self.featureClassName = None
+    self.matlabFeatureClassName = None
     self.baselineFeatures = {}
+    self.matlab2PyradiomicsFeatures = {}
     self.matlab2PyradiomicsIndices = {}
     self.pyradiomics2MatlabIndices = {}
     self.matlabIndices = {}
@@ -49,10 +52,13 @@ class RadiomicsTestUtils:
 
     self.readMatlabFeatures()
 
+    self.readMatlab2PyradiomicsFeatures()
+
     self.results = {}
 
   #
   # Set up the feature class, read in the files associated with it.
+  # Also sets the matlab feature class that maps to this one.
   # Returns false if the feature class name didn't change, true if it did.
   #
   def setFeatureClassName(self, className):
@@ -70,6 +76,11 @@ class RadiomicsTestUtils:
     self.readMatlabIndices()
     self.readRadiomicsIndices()
     self.readMatlab2Pyradiomics()
+
+    pyradFeatureClassIndex = self.matlab2PyradiomicsFeatures.values().index(className)
+    self.matlabFeatureClassName = self.matlab2PyradiomicsFeatures.keys()[pyradFeatureClassIndex]
+    self.logger.debug("pyradFeatureClassIndex = %d, matlabFeatureClassName = %s", pyradFeatureClassIndex, self.matlabFeatureClassName)
+
 
     return True
 
@@ -213,6 +224,23 @@ class RadiomicsTestUtils:
 
 
   #
+  # Read in the file that maps between matlab feature names and pyradiomics
+  # feature names
+  #
+  def readMatlab2PyradiomicsFeatures(self):
+    if (not os.path.exists(self.matlab2PyradiomicsFeaturesFile)):
+      self.logger.error('Matlab features to Pyradiomics features mapping file not found %s:',self.matlab2PyradiomicsFeaturesFile)
+      return
+    self.matlab2PyradiomicsFeatures = {}
+    mappingFile = open(self.matlab2PyradiomicsFeaturesFile, 'rb')
+    for line in mappingFile:
+      matlabPy = line.rstrip().split(':')
+      m = matlabPy[0]
+      p = matlabPy[1]
+      self.matlab2PyradiomicsFeatures[m] = p
+    self.logger.debug('readMatlab2PyradomicsFeatures: mapping = %s',self.matlab2PyradiomicsFeatures)
+
+  #
   # Read in the file that maps matlab feature indices to matlab feature names
   #
   def readMatlabIndices(self):
@@ -310,7 +338,7 @@ class RadiomicsTestUtils:
       # sitk only does 3D
       featureName = 'laplacian_sigma_' + sigmaString + '_mm_3D_' + self.featureClassName + '_' + matlabFeatureName
     else:
-      featureName = self.featureClassName + '_' + matlabFeatureName
+      featureName = self.matlabFeatureClassName + '_' + matlabFeatureName
 
     # Check if the feature name is in the baseline
     self.logger.debug('\tfeature name = %s', featureName)

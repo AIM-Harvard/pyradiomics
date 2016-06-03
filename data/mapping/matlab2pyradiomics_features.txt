@@ -1,0 +1,5 @@
+GLCM:glcm
+Shape:shape
+RLGL:rlgl
+Stats:firstorder
+GLSZM:glszm

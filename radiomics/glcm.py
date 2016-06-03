@@ -137,16 +137,16 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = numpy.array([ numpy.sum(self.P_glcm[numpy.abs(i-j) == k], 0) for k in kValuesDiff ])
 
     # entropy of px #shape = (distances.size, angles)
-    HX = (-1) * numpy.sum( (px * numpy.log(px+eps)), (0, 1))
+    HX = (-1) * numpy.sum( (px * numpy.log2(px+eps)), (0, 1))
     # entropy of py #shape = (distances.size, angles)
-    HY = (-1) * numpy.sum( (py * numpy.log(py+eps)), (0, 1))
+    HY = (-1) * numpy.sum( (py * numpy.log2(py+eps)), (0, 1))
 
     # shape = (distances.size, angles)
-    HXY = (-1) * numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), (0, 1) )
+    HXY = (-1) * numpy.sum( (self.P_glcm * numpy.log2(self.P_glcm+eps)), (0, 1) )
     # shape = (distances.size, angles)
-    HXY1 = (-1) * numpy.sum( (self.P_glcm * numpy.log(px*py+eps)), (0, 1) )
+    HXY1 = (-1) * numpy.sum( (self.P_glcm * numpy.log2(px*py+eps)), (0, 1) )
     # shape = (distances.size, angles)
-    HXY2 = (-1) * numpy.sum( ((px*py) * numpy.log(px*py+eps)), (0, 1) )
+    HXY2 = (-1) * numpy.sum( ((px*py) * numpy.log2(px*py+eps)), (0, 1) )
 
     self.coefficients['Ng'] = Ng
     self.coefficients['eps'] = eps
@@ -269,7 +269,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = self.coefficients['pxSuby']
     eps = self.coefficients['eps']
 
-    difent = (-1) * numpy.sum( (pxSuby*numpy.log(pxSuby+eps)), 0 )
+    difent = (-1) * numpy.sum( (pxSuby*numpy.log2(pxSuby+eps)), 0 )
     return (difent.mean())
 
   def getDissimilarityFeatureValue(self):
@@ -435,7 +435,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxAddy = self.coefficients['pxAddy']
     eps = self.coefficients['eps']
 
-    sumentr = (-1) * numpy.sum( (pxAddy * numpy.log(pxAddy+eps)), 0 )
+    sumentr = (-1) * numpy.sum( (pxAddy * numpy.log2(pxAddy+eps)), 0 )
     return (sumentr.mean())
 
   def getSumVarianceFeatureValue(self):

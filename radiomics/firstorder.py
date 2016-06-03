@@ -35,7 +35,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     if moment == 1:
       return numpy.float64(0.0)
     else:
-      mn = numpy.expand_dims(numpy.mean(a,axis), axis)
+      mn = numpy.mean(a,axis, keepdims= True)
       s = numpy.power((a-mn), moment)
       return numpy.mean(s, axis)
 
@@ -139,13 +139,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     m2 = self._moment(self.targetVoxelArray, 2, axis)
     m3 = self._moment(self.targetVoxelArray, 3, axis)
-    zero = (m2 == 0)
-    vals = numpy.where(zero, 0, m3 / m2**1.5)
 
-    if vals.ndim == 0:
-      return vals.item()
+    if (m2 == 0): return 0
 
-    return vals
+    return m3 / m2**1.5
 
   def getKurtosisFeatureValue(self, axis=0):
     """
@@ -160,17 +157,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     m2 = self._moment(self.targetVoxelArray,2,axis)
     m4 = self._moment(self.targetVoxelArray,4,axis)
-    zero = (m2 == 0)
-    olderr = numpy.seterr(all='ignore')
 
-    try:
-      vals = numpy.where(zero, 0, m4 / m2**2.0)
-    finally:
-      numpy.seterr(**olderr)
-    if vals.ndim == 0:
-      vals = vals.item()
+    if (m2==0): return 0
 
-    return vals
+    return m4 / m2**2.0
 
   def getVarianceFeatureValue(self):
     """

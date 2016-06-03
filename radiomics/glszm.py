@@ -24,7 +24,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = len(self.histogram[0])
+    self.coefficients['Ng'] = len(self.histogram[0]) - 1
     self.coefficients['grayLevels'] = numpy.linspace(1,self.coefficients['Ng'],num=self.coefficients['Ng'])
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size

@@ -3,10 +3,12 @@ import numpy, operator, pywt, logging
 from itertools import chain
 
 def binImage(binwidth, parameterValues, parameterMatrix, parameterMatrixCoordinates):
-  lowBound = min(parameterValues) - binwidth
+  lowBound = min(parameterValues)
   highBound = max(parameterValues) + binwidth
 
-  binedges = numpy.union1d(numpy.arange(0,lowBound,-binwidth), numpy.arange(0,highBound,binwidth))
+  binedges = numpy.arange(lowBound, highBound, binwidth)
+  binedges[-1] += 1 # ensures that max(parametervalues) is binned to upper bin by numpy.digitize
+
   histogram = numpy.histogram(parameterValues, bins=binedges)
   parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterValues,binedges)
 

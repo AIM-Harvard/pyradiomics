@@ -2,6 +2,7 @@ import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
 import pdb
+from tqdm import trange
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   """GLSZM feature calculation."""
@@ -9,7 +10,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLSZM,self).__init__(inputImage, inputMask, **kwargs)
 
     if inputImage == None or inputMask == None:
-      print('ERROR GLSZM: missing input image or mask')
+      if self.verbose: print('ERROR GLSZM: missing input image or mask')
       return
 
     self.imageArray = sitk.GetArrayFromImage(inputImage)
@@ -60,11 +61,12 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     # Iterate over all gray levels in the image
     numGrayLevels = self.coefficients['grayLevels'].size+1
+
+    if self.verbose: bar = trange(numGrayLevels-1, desc= 'calculate GLSZM')
+
     for i in xrange(1, numGrayLevels):
       # give some progress
-      if i % 5 == 0:
-        percentProgress = (float(i) / float(numGrayLevels)) * 100.0
-        print('calculate GLSZM: %.2f%s' % (percentProgress, '%'))
+      if self.verbose: bar.update()
 
       dataTemp = numpy.where(self.matrix==i, 1, 0)
       ind = zip(*numpy.where(dataTemp==1))
@@ -101,6 +103,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
         ind = zip(*numpy.where(dataTemp==1))
         ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
 
+    if self.verbose: bar.close()
+
     # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area
     P_glszm_bounds = numpy.argwhere(P_glszm)
@@ -108,7 +112,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.P_glszm = P_glszm[xstart:xstop,:ystop]
 
   def calculateCoefficients(self):
-    sumP_glszm = numpy.sum( numpy.sum(self.P_glszm, 0), 0 )
+    sumP_glszm = numpy.sum(self.P_glszm, (0, 1) )
 
     # set sum to numpy.spacing(1) if sum is 0?
     if sumP_glszm == 0:
@@ -215,7 +219,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of smaller size zones with lower gray-level values.
     """
     try:
-      lisae = numpy.sum( numpy.sum( (self.P_glszm/((self.coefficients['ivector'][:,None]**2)*(self.coefficients['jvector'][None,:]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      lisae = numpy.sum( (self.P_glszm/((self.coefficients['ivector'][:,None]**2)*(self.coefficients['jvector'][None,:]**2))) , (0, 1) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       lisae = numpy.core.numeric.NaN
     return (lisae)
@@ -226,7 +230,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of smaller size zones with higher gray-level values.
     """
     try:
-      hisae = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['ivector'][:,None]**2)/(self.coefficients['jvector'][None,:]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      hisae = numpy.sum( (self.P_glszm*(self.coefficients['ivector'][:,None]**2)/(self.coefficients['jvector'][None,:]**2)) , (0, 1) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       hisae = numpy.core.numeric.NaN
     return (hisae)
@@ -237,7 +241,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of larger size zones with lower gray-level values.
     """
     try:
-      lilae = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['jvector'][None,:]**2)/(self.coefficients['ivector'][:,None]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      lilae = numpy.sum( (self.P_glszm*(self.coefficients['jvector'][None,:]**2)/(self.coefficients['ivector'][:,None]**2)) , (0, 1) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       lilae = numpy.core.numeric.NaN
     return (lilae)
@@ -248,7 +252,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of larger size zones with higher gray-level values.
     """
     try:
-      hilae = numpy.sum( numpy.sum( (self.P_glszm*((self.coefficients['jvector'][None,:]**2)*(self.coefficients['ivector'][:,None]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      hilae = numpy.sum( (self.P_glszm*((self.coefficients['jvector'][None,:]**2)*(self.coefficients['ivector'][:,None]**2))) , (0, 1) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       hilae = numpy.core.numeric.NaN
     return (hilae)

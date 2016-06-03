@@ -18,6 +18,7 @@ class RadiomicsFeaturesBase(object):
     self.interpolator = sitk.sitkBSpline
     self.padDistance = 5 # no padding
     self.padFillValue = 0
+    self.verbose = True
 
     for key,value in kwargs.iteritems():
       if key == 'binWidth':
@@ -30,7 +31,9 @@ class RadiomicsFeaturesBase(object):
         self.padDistance = value
       elif key == 'padFillValue':
         self.padFillValue = value
-      else:
+      elif key == 'verbose':
+        self.verbose = value
+      elif self.verbose:
         print 'Warning: unknown parameter:',key
 
     # all features are disabled by default

@@ -152,8 +152,9 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
 
     ret.append(dec)
 
-  approximation = data
-  approximation.resize(original_shape)
+  data.resize(original_shape)
+  approximation = sitk.GetImageFromArray(data)
+  approximation.CopyInformation(inputImage)
 
   return approximation, ret
 

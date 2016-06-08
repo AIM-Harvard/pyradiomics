@@ -3,10 +3,12 @@ import numpy, operator, pywt, logging
 from itertools import chain
 
 def binImage(binwidth, parameterValues, parameterMatrix, parameterMatrixCoordinates):
-  lowBound = min(parameterValues) - binwidth
+  lowBound = min(parameterValues)
   highBound = max(parameterValues) + binwidth
 
-  binedges = numpy.union1d(numpy.arange(0,lowBound,-binwidth), numpy.arange(0,highBound,binwidth))
+  binedges = numpy.arange(lowBound, highBound, binwidth)
+  binedges[-1] += 1 # ensures that max(parametervalues) is binned to upper bin by numpy.digitize
+
   histogram = numpy.histogram(parameterValues, bins=binedges)
   parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterValues,binedges)
 
@@ -132,8 +134,8 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
     LHH, LHL = decompose_k(LH, wavelet)
     LLH, LLL = decompose_k(LL, wavelet)
 
-    approximation = LLL.copy()
-    approximation.resize(original_shape)
+    data = LLL.copy()
+
     dec = {'HHH': HHH,
            'HHL': HHL,
            'HLH': HLH,
@@ -149,6 +151,10 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
       dec[decName] = sitkImage
 
     ret.append(dec)
+
+  data.resize(original_shape)
+  approximation = sitk.GetImageFromArray(data)
+  approximation.CopyInformation(inputImage)
 
   return approximation, ret
 

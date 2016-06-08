@@ -104,36 +104,34 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     eps = numpy.spacing(1)
 
     # shape = (Ng, Ng)
-    i, j = numpy.meshgrid(numpy.arange(1, self.P_glcm.shape[0]+1, dtype= 'float64'), numpy.arange(1, self.P_glcm.shape[1]+1, dtype= 'float64'))
+    Ngvector = numpy.arange(1, self.P_glcm.shape[1] +1, dtype= 'float64')
+    i, j = numpy.meshgrid(Ngvector, Ngvector, indexing= 'ij')
 
     # shape = (2*Ng-1)
-    # 2-112
     kValuesSum = numpy.arange(2, (Ng*2)+1)
     # shape = (Ng-1)
-    # 0-55
     kValuesDiff = numpy.arange(0,Ng)
 
-    # shape = (distances.size, angles)
+    # shape = (1, 1, distances.size, angles)
     u = numpy.sum((self.P_glcm*(i*j)[:,:,None,None]), (0, 1), keepdims= True )
-    # marginal row probabilities #shape = (Ng, distances.size, angles)
+
+    # marginal row probabilities #shape = (Ng, 1, distances.size, angles)
     px = self.P_glcm.sum(1, keepdims= True)
-    # marginal column probabilities #shape = (Ng, distances.size, angles)
+    # marginal column probabilities #shape = (1, Ng, distances.size, angles)
     py = self.P_glcm.sum(0, keepdims= True)
 
-    # shape = (distances.size, angles)
+    # shape = (1, 1, distances.size, angles)
     ux = numpy.sum( self.P_glcm*i[:,:,None,None], (0, 1), keepdims= True )
     uy = numpy.sum( self.P_glcm*j[:,:,None,None], (0, 1), keepdims= True )
 
-    # shape = (distances.size, angles)
+    # shape = (1, 1, distances.size, angles)
     sigx = numpy.sum( self.P_glcm*((i[:,:,None,None]-ux)**2), (0, 1), keepdims= True  )**0.5
-    # shape = (distances.size, angles)
+    # shape = (1, 1, distances.size, angles)
     sigy = numpy.sum( self.P_glcm*((j[:,:,None,None]-uy)**2), (0, 1), keepdims= True  )**0.5
 
     # shape = (2*Ng-1, distances.size, angles)
-    # 111 long
     pxAddy = numpy.array([ numpy.sum(self.P_glcm[i+j == k], 0) for k in kValuesSum ])
     # shape = (Ng, distances.size, angles)
-    # 56 long
     pxSuby = numpy.array([ numpy.sum(self.P_glcm[numpy.abs(i-j) == k], 0) for k in kValuesDiff ])
 
     # entropy of px #shape = (distances.size, angles)

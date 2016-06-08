@@ -255,8 +255,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     sigx = self.coefficients['sigx']
     sigy = self.coefficients['sigy']
 
-    corm = numpy.sum( self.P_glcm*(i[:,:,None,None]-ux)*(j[:,:,None,None]-uy), (0, 1) )
-    corr = corm/(sigx*sigy)
+    corm = numpy.sum( self.P_glcm*(i[:,:,None,None]-ux)*(j[:,:,None,None]-uy), (0, 1), keepdims= True )
+    corr = numpy.where((sigx*sigy) == 0, 1, corm/(sigx*sigy))
     return (corr.mean())
 
   def getDifferenceEntropyFeatureValue(self):

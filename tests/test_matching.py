@@ -1,6 +1,6 @@
 # to run this test, from directory above:
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/test_features.py
+# nosetests --nocapture -v tests/test_matching.py
 
 from radiomics import imageoperations, firstorder, glcm, rlgl, shape, glszm
 from testUtils import RadiomicsTestUtils
@@ -20,7 +20,7 @@ features = defaultFeatures
 
 featureClass = None
 
-class TestFeatures:
+class TestMapping:
 
   def generate_scenarios():
     global testCases
@@ -55,38 +55,12 @@ class TestFeatures:
     testCaseChanged = testUtils.setTestCase(testCase)
     featureChanged = testUtils.setFeatureClassName(featureClassName)
 
-    global featureClass
-    testImage = testUtils.getImage()
-    testMask = testUtils.getMask()
-    if featureClass is None or testCaseChanged or featureChanged:
-      if featureClassName == 'firstorder':
-        logging.debug('Init First Order')
-        featureClass = firstorder.RadiomicsFirstOrder(testImage, testMask)
-      elif featureClassName == 'glcm':
-        logging.debug('Init GLCM')
-        featureClass = glcm.RadiomicsGLCM(testImage, testMask)
-      elif featureClassName == 'rlgl':
-        logging.debug('Init RLGL')
-        featureClass = rlgl.RadiomicsRLGL(testImage, testMask)
-      elif featureClassName == 'shape':
-        logging.debug('Init Shape')
-        featureClass = shape.RadiomicsShape(testImage, testMask)
-      elif featureClassName == 'glszm':
-        logging.debug('Init GLSZM')
-        featureClass = glszm.RadiomicsGLSZM(testImage, testMask)
-    assert (featureClass != None)
+    matlabString = testUtils.getBaselineFeatureClassAndName(featureName)
 
-    featureClass.disableAllFeatures()
-    featureClass.enableFeatureByName(featureName)
-    featureClass.calculateFeatures()
-    # get the result and test it
-    val = featureClass.featureValues[featureName]
-    testUtils.checkResult(featureName, val)
+    logging.debug('Baseline = %s, for testCase = %s, featureClassName = %s, featureName = %s', matlabString, testCase, featureClassName, featureName)
+
+    assert (matlabString != None)
 
 def teardown_module():
   print("")
-  res = testUtils.getResults()
-  print res
-  diff = testUtils.getDiffs()
-  print 'Differences from baseline:'
-  print diff
+

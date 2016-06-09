@@ -78,6 +78,8 @@ def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSp
   2 - sitkBSpline
   3 - sitkGaussian
   """
+  if imageNode == None: return None
+
   rif = sitk.ResampleImageFilter()
 
   rif.SetInterpolator(interpolator)

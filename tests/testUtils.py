@@ -434,3 +434,24 @@ class RadiomicsTestUtils:
 
   def getDiffs(self):
     return self.diffs
+
+  #
+  # Assumes a data structure with:
+  # {'id1' : {'f1':n1, 'f2':n2}, 'id2' : {'f1':n3, 'f2':n4}}
+  #
+  def writeCSV(self, data, fileName):
+    csvFile = open(fileName, 'wb')
+    csvFileWriter = csv.writer(csvFile)
+    # get the headers from the first row
+    header = data[data.keys()[0]].keys()
+    header = ['testCase'] + header
+    csvFileWriter.writerow(header)
+    for testCase in data.keys():
+      thisCase = data[testCase]
+      thisCase['testCase'] = testCase
+      row = []
+      for h in header:
+        row = row + [thisCase[h]]
+      csvFileWriter.writerow(row)
+    csvFile.close()
+    self.logger.info('Wrote to file %s', fileName)

@@ -13,7 +13,7 @@ class RadiomicsFeaturesBase(object):
     '''
 
     self.binWidth = 25
-    self.resampledPixelSpacing = '3,3,3'
+    self.resampledPixelSpacing = [3,3,3]
     self.interpolator = sitk.sitkBSpline
     self.padDistance = 5 # no padding
     self.padFillValue = 0
@@ -42,11 +42,7 @@ class RadiomicsFeaturesBase(object):
 
     if self.interpolator != None and self.resampledPixelSpacing != None:
       self.inputImage = imageoperations.interpolateImage(inputImage, self.resampledPixelSpacing, self.interpolator)
-
-      tempMask = imageoperations.interpolateImage(inputMask, self.resampledPixelSpacing, self.interpolator)
-      maskLowerthresh = -.5
-      maskUpperthresh = 0.5
-      self.inputMask = imageoperations.applyThreshold(tempMask, maskLowerthresh, maskUpperthresh, 0, 1)
+      self.inputMask = imageoperations.interpolateImage(inputMask, self.resampledPixelSpacing, self.interpolator, True)
     else:
       self.inputImage = inputImage
       self.inputMask = inputMask

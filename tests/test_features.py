@@ -15,8 +15,8 @@ defaultFeatures = ["firstorder", "glcm", "rlgl", "shape", "glszm"]
 
 testCases = defaultTestCases
 # testCases = ["breast1"]
-features = defaultFeatures
-# features = ["firstorder"]
+# features = defaultFeatures
+features = ["firstorder", "rlgl"]
 
 featureClass = None
 
@@ -87,6 +87,11 @@ def teardown_module():
   print("")
   res = testUtils.getResults()
   print res
+  resultsFile = os.path.join(testUtils.dataDir, 'PyradiomicsFeatures.csv')
+  testUtils.writeCSV(res, resultsFile)
   diff = testUtils.getDiffs()
   print 'Differences from baseline:'
   print diff
+  diffFile = os.path.join(testUtils.dataDir, 'Matlab2PyradiomicsFeaturesDiff.csv')
+  testUtils.writeCSV(diff, diffFile)
+  logging.info("Wrote calculated features to %s, and the differences between the matlab features and the pyradiomics ones to %s.", resultsFile, diffFile)

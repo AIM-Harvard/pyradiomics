@@ -59,7 +59,7 @@ for n in matlabFeaturesNamesList:
     matlabNames[classMap[category]].add(name)
 
 # save the feature class mapping
-matlab2pyradiomics_featuresFile = os.path.join(outputDir, 'matlab2pyradiomics_features.txt')
+matlab2pyradiomics_featuresFile = os.path.join(outputDir, 'matlab2pyradiomics_featureClasses.txt')
 f = open(matlab2pyradiomics_featuresFile,'w')
 for m,p in matlab2pyradiomics_features.iteritems():
   f.write(m+":"+p+"\n")

@@ -19,8 +19,8 @@ class RadiomicsTestUtils:
   def __init__(self):
     # set if output should be verbose for debugging
     self.logger = logging.getLogger('testUtils')
-    # self.logger.setLevel(logging.ERROR)
-    self.logger.setLevel(logging.DEBUG)
+    self.logger.setLevel(logging.ERROR)
+    # self.logger.setLevel(logging.DEBUG)
 
     self.logger.debug('RadiomicsTestUtils')
 
@@ -33,26 +33,37 @@ class RadiomicsTestUtils:
     self.mappingDir = os.path.join(self.dataDir,'mapping')
 
     self.matlabFeaturesFile = os.path.join(self.dataDir,'MatlabFeatures.csv')
+    self.matlab2PyradiomicsFeatureClassesFile = os.path.join(self.mappingDir, 'matlab2pyradiomics_featureClasses.txt')
     self.matlab2PyradiomicsFile = None
     self.matlabIndicesFile = None
     self.pyradiomicsIndicesFile = None
 
     self.featureClassName = None
+    self.matlabFeatureClassName = None
     self.baselineFeatures = {}
+    self.matlab2PyradiomicsFeatureClasses = {}
     self.matlab2PyradiomicsIndices = {}
     self.pyradiomics2MatlabIndices = {}
     self.matlabIndices = {}
     self.pyradiomicsIndices = {}
 
     self.testCase = None
+
     self.sigma = 0.0
+
+    self.doWavelets = False
+    self.waveletString = None
 
     self.readMatlabFeatures()
 
+    self.readMatlab2PyradiomicsFeatureClasses()
+
     self.results = {}
+    self.diffs = {}
 
   #
   # Set up the feature class, read in the files associated with it.
+  # Also sets the matlab feature class that maps to this one.
   # Returns false if the feature class name didn't change, true if it did.
   #
   def setFeatureClassName(self, className):
@@ -71,6 +82,11 @@ class RadiomicsTestUtils:
     self.readRadiomicsIndices()
     self.readMatlab2Pyradiomics()
 
+    pyradFeatureClassIndex = self.matlab2PyradiomicsFeatureClasses.values().index(className)
+    self.matlabFeatureClassName = self.matlab2PyradiomicsFeatureClasses.keys()[pyradFeatureClassIndex]
+    self.logger.debug("pyradFeatureClassIndex = %d, matlabFeatureClassName = %s", pyradFeatureClassIndex, self.matlabFeatureClassName)
+
+
     return True
 
   #
@@ -88,6 +104,7 @@ class RadiomicsTestUtils:
       self.image = sitk.ReadImage(imageName)
       self.mask = sitk.ReadImage(maskName)
       self.results[testCase] = {}
+      self.diffs[testCase] = {}
       self.testCase = testCase
       return True
     else:
@@ -213,6 +230,23 @@ class RadiomicsTestUtils:
 
 
   #
+  # Read in the file that maps between matlab feature names and pyradiomics
+  # feature names
+  #
+  def readMatlab2PyradiomicsFeatureClasses(self):
+    if (not os.path.exists(self.matlab2PyradiomicsFeatureClassesFile)):
+      self.logger.error('Matlab features to Pyradiomics features mapping file not found %s:',self.matlab2PyradiomicsFeatureClassesFile)
+      return
+    self.matlab2PyradiomicsFeatureClasses = {}
+    mappingFile = open(self.matlab2PyradiomicsFeatureClassesFile, 'rb')
+    for line in mappingFile:
+      matlabPy = line.rstrip().split(':')
+      m = matlabPy[0]
+      p = matlabPy[1]
+      self.matlab2PyradiomicsFeatureClasses[m] = p
+    self.logger.debug('readMatlab2PyradomicsFeatures: mapping = %s',self.matlab2PyradiomicsFeatureClasses)
+
+  #
   # Read in the file that maps matlab feature indices to matlab feature names
   #
   def readMatlabIndices(self):
@@ -297,55 +331,70 @@ class RadiomicsTestUtils:
     return featureName
 
   #
-  # From the given matlabFeatureName, check that the currently set
-  # testCase has an entry in the baseline features dictionary. If so,
-  # return the value of the feature named.
+  # From the given pyradiomics feature name, get the full string with the feature class
+  # and any LoG or wavelet setting strings, to be used to index into the baseline
+  # features dictionary. Relies on the pyradomics featureClassName having been set in this utility class.
   #
-  def getBaselineFeature(self, matlabFeatureName):
-    assert(self.getTestCase() in self.baselineFeatures)
-    self.logger.debug('getBaselineFeature: Test case %s has baseline information', self.getTestCase())
+  def getBaselineFeatureClassAndName(self, pyradFeatureName):
+    self.logger.debug('getBaselineFeatureClassAndName: pyradFeatureName = %s', pyradFeatureName)
+    matlabFeatureName = self.getMatlabFeatureNameFromPyradiomicsFeatureName(pyradFeatureName)
+    self.logger.debug('getBaselineFeatureClassAndName: matlabFeatureName = %s', matlabFeatureName)
+    featureName = None
     if self.getSigma() > 0.0:
       sigmaString = self.getLaplacianSigmaString(self.getSigma())
-      self.logger.debug('getBaselineFeature: using sigma of %f, string = %s',self.getSigma(), sigmaString)
+      self.logger.debug('getBaselineFeatureClassAndName: using sigma of %f, string = %s',self.getSigma(), sigmaString)
       # sitk only does 3D
-      featureName = 'laplacian_sigma_' + sigmaString + '_mm_3D_' + self.featureClassName + '_' + matlabFeatureName
+      featureName = 'laplacian_sigma_' + sigmaString + '_mm_3D_' + self.matlabFeatureClassName + '_' + matlabFeatureName
+    elif self.doWavelets:
+      featureName = 'wavelet_' + self.waveletString + '_' + self.matlabFeatureClassName + '_' + matlabFeatureName
     else:
-      featureName = self.featureClassName + '_' + matlabFeatureName
+      featureName = self.matlabFeatureClassName + '_' + matlabFeatureName
+    return featureName
+
+  #
+  # From the given pyradiomics feature name, check that the currently set
+  # testCase has an entry in the baseline features dictionary. If so,
+  # find the matching matlab key and return the baseline feature value for
+  # the currently set test case ID.
+  #
+  def getBaselineFeatureValue(self, pyradFeatureName):
+    assert(self.getTestCase() in self.baselineFeatures)
+    self.logger.debug('getBaselineFeatureValue: Test case %s has baseline information', self.getTestCase())
+
+    featureName = self.getBaselineFeatureClassAndName(pyradFeatureName)
 
     # Check if the feature name is in the baseline
     self.logger.debug('\tfeature name = %s', featureName)
     if not (featureName in self.baselineFeatures[self.getTestCase()]):
-      self.logger.error('getBaselineFeature: feature %s does not appear in the Matlab baseline file for this test case', featureName)
+      self.logger.error('getBaselineFeatureValue: feature %s does not appear in the Matlab baseline file for this test case', featureName)
     assert(featureName in self.baselineFeatures[self.getTestCase()])
-    self.logger.debug('getBaselineFeature: Matlab feature %s is in the baseline for this test case', featureName)
+    self.logger.debug('getBaselineFeatureValue: Matlab feature %s is in the baseline for this test case', featureName)
 
     return float(self.baselineFeatures[self.getTestCase()][featureName])
 
   #
-  # From the given pyradiomics key, find the matching matlab key
-  # and return the baseline feature value for the currently set test case
-  # ID.
+  # Utility method to map between pyradiomics feature name and the matlab feature name.
+  # Returns the matlab feature name as a string that can then be used to generate the
+  # feature class name plus feature name string for lookup in the baseline.
   #
-  def getMatlabValue(self, pyradiomicsKey):
-    self.logger.debug('getMatlabValue: pyradiomicsKey key = %s', pyradiomicsKey)
+  def getMatlabFeatureNameFromPyradiomicsFeatureName(self, pyradFeatureName):
+    self.logger.debug('getMatlabFeatureNameFromPyradiomicsFeatureName: pyradiomics feature name = %s', pyradFeatureName)
 
     # get the index of this pyradoimics feature name
-    pyradIndex = self.getPyradiomicsIndex(pyradiomicsKey)
-    self.logger.debug('getMatlabValue: got pyradindex %d', pyradIndex)
+    pyradIndex = self.getPyradiomicsIndex(pyradFeatureName)
+    self.logger.debug('getMatlabFeatureNameFromPyradiomicsFeatureName: got pyradindex %d', pyradIndex)
     assert(pyradIndex != -1)
 
     # now map that index to a matlab index
     matlabIndex = self.getMatlabIndexFromPyradIndex(pyradIndex)
-    self.logger.debug('getMatlabValue: got matlab index %d', matlabIndex)
+    self.logger.debug('getMatlabFeatureNameFromPyradiomicsFeatureName: got matlab index %d', matlabIndex)
     assert(matlabIndex != -1)
 
     # now get the matlab feature name for that index
     matlabFeatureName = self.getMatlabFeatureName(matlabIndex)
-    self.logger.debug('getMatlabValue: got matlab feature name %s', matlabFeatureName)
+    self.logger.debug('getMatlabFeatureNameFromPyradiomicsFeatureName: got matlab feature name %s', matlabFeatureName)
     assert(matlabFeatureName != None)
-
-    # now get the baseline for this feature for this test case
-    return self.getBaselineFeature(matlabFeatureName)
+    return matlabFeatureName
 
   #
   # Use utility methods to get and test the results against the expected baseline value for this key.
@@ -354,15 +403,14 @@ class RadiomicsTestUtils:
     assert(value != None)
     assert(not math.isnan(value))
 
-    # save the result
-    pyradIndex = self.getPyradiomicsIndex(key)
-    matlabIndex = self.getMatlabIndexFromPyradIndex(pyradIndex)
-    matlabFeatureName = self.getMatlabFeatureName(matlabIndex)
-    featureName = self.featureClassName + '_' + matlabFeatureName
+    # save the result using the matlab class and feature names
+    self.logger.debug('checkResults: key = %s', key)
+    featureName = self.getBaselineFeatureClassAndName(key)
+    self.logger.debug('checkResults: featureName = %s', featureName)
     self.results[self.getTestCase()][featureName] = value
 
     # use the mapping from the utils
-    baseline = self.getMatlabValue(key)
+    baseline = self.getBaselineFeatureValue(key)
     self.logger.debug('checkResults: for key %s, got baseline = %f', key, baseline)
     if baseline == 0.0:
       # avoid divide by zero, the difference is either 0% if the value is also zero, or 100%
@@ -373,6 +421,9 @@ class RadiomicsTestUtils:
     else:
       percentDiff = abs(1.0 - (value / baseline))
 
+    # save the difference
+    self.diffs[self.getTestCase()][featureName] = percentDiff
+
     # check for a less than three percent difference
     if (percentDiff >= 0.03):
       self.logger.error('checkResult %s, baseline value = %f, calculated = %f, diff = %f%%', key, float(baseline), value, percentDiff * 100)
@@ -381,4 +432,26 @@ class RadiomicsTestUtils:
   def getResults(self):
     return self.results
 
-# testUtils = RadiomicsTestUtils('glcm')
+  def getDiffs(self):
+    return self.diffs
+
+  #
+  # Assumes a data structure with:
+  # {'id1' : {'f1':n1, 'f2':n2}, 'id2' : {'f1':n3, 'f2':n4}}
+  #
+  def writeCSV(self, data, fileName):
+    csvFile = open(fileName, 'wb')
+    csvFileWriter = csv.writer(csvFile)
+    # get the headers from the first row
+    header = data[data.keys()[0]].keys()
+    header = ['testCase'] + header
+    csvFileWriter.writerow(header)
+    for testCase in data.keys():
+      thisCase = data[testCase]
+      thisCase['testCase'] = testCase
+      row = []
+      for h in header:
+        row = row + [thisCase[h]]
+      csvFileWriter.writerow(row)
+    csvFile.close()
+    self.logger.info('Wrote to file %s', fileName)

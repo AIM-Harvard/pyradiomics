@@ -25,12 +25,13 @@ outputDir = os.path.join(dataDir,'mapping')
 # names. Note that Matlab implementation does not name feature classes
 # consistently, thus multiple Matlab feature classes may map into the same
 # pyradiomics feature class (at least this was the assumption of @fedorov)
-classMap = {"firstorder":"firstorder","Shape":"shape","RLGL":"rlgl","GLCM":"glcm","rlgl":"rlgl","glcm":"glcm","glszm":"glszm","Stats":"firstorder","shape":"shape"}
+classMap = {"firstorder":"firstorder","Shape":"shape","RLGL":"rlgl","GLCM":"glcm","GLSZM":"glszm","rlgl":"rlgl","glcm":"glcm","glszm":"glszm","Stats":"firstorder","shape":"shape"}
 
 matlabFeaturesNamesList = open(matlabFeaturesFile,'r').readline()[:-1].split(',')
 
 # parse names from Matlab csv file
 matlabNames = {}
+matlab2pyradiomics_features = {}
 for n in matlabFeaturesNamesList:
   # try to figure out the class name first
   classNameFound = False
@@ -45,6 +46,9 @@ for n in matlabFeaturesNamesList:
     print "Failed to recognize class from the feature code",n
     continue
 
+  # save this particular set of feature name mappings
+  matlab2pyradiomics_features[matlabClassName] = classMap[matlabClassName]
+
   category = matlabClassName
   name = n
 
@@ -54,6 +58,12 @@ for n in matlabFeaturesNamesList:
     matlabNames[classMap[category]] = set()
     matlabNames[classMap[category]].add(name)
 
+# save the feature class mapping
+matlab2pyradiomics_featuresFile = os.path.join(outputDir, 'matlab2pyradiomics_featureClasses.txt')
+f = open(matlab2pyradiomics_featuresFile,'w')
+for m,p in matlab2pyradiomics_features.iteritems():
+  f.write(m+":"+p+"\n")
+f.close()
 
 # populate pyradiomics names
 pyradiomicsNames = {}

@@ -2,15 +2,27 @@ import SimpleITK as sitk
 import numpy, operator, pywt, logging
 from itertools import chain
 
-def binImage(binwidth, parameterValues, parameterMatrix, parameterMatrixCoordinates):
-  lowBound = min(parameterValues)
+def binImage(binwidth, parameterValues, parameterMatrix = None, parameterMatrixCoordinates = None):
+  lowBound = min(parameterValues) - binwidth
   highBound = max(parameterValues) + binwidth
 
-  binedges = numpy.arange(lowBound, highBound, binwidth)
-  binedges[-1] += 1 # ensures that max(parametervalues) is binned to upper bin by numpy.digitize
+  highRange = numpy.arange(0, highBound, binwidth)
+  lowRange = numpy.arange(0, lowBound, -binwidth) # handles negative minimum values
+
+  # contains edges from 0 up to, but not including the lower edge of the bin containing minimum value
+  intersectRange = numpy.arange(0, lowBound, binwidth)
+  # contains all binedges, including negative edges
+  unionRange = numpy.union1d(lowRange, highRange)
+
+  #exclude unnecessary binedges defined by intersectRange
+  binedges = numpy.setxor1d(unionRange, intersectRange)
+
+  binedges[-1] += 1 # ensures that max(self.targertVoxelArray) is binned to upper bin by numpy.digitize
 
   histogram = numpy.histogram(parameterValues, bins=binedges)
-  parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterValues,binedges)
+
+  if (parameterMatrix != None and parameterMatrixCoordinates !=  None):
+    parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterValues,binedges)
 
   return parameterMatrix, histogram
 

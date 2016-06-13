@@ -70,16 +70,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     image values. It measures the average amount of
     information required to encode the image values
     """
-    lowBound = min(self.targetVoxelArray)
-    highBound = max(self.targetVoxelArray) + self.binWidth
-
-    binedges = numpy.arange(lowBound, highBound, self.binWidth)
-    binedges[-1] += 1 # ensures that max(self.targertVoxelArray) is binned to upper bin by numpy.digitize
-
     eps = numpy.spacing(1)
-    bins = numpy.histogram(self.targetVoxelArray, bins=binedges)[0]
-    bins = bins + eps
-    bins = bins/float(bins.sum())
+
+    histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray)[1]
+    bins = histogram[0]
+    bins = bins/(float(bins.sum()) + eps)
     return (-1.0 * numpy.sum(bins*numpy.log2(bins)))
 
   def getMinimumFeatureValue(self):
@@ -194,14 +189,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     where a greater uniformity implies a greater heterogeneity or a
     greater range of discrete intensity values.
     """
-    lowBound = min(self.targetVoxelArray)
-    highBound = max(self.targetVoxelArray) + self.binWidth
-
-    binedges = numpy.arange(lowBound, highBound, self.binWidth)
-    binedges[-1] += 1 # ensures that max(self.targertVoxelArray) is binned to upper bin by numpy.digitize
-
     eps = numpy.spacing(1)
-    bins = numpy.histogram(self.targetVoxelArray, bins=binedges)[0]
-    bins = bins + eps
-    bins = bins/float(bins.sum())
+
+    histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray)[1]
+    bins = histogram[0]
+    bins = bins/(float(bins.sum()) + eps)
     return (numpy.sum(bins**2))

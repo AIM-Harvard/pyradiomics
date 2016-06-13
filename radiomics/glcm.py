@@ -107,9 +107,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i,j = numpy.meshgrid(NgVector, NgVector, indexing= 'ij')
 
     # shape = (2*Ng-1)
-    kValuesSum = numpy.arange(2, (Ng*2)+1) - 1
+    kValuesSum = numpy.arange(2, (Ng*2)+1)
     # shape = (Ng-1)
-    kValuesDiff = numpy.arange(0,Ng) + 1
+    kValuesDiff = numpy.arange(0,Ng)
 
     # shape = (1, 1, distances.size, angles)
     u = self.P_glcm.mean((0, 1), keepdims= True)

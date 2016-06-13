@@ -10,7 +10,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     super(RadiomicsShape,self).__init__(inputImage,inputMask, **kwargs)
 
     if inputImage == None or inputMask == None:
-      print('ERROR Shape: missing input image or mask')
+      if self.verbose: print('ERROR Shape: missing input image or mask')
       return
 
     self.pixelSpacing = inputImage.GetSpacing()

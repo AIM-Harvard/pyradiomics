@@ -2,6 +2,7 @@ import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
 import pdb
+from tqdm import trange
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   """GLSZM feature calculation."""
@@ -9,7 +10,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLSZM,self).__init__(inputImage, inputMask, **kwargs)
 
     if inputImage == None or inputMask == None:
-      print('ERROR GLSZM: missing input image or mask')
+      if self.verbose: print('ERROR GLSZM: missing input image or mask')
       return
 
     self.imageArray = sitk.GetArrayFromImage(inputImage)
@@ -60,11 +61,12 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     # Iterate over all gray levels in the image
     numGrayLevels = self.coefficients['grayLevels'].size+1
+
+    if self.verbose: bar = trange(numGrayLevels-1, desc= 'calculate GLSZM')
+
     for i in xrange(1, numGrayLevels):
       # give some progress
-      if i % 5 == 0:
-        percentProgress = (float(i) / float(numGrayLevels)) * 100.0
-        print('calculate GLSZM: %.2f%s' % (percentProgress, '%'))
+      if self.verbose: bar.update()
 
       dataTemp = numpy.where(self.matrix==i, 1, 0)
       ind = zip(*numpy.where(dataTemp==1))
@@ -100,6 +102,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
         # Find unprocessed nonzero positions for current gray level
         ind = zip(*numpy.where(dataTemp==1))
         ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
+
+    if self.verbose: bar.close()
 
     # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area

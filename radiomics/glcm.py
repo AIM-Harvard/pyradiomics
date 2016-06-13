@@ -101,43 +101,31 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
     eps = numpy.spacing(1)
 
-    # shape = (Ng, distances.size, angles)
-    ivector = numpy.arange(1,Ng+1)
-    # shape = (Ng, distances.size, angles)
-    jvector = numpy.arange(1,Ng+1)
-    i,j = numpy.meshgrid(numpy.arange(1,self.P_glcm.shape[0]+1), numpy.arange(1,self.P_glcm.shape[1]+1))
 
+    NgVector = numpy.arange(1,self.P_glcm.shape[0]+1)
     # shape = (Ng, Ng)
-    prodMatrix = numpy.multiply.outer(ivector, jvector)
-    # shape = (Ng, Ng)
-    # sum-1 so 111 in corner
-    sumMatrix = numpy.add.outer(ivector, jvector)
-    # shape = (Ng, Ng)
-    # absval(subtract)+1 so 1-1 and 56-56 in corners
-    diffMatrix = numpy.absolute(numpy.subtract.outer(ivector, jvector))
+    i,j = numpy.meshgrid(NgVector, NgVector, indexing= 'ij')
 
     # shape = (2*Ng-1)
-    # 1-111
     kValuesSum = numpy.arange(2, (Ng*2)+1) - 1
     # shape = (Ng-1)
-    # 0-55
     kValuesDiff = numpy.arange(0,Ng) + 1
 
     # shape = (distances.size, angles)
-    u = self.P_glcm.mean(0).mean(0)
+    u = self.P_glcm.mean((0, 1))
     # marginal row probabilities #shape = (Ng, distances.size, angles)
     px = self.P_glcm.sum(1)
     # marginal column probabilities #shape = (Ng, distances.size, angles)
     py = self.P_glcm.sum(0)
 
     # shape = (distances.size, angles)
-    ux = numpy.sum(numpy.sum( ivector[None,:,None,None]*self.P_glcm, 0 ), 0 )
-    uy = numpy.sum(numpy.sum( jvector[:,None,None,None]*self.P_glcm, 0 ), 0 )
+    ux = numpy.sum( i[:,:,None,None]*self.P_glcm, (0, 1) )
+    uy = numpy.sum( j[:,:,None,None]*self.P_glcm, (0, 1) )
 
     # shape = (distances.size, angles)
-    sigx = numpy.sum(numpy.sum(self.P_glcm*((i[:,:,None,None]-ux[None,None,:,:])**2), 0 ), 0 )**0.5
+    sigx = numpy.sum(self.P_glcm*((i[:,:,None,None]-ux[None,None,:,:])**2), (0, 1) )**0.5
     # shape = (distances.size, angles)
-    sigy = numpy.sum(numpy.sum(self.P_glcm*((j[:,:,None,None]-uy[None,None,:,:])**2), 0 ), 0 )**0.5
+    sigy = numpy.sum(self.P_glcm*((j[:,:,None,None]-uy[None,None,:,:])**2), (0, 1) )**0.5
 
     # shape = (2*Ng-1, distances.size, angles)
     # 111 long
@@ -151,12 +139,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     # entropy of py #shape = (distances.size, angles)
     HY = (-1) * numpy.sum( (py * numpy.log(py+eps)), 0)
     # shape = (distances.size, angles)
-    HXY = (-1) * numpy.sum( numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), 0 ), 0 )
+    HXY = (-1) * numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), (0, 1) )
 
     # shape = (distances.size, angles)
-    HXY1 = (-1) * numpy.sum( numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), 0 ), 0)
+    HXY1 = (-1) * numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), (0, 1) )
     # shape = (distances.size, angles)
-    HXY2 = (-1) * numpy.sum( numpy.sum( ((px*py) * numpy.log(px*py+eps)), 0 ), 0)
+    HXY2 = (-1) * numpy.sum( ((px*py) * numpy.log(px*py+eps)), (0, 1) )
 
     self.coefficients['Ng'] = Ng
     self.coefficients['eps'] = eps
@@ -188,7 +176,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
-    ac = numpy.sum(numpy.sum(self.P_glcm * (i*j)[:,:,None,None], 0 ), 0 )
+    ac = numpy.sum( self.P_glcm * (i*j)[:,:,None,None], (0, 1) )
     return (ac.mean())
 
   def getClusterProminenceFeatureValue(self):
@@ -203,7 +191,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     j = self.coefficients['j']
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
-    cp = numpy.sum( numpy.sum( (self.P_glcm * (((i+j)[:,:,None,None] - ux[None,None,:,:] - uy[None,None,:,:])**4)), 0 ), 0 )
+    cp = numpy.sum( (self.P_glcm * (((i+j)[:,:,None,None] - ux[None,None,:,:] - uy[None,None,:,:])**4)), (0, 1) )
     return (cp.mean())
 
   def getClusterShadeFeatureValue(self):
@@ -217,7 +205,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     j = self.coefficients['j']
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
-    cs = numpy.sum( numpy.sum( (self.P_glcm * (((i+j)[:,:,None,None] - ux[None,None,:,:] - uy[None,None,:,:])**3)), 0 ), 0 )
+    cs = numpy.sum( (self.P_glcm * (((i+j)[:,:,None,None] - ux[None,None,:,:] - uy[None,None,:,:])**3)), (0, 1) )
     return (cs.mean())
 
   def getClusterTendencyFeatureValue(self):
@@ -230,7 +218,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     j = self.coefficients['j']
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
-    ct = numpy.sum( numpy.sum( (self.P_glcm * (((i+j)[:,:,None,None] - ux[None,None,:,:] - uy[None,None,:,:])**2)), 0 ), 0 )
+    ct = numpy.sum( (self.P_glcm * (((i+j)[:,:,None,None] - ux[None,None,:,:] - uy[None,None,:,:])**2)), (0, 1) )
     return (ct.mean())
 
   def getContrastFeatureValue(self):
@@ -243,7 +231,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
-    cont = numpy.sum( numpy.sum( (self.P_glcm * ((numpy.abs(i-j))[:,:,None,None]**2)), 0 ), 0 )
+    cont = numpy.sum( (self.P_glcm * ((numpy.abs(i-j))[:,:,None,None]**2)), (0, 1) )
     return (cont.mean())
 
   def getCorrelationFeatureValue(self):
@@ -259,7 +247,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     uy = self.coefficients['uy']
     sigx = self.coefficients['sigx']
     sigy = self.coefficients['sigy']
-    corm = numpy.sum(numpy.sum(self.P_glcm*(i[:,:,None,None]-ux[None,None,:,:])*(j[:,:,None,None]-uy[None,None,:,:]), 0 ), 0 )
+    corm = numpy.sum(self.P_glcm*(i[:,:,None,None]-ux[None,None,:,:])*(j[:,:,None,None]-uy[None,None,:,:]), (0, 1) )
     corr = corm/(sigx*sigy)
     return (corr.mean())
 
@@ -285,7 +273,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
-    dis = numpy.sum( numpy.sum( (self.P_glcm * (numpy.abs(i-j))[:,:,None,None]), 0 ), 0 )
+    dis = numpy.sum( (self.P_glcm * (numpy.abs(i-j))[:,:,None,None]), (0, 1) )
     return (dis.mean())
 
   def getEnergyFeatureValue(self):
@@ -297,7 +285,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     of intensity value pairs in the image that neighbor each other at
     higher frequencies.
     """
-    ene = numpy.sum( numpy.sum( (self.P_glcm**2), 0), 0 )
+    ene = numpy.sum( (self.P_glcm**2), (0, 1))
     return (ene.mean())
 
   def getEntropyFeatureValue(self):
@@ -307,7 +295,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Entropy is a measure of the randomness/variability in neighborhood intensity values.
     """
     eps = self.coefficients['eps']
-    ent = (-1) * numpy.sum( numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), 0), 0)
+    ent = (-1) * numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), (0, 1))
     return (ent.mean())
 
   def getHomogeneity1FeatureValue(self):
@@ -320,7 +308,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
-    homo1 = numpy.sum( numpy.sum( (self.P_glcm / (1 + (numpy.abs(i-j))[:,:,None,None])), 0 ), 0 )
+    homo1 = numpy.sum( (self.P_glcm / (1 + (numpy.abs(i-j))[:,:,None,None])), (0, 1) )
     return (homo1.mean())
 
   def getHomogeneity2FeatureValue(self):
@@ -332,7 +320,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
-    homo2 = numpy.sum( numpy.sum( (self.P_glcm / (1 + (numpy.abs(i-j))[:,:,None,None]**2)), 0 ), 0 )
+    homo2 = numpy.sum( (self.P_glcm / (1 + (numpy.abs(i-j))[:,:,None,None]**2)), (0, 1) )
     return (homo2.mean())
 
   def getImc1FeatureValue(self):
@@ -386,7 +374,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     Ng = self.coefficients['Ng']
-    idmn = numpy.sum( numpy.sum( (self.P_glcm / (1 + (((numpy.abs(i-j))[:,:,None,None]**2)/(Ng**2)))), 0 ), 0 )
+    idmn = numpy.sum( (self.P_glcm / (1 + (((numpy.abs(i-j))[:,:,None,None]**2)/(Ng**2)))), (0, 1) )
     return (idmn.mean())
 
   def getIdnFeatureValue(self):
@@ -401,7 +389,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     Ng = self.coefficients['Ng']
-    idn  = numpy.sum( numpy.sum( (self.P_glcm / (1 + ((numpy.abs(i-j))[:,:,None,None]/Ng))), 0 ), 0 )
+    idn  = numpy.sum( (self.P_glcm / (1 + ((numpy.abs(i-j))[:,:,None,None]/Ng))), (0, 1) )
     return (idn.mean())
 
   def getInverseVarianceFeatureValue(self):
@@ -421,7 +409,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Maximum Probability is occurrences of the most predominant pair of
     neighboring intensity values.
     """
-    maxprob = self.P_glcm.max(0).max(0)
+    maxprob = self.P_glcm.max((0, 1))
     return (maxprob.mean())
 
   def getSumAverageFeatureValue(self):
@@ -470,5 +458,5 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     j = self.coefficients['j']
     u = self.coefficients['u']
     # Also known as Variance
-    ss = numpy.sum( numpy.sum( (self.P_glcm * ((j[:,:,None,None]-u[None,None,:,:])**2)), 0 ), 0 )
+    ss = numpy.sum( (self.P_glcm * ((j[:,:,None,None]-u[None,None,:,:])**2)), (0, 1) )
     return (ss.mean())

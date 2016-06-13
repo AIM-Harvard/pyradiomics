@@ -132,8 +132,8 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
     LHH, LHL = decompose_k(LH, wavelet)
     LLH, LLL = decompose_k(LL, wavelet)
 
-    approximation = LLL.copy()
-    approximation.resize(original_shape)
+    data = LLL.copy()
+
     dec = {'HHH': HHH,
            'HHL': HHL,
            'HLH': HLH,
@@ -149,6 +149,10 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
       dec[decName] = sitkImage
 
     ret.append(dec)
+
+  data.resize(original_shape)
+  approximation = sitk.GetImageFromArray(data)
+  approximation.CopyInformation(inputImage)
 
   return approximation, ret
 

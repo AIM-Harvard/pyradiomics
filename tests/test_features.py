@@ -7,6 +7,7 @@ from testUtils import RadiomicsTestUtils
 import sys, os
 import logging
 from nose_parameterized import parameterized
+import SimpleITK as sitk
 from itertools import product
 
 testUtils = RadiomicsTestUtils()
@@ -19,6 +20,14 @@ testCases = defaultTestCases
 features = ["firstorder", "rlgl"]
 
 featureClass = None
+
+# set testing arguments
+kwargs = {}
+kwargs['binWidth'] = 25
+kwargs['resampledPixelSpacing'] = None # [3,3,3]
+kwargs['interpolator'] = sitk.sitkBSpline
+kwargs['padDistance'] = 5
+kwargs['padFillValue'] = 0
 
 class TestFeatures:
 
@@ -61,19 +70,19 @@ class TestFeatures:
     if featureClass is None or testCaseChanged or featureChanged:
       if featureClassName == 'firstorder':
         logging.debug('Init First Order')
-        featureClass = firstorder.RadiomicsFirstOrder(testImage, testMask)
+        featureClass = firstorder.RadiomicsFirstOrder(testImage, testMask, **kwargs)
       elif featureClassName == 'glcm':
         logging.debug('Init GLCM')
-        featureClass = glcm.RadiomicsGLCM(testImage, testMask)
+        featureClass = glcm.RadiomicsGLCM(testImage, testMask, **kwargs)
       elif featureClassName == 'rlgl':
         logging.debug('Init RLGL')
-        featureClass = rlgl.RadiomicsRLGL(testImage, testMask)
+        featureClass = rlgl.RadiomicsRLGL(testImage, testMask, **kwargs)
       elif featureClassName == 'shape':
         logging.debug('Init Shape')
-        featureClass = shape.RadiomicsShape(testImage, testMask)
+        featureClass = shape.RadiomicsShape(testImage, testMask, **kwargs)
       elif featureClassName == 'glszm':
         logging.debug('Init GLSZM')
-        featureClass = glszm.RadiomicsGLSZM(testImage, testMask)
+        featureClass = glszm.RadiomicsGLSZM(testImage, testMask, **kwargs)
     assert (featureClass != None)
 
     featureClass.disableAllFeatures()

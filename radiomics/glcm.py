@@ -140,7 +140,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     HXY = (-1) * numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), (0, 1) )
 
     # shape = (distances.size, angles)
-    HXY1 = (-1) * numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), (0, 1) )
+    HXY1 = (-1) * numpy.sum( (self.P_glcm * numpy.log(px*py+eps)), (0, 1) )
     # shape = (distances.size, angles)
     HXY2 = (-1) * numpy.sum( ((px*py) * numpy.log(px*py+eps)), (0, 1) )
 
@@ -338,25 +338,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     Using coefficients HXY, HXY2, calculate and return the mean Informal Measure
     of Correlation 2 for all 13 GLCMs.
-
-    NOT IMPLEMENTED
     """
-    # Produces Error
     HXY = self.coefficients['HXY']
     HXY2 = self.coefficients['HXY2']
 
-    # imc2[g,a] = ( 1-numpy.e**(-2*(HXY2[g,a]-HXY[g,a])) )**(0.5) #nan value too high
-    # matlab:(1-exp(-2*(hxy2-hxy)))^0.5;
+    imc2 = ( 1-numpy.e**(-2*(HXY2-HXY)) )**(0.5)    # matlab:(1-exp(-2*(hxy2-hxy)))^0.5;
 
-    #produces Nan(square root of a negative)
-    #exponent = decimal.Decimal( -2*(HXY2[g,a]-HXY[g,a]) )
-    #imc2.append( ( decimal.Decimal(1)-decimal.Decimal(numpy.e)**(exponent) )**(decimal.Decimal(0.5)) )
-
-    #if meanFlag:
-      #return (homo2.mean())
-    #else:
-      #return homo2
-    return float('nan')
+    return (imc2.mean())
 
   def getIdmnFeatureValue(self):
     """

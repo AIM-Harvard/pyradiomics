@@ -82,24 +82,32 @@ def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSp
 
   rif = sitk.ResampleImageFilter()
 
-  rif.SetInterpolator(interpolator)
-
-  rif.SetOutputSpacing(resampledPixelSpacing)
-  rif.SetOutputOrigin(imageNode.GetOrigin())
-  rif.SetOutputDirection(imageNode.GetDirection())
-  rif.SetOutputPixelType(sitk.sitkFloat32)
-
-  oldSize = numpy.array(imageNode.GetSize())
+  oldPixelType = imageNode.GetPixelID()
+  oldOrigin = numpy.array(imageNode.GetOrigin())
   oldSpacing = numpy.array(imageNode.GetSpacing())
+  oldSize = numpy.array(imageNode.GetSize())
+
   newSize = numpy.array(oldSize * oldSpacing / resampledPixelSpacing, dtype= 'int')
 
+  newOrigin = oldOrigin
+  # recalculate the origin, which is the left-upper-lower corner of the image (i.e. x = 0, y = max, z = 0)
+  newOrigin[0] -= ((oldSpacing - resampledPixelSpacing)/2)[0]
+  newOrigin[1] += ((oldSpacing - resampledPixelSpacing)/2)[1]
+  newOrigin[2] -= ((oldSpacing - resampledPixelSpacing)/2)[2]
+
+  rif.SetInterpolator(interpolator)
+  rif.SetOutputSpacing(resampledPixelSpacing)
+  rif.SetOutputDirection(imageNode.GetDirection())
+  rif.SetOutputPixelType(sitk.sitkFloat32)
   rif.SetSize(newSize)
+  rif.SetOutputOrigin(newOrigin)
+
   resampledImageNode = rif.Execute(imageNode)
 
   if isMask:
     resampledImageNode = applyThreshold(resampledImageNode, -.5, .5, 0, 1)
 
-  return sitk.Cast(resampledImageNode, sitk.sitkInt32)
+  return sitk.Cast(resampledImageNode, oldPixelType)
 
 #
 # Use the SimpleITK LaplacianRecursiveGaussianImageFilter

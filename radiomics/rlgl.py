@@ -233,7 +233,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     Np = self.coefficients['Np']
 
     try:
-      rp = numpy.sum( numpy.sum( (self.P_rlgl/(Np)) , 0 ), 0 )
+      rp = numpy.sum( (self.P_rlgl/(Np)) , (0, 1) )
     except ZeroDivisionError:
       rp = 0
     return (rp.mean())
@@ -280,7 +280,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     sumP_rlgl = self.coefficients['sumP_rlgl']
 
     try:
-      srlgle = numpy.sum( numpy.sum( (self.P_rlgl/((ivector[:,None,None]**2)*(jvector[None,:,None]**2))) , 0 ), 0 ) / sumP_rlgl
+      srlgle = numpy.sum( (self.P_rlgl/((ivector[:,None,None]**2)*(jvector[None,:,None]**2))) , (0, 1) ) / sumP_rlgl
     except ZeroDivisionError:
       srlgle = 0
     return (srlgle.mean())
@@ -295,7 +295,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     sumP_rlgl = self.coefficients['sumP_rlgl']
 
     try:
-      srhgle = numpy.sum( numpy.sum( (self.P_rlgl*(ivector[:,None,None]**2)/(jvector[None,:,None]**2)) , 0 ), 0 ) / sumP_rlgl
+      srhgle = numpy.sum( (self.P_rlgl*(ivector[:,None,None]**2)/(jvector[None,:,None]**2)) , (0, 1) ) / sumP_rlgl
     except ZeroDivisionError:
       srhgle = 0
     return (srhgle.mean())
@@ -310,7 +310,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     sumP_rlgl = self.coefficients['sumP_rlgl']
 
     try:
-      lrlgle = numpy.sum( numpy.sum( (self.P_rlgl*(jvector[None,:,None]**2)/(ivector[:,None,None]**2)) , 0 ), 0 ) / sumP_rlgl
+      lrlgle = numpy.sum( (self.P_rlgl*(jvector[None,:,None]**2)/(ivector[:,None,None]**2)) , (0, 1) ) / sumP_rlgl
     except ZeroDivisionError:
       lrlgle = 0
     return (lrlgle.mean())
@@ -325,7 +325,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
     sumP_rlgl = self.coefficients['sumP_rlgl']
 
     try:
-      lrhgle = numpy.sum( numpy.sum( (self.P_rlgl*((jvector[None,:,None]**2)*(ivector[:,None,None]**2))) , 0 ), 0 ) / sumP_rlgl
+      lrhgle = numpy.sum( (self.P_rlgl*((jvector[None,:,None]**2)*(ivector[:,None,None]**2))) , (0, 1) ) / sumP_rlgl
     except ZeroDivisionError:
       lrhgle = 0
     return (lrhgle.mean())

@@ -108,7 +108,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.P_glszm = P_glszm[xstart:xstop,:ystop]
 
   def calculateCoefficients(self):
-    sumP_glszm = numpy.sum( numpy.sum(self.P_glszm, 0), 0 )
+    sumP_glszm = numpy.sum(self.P_glszm, (0, 1) )
 
     # set sum to numpy.spacing(1) if sum is 0?
     if sumP_glszm == 0:
@@ -215,7 +215,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of smaller size zones with lower gray-level values.
     """
     try:
-      lisae = numpy.sum( numpy.sum( (self.P_glszm/((self.coefficients['ivector'][:,None]**2)*(self.coefficients['jvector'][None,:]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      lisae = numpy.sum( (self.P_glszm/((self.coefficients['ivector'][:,None]**2)*(self.coefficients['jvector'][None,:]**2))) , (0, 1) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       lisae = numpy.core.numeric.NaN
     return (lisae)
@@ -226,7 +226,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of smaller size zones with higher gray-level values.
     """
     try:
-      hisae = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['ivector'][:,None]**2)/(self.coefficients['jvector'][None,:]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      hisae = numpy.sum( (self.P_glszm*(self.coefficients['ivector'][:,None]**2)/(self.coefficients['jvector'][None,:]**2)) , (0, 1) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       hisae = numpy.core.numeric.NaN
     return (hisae)
@@ -237,7 +237,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of larger size zones with lower gray-level values.
     """
     try:
-      lilae = numpy.sum( numpy.sum( (self.P_glszm*(self.coefficients['jvector'][None,:]**2)/(self.coefficients['ivector'][:,None]**2)) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      lilae = numpy.sum( (self.P_glszm*(self.coefficients['jvector'][None,:]**2)/(self.coefficients['ivector'][:,None]**2)) , (0, 1) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       lilae = numpy.core.numeric.NaN
     return (lilae)
@@ -248,7 +248,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of larger size zones with higher gray-level values.
     """
     try:
-      hilae = numpy.sum( numpy.sum( (self.P_glszm*((self.coefficients['jvector'][None,:]**2)*(self.coefficients['ivector'][:,None]**2))) , 0 ), 0 ) / self.coefficients['sumP_glszm']
+      hilae = numpy.sum( (self.P_glszm*((self.coefficients['jvector'][None,:]**2)*(self.coefficients['ivector'][:,None]**2))) , (0, 1) ) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       hilae = numpy.core.numeric.NaN
     return (hilae)

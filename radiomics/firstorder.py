@@ -72,9 +72,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     eps = numpy.spacing(1)
 
-    histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray)[1]
-    bins = histogram[0]
-    bins = bins/(float(bins.sum()) + eps)
+    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
+    bins = bins + eps
+    bins = bins/float(bins.sum())
     return (-1.0 * numpy.sum(bins*numpy.log2(bins)))
 
   def getMinimumFeatureValue(self):
@@ -191,7 +191,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     eps = numpy.spacing(1)
 
-    histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray)[1]
-    bins = histogram[0]
+    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
     bins = bins/(float(bins.sum()) + eps)
     return (numpy.sum(bins**2))

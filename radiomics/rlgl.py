@@ -137,7 +137,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
         for diagonal in angle:
           pos, = numpy.where(numpy.diff(diagonal) != 0)
           pos = numpy.concatenate(([0], pos+1, [len(diagonal)]))
-          rle = zip([n for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
+          rle = zip([int(n) for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
           for level, run_length in rle:
             if level != padVal:
               P[level-1, run_length-1] += 1

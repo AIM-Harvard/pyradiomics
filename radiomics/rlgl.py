@@ -48,51 +48,51 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
       #(1,0,0), (-1,0,0)
       aDiags = chain.from_iterable(numpy.transpose(self.matrix,(1,2,0)))
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, aDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, aDiags) )
 
       #(0,1,0), (0,-1,0)
       bDiags = chain.from_iterable(numpy.transpose(self.matrix,(0,2,1)))
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, bDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, bDiags) )
 
       #(0,0,1), (0,0,-1)
       cDiags = chain.from_iterable(numpy.transpose(self.matrix,(0,1,2)))
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, cDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, cDiags) )
 
       #(1,1,0), (-1,-1,0)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[1]
       dDiags = chain.from_iterable([self.matrix.diagonal(a,0,1) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, dDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, dDiags) )
 
       #(1,0,1), (-1,0-1)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[2]
       eDiags = chain.from_iterable([self.matrix.diagonal(a,0,2) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, eDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, eDiags) )
 
       #(0,1,1), (0,-1,-1)
       lowBound = -self.matrix.shape[1]+1
       highBound = self.matrix.shape[2]
       fDiags = chain.from_iterable([self.matrix.diagonal(a,1,2) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, fDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, fDiags) )
 
       #(1,-1,0), (-1,1,0)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[1]
       gDiags = chain.from_iterable([self.matrix[:,::-1,:].diagonal(a,0,1) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, gDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, gDiags) )
 
       #(-1,0,1), (1,0,-1)
       lowBound = -self.matrix.shape[0]+1
       highBound = self.matrix.shape[2]
       hDiags = chain.from_iterable([self.matrix[:,:,::-1].diagonal(a,0,2) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, hDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, hDiags) )
 
       #(0,1,-1), (0,-1,1)
       lowBound = -self.matrix.shape[1]+1
       highBound = self.matrix.shape[2]
       iDiags = chain.from_iterable([self.matrix[:,:,::-1].diagonal(a,1,2) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, iDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, iDiags) )
 
       #(1,1,1), (-1,-1,-1)
       lowBound = -self.matrix.shape[0]+1
@@ -101,7 +101,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       for h in [self.matrix.diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
         for x in xrange(-h.shape[0]+1, h.shape[1]):
           jDiags.append(numpy.diagonal(h,x,0,1))    
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, jDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, jDiags) )
 
       #(-1,1,-1), #(1,-1,1),
       lowBound = -self.matrix.shape[0]+1
@@ -110,7 +110,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       for h in [self.matrix[:,::-1,:].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
         for x in xrange(-h.shape[0]+1, h.shape[1]):
           kDiags.append(numpy.diagonal(h,x,0,1))   
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, kDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, kDiags) )
 
       #(1,1,-1), #(-1,-1,1),
       lowBound = -self.matrix.shape[0]+1
@@ -119,7 +119,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       for h in [self.matrix[:,:,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
         for x in xrange(-h.shape[0]+1, h.shape[1]):
           lDiags.append(numpy.diagonal(h,x,0,1))    
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, lDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, lDiags) )
 
       #(-1,1,1), #(1,-1,-1),
       lowBound = -self.matrix.shape[0]+1
@@ -128,7 +128,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       for h in [self.matrix[:,::-1,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
         for x in xrange(-h.shape[0]+1, h.shape[1]):
           mDiags.append(numpy.diagonal(h,x,0,1))    
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>1, mDiags) )
+      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, mDiags) )
       
       # Run-Length Encoding (rle) for the 13 list of diagonals
       # (1 list per 3D direction/angle)

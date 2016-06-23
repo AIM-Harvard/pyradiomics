@@ -126,7 +126,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Standard Deviation measures the amount of variation
     or dispersion from the Mean Value.
     """
-    return (numpy.std(self.targetVoxelArray))
+    return (numpy.std(self.targetVoxelArray, ddof= 1))
 
   def getSkewnessFeatureValue(self, axis=0):
     """
@@ -180,7 +180,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     value from the Mean value. This is a measure of the spread
     of the distribution about the mean..
     """
-    return (numpy.std(self.targetVoxelArray)**2)
+    return (numpy.std(self.targetVoxelArray, ddof= 1)**2)
 
   def getUniformityFeatureValue(self):
     """

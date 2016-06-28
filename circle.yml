@@ -3,6 +3,7 @@ dependencies:
     - pip install numpy
     - pip install --trusted-host www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK
     - pip install nose-parameterized
+    - pip install tqdm
     - git clone https://github.com/nigma/pywt.git && cd pywt && python setup.py install
 test:
   override:

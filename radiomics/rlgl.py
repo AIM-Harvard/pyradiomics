@@ -9,7 +9,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       super(RadiomicsRLGL,self).__init__(inputImage, inputMask, **kwargs)
 
       if inputImage == None or inputMask == None:
-        print('ERROR RLGL: missing input image or mask')
+        if self.verbose: print('ERROR RLGL: missing input image or mask')
         return
 
       self.imageArray = sitk.GetArrayFromImage(inputImage)

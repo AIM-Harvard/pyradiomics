@@ -1,0 +1,523 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>radiomics.rlgl &mdash; pyradiomics 0.0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="pyradiomics 0.0.1 documentation" href="../../index.html"/>
+        <link rel="up" title="radiomics" href="../radiomics.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> pyradiomics
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="simple">
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">pyradiomics</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../radiomics.html">radiomics</a> &raquo;</li>
+      
+    <li>radiomics.rlgl</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for radiomics.rlgl</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">SimpleITK</span> <span class="kn">as</span> <span class="nn">sitk</span>
+<span class="kn">from</span> <span class="nn">radiomics</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">imageoperations</span>
+
+<div class="viewcode-block" id="RadiomicsRLGL"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL">[docs]</a><span class="k">class</span> <span class="nc">RadiomicsRLGL</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">RadiomicsFeaturesBase</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;RLGL feature calculation.&quot;&quot;&quot;</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">,</span> <span class="n">inputMask</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+      <span class="nb">super</span><span class="p">(</span><span class="n">RadiomicsRLGL</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">inputImage</span><span class="p">,</span> <span class="n">inputMask</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+      <span class="k">if</span> <span class="n">inputImage</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">inputMask</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span> <span class="k">print</span><span class="p">(</span><span class="s1">&#39;ERROR RLGL: missing input image or mask&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+      <span class="bp">self</span><span class="o">.</span><span class="n">imageArray</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">inputImage</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">maskArray</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">inputMask</span><span class="p">)</span>
+
+      <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">)</span> <span class="o">=</span> \
+        <span class="n">imageoperations</span><span class="o">.</span><span class="n">padTumorMaskToCube</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageArray</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">maskArray</span><span class="p">)</span>
+
+      <span class="bp">self</span><span class="o">.</span><span class="n">targetVoxelArray</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">]</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">=</span> <span class="p">{}</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span> <span class="o">=</span> <span class="p">{}</span>
+
+      <span class="c1"># binning</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">histogram</span> <span class="o">=</span> <span class="n">imageoperations</span><span class="o">.</span><span class="n">binImage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">binWidth</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">targetVoxelArray</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">histogram</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;grayLevels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">],</span><span class="n">num</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">])</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Nr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Np&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">targetVoxelArray</span><span class="o">.</span><span class="n">size</span>
+
+      <span class="bp">self</span><span class="o">.</span><span class="n">calculateRLGL</span><span class="p">()</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">calculateCoefficients</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RadiomicsRLGL.calculateRLGL"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.calculateRLGL">[docs]</a>  <span class="k">def</span> <span class="nf">calculateRLGL</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="n">Ng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span>
+      <span class="n">Nr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Nr&#39;</span><span class="p">]</span>
+      <span class="n">grayLevels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;grayLevels&#39;</span><span class="p">]</span>
+
+      <span class="n">P_rlgl</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">Ng</span><span class="p">,</span> <span class="n">Nr</span><span class="p">,</span> <span class="mi">13</span><span class="p">))</span>
+
+      <span class="n">padVal</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2000</span>   <span class="c1">#use eps or NaN to pad matrix</span>
+      <span class="n">padMask</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+      <span class="n">padMask</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="o">~</span><span class="n">padMask</span><span class="p">]</span> <span class="o">=</span> <span class="n">padVal</span>
+      
+      <span class="n">matrixDiagonals</span> <span class="o">=</span> <span class="p">[]</span>
+
+      <span class="c1">#(1,0,0), (-1,0,0)</span>
+      <span class="n">aDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">)))</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">aDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(0,1,0), (0,-1,0)</span>
+      <span class="n">bDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">bDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(0,0,1), (0,0,-1)</span>
+      <span class="n">cDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)))</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">cDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(1,1,0), (-1,-1,0)</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="n">dDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)])</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">dDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(1,0,1), (-1,0-1)</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="n">eDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)])</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">eDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(0,1,1), (0,-1,-1)</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="n">fDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)])</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">fDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(1,-1,0), (-1,1,0)</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="n">gDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)])</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">gDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(-1,0,1), (1,0,-1)</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="n">hDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[:,:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)])</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">hDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(0,1,-1), (0,-1,1)</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="n">iDiags</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[:,:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)])</span>
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">iDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(1,1,1), (-1,-1,-1)</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="n">jDiags</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)]:</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="o">-</span><span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+          <span class="n">jDiags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>    
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">jDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(-1,1,-1), #(1,-1,1),</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="n">kDiags</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)]:</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="o">-</span><span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+          <span class="n">kDiags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>   
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">kDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(1,1,-1), #(-1,-1,1),</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="n">lDiags</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[:,:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)]:</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="o">-</span><span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+          <span class="n">lDiags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>    
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">lDiags</span><span class="p">)</span> <span class="p">)</span>
+
+      <span class="c1">#(-1,1,1), #(1,-1,-1),</span>
+      <span class="n">lowBound</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+      <span class="n">highBound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="n">mDiags</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">,::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">lowBound</span><span class="p">,</span> <span class="n">highBound</span><span class="p">)]:</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="o">-</span><span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+          <span class="n">mDiags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>    
+      <span class="n">matrixDiagonals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">,</span> <span class="n">mDiags</span><span class="p">)</span> <span class="p">)</span>
+      
+      <span class="c1"># Run-Length Encoding (rle) for the 13 list of diagonals</span>
+      <span class="c1"># (1 list per 3D direction/angle)</span>
+      <span class="k">for</span> <span class="n">angle_idx</span><span class="p">,</span> <span class="n">angle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">matrixDiagonals</span><span class="p">):</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">P_rlgl</span><span class="p">[:,:,</span><span class="n">angle_idx</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">diagonal</span> <span class="ow">in</span> <span class="n">angle</span><span class="p">:</span>
+          <span class="n">pos</span><span class="p">,</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">diagonal</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+          <span class="n">pos</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">diagonal</span><span class="p">)]))</span>
+          <span class="n">rle</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">([</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">diagonal</span><span class="p">[</span><span class="n">pos</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]],</span> <span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">pos</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+          <span class="k">for</span> <span class="n">level</span><span class="p">,</span> <span class="n">run_length</span> <span class="ow">in</span> <span class="n">rle</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">level</span> <span class="o">!=</span> <span class="n">padVal</span><span class="p">:</span>
+              <span class="n">P</span><span class="p">[</span><span class="n">level</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">run_length</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+      
+      <span class="c1"># Crop gray-level axis of RLGL matrix to between minimum and maximum observed gray-levels</span>
+      <span class="c1"># Crop run-length axis of RLGL matrix up to maximum observed run-length</span>
+      <span class="n">P_rlgl_bounds</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">P_rlgl</span><span class="p">)</span>
+      <span class="p">(</span><span class="n">xstart</span><span class="p">,</span> <span class="n">ystart</span><span class="p">,</span> <span class="n">zstart</span><span class="p">),</span> <span class="p">(</span><span class="n">xstop</span><span class="p">,</span> <span class="n">ystop</span><span class="p">,</span> <span class="n">zstop</span><span class="p">)</span> <span class="o">=</span> <span class="n">P_rlgl_bounds</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">P_rlgl_bounds</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span> <span class="o">=</span> <span class="n">P_rlgl</span><span class="p">[</span><span class="n">xstart</span><span class="p">:</span><span class="n">xstop</span><span class="p">,:</span><span class="n">ystop</span><span class="p">,:]</span></div>
+      
+<div class="viewcode-block" id="RadiomicsRLGL.calculateCoefficients"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.calculateCoefficients">[docs]</a>  <span class="k">def</span> <span class="nf">calculateCoefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+
+      <span class="n">pr</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="n">pg</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+      <span class="n">ivector</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+      <span class="n">jvector</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sumP_rlgl</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pr</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pg</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ivector&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ivector</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;jvector&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">jvector</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getShortRunEmphasisFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getShortRunEmphasisFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getShortRunEmphasisFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Short Run Emphasis (SRE) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    A measure of the distribution of short run lengths, with a greater value indicative </span>
+<span class="sd">    of shorter run lengths and more fine textural textures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pr&#39;</span><span class="p">]</span>
+    <span class="n">jvector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;jvector&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">sre</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pr</span><span class="o">/</span><span class="p">(</span><span class="n">jvector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">sre</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sre</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getLongRunEmphasisFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getLongRunEmphasisFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getLongRunEmphasisFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Long Run Emphasis (LRE) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    A measure of the distribution of long run lengths, with a greater value indicative </span>
+<span class="sd">    of longer run lengths and more coarse structural textures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>  
+    <span class="n">pr</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pr&#39;</span><span class="p">]</span>
+    <span class="n">jvector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;jvector&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">lre</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pr</span><span class="o">*</span><span class="p">(</span><span class="n">jvector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">lre</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">lre</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getGrayLevelNonUniformityFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getGrayLevelNonUniformityFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getGrayLevelNonUniformityFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the similarity of gray-level intensity values in the image, where a lower GLN value </span>
+<span class="sd">    correlates with a greater similarity in intensity values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pg&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">gln</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pg</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="p">,</span> <span class="mi">0</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">gln</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">gln</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getRunLengthNonUniformityFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getRunLengthNonUniformityFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getRunLengthNonUniformityFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Run Length Non-Uniformity (RLN) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the similarity of run lengths throughout the image, with a lower value indicating </span>
+<span class="sd">    more homogeneity among run lengths in the image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pr&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">rln</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pr</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="p">,</span> <span class="mi">0</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">rln</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">rln</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getRunPercentageFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getRunPercentageFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getRunPercentageFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Run Percentage (RP) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the homogeneity and distribution of runs of an image for a certain direction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Np</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Np&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">rp</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="o">/</span><span class="p">(</span><span class="n">Np</span><span class="p">))</span> <span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">rp</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">rp</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getLowGrayLevelRunEmphasisFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getLowGrayLevelRunEmphasisFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getLowGrayLevelRunEmphasisFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the distribution of low gray-level values, with a higher value indicating a greater </span>
+<span class="sd">    concentration of low gray-level values in the image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="n">pg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pg&#39;</span><span class="p">]</span>
+    <span class="n">ivector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ivector&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">lglre</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pg</span><span class="o">/</span><span class="p">(</span><span class="n">ivector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="p">,</span> <span class="mi">0</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">lglre</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">lglre</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getHighGrayLevelRunEmphasisFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getHighGrayLevelRunEmphasisFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getHighGrayLevelRunEmphasisFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the distribution of the higher gray-level values, with a higher value indicating  </span>
+<span class="sd">    a greater concentration of high gray-level values in the image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="n">pg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pg&#39;</span><span class="p">]</span>
+    <span class="n">ivector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ivector&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">hglre</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pg</span><span class="o">*</span><span class="p">(</span><span class="n">ivector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="p">,</span> <span class="mi">0</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">hglre</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">hglre</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getShortRunLowGrayLevelEmphasisFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getShortRunLowGrayLevelEmphasisFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getShortRunLowGrayLevelEmphasisFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the joint distribution of shorter run lengths with lower gray-level values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="n">ivector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ivector&#39;</span><span class="p">]</span>
+    <span class="n">jvector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;jvector&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">srlgle</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="o">/</span><span class="p">((</span><span class="n">ivector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">jvector</span><span class="p">[</span><span class="bp">None</span><span class="p">,:,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span> <span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">srlgle</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">srlgle</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getShortRunHighGrayLevelEmphasisFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getShortRunHighGrayLevelEmphasisFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getShortRunHighGrayLevelEmphasisFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the joint distribution of shorter run lengths with higher gray-level values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="n">ivector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ivector&#39;</span><span class="p">]</span>
+    <span class="n">jvector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;jvector&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">srhgle</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="o">*</span><span class="p">(</span><span class="n">ivector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">jvector</span><span class="p">[</span><span class="bp">None</span><span class="p">,:,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">srhgle</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">srhgle</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getLongRunLowGrayLevelEmphasisFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getLongRunLowGrayLevelEmphasisFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getLongRunLowGrayLevelEmphasisFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the joint distribution of long run lengths with lower gray-level values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="n">ivector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ivector&#39;</span><span class="p">]</span>
+    <span class="n">jvector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;jvector&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">lrlgle</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="o">*</span><span class="p">(</span><span class="n">jvector</span><span class="p">[</span><span class="bp">None</span><span class="p">,:,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">ivector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">lrlgle</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">lrlgle</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsRLGL.getLongRunHighGrayLevelEmphasisFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.rlgl.RadiomicsRLGL.getLongRunHighGrayLevelEmphasisFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getLongRunHighGrayLevelEmphasisFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all 13 RLGL matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Measures the joint distribution of long run lengths with higher gray-level values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="n">ivector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ivector&#39;</span><span class="p">]</span>
+    <span class="n">jvector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;jvector&#39;</span><span class="p">]</span>
+    <span class="n">sumP_rlgl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sumP_rlgl&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">lrhgle</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_rlgl</span><span class="o">*</span><span class="p">((</span><span class="n">jvector</span><span class="p">[</span><span class="bp">None</span><span class="p">,:,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">ivector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span> <span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">sumP_rlgl</span>
+    <span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+      <span class="n">lrhgle</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">lrhgle</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, pyradiomics community, http://github.com/radiomics/pyradiomics.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

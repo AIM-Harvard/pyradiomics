@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>radiomics.shape &mdash; pyradiomics 0.0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="pyradiomics 0.0.1 documentation" href="../../index.html"/>
+        <link rel="up" title="radiomics" href="../radiomics.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> pyradiomics
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="simple">
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">pyradiomics</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../radiomics.html">radiomics</a> &raquo;</li>
+      
+    <li>radiomics.shape</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for radiomics.shape</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">from</span> <span class="nn">radiomics</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">imageoperations</span>
+<span class="kn">import</span> <span class="nn">SimpleITK</span> <span class="kn">as</span> <span class="nn">sitk</span>
+
+<div class="viewcode-block" id="RadiomicsShape"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape">[docs]</a><span class="k">class</span> <span class="nc">RadiomicsShape</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">RadiomicsFeaturesBase</span><span class="p">):</span>
+
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">,</span> <span class="n">inputMask</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="nb">super</span><span class="p">(</span><span class="n">RadiomicsShape</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">inputImage</span><span class="p">,</span><span class="n">inputMask</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">inputImage</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">inputMask</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span> <span class="k">print</span><span class="p">(</span><span class="s1">&#39;ERROR Shape: missing input image or mask&#39;</span><span class="p">)</span>
+      <span class="k">return</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">pixelSpacing</span> <span class="o">=</span> <span class="n">inputImage</span><span class="o">.</span><span class="n">GetSpacing</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">cubicMMPerVoxel</span> <span class="o">=</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span> <span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixelSpacing</span><span class="p">)</span>
+
+    <span class="c1">#self.featureNames = self.getFeatureNames()</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">imageArray</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">inputImage</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">maskArray</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">inputMask</span><span class="p">)</span>
+
+    <span class="c1"># Generate a cuboid matrix of the tumor region and pad by 10 voxels in three directions</span>
+    <span class="c1"># for surface area calculation</span>
+    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">)</span> <span class="o">=</span> \
+      <span class="n">imageoperations</span><span class="o">.</span><span class="n">padTumorMaskToCube</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageArray</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">maskArray</span><span class="p">,</span> <span class="n">padDistance</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">targetVoxelArray</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">]</span>
+
+    <span class="c1"># Volume and Surface Area are pre-calculated</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Volume</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getVolumeFeatureValue</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">SurfaceArea</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getSurfaceAreaFeatureValue</span><span class="p">()</span>
+
+    <span class="c1">#self.InitializeFeatureVector()</span>
+    <span class="c1">#for f in self.getFeatureNames():</span>
+    <span class="c1">#  self.enabledFeatures[f] = True</span>
+
+    <span class="c1"># TODO: add an option to instantiate the class that reuses initialization</span>
+
+<div class="viewcode-block" id="RadiomicsShape.getVolumeFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape.getVolumeFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getVolumeFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the volume of the tumor region in cubic millimeters.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cubicMMPerVoxel</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RadiomicsShape.getSurfaceAreaFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape.getSurfaceAreaFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getSurfaceAreaFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the surface area of the tumor region in square millimeters.&quot;&quot;&quot;</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixelSpacing</span>
+    <span class="n">xz</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">z</span>
+    <span class="n">yz</span> <span class="o">=</span> <span class="n">y</span><span class="o">*</span><span class="n">z</span>
+    <span class="n">xy</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span>
+    <span class="n">voxelTotalSA</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">xy</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">xz</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">yz</span><span class="p">)</span>
+    <span class="n">totalSA</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">targetVoxelArray</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">voxelTotalSA</span>
+
+    <span class="c1"># in matrixCoordinates:</span>
+    <span class="c1"># i corresponds to height (z)</span>
+    <span class="c1"># j corresponds to vertical (y)</span>
+    <span class="c1"># k corresponds to horizontal (x)</span>
+
+    <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="n">surfaceArea</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">voxel</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">targetVoxelArray</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+      <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">voxel</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">voxel</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="n">voxel</span><span class="p">]</span>
+      <span class="n">fxy</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="p">]</span> <span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># evaluate to 1 if true, 0 if false</span>
+      <span class="n">fyz</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">k</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">k</span><span class="p">]</span> <span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># evaluate to 1 if true, 0 if false</span>
+      <span class="n">fxz</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">k</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># evaluate to 1 if true, 0 if false</span>
+      <span class="n">surface</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fxz</span><span class="p">)</span> <span class="o">*</span> <span class="n">xz</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fyz</span><span class="p">)</span> <span class="o">*</span> <span class="n">yz</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">fxy</span><span class="p">)</span> <span class="o">*</span> <span class="n">xy</span><span class="p">)</span>
+      <span class="n">surfaceArea</span> <span class="o">+=</span> <span class="n">surface</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">surfaceArea</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RadiomicsShape.getSurfaceVolumeRatioFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape.getSurfaceVolumeRatioFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getSurfaceVolumeRatioFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the surface area to volume ratio of the tumor region&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SurfaceArea</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">Volume</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RadiomicsShape.getCompactness1FeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape.getCompactness1FeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getCompactness1FeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the compactness (1) of the tumor region.</span>
+
+<span class="sd">    Compactness 1 is a measure of how compact the shape of the tumor is</span>
+<span class="sd">    relative to a sphere (most compact). It is a dimensionless measure,</span>
+<span class="sd">    independent of scale and orientation. Compactness 1 is defined as the</span>
+<span class="sd">    ratio of volume to the (surface area)^(1.5). This is a measure of the</span>
+<span class="sd">    compactness of the shape of the image ROI</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Volume</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">SurfaceArea</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">2.0</span><span class="o">/</span><span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="RadiomicsShape.getCompactness2FeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape.getCompactness2FeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getCompactness2FeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the Compactness (2) of the tumor region.</span>
+
+<span class="sd">    Compactness 2 is a measure of how compact the shape of the tumor is</span>
+<span class="sd">    relative to a sphere (most compact). It is a dimensionless measure,</span>
+<span class="sd">    independent of scale and orientation. This is a measure of the compactness</span>
+<span class="sd">    of the shape of the image ROI.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">((</span><span class="mf">36.0</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">Volume</span><span class="p">)</span><span class="o">**</span><span class="mf">2.0</span><span class="p">)</span><span class="o">/</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">SurfaceArea</span><span class="p">)</span><span class="o">**</span><span class="mf">3.0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RadiomicsShape.getMaximum3DDiameterFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape.getMaximum3DDiameterFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getMaximum3DDiameterFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the largest pairwise euclidean distance between tumor surface voxels&quot;&quot;&quot;</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixelSpacing</span>
+
+    <span class="n">minBounds</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">2</span><span class="p">])])</span>
+    <span class="n">maxBounds</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">[</span><span class="mi">2</span><span class="p">])])</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">))</span>
+    <span class="n">edgeVoxelsMinCoords</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">a</span><span class="p">[</span><span class="n">a</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="n">minBounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">a</span><span class="p">[</span><span class="n">a</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="n">minBounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">a</span><span class="p">[</span><span class="n">a</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="n">minBounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]]])</span> <span class="o">*</span> <span class="p">[</span><span class="n">z</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">]</span>
+    <span class="n">edgeVoxelsMaxCoords</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">vstack</span><span class="p">([(</span><span class="n">a</span><span class="p">[</span><span class="n">a</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="n">maxBounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">a</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="n">maxBounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">a</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="n">maxBounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span> <span class="o">*</span> <span class="p">[</span><span class="n">z</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">]</span>
+
+    <span class="n">maxDiameter</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">voxel1</span> <span class="ow">in</span> <span class="n">edgeVoxelsMaxCoords</span><span class="p">:</span>
+      <span class="n">voxelDistances</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">edgeVoxelsMinCoords</span><span class="o">-</span><span class="n">voxel1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+      <span class="k">if</span> <span class="n">voxelDistances</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">maxDiameter</span><span class="p">:</span>
+        <span class="n">maxDiameter</span> <span class="o">=</span> <span class="n">voxelDistances</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="k">return</span><span class="p">(</span><span class="n">maxDiameter</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RadiomicsShape.getSphericalDisproportionFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape.getSphericalDisproportionFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getSphericalDisproportionFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the Spherical Disproportion of the tumor region.</span>
+
+<span class="sd">    Spherical Disproportion is the ratio of the surface area of the</span>
+<span class="sd">    tumor region to the surface area of a sphere with the same</span>
+<span class="sd">    volume as the tumor region.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="p">(</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">Volume</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">4.0</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mf">3.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SurfaceArea</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">4.0</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="p">(</span><span class="n">R</span><span class="o">**</span><span class="mf">2.0</span><span class="p">))</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="RadiomicsShape.getSphericityFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.shape.RadiomicsShape.getSphericityFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getSphericityFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the Sphericity of the tumor region.</span>
+
+<span class="sd">    Sphericity is a measure of the roundness of the shape of the tumor region</span>
+<span class="sd">    relative to a sphere. This is another measure of the compactness of a tumor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span> <span class="p">((</span><span class="n">numpy</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">6.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Volume</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">2.0</span><span class="o">/</span><span class="mf">3.0</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SurfaceArea</span><span class="p">)</span> <span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, pyradiomics community, http://github.com/radiomics/pyradiomics.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

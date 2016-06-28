@@ -1,0 +1,666 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>radiomics.glcm &mdash; pyradiomics 0.0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="pyradiomics 0.0.1 documentation" href="../../index.html"/>
+        <link rel="up" title="radiomics" href="../radiomics.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> pyradiomics
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="simple">
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">pyradiomics</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../radiomics.html">radiomics</a> &raquo;</li>
+      
+    <li>radiomics.glcm</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for radiomics.glcm</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">from</span> <span class="nn">radiomics</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">imageoperations</span>
+<span class="kn">import</span> <span class="nn">SimpleITK</span> <span class="kn">as</span> <span class="nn">sitk</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span>  <span class="n">trange</span>
+
+<div class="viewcode-block" id="RadiomicsGLCM"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM">[docs]</a><span class="k">class</span> <span class="nc">RadiomicsGLCM</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">RadiomicsFeaturesBase</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;GLCM feature calculation.&quot;&quot;&quot;</span>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputImage</span><span class="p">,</span> <span class="n">inputMask</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="nb">super</span><span class="p">(</span><span class="n">RadiomicsGLCM</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">inputImage</span><span class="p">,</span> <span class="n">inputMask</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">inputImage</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">inputMask</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span> <span class="k">print</span><span class="p">(</span><span class="s1">&#39;ERROR GLCM: missing input image or mask&#39;</span><span class="p">)</span>
+      <span class="k">return</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">imageArray</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">inputImage</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">maskArray</span> <span class="o">=</span> <span class="n">sitk</span><span class="o">.</span><span class="n">GetArrayFromImage</span><span class="p">(</span><span class="n">inputMask</span><span class="p">)</span>
+
+    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">)</span> <span class="o">=</span> \
+      <span class="n">imageoperations</span><span class="o">.</span><span class="n">padTumorMaskToCube</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageArray</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">maskArray</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">targetVoxelArray</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># binning</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">histogram</span> <span class="o">=</span> <span class="n">imageoperations</span><span class="o">.</span><span class="n">binImage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">binWidth</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">targetVoxelArray</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">histogram</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">createGLCM</span><span class="p">()</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">calculateCoefficients</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RadiomicsGLCM.calculateGLCM"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.calculateGLCM">[docs]</a>  <span class="k">def</span> <span class="nf">calculateGLCM</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">angles</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute 13 GLCM matrices for the input image for every direction in 3D.</span>
+
+<span class="sd">    (13 GLCMs for each neighboring voxel from a reference voxel centered in a 3x3 cube)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">maxrows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">maxcols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">maxheight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">matrixCoordinates</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span> <span class="n">bar</span> <span class="o">=</span> <span class="n">trange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span> <span class="s1">&#39;calculate GLCM&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span> <span class="n">bar</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+      <span class="k">for</span> <span class="n">angles_idx</span><span class="p">,</span> <span class="n">angle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">angles</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">distances_idx</span><span class="p">,</span> <span class="n">distance</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">distances</span><span class="p">):</span>
+          <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span>
+          <span class="n">i_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+          <span class="n">row</span> <span class="o">=</span> <span class="n">r</span> <span class="o">+</span> <span class="n">angle</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+          <span class="n">col</span> <span class="o">=</span> <span class="n">c</span> <span class="o">+</span> <span class="n">angle</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+          <span class="n">height</span> <span class="o">=</span> <span class="n">h</span> <span class="o">+</span> <span class="n">angle</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+          <span class="k">if</span> <span class="n">row</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">row</span> <span class="o">&lt;</span> <span class="n">maxrows</span> <span class="ow">and</span> <span class="n">col</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">col</span> <span class="o">&lt;</span> <span class="n">maxcols</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+              <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">[</span><span class="n">height</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">]</span>
+              <span class="n">j_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+              <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">[</span><span class="n">i_idx</span><span class="p">,</span> <span class="n">j_idx</span><span class="p">,</span> <span class="n">distances_idx</span><span class="p">,</span> <span class="n">angles_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span> <span class="n">bar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.createGLCM"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.createGLCM">[docs]</a>  <span class="k">def</span> <span class="nf">createGLCM</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate container for GLCM Matrices: P_glcm as an array of shape: (i,j,gamma,a)</span>
+
+<span class="sd">    i/j = total gray-level bins for image array,</span>
+<span class="sd">    gamma = 1 (distance in voxels),</span>
+<span class="sd">    a = 1...13 (directions in 3D)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">Ng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span>
+
+    <span class="n">distances</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">angles</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                           <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                           <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                           <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                           <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                           <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span> <span class="p">(</span><span class="n">Ng</span><span class="p">,</span> <span class="n">Ng</span><span class="p">,</span> <span class="n">distances</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">angles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span> <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">calculateGLCM</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">angles</span><span class="p">)</span>
+
+    <span class="c1"># Normalize each glcm</span>
+    <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">angles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,</span><span class="n">q</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,</span><span class="n">q</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">,</span><span class="n">q</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span></div>
+
+  <span class="c1"># check if ivector and jvector can be replaced</span>
+<div class="viewcode-block" id="RadiomicsGLCM.calculateCoefficients"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.calculateCoefficients">[docs]</a>  <span class="k">def</span> <span class="nf">calculateCoefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate and fill in the coefficients dict&quot;&quot;&quot;</span>
+    <span class="n">Ng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">spacing</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># shape = (Ng, distances.size, angles)</span>
+    <span class="n">ivector</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">Ng</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># shape = (Ng, distances.size, angles)</span>
+    <span class="n">jvector</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">Ng</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">i</span><span class="p">,</span><span class="n">j</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># shape = (Ng, Ng)</span>
+    <span class="n">prodMatrix</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">multiply</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">ivector</span><span class="p">,</span> <span class="n">jvector</span><span class="p">)</span>
+    <span class="c1"># shape = (Ng, Ng)</span>
+    <span class="c1"># sum-1 so 111 in corner</span>
+    <span class="n">sumMatrix</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">ivector</span><span class="p">,</span> <span class="n">jvector</span><span class="p">)</span>
+    <span class="c1"># shape = (Ng, Ng)</span>
+    <span class="c1"># absval(subtract)+1 so 1-1 and 56-56 in corners</span>
+    <span class="n">diffMatrix</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">subtract</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">ivector</span><span class="p">,</span> <span class="n">jvector</span><span class="p">))</span>
+
+    <span class="c1"># shape = (2*Ng-1)</span>
+    <span class="c1"># 1-111</span>
+    <span class="n">kValuesSum</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="n">Ng</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="c1"># shape = (Ng-1)</span>
+    <span class="c1"># 0-55</span>
+    <span class="n">kValuesDiff</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">Ng</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># shape = (distances.size, angles)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># marginal row probabilities #shape = (Ng, distances.size, angles)</span>
+    <span class="n">px</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># marginal column probabilities #shape = (Ng, distances.size, angles)</span>
+    <span class="n">py</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># shape = (distances.size, angles)</span>
+    <span class="n">ux</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">ivector</span><span class="p">[</span><span class="bp">None</span><span class="p">,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">,</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="n">uy</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">jvector</span><span class="p">[:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">,</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+
+    <span class="c1"># shape = (distances.size, angles)</span>
+    <span class="n">sigx</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">*</span><span class="p">((</span><span class="n">i</span><span class="p">[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">-</span><span class="n">ux</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:])</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+    <span class="c1"># shape = (distances.size, angles)</span>
+    <span class="n">sigy</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">*</span><span class="p">((</span><span class="n">j</span><span class="p">[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">-</span><span class="n">uy</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:])</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+
+    <span class="c1"># shape = (2*Ng-1, distances.size, angles)</span>
+    <span class="c1"># 111 long</span>
+    <span class="n">pxAddy</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">j</span> <span class="o">==</span> <span class="n">k</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kValuesSum</span> <span class="p">])</span>
+    <span class="c1"># shape = (Ng, distances.size, angles)</span>
+    <span class="c1"># 56 long</span>
+    <span class="n">pxSuby</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">)</span> <span class="o">==</span> <span class="n">k</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kValuesDiff</span> <span class="p">])</span>
+
+    <span class="c1"># entropy of px #shape = (distances.size, angles)</span>
+    <span class="n">HX</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">px</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">px</span><span class="o">+</span><span class="n">eps</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># entropy of py #shape = (distances.size, angles)</span>
+    <span class="n">HY</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">py</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">py</span><span class="o">+</span><span class="n">eps</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># shape = (distances.size, angles)</span>
+    <span class="n">HXY</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">+</span><span class="n">eps</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+
+    <span class="c1"># shape = (distances.size, angles)</span>
+    <span class="n">HXY1</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">+</span><span class="n">eps</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># shape = (distances.size, angles)</span>
+    <span class="n">HXY2</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">((</span><span class="n">px</span><span class="o">*</span><span class="n">py</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">px</span><span class="o">*</span><span class="n">py</span><span class="o">+</span><span class="n">eps</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ng</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">eps</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;kValuesSum&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kValuesSum</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;kValuesDiff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kValuesDiff</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;u&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;px&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">px</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;py&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">py</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ux&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ux</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;uy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">uy</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sigx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sigx</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sigy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sigy</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pxAddy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pxAddy</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pxSuby&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pxSuby</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HX&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HX</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HY</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HXY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HXY</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HXY1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HXY1</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HXY2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HXY2</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getAutocorrelationFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getAutocorrelationFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getAutocorrelationFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using the i and j arrays, calculate and return the mean Autocorrelation for all 13 GLCMs.</span>
+
+<span class="sd">    Autocorrelation is a measure of the magnitude of the</span>
+<span class="sd">    fineness and coarseness of texture.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">ac</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="n">j</span><span class="p">)[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">],</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">ac</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getClusterProminenceFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getClusterProminenceFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getClusterProminenceFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, ux, uy, calculate and return the mean Cluster Prominence for all 13 GLCMs.</span>
+
+<span class="sd">    Cluster Prominence is a measure of the skewness and asymmetry of the GLCM.</span>
+<span class="sd">    A higher values implies more asymmetry about the mean while a lower value</span>
+<span class="sd">    indicates a peak near the mean value and less variation about the mean.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">ux</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ux&#39;</span><span class="p">]</span>
+    <span class="n">uy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;uy&#39;</span><span class="p">]</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="p">(((</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">)[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">ux</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:]</span> <span class="o">-</span> <span class="n">uy</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:])</span><span class="o">**</span><span class="mi">4</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getClusterShadeFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getClusterShadeFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getClusterShadeFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, ux, uy, calculate and return the mean Cluster Shade for all 13 GLCMs.</span>
+
+<span class="sd">    Cluster Shade is a measure of the skewness and uniformity of the GLCM.</span>
+<span class="sd">    A higher cluster shade implies greater asymmetry about the mean.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">ux</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ux&#39;</span><span class="p">]</span>
+    <span class="n">uy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;uy&#39;</span><span class="p">]</span>
+    <span class="n">cs</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="p">(((</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">)[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">ux</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:]</span> <span class="o">-</span> <span class="n">uy</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:])</span><span class="o">**</span><span class="mi">3</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">cs</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getClusterTendencyFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getClusterTendencyFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getClusterTendencyFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, ux, uy, calculate and return the mean Cluster Tendency for all 13 GLCMs.</span>
+
+<span class="sd">    Cluster Tendency is a measure of groupings of voxels with similar gray-level values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">ux</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ux&#39;</span><span class="p">]</span>
+    <span class="n">uy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;uy&#39;</span><span class="p">]</span>
+    <span class="n">ct</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="p">(((</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">)[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">ux</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:]</span> <span class="o">-</span> <span class="n">uy</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:])</span><span class="o">**</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">ct</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getContrastFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getContrastFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getContrastFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, calculate and return the mean Contrast for all 13 GLCMs.</span>
+
+<span class="sd">    Contrast is a measure of the local intensity variation, favoring P(i,j)</span>
+<span class="sd">    values away from the diagonal (i != j). A larger value correlates with</span>
+<span class="sd">    a greater disparity in intensity values among neighboring voxels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">cont</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="p">((</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">))[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">cont</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getCorrelationFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getCorrelationFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getCorrelationFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, ux, uy, sigx, sigy, calculate and return the mean Correlation value for all 13 GLCMs.</span>
+
+<span class="sd">    Correlation is a value between 0 (uncorrelated) and 1 (perfectly correlated) showing the</span>
+<span class="sd">    linear dependency of gray level values to their respective voxels in the GLCM.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">ux</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;ux&#39;</span><span class="p">]</span>
+    <span class="n">uy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;uy&#39;</span><span class="p">]</span>
+    <span class="n">sigx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sigx&#39;</span><span class="p">]</span>
+    <span class="n">sigy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;sigy&#39;</span><span class="p">]</span>
+    <span class="n">corm</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="p">[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">-</span><span class="n">ux</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:])</span><span class="o">*</span><span class="p">(</span><span class="n">j</span><span class="p">[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">-</span><span class="n">uy</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:]),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">corm</span><span class="o">/</span><span class="p">(</span><span class="n">sigx</span><span class="o">*</span><span class="n">sigy</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getDifferenceEntropyFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getDifferenceEntropyFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getDifferenceEntropyFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients pxSuby, eps, calculate and return the mean Difference Entropy for all 13 GLCMs.</span>
+
+<span class="sd">    Difference Entropy is a measure of the randomness/variability</span>
+<span class="sd">    in neighborhood intensity value differences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pxSuby</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pxSuby&#39;</span><span class="p">]</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">]</span>
+    <span class="n">difent</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pxSuby</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">pxSuby</span><span class="o">+</span><span class="n">eps</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">difent</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getDissimilarityFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getDissimilarityFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getDissimilarityFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, calculate and return the mean Dissimilarity for all 13 GLCMs.</span>
+
+<span class="sd">    Dissimilarity is a measure of local intensity variation. A larger</span>
+<span class="sd">    value correlates with a greater disparity in intensity values</span>
+<span class="sd">    among neighboring voxels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">dis</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">))[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">dis</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getEnergyFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getEnergyFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getEnergyFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using P_glcm, calculate and return the mean Energy for all 13 GLCMs.</span>
+
+<span class="sd">    Energy (or Angular Second Moment)is a measure of homogeneous patterns</span>
+<span class="sd">    in the image. A greater Energy implies that there are more instances</span>
+<span class="sd">    of intensity value pairs in the image that neighbor each other at</span>
+<span class="sd">    higher frequencies.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ene</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">ene</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getEntropyFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getEntropyFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getEntropyFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients eps, calculate and return the mean Entropy for all 13 GLCMs.</span>
+
+<span class="sd">    Entropy is a measure of the randomness/variability in neighborhood intensity values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">]</span>
+    <span class="n">ent</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">+</span><span class="n">eps</span><span class="p">)),</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">ent</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getHomogeneity1FeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getHomogeneity1FeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getHomogeneity1FeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, calculate and return the mean Homogeneity 1 for all 13 GLCMs.</span>
+
+<span class="sd">    Homogeneity 1 is a measure of the similarity in intensity values for</span>
+<span class="sd">    neighboring voxels. It is a measure of local homogeneity that increases</span>
+<span class="sd">    with less contrast in the window.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">homo1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">))[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">])),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">homo1</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getHomogeneity2FeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getHomogeneity2FeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getHomogeneity2FeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, calculate and return the mean Homogeneity 2 for all 13 GLCMs.</span>
+
+<span class="sd">    Homogeneity 2 is a measure of the similarity in intensity values</span>
+<span class="sd">    for neighboring voxels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">homo2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">))[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">homo2</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getImc1FeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getImc1FeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getImc1FeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients HX, HY, HXY, HXY1, HXY2, calculate and return the mean</span>
+<span class="sd">    Informal Measure of Correlation 1 for all 13 GLCMs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">HX</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HX&#39;</span><span class="p">]</span>
+    <span class="n">HY</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HY&#39;</span><span class="p">]</span>
+    <span class="n">HXY</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HXY&#39;</span><span class="p">]</span>
+    <span class="n">HXY1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HXY1&#39;</span><span class="p">]</span>
+    <span class="n">HXY2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HXY2&#39;</span><span class="p">]</span>
+    <span class="n">imc1</span> <span class="o">=</span> <span class="p">(</span><span class="n">HXY</span> <span class="o">-</span> <span class="n">HXY1</span><span class="p">)</span><span class="o">/</span><span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">(([</span><span class="n">HX</span><span class="p">,</span><span class="n">HY</span><span class="p">]),</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">imc1</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getImc2FeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getImc2FeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getImc2FeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients HXY, HXY2, calculate and return the mean Informal Measure</span>
+<span class="sd">    of Correlation 2 for all 13 GLCMs.</span>
+
+<span class="sd">    NOT IMPLEMENTED</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Produces Error</span>
+    <span class="n">HXY</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HXY&#39;</span><span class="p">]</span>
+    <span class="n">HXY2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;HXY2&#39;</span><span class="p">]</span>
+
+    <span class="c1"># imc2[g,a] = ( 1-numpy.e**(-2*(HXY2[g,a]-HXY[g,a])) )**(0.5) #nan value too high</span>
+    <span class="c1"># matlab:(1-exp(-2*(hxy2-hxy)))^0.5;</span>
+
+    <span class="c1">#produces Nan(square root of a negative)</span>
+    <span class="c1">#exponent = decimal.Decimal( -2*(HXY2[g,a]-HXY[g,a]) )</span>
+    <span class="c1">#imc2.append( ( decimal.Decimal(1)-decimal.Decimal(numpy.e)**(exponent) )**(decimal.Decimal(0.5)) )</span>
+
+    <span class="c1">#if meanFlag:</span>
+      <span class="c1">#return (homo2.mean())</span>
+    <span class="c1">#else:</span>
+      <span class="c1">#return homo2</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getIdmnFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getIdmnFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getIdmnFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, Ng, calculate and return the mean IDMN for all 13 GLCMs.</span>
+
+<span class="sd">    IDMN (inverse difference moment normalized)  is a measure of the local</span>
+<span class="sd">    homogeneity of an image. IDMN weights are the inverse of the Contrast</span>
+<span class="sd">    weights (decreasing exponentially from the diagonal i=j in the GLCM).</span>
+<span class="sd">    Unlike Homogeneity2, IDMN normalizes the square of the difference between</span>
+<span class="sd">    neighboring intensity values by dividing over the square of the total</span>
+<span class="sd">    number of discrete intensity values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">Ng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span>
+    <span class="n">idmn</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(((</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">))[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">Ng</span><span class="o">**</span><span class="mi">2</span><span class="p">)))),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">idmn</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getIdnFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getIdnFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getIdnFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients i, j, Ng, calculate and return the mean IDN for all 13 GLCMs.</span>
+
+<span class="sd">    IDN (inverse difference normalized) is another measure of the local</span>
+<span class="sd">    homogeneity of an image. Unlike Homogeneity1, IDN normalizes the difference</span>
+<span class="sd">    between the neighboring intensity values by dividing over the total number</span>
+<span class="sd">    of discrete intensity values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">Ng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span>
+    <span class="n">idn</span>  <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">((</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">))[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">/</span><span class="n">Ng</span><span class="p">))),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">idn</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getInverseVarianceFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getInverseVarianceFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getInverseVarianceFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Using the i, j, Ng coeffients, calculate and return the mean Inverse Variance for all 13 GLCMs.&quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">Ng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;Ng&#39;</span><span class="p">]</span>
+    <span class="n">maskDiags</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">))</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="n">maskDiags</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">diag_indices</span><span class="p">(</span><span class="n">Ng</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">inv</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="p">[</span><span class="n">maskDiags</span><span class="p">]</span> <span class="o">/</span> <span class="p">((</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">))[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)[</span><span class="n">maskDiags</span><span class="p">]),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">inv</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getMaximumProbabilityFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getMaximumProbabilityFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getMaximumProbabilityFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using P_glcm, calculate and return the mean Maximum Probability for all 13 GLCMs.</span>
+
+<span class="sd">    Maximum Probability is occurrences of the most predominant pair of</span>
+<span class="sd">    neighboring intensity values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">maxprob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">maxprob</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getSumAverageFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getSumAverageFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getSumAverageFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients pxAddy, kValuesSum, calculate and return the mean Sum Average for all 13 GLCMs.</span>
+
+<span class="sd">    Sum Average measures the relationship between occurrences of pairs</span>
+<span class="sd">    with lower intensity values and occurrences of pairs with higher intensity</span>
+<span class="sd">    values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pxAddy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pxAddy&#39;</span><span class="p">]</span>
+    <span class="n">kValuesSum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;kValuesSum&#39;</span><span class="p">]</span>
+    <span class="n">sumavg</span> <span class="o">=</span>  <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">kValuesSum</span><span class="p">[:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">*</span><span class="n">pxAddy</span><span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sumavg</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getSumEntropyFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getSumEntropyFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getSumEntropyFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients pxAddy, eps, calculate and return the mean Sum Entropy for all 13 GLCMs.</span>
+
+<span class="sd">    Sum Entropy is a sum of neighborhood intensity value differences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pxAddy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pxAddy&#39;</span><span class="p">]</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">]</span>
+    <span class="n">sumentr</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pxAddy</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">pxAddy</span><span class="o">+</span><span class="n">eps</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sumentr</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getSumVarianceFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getSumVarianceFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getSumVarianceFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients pxAddy, kValuesSum, calculate and return the mean Sum Variance for all 13 GLCMs.</span>
+
+<span class="sd">    Sum Variance is a measure of heterogeneity that places higher weights on</span>
+<span class="sd">    neighboring intensity level pairs that deviate more from the mean.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pxAddy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;pxAddy&#39;</span><span class="p">]</span>
+    <span class="n">kValuesSum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;kValuesSum&#39;</span><span class="p">]</span>
+    <span class="n">sumvar</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">pxAddy</span><span class="o">*</span><span class="p">((</span><span class="n">kValuesSum</span><span class="p">[:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">kValuesSum</span><span class="p">[:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">*</span><span class="n">pxAddy</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">sumvar</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="RadiomicsGLCM.getSumSquaresFeatureValue"><a class="viewcode-back" href="../../radiomics.html#radiomics.glcm.RadiomicsGLCM.getSumSquaresFeatureValue">[docs]</a>  <span class="k">def</span> <span class="nf">getSumSquaresFeatureValue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using coefficients j, u, calculate and return the mean um of Squares (Variance) for all 13 GLCMs.</span>
+
+<span class="sd">    Sum of Squares or Variance is a measure in the distribution of neigboring</span>
+<span class="sd">    intensity level pairs about the mean intensity level in the GLCM.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;j&#39;</span><span class="p">]</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="s1">&#39;u&#39;</span><span class="p">]</span>
+    <span class="c1"># Also known as Variance</span>
+    <span class="n">ss</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P_glcm</span> <span class="o">*</span> <span class="p">((</span><span class="n">j</span><span class="p">[:,:,</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">]</span><span class="o">-</span><span class="n">u</span><span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">,:,:])</span><span class="o">**</span><span class="mi">2</span><span class="p">)),</span> <span class="mi">0</span> <span class="p">),</span> <span class="mi">0</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">ss</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, pyradiomics community, http://github.com/radiomics/pyradiomics.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -12,7 +12,7 @@ do better.
 We encourage a range of Pull Requests, from patches that include passing tests and
 documentation, all the way down to half-baked ideas that launch discussions.
 
-The PR Process, Travis CI, and Related Gotchas
+The PR Process, Circle CI, and Related Gotchas
 ----------------------------------------------
 
 #### How to submit a PR ?

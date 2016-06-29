@@ -5,7 +5,7 @@ There are many ways to contribute to pyradiomics, with varying levels of effort.
 look through the documentation first if something is unclear, and let us know how we can
 do better.
 
-  * Ask a question on the [pyradiomics developers email list](https://groups.google.com/forum/#!forum/pyradiomics-devel)
+  * Ask a question on the [pyradiomics email list](https://groups.google.com/forum/#!forum/pyradiomics)
   * Submit a feature request or bug, or add to the discussion on the [pyradiomics issue tracker](https://github.com/Radiomics/pyradiomics/issues)
   * Submit a [Pull Request](https://github.com/Radiomics/pyradiomics/pulls) to improve pyradiomics or its documentation
 
@@ -34,7 +34,7 @@ into the main repository and create a [Pull Request](https://github.com/Radiomic
 topic without having to [configure a remote](https://help.github.com/articles/configuring-a-remote-for-a-fork/).
 It will also simplify the workflow when you are _co-developing_ a branch.
 
-When submitting a PR, make sure to add a `Cc: @Radiomics/pyradiomics-developers` comment to notify pyradiomics
+When submitting a PR, make sure to add a `Cc: @Radiomics/developers` comment to notify pyradiomics
 developers of your awesome contributions. Based on the
 comments posted by the reviewers, you may have to revisit your patches.
 

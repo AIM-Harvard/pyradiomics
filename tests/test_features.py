@@ -17,7 +17,7 @@ defaultFeatures = ["firstorder", "glcm", "rlgl", "shape", "glszm"]
 testCases = defaultTestCases
 # testCases = ["breast1"]
 # features = defaultFeatures
-features = ["firstorder", "rlgl"]
+features = ["firstorder"]
 
 featureClass = None
 

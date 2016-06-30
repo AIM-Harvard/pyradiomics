@@ -64,8 +64,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       # give some progress
       if self.verbose: bar.update()
 
-      dataTemp = numpy.where(self.matrix==i, 1, 0)
-      ind = zip(*numpy.where(dataTemp==1))
+      ind = zip(*numpy.where(self.matrix==i))
       ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
 
       while ind: # check if ind is not empty
@@ -78,19 +77,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
         # get coordinates in 26-connected region with same grey level
         region_level = list(set(ind).intersection(set(region_full)))
 
-        # Set already processed indices to zero
-        for pos in region_level:
-          dataTemp[pos] = 0
+        # Remove already processed indices
+        ind = list(set(ind) - set(region_level))
 
         # Size of the region (# of voxels in region)
         regionSize = len(region_level)
 
         # Update the gray level size zone matrix
         P_glszm[i-1,regionSize-1] += 1
-
-        # Find unprocessed nonzero positions for current gray level
-        ind = zip(*numpy.where(dataTemp==1))
-        ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
 
     if self.verbose: bar.close()
 

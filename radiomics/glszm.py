@@ -68,20 +68,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
 
       while ind: # check if ind is not empty
-        # Current label number and first coordinate
+        # First coordinate
         ind_node = ind[0]
 
-        # get all coordinates in the 26-connected region
-        region_full = [ind_node] + [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles]
-
-        # get coordinates in 26-connected region with same grey level
-        region_level = list(set(ind).intersection(set(region_full)))
-
-        # Remove already processed indices
-        ind = list(set(ind) - set(region_level))
+        # Remove first element to prevent reprocessing
+        ind = ind[1:]
 
         # Size of the region (# of voxels in region)
-        regionSize = len(region_level)
+        regionSize, ind = self.growZone(ind_node, ind, angles)
 
         # Update the gray level size zone matrix
         P_glszm[i-1,regionSize-1] += 1
@@ -93,6 +87,33 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     P_glszm_bounds = numpy.argwhere(P_glszm)
     (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1
     self.P_glszm = P_glszm[xstart:xstop,:ystop]
+
+  def growZone(self, ind_node, ind, angles):
+    """
+    Region growing. Recursive procedure, where each single call operates on a single voxel:
+     removes neighbouring voxels that are equal to itself from indices and calls growZone() on these
+
+    :returns # of voxels belonging to the same (sub)region, remaining indices to process
+    """
+
+    region_Size = 1
+
+    # get all coordinates in the 26-connected region, 2 voxels per angle
+    region_full = [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles]
+    region_full += [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles*-1]
+
+    # get all unprocessed coordinates in the 26-connected region with same gray level
+    region_level = list(set(ind).intersection(set(region_full)))
+
+    # Remove already processed indices
+    ind = list(set(ind) - set(region_level))
+
+    # for every found node, get number of unprocessed indices with same gray level
+    for new_node in region_level:
+      subRegion_size, ind = self.growZone(new_node, ind, angles)
+      region_Size += subRegion_size
+
+    return region_Size, ind
 
   def calculateCoefficients(self):
     sumP_glszm = numpy.sum(self.P_glszm, (0, 1) )

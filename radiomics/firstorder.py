@@ -70,11 +70,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     image values. It measures the average amount of
     information required to encode the image values
     """
-    ##check for binning centered at 0
-    bincount = numpy.ceil((numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))/float(self.binWidth))
-    
     eps = numpy.spacing(1)
-    bins = numpy.histogram(self.targetVoxelArray, bins=bincount)[0]
+
+    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
     bins = bins + eps
     bins = bins/float(bins.sum())
     return (-1.0 * numpy.sum(bins*numpy.log2(bins)))
@@ -181,10 +179,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     where a greater uniformity implies a greater heterogeneity or a
     greater range of discrete intensity values.
     """
-    bincount = numpy.ceil((numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))/float(self.binWidth))
     eps = numpy.spacing(1)
-    
-    bins = numpy.histogram(self.targetVoxelArray, bins=bincount)[0]
-    bins = bins/float(bins.sum())
-    bins = bins + eps
+
+    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
+    bins = bins/(float(bins.sum()) + eps)
     return (numpy.sum(bins**2))

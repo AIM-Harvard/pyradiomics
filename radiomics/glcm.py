@@ -25,7 +25,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = self.histogram[1].shape[0]
+    self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
 
     self.createGLCM()
 

@@ -27,7 +27,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = len(self.histogram[0])
     self.coefficients['grayLevels'] = numpy.linspace(1,self.coefficients['Ng'],num=self.coefficients['Ng'])
-    self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
 
     self.calculateGLSZM()
@@ -39,22 +38,19 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Number of times a 26-connected region with a
     gray level and voxel count occurs in an image. P_glszm[level, voxel_count] = # occurrences
     """
-    angles = numpy.array([ (0, 1, 0),
-                       (-1, 1, 0),
-                       (-1, 0, 0),
-                       (-1, -1, 0),
-                       (0, 1, -1),
-                       (0, 0, -1),
-                       (0, -1, -1),
-                       (-1, 0, -1),
-                       (1, 0, -1),
-                       (-1, 1, -1),
-                       (1, -1, -1),
-                       (-1, -1, -1),
-                       (1, 1, -1) ])
-
-    # Kernel for 26-connected neighborhood
-    B = numpy.ones((3,3,3))
+    angles = numpy.array([ (0, 0, 1),
+                           (0, 1, 0),
+                           (0, 1, 1),
+                           (0, 1, -1),
+                           (1, 0, 0),
+                           (1, 0, 1),
+                           (1, 0, -1),
+                           (1, 1, 0),
+                           (1, 1, 1),
+                           (1, 1, -1),
+                           (1, -1, 0),
+                           (1, -1, 1),
+                           (1, -1, -1) ])
 
     # Empty GLSZ matrix
     P_glszm = numpy.zeros((self.coefficients['grayLevels'].size, self.coefficients['Np']))
@@ -71,11 +67,9 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       dataTemp = numpy.where(self.matrix==i, 1, 0)
       ind = zip(*numpy.where(dataTemp==1))
       ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
-      labels = numpy.zeros(dataTemp.shape)
-      n = 0
+
       while ind: # check if ind is not empty
         # Current label number and first coordinate
-        n = n+1
         ind_node = ind[0]
 
         # get all coordinates in the 26-connected region
@@ -88,12 +82,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
         for pos in region_level:
           dataTemp[pos] = 0
 
-        # Assign the label n
-        for pos in region_level:
-          labels[pos] = n
-
         # Size of the region (# of voxels in region)
-        #regionSize = len(zip(*numpy.where(Y!=0)))
         regionSize = len(region_level)
 
         # Update the gray level size zone matrix

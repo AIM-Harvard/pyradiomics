@@ -429,9 +429,11 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Sum Variance is a measure of heterogeneity that places higher weights on
     neighboring intensity level pairs that deviate more from the mean.
     """
+    eps = self.coefficients['eps']
     pxAddy = self.coefficients['pxAddy']
     kValuesSum = self.coefficients['kValuesSum']
-    sumvar = numpy.sum( (pxAddy*((kValuesSum[:,None,None] - kValuesSum[:,None,None]*pxAddy)**2)), 0 )
+    sumentr = (-1) * numpy.sum( (pxAddy * numpy.log(pxAddy+eps)), 0, keepdims= True )
+    sumvar = numpy.sum( (pxAddy*((kValuesSum[:,None,None] - sumentr)**2)), 0 )
     return (sumvar.mean())
 
   def getSumSquaresFeatureValue(self):

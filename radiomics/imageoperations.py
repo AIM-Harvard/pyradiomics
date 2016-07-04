@@ -68,7 +68,7 @@ def padCubicMatrix(a, matrixCoordinates, padDistance):
   matrix2[matrixCoordinatesPadded] = a[matrixCoordinates]
   return (matrix2, matrixCoordinatesPadded)
 
-def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, isMask= False):
+def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.
@@ -79,10 +79,13 @@ def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSp
   3 - sitkGaussian
   """
   if imageNode == None: return None
+  if maskNode == None: return  None
 
   rif = sitk.ResampleImageFilter()
 
-  oldPixelType = imageNode.GetPixelID()
+  oldImagePixelType = imageNode.GetPixelID()
+  oldMaskPixelType = imageNode.GetPixelID()
+
   oldOrigin = numpy.array(imageNode.GetOrigin())
   oldSpacing = numpy.array(imageNode.GetSpacing())
   oldSize = numpy.array(imageNode.GetSize())
@@ -103,11 +106,11 @@ def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSp
   rif.SetOutputOrigin(newOrigin)
 
   resampledImageNode = rif.Execute(imageNode)
+  resampledMaskNode = rif.Execute(maskNode)
 
-  if isMask:
-    resampledImageNode = applyThreshold(resampledImageNode, -.5, .5, 0, 1)
+  resampledMaskNode = applyThreshold(resampledMaskNode, -.5, .5, 0, 1)
 
-  return sitk.Cast(resampledImageNode, oldPixelType)
+  return sitk.Cast(resampledImageNode, oldImagePixelType), sitk.Cast(resampledMaskNode, oldMaskPixelType)
 
 #
 # Use the SimpleITK LaplacianRecursiveGaussianImageFilter

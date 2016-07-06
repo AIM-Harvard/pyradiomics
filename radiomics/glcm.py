@@ -2,6 +2,7 @@ import numpy
 import collections
 from radiomics import base, imageoperations
 import SimpleITK as sitk
+from tqdm import  trange
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   """GLCM feature calculation."""
@@ -9,7 +10,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLCM,self).__init__(inputImage, inputMask, **kwargs)
 
     if inputImage == None or inputMask == None:
-      print('ERROR GLCM: missing input image or mask')
+      if self.verbose: print('ERROR GLCM: missing input image or mask')
       return
 
     self.imageArray = sitk.GetArrayFromImage(inputImage)
@@ -24,7 +25,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = self.histogram[1].shape[0]
+    self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
 
     self.createGLCM()
 
@@ -41,14 +42,11 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     maxheight = self.matrix.shape[0]
     indices = zip(*self.matrixCoordinates)
 
-    numIndices = len(indices)
-    index = 0
+    if self.verbose: bar = trange(len(indices), desc= 'calculate GLCM')
 
     for h, c, r in indices:
-      if index % 100 == 0:
-        percentProgress = (float(index) / float(numIndices)) * 100.0
-        print ('calculate GLCM: %.2f%s' % (percentProgress, '%'))
-      index = index + 1
+      if self.verbose: bar.update()
+
       for angles_idx, angle in enumerate(angles):
         for distances_idx, distance in enumerate(distances):
           i = self.matrix[h, c, r]
@@ -63,6 +61,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
               j = self.matrix[height, col, row]
               j_idx = int(j-1)
               self.P_glcm[i_idx, j_idx, distances_idx, angles_idx] += 1
+
+    if self.verbose: bar.close()
 
   def createGLCM(self):
     """

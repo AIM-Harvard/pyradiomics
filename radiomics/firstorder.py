@@ -9,7 +9,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     super(RadiomicsFirstOrder,self).__init__(inputImage,inputMask,**kwargs)
 
     if inputImage == None or inputMask == None:
-      print ('ERROR FirstOrder: missing input image or mask')
+      if self.verbose: print ('ERROR FirstOrder: missing input image or mask')
       return
 
     self.pixelSpacing = inputImage.GetSpacing()
@@ -35,7 +35,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     if moment == 1:
       return numpy.float64(0.0)
     else:
-      mn = numpy.expand_dims(numpy.mean(a,axis), axis)
+      mn = numpy.mean(a,axis, keepdims= True)
       s = numpy.power((a-mn), moment)
       return numpy.mean(s, axis)
 
@@ -70,11 +70,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     image values. It measures the average amount of
     information required to encode the image values
     """
-    ##check for binning centered at 0
-    bincount = numpy.ceil((numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))/float(self.binWidth))
-    
     eps = numpy.spacing(1)
-    bins = numpy.histogram(self.targetVoxelArray, bins=bincount)[0]
+
+    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
     bins = bins + eps
     bins = bins/float(bins.sum())
     return (-1.0 * numpy.sum(bins*numpy.log2(bins)))
@@ -126,7 +124,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Standard Deviation measures the amount of variation
     or dispersion from the Mean Value.
     """
-    return (numpy.std(self.targetVoxelArray))
+    return (numpy.std(self.targetVoxelArray, ddof= 1))
 
   def getSkewnessFeatureValue(self, axis=0):
     """
@@ -139,13 +137,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     m2 = self._moment(self.targetVoxelArray, 2, axis)
     m3 = self._moment(self.targetVoxelArray, 3, axis)
-    zero = (m2 == 0)
-    vals = numpy.where(zero, 0, m3 / m2**1.5)
 
-    if vals.ndim == 0:
-      return vals.item()
+    if (m2 == 0): return 0
 
-    return vals
+    return m3 / m2**1.5
 
   def getKurtosisFeatureValue(self, axis=0):
     """
@@ -160,17 +155,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     m2 = self._moment(self.targetVoxelArray,2,axis)
     m4 = self._moment(self.targetVoxelArray,4,axis)
-    zero = (m2 == 0)
-    olderr = numpy.seterr(all='ignore')
 
-    try:
-      vals = numpy.where(zero, 0, m4 / m2**2.0)
-    finally:
-      numpy.seterr(**olderr)
-    if vals.ndim == 0:
-      vals = vals.item()
+    if (m2==0): return 0
 
-    return vals
+    return m4 / m2**2.0
 
   def getVarianceFeatureValue(self):
     """
@@ -180,7 +168,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     value from the Mean value. This is a measure of the spread
     of the distribution about the mean..
     """
-    return (numpy.std(self.targetVoxelArray)**2)
+    return (numpy.std(self.targetVoxelArray, ddof= 1)**2)
 
   def getUniformityFeatureValue(self):
     """
@@ -191,10 +179,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     where a greater uniformity implies a greater heterogeneity or a
     greater range of discrete intensity values.
     """
-    bincount = numpy.ceil((numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))/float(self.binWidth))
     eps = numpy.spacing(1)
-    
-    bins = numpy.histogram(self.targetVoxelArray, bins=bincount)[0]
-    bins = bins/float(bins.sum())
-    bins = bins + eps
+
+    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
+    bins = bins/(float(bins.sum()) + eps)
     return (numpy.sum(bins**2))

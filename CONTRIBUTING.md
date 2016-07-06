@@ -38,7 +38,7 @@ When submitting a PR, make sure to add a `Cc: @Radiomics/developers` comment to 
 developers of your awesome contributions. Based on the
 comments posted by the reviewers, you may have to revisit your patches.
 
-### How to integrate a PR ?
+#### How to integrate a PR ?
 
 Getting your contributions integrated is relatively straightforward, here
 is the checklist:
@@ -60,3 +60,16 @@ Every pull request is tested automatically using CircleCI each time you push a
 commit to it. The Github UI will restrict users from merging pull requests until
 the CI build has returned with a successful result indicating that all tests have
 passed and there were no problems detected by the linter.
+
+#### Sphinx documentation updates
+
+If you contribute a change that will add a new module/function to pyradiomics, the
+package index used by sphinx for auto-generating documentation needs to be updated.
+To do that, follow the instructions on this page to set up sphinx on your system
+
+ https://github.com/Radiomics/pyradiomics/wiki/Documentation-infrastructure
+
+and update the package index file radiomics-api.rst by issuing the following command
+from the docs folder (make sure you include the updated file in your PR!)
+
+ sphinx-apidoc -f -o . ../radiomics

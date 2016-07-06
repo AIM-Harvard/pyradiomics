@@ -130,10 +130,16 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     Calculate the Skewness of the image array.
 
+    :math:`\\gamma_1 = \\frac{\\frac{1}{N}\sum^{N}_{i=1}{(\\bf{X}(i)-\\bar{X}})^3}{(\sum^{N}_{i=1}{(\\bf{X}(i)-\\bar{X}})^2)^3}`
+
     Skewness measures the asymmetry of the distribution of
     values about the Mean value. Depending
     on where the tail is elongated and the mass of the distribution
     is concentrated, this value can be positive or negative.
+
+    Related links:
+
+    https://en.wikipedia.org/wiki/Skewness
     """
     m2 = self._moment(self.targetVoxelArray, 2, axis)
     m3 = self._moment(self.targetVoxelArray, 3, axis)
@@ -143,8 +149,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return m3 / m2**1.5
 
   def getKurtosisFeatureValue(self, axis=0):
-    """
+    r"""
     Calculate the Kurtosis of the image array.
+
+    :math:`Kurt[X] = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\bf{X}(i)-\bar{X}})^4}{(\sum^{N}_{i=1}{(\bf{X}(i)-\bar{X}})^2)^2}`
 
     Kurtosis is a measure of the 'peakedness' of the distribution
     of values in the image ROI. A higher kurtosis implies that the
@@ -152,6 +160,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     rather than towards the mean. A lower kurtosis implies the reverse:
     that the mass of the distribution is concentrated towards a
     spike near the Mean value.
+
+    Related links:
+
+    https://en.wikipedia.org/wiki/Kurtosis
     """
     m2 = self._moment(self.targetVoxelArray,2,axis)
     m4 = self._moment(self.targetVoxelArray,4,axis)

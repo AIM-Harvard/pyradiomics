@@ -106,9 +106,9 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   rif.SetOutputOrigin(newOrigin)
 
   resampledImageNode = rif.Execute(imageNode)
-  resampledMaskNode = rif.Execute(maskNode)
 
-  resampledMaskNode = applyThreshold(resampledMaskNode, -.5, .5, 0, 1)
+  rif.setInterpolator(sitk.sitkNearestNeighbor)
+  resampledMaskNode = rif.Execute(maskNode)
 
   return sitk.Cast(resampledImageNode, oldImagePixelType), sitk.Cast(resampledMaskNode, oldMaskPixelType)
 

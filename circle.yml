@@ -7,5 +7,5 @@ dependencies:
     - git clone https://github.com/nigma/pywt.git && cd pywt && python setup.py install
 test:
   override:
-    - nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests
+    - nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests/test_features.py
     - cp nosetests.xml $CIRCLE_TEST_REPORTS

@@ -239,14 +239,15 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Correlation is a value between 0 (uncorrelated) and 1 (perfectly correlated) showing the
     linear dependency of gray level values to their respective voxels in the GLCM.
     """
+    eps = self.coefficients['eps']
     i = self.coefficients['i']
     j = self.coefficients['j']
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
     sigx = self.coefficients['sigx']
     sigy = self.coefficients['sigy']
-    corm = numpy.sum(self.P_glcm*(i[:,:,None,None]-ux)*(j[:,:,None,None]-uy), (0, 1), keepdims= True )
-    corr = corm/(sigx*sigy)
+    corm = numpy.sum( self.P_glcm*(i[:,:,None,None]-ux)*(j[:,:,None,None]-uy), (0, 1), keepdims= True )
+    corr = corm/(sigx*sigy+eps)
     return (corr.mean())
 
   def getDifferenceEntropyFeatureValue(self):

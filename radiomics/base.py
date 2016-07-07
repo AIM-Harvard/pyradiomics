@@ -13,7 +13,7 @@ class RadiomicsFeaturesBase(object):
     '''
 
     self.binWidth = 25
-    self.resampledPixelSpacing = [3,3,3]
+    self.resampledPixelSpacing = None # no resampling
     self.interpolator = sitk.sitkBSpline
     self.padDistance = 5 # no padding
     self.padFillValue = 0

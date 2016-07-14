@@ -175,9 +175,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       sre = numpy.sum( (pr/(jvector[:,None]**2)), 0 ) / sumP_rlgl
+      return (sre.mean())
     except ZeroDivisionError:
-      sre = 0
-    return (sre.mean())
+      return numpy.core.nan
 
   def getLongRunEmphasisFeatureValue(self):
     """Calculate and return the mean Long Run Emphasis (LRE) value for all 13 RLGL matrices.
@@ -191,9 +191,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       lre = numpy.sum( (pr*(jvector[:,None]**2)), 0 ) / sumP_rlgl
+      return (lre.mean())
     except ZeroDivisionError:
-      lre = 0
-    return (lre.mean())
+      return numpy.core.nan
 
   def getGrayLevelNonUniformityFeatureValue(self):
     """Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all 13 RLGL matrices.
@@ -206,9 +206,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       gln = numpy.sum( (pg**2) , 0 ) / sumP_rlgl
+      return (gln.mean())
     except ZeroDivisionError:
-      gln = 0
-    return (gln.mean())
+      return numpy.core.nan
 
   def getRunLengthNonUniformityFeatureValue(self):
     """Calculate and return the mean Run Length Non-Uniformity (RLN) value for all 13 RLGL matrices.
@@ -221,9 +221,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       rln = numpy.sum( (pr**2) , 0 ) / sumP_rlgl
+      return (rln.mean())
     except ZeroDivisionError:
-      rln = 0
-    return (rln.mean())
+      return numpy.core.nan
 
   def getRunPercentageFeatureValue(self):
     """Calculate and return the mean Run Percentage (RP) value for all 13 RLGL matrices.
@@ -234,9 +234,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       rp = numpy.sum( (self.P_rlgl/(Np)) , (0, 1) )
+      return (rp.mean())
     except ZeroDivisionError:
-      rp = 0
-    return (rp.mean())
+      return numpy.core.nan
 
   def getLowGrayLevelRunEmphasisFeatureValue(self):
     """Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all 13 RLGL matrices.
@@ -250,9 +250,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       lglre = numpy.sum( (pg/(ivector[:,None]**2)) , 0 ) / sumP_rlgl
+      return (lglre.mean())
     except ZeroDivisionError:
-      lglre = 0
-    return (lglre.mean())
+      return numpy.core.nan
 
   def getHighGrayLevelRunEmphasisFeatureValue(self):
     """Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all 13 RLGL matrices.
@@ -266,9 +266,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       hglre = numpy.sum( (pg*(ivector[:,None]**2)) , 0 ) / sumP_rlgl
+      return (hglre.mean())
     except ZeroDivisionError:
-      hglre = 0
-    return (hglre.mean())
+      return numpy.core.nan
 
   def getShortRunLowGrayLevelEmphasisFeatureValue(self):
     """Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all 13 RLGL matrices.
@@ -281,9 +281,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       srlgle = numpy.sum( (self.P_rlgl/((ivector[:,None,None]**2)*(jvector[None,:,None]**2))) , (0, 1) ) / sumP_rlgl
+      return (srlgle.mean())
     except ZeroDivisionError:
-      srlgle = 0
-    return (srlgle.mean())
+      return numpy.core.nan
 
   def getShortRunHighGrayLevelEmphasisFeatureValue(self):
     """Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all 13 RLGL matrices.
@@ -296,9 +296,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       srhgle = numpy.sum( (self.P_rlgl*(ivector[:,None,None]**2)/(jvector[None,:,None]**2)) , (0, 1) ) / sumP_rlgl
+      return (srhgle.mean())
     except ZeroDivisionError:
-      srhgle = 0
-    return (srhgle.mean())
+      return numpy.core.nan
 
   def getLongRunLowGrayLevelEmphasisFeatureValue(self):
     """Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all 13 RLGL matrices.
@@ -311,9 +311,9 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       lrlgle = numpy.sum( (self.P_rlgl*(jvector[None,:,None]**2)/(ivector[:,None,None]**2)) , (0, 1) ) / sumP_rlgl
+      return (lrlgle.mean())
     except ZeroDivisionError:
-      lrlgle = 0
-    return (lrlgle.mean())
+      return numpy.core.nan
 
   def getLongRunHighGrayLevelEmphasisFeatureValue(self):
     """Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all 13 RLGL matrices.
@@ -326,6 +326,6 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
     try:
       lrhgle = numpy.sum( (self.P_rlgl*((jvector[None,:,None]**2)*(ivector[:,None,None]**2))) , (0, 1) ) / sumP_rlgl
+      return (lrhgle.mean())
     except ZeroDivisionError:
-      lrhgle = 0
-    return (lrhgle.mean())
+      return numpy.core.nan

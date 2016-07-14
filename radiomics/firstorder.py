@@ -144,7 +144,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     m2 = self._moment(self.targetVoxelArray, 2, axis)
     m3 = self._moment(self.targetVoxelArray, 3, axis)
 
-    if (m2 == 0): return 0
+    if (m2 == 0): return numpy.core.nan
 
     return m3 / m2**1.5
 
@@ -168,7 +168,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     m2 = self._moment(self.targetVoxelArray,2,axis)
     m4 = self._moment(self.targetVoxelArray,4,axis)
 
-    if (m2==0): return 0
+    if (m2==0): return numpy.core.nan
 
     return m4 / m2**2.0
 
@@ -191,8 +191,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     where a greater uniformity implies a greater heterogeneity or a
     greater range of discrete intensity values.
     """
-    eps = numpy.spacing(1)
 
     bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
-    bins = bins/(float(bins.sum()) + eps)
-    return (numpy.sum(bins**2))
+    bins = bins/(float(bins.sum()))
+    try:
+      return (numpy.sum(bins**2))
+    except ZeroDivisionError:
+      return numpy.core.nan

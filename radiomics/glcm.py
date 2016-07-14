@@ -245,9 +245,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     uy = self.coefficients['uy']
     sigx = self.coefficients['sigx']
     sigy = self.coefficients['sigy']
-    corm = numpy.sum(self.P_glcm*(i[:,:,None,None]-ux)*(j[:,:,None,None]-uy), (0, 1), keepdims= True )
-    corr = corm/(sigx*sigy)
-    return (corr.mean())
+
+    try:
+      corm = numpy.sum( self.P_glcm*(i[:,:,None,None]-ux)*(j[:,:,None,None]-uy), (0, 1), keepdims= True )
+      corr = corm/(sigx*sigy)
+      return (corr.mean())
+    except ZeroDivisionError:
+      return numpy.core.nan
 
   def getDifferenceEntropyFeatureValue(self):
     """
@@ -292,8 +296,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     Entropy is a measure of the randomness/variability in neighborhood intensity values.
     """
-    eps = self.coefficients['eps']
-    ent = (-1) * numpy.sum( (self.P_glcm * numpy.log(self.P_glcm+eps)), (0, 1))
+    ent = self.coefficients['HXY']
     return (ent.mean())
 
   def getHomogeneity1FeatureValue(self):
@@ -323,14 +326,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getImc1FeatureValue(self):
     """
-    Using coefficients HX, HY, HXY, HXY1, HXY2, calculate and return the mean
+    Using coefficients HX, HY, HXY, HXY1, calculate and return the mean
     Informal Measure of Correlation 1 for all 13 GLCMs.
     """
     HX = self.coefficients['HX']
     HY = self.coefficients['HY']
     HXY = self.coefficients['HXY']
     HXY1 = self.coefficients['HXY1']
-    HXY2 = self.coefficients['HXY2']
     imc1 = (HXY - HXY1)/numpy.max(([HX,HY]),0)
     return (imc1.mean())
 
@@ -379,12 +381,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     return (idn.mean())
 
   def getInverseVarianceFeatureValue(self):
-    """Using the i, j, Ng coeffients, calculate and return the mean Inverse Variance for all 13 GLCMs."""
+    """Using the i, j coeffients, calculate and return the mean Inverse Variance for all 13 GLCMs."""
     i = self.coefficients['i']
     j = self.coefficients['j']
-    Ng = self.coefficients['Ng']
-    maskDiags = numpy.ones((numpy.abs(i-j)).shape, dtype = bool)
-    maskDiags[numpy.diag_indices(Ng)] = False
+    maskDiags = numpy.abs(i-j) > 0
     inv = numpy.sum( (self.P_glcm[maskDiags] / ((numpy.abs(i-j))[:,:,None,None]**2)[maskDiags]), 0 )
     return (inv.mean())
 

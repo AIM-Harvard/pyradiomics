@@ -424,7 +424,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumVarianceFeatureValue(self):
     """
-    Using coefficients pxAddy, kValuesSum, calculate and return the mean Sum Variance for all 13 GLCMs.
+    Using coefficients pxAddy, kValuesSum, SumEntropy calculate and return the mean Sum Variance for all 13 GLCMs.
 
     Sum Variance is a measure of heterogeneity that places higher weights on
     neighboring intensity level pairs that deviate more from the mean.
@@ -434,6 +434,19 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     kValuesSum = self.coefficients['kValuesSum']
     sumentr = (-1) * numpy.sum( (pxAddy * numpy.log(pxAddy+eps)), 0, keepdims= True )
     sumvar = numpy.sum( (pxAddy*((kValuesSum[:,None,None] - sumentr)**2)), 0 )
+    return (sumvar.mean())
+
+  def getSumVariance2FeatureValue(self):
+    """
+    Using coefficients pxAddy, kValuesSum, SumAvarage calculate and return the mean Sum Variance for all 13 GLCMs.
+
+    Sum Variance is a measure of heterogeneity that places higher weights on
+    neighboring intensity level pairs that deviate more from the mean.
+    """
+    pxAddy = self.coefficients['pxAddy']
+    kValuesSum = self.coefficients['kValuesSum']
+    sumavg = numpy.sum( (kValuesSum[:,None,None]*pxAddy), 0, keepdims= True )
+    sumvar = numpy.sum( (pxAddy*((kValuesSum[:,None,None] - sumavg)**2)), 0 )
     return (sumvar.mean())
 
   def getSumSquaresFeatureValue(self):
@@ -447,4 +460,18 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     u = self.coefficients['u']
     # Also known as Variance
     ss = numpy.sum( (self.P_glcm * ((j[:,:,None,None]-u)**2)), (0, 1) )
+    return (ss.mean())
+
+  def getSumSquares2FeatureValue(self):
+    """
+    Using coefficients i, j, u, calculate and return the mean um of Squares (Variance) for all 13 GLCMs.
+
+    Sum of Squares or Variance is a measure in the distribution of neigboring
+    intensity level pairs about the mean intensity level in the GLCM.
+    """
+    i = self.coefficients['i']
+    j = self.coefficients['j']
+    u = numpy.sum(self.P_glcm*(i*j)[:, :, None, None], (0,1), keepdims= True)
+    # Also known as Variance
+    ss = numpy.sum( (self.P_glcm * (((i*j)[:,:,None,None]-u)**2)), (0, 1) )
     return (ss.mean())

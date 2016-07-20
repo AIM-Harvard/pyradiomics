@@ -86,21 +86,40 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   oldImagePixelType = imageNode.GetPixelID()
   oldMaskPixelType = imageNode.GetPixelID()
 
+  imageDirection = imageNode.GetDirection()
+
   oldOrigin = numpy.array(imageNode.GetOrigin())
   oldSpacing = numpy.array(imageNode.GetSpacing())
   oldSize = numpy.array(imageNode.GetSize())
 
   newSize = numpy.array(oldSize * oldSpacing / resampledPixelSpacing, dtype= 'int')
 
-  newOrigin = oldOrigin
-  # recalculate the origin, which is the left-upper-lower corner of the image (i.e. x = 0, y = max, z = 0)
-  newOrigin[0] -= ((oldSpacing - resampledPixelSpacing)/2)[0]
-  newOrigin[1] += ((oldSpacing - resampledPixelSpacing)/2)[1]
-  newOrigin[2] -= ((oldSpacing - resampledPixelSpacing)/2)[2]
+  # in the imageNode Coordinate system, Origin is located in center of first voxel, e.g. 1/2 voxel from Corner
+  # in mm (common between imageNode and resampledImageNode): corner = volOrigin - .5 * pixelSpacing
+  # in resampling, the volume does not move, therefore originalCorner = resampledCorner
+  # therefore: oldVolOrigin(in mm) - .5 * oldPixelSpacing = newVolOrigin(in mm) - .5 * newPixelSpacing
+  # newVolOrigin (in mm) = oldVolOrigin + .5 * (newPixelSpacing - oldPixelSpacing)
+  # newVolOrigin (in imageNode Coordinates) = oldVolOrigin + (.5 * (newPixelSpacing - oldPixelSpacing) / oldpixelspacing)
+
+  # calculate distance between the old and new origin in mm
+  # this translation is the coordinate of the new origin in the imageNode Coordinate system, but with pixelspacing of [1, 1, 1]
+  trans = (resampledPixelSpacing-oldSpacing) / 2
+
+  # create transformation matrix to calculate new origin in the Reference (patient) Coordinate System (RCS in DICOM)
+  # This transformation matrix only has to apply the direction,the translation already is in mm and not voxels (e.g. spacing = [1, 1, 1]
+  #[['Xx' 'Yx' 'Zx' 'Sx']
+  # ['Xy' 'Yy' 'Zy' 'Sy']
+  # ['Xz' 'Yz' 'Zz' 'Sz']]
+  transMat = imageDirection.reshape(3,3)
+  transMat = numpy.append(transMat, [oldOrigin], axis= 0)  # add origin to the transformation matrix
+  transMat = transMat.transpose(1,0)  # swap rows and columns
+
+  # calculation position of new origin in RCS
+  newOrigin = numpy.dot(transMat, trans)
 
   rif.SetInterpolator(interpolator)
   rif.SetOutputSpacing(resampledPixelSpacing)
-  rif.SetOutputDirection(imageNode.GetDirection())
+  rif.SetOutputDirection(imageDirection)
   rif.SetOutputPixelType(sitk.sitkFloat32)
   rif.SetSize(newSize)
   rif.SetOutputOrigin(newOrigin)

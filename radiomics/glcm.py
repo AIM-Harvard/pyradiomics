@@ -442,6 +442,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     Sum Variance is a measure of heterogeneity that places higher weights on
     neighboring intensity level pairs that deviate more from the mean.
+
+    This formula differs from SumVariance in that instead of subtracting the SumEntropy from the intensity,
+    it subtracts the SumAvarage, which is the mean of intensities and not its entropy
     """
     pxAddy = self.coefficients['pxAddy']
     kValuesSum = self.coefficients['kValuesSum']
@@ -468,6 +471,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     Sum of Squares or Variance is a measure in the distribution of neigboring
     intensity level pairs about the mean intensity level in the GLCM.
+
+    This formula differs from SumSquares in that the mean of P_glcm is calculated differently.
+    In stead of taking the mean of probabilities, each probability is weighed by i*j.
+    Additionally, the value of i*j is taken as intensity, instead of just the intensity of j.
     """
     i = self.coefficients['i']
     j = self.coefficients['j']

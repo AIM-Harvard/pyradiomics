@@ -110,9 +110,9 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   #[['Xx' 'Yx' 'Zx' 'Sx']
   # ['Xy' 'Yy' 'Zy' 'Sy']
   # ['Xz' 'Yz' 'Zz' 'Sz']]
-  transMat = imageDirection.reshape(3,3)
-  transMat = numpy.append(transMat, [oldOrigin], axis= 0)  # add origin to the transformation matrix
-  transMat = transMat.transpose(1,0)  # swap rows and columns
+
+  transMat = imageDirection.reshape((3, -1), order= 'F')
+  transMat = numpy.append(transMat, oldOrigin[:, None], axis= 1)  # add origin to the transformation matrix
 
   # calculation position of new origin in RCS
   newOrigin = numpy.dot(transMat, trans)

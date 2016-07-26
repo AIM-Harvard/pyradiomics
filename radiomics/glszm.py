@@ -27,7 +27,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['grayLevels'] = numpy.linspace(1,self.coefficients['Ng'],num=self.coefficients['Ng'])
-    self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
 
     self.calculateGLSZM()
@@ -39,22 +38,19 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Number of times a 26-connected region with a
     gray level and voxel count occurs in an image. P_glszm[level, voxel_count] = # occurrences
     """
-    angles = numpy.array([ (0, 1, 0),
-                       (-1, 1, 0),
-                       (-1, 0, 0),
-                       (-1, -1, 0),
-                       (0, 1, -1),
-                       (0, 0, -1),
-                       (0, -1, -1),
-                       (-1, 0, -1),
-                       (1, 0, -1),
-                       (-1, 1, -1),
-                       (1, -1, -1),
-                       (-1, -1, -1),
-                       (1, 1, -1) ])
-
-    # Kernel for 26-connected neighborhood
-    B = numpy.ones((3,3,3))
+    angles = numpy.array([ (0, 0, 1),
+                           (0, 1, 0),
+                           (0, 1, 1),
+                           (0, 1, -1),
+                           (1, 0, 0),
+                           (1, 0, 1),
+                           (1, 0, -1),
+                           (1, 1, 0),
+                           (1, 1, 1),
+                           (1, 1, -1),
+                           (1, -1, 0),
+                           (1, -1, 1),
+                           (1, -1, -1) ])
 
     # Empty GLSZ matrix
     P_glszm = numpy.zeros((self.coefficients['grayLevels'].size, self.coefficients['Np']))
@@ -68,40 +64,40 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       # give some progress
       if self.verbose: bar.update()
 
-      dataTemp = numpy.where(self.matrix==i, 1, 0)
-      ind = zip(*numpy.where(dataTemp==1))
+      ind = zip(*numpy.where(self.matrix==i))
       ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
-      labels = numpy.zeros(dataTemp.shape)
-      n = 0
-      while ind: # check if ind is not empty
-        # Current label number and first coordinate
-        n = n+1
-        ind_node = ind[0]
 
-        # get all coordinates in the 26-connected region
-        region_full = [ind_node] + [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles]
+      while ind: # check if ind is not empty: unprocessed regions for current gray level
+        # Pop first coordinate of an unprocessed zone, start new stack
+        ind_region = [ind.pop()]
 
-        # get coordinates in 26-connected region with same grey level
-        region_level = list(set(ind).intersection(set(region_full)))
+        # Define regionSize
+        regionSize = 0
 
-        # Set already processed indices to zero
-        for pos in region_level:
-          dataTemp[pos] = 0
+        # Grow zone for item popped from stack of region indices, loop until stack of region indices is exhausted
+        # Each loop represents one voxel belonging to current zone. Therefore, count number of loops as regionSize
+        while ind_region:
+          regionSize+=1
 
-        # Assign the label n
-        for pos in region_level:
-          labels[pos] = n
+          # Use pop to remove next node for set of unprocessed region indices
+          ind_node = ind_region.pop()
 
-        # Size of the region (# of voxels in region)
-        #regionSize = len(zip(*numpy.where(Y!=0)))
-        regionSize = len(region_level)
+          # get all coordinates in the 26-connected region, 2 voxels per angle
+          region_full = [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles]
+          region_full += [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles*-1]
+
+          # get all unprocessed coordinates in the 26-connected region with same gray level
+          region_level = list(set(ind).intersection(set(region_full)))
+
+          # Remove already processed indices to prevent reprocessing
+          ind = list(set(ind) - set(region_level))
+
+          # Add all found neighbours to the total stack of unprocessed neighbours
+          ind_region.extend(region_level)
+
 
         # Update the gray level size zone matrix
         P_glszm[i-1,regionSize-1] += 1
-
-        # Find unprocessed nonzero positions for current gray level
-        ind = zip(*numpy.where(dataTemp==1))
-        ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
 
     if self.verbose: bar.close()
 

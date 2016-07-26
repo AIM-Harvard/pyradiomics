@@ -14,6 +14,7 @@ import logging
 import math
 import numpy
 from nose_parameterized import parameterized
+from radiomics import imageoperations
 
 class RadiomicsTestUtils:
 
@@ -28,6 +29,10 @@ class RadiomicsTestUtils:
     # the image and mask volumes
     self.image = None
     self.mask = None
+
+    # resampling settings
+    self.interpolator = None
+    self.resampledPixelSpacing = None
 
     # set up file paths
     self.dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","data")
@@ -61,6 +66,10 @@ class RadiomicsTestUtils:
 
     self.results = {}
     self.diffs = {}
+
+  def setResampling(self, interpolator, resampledPixelSpacing):
+    self.interpolator = interpolator
+    self.resampledPixelSpacing = resampledPixelSpacing
 
   #
   # Set up the feature class, read in the files associated with it.
@@ -104,6 +113,8 @@ class RadiomicsTestUtils:
       self.logger.info("Reading the image and mask for test case %s", testCase)
       self.image = sitk.ReadImage(imageName)
       self.mask = sitk.ReadImage(maskName)
+      if self.interpolator != None and self.resampledPixelSpacing != None:
+        self.image, self.mask = imageoperations.resampleImage(self.image, self.mask, self.resampledPixelSpacing, self.interpolator)
       self.results[testCase] = {}
       self.diffs[testCase] = {}
       self.testCase = testCase

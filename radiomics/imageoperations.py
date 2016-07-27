@@ -123,10 +123,17 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
 
   original_shape = matrix.shape
   adjusted_shape = tuple([dim+1 if dim % 2 != 0 else dim for dim in original_shape])
-  data.resize(adjusted_shape)
+  data = numpy.resize(data, adjusted_shape)
 
   if not isinstance(wavelet, pywt.Wavelet):
     wavelet = pywt.Wavelet(wavelet)
+
+  for i in range(0, start_level):
+    H, L = decompose_i(data, wavelet)
+    LH, LL = decompose_j(L, wavelet)
+    LLH, LLL = decompose_k(LL, wavelet)
+
+    data = LLL.copy()
 
   ret = []
   for i in range(start_level, start_level + level):
@@ -140,8 +147,8 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
     LHH, LHL = decompose_k(LH, wavelet)
     LLH, LLL = decompose_k(LL, wavelet)
 
-    approximation = LLL.copy()
-    approximation.resize(original_shape)
+    data = LLL.copy()
+
     dec = {'HHH': HHH,
            'HHL': HHL,
            'HLH': HLH,
@@ -151,12 +158,16 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
            'LLH': LLH}
     for decName, decImage in dec.iteritems():
       decTemp = decImage.copy()
-      decTemp.resize(original_shape)
+      decTemp= numpy.resize(decTemp, original_shape)
       sitkImage = sitk.GetImageFromArray(decTemp)
       sitkImage.CopyInformation(inputImage)
       dec[decName] = sitkImage
 
     ret.append(dec)
+
+  data= numpy.resize(data, original_shape)
+  approximation = sitk.GetImageFromArray(data)
+  approximation.CopyInformation(inputImage)
 
   return approximation, ret
 

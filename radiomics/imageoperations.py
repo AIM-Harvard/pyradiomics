@@ -81,7 +81,10 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   if imageNode == None: return None
   if maskNode == None: return  None
 
-  rif = sitk.ResampleImageFilter()
+  oldSpacing = numpy.array(imageNode.GetSpacing())
+
+  # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
+  if numpy.array_equal(oldSpacing, resampledPixelSpacing): return imageNode, maskNode
 
   oldImagePixelType = imageNode.GetPixelID()
   oldMaskPixelType = imageNode.GetPixelID()
@@ -89,7 +92,7 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   imageDirection = imageNode.GetDirection()
 
   oldOrigin = numpy.array(imageNode.GetOrigin())
-  oldSpacing = numpy.array(imageNode.GetSpacing())
+
   oldSize = numpy.array(imageNode.GetSize())
 
   newSize = numpy.array(oldSize * oldSpacing / resampledPixelSpacing, dtype= 'int')
@@ -116,6 +119,8 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
 
   # calculation position of new origin in RCS
   newOrigin = numpy.dot(transMat, trans)
+
+  rif = sitk.ResampleImageFilter()
 
   rif.SetInterpolator(interpolator)
   rif.SetOutputSpacing(resampledPixelSpacing)

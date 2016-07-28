@@ -89,7 +89,7 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   oldImagePixelType = imageNode.GetPixelID()
   oldMaskPixelType = imageNode.GetPixelID()
 
-  imageDirection = imageNode.GetDirection()
+  imageDirection = numpy.array(imageNode.GetDirection())
 
   oldOrigin = numpy.array(imageNode.GetOrigin())
 
@@ -107,6 +107,7 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   # calculate distance between the old and new origin in mm
   # this translation is the coordinate of the new origin in the imageNode Coordinate system, but with pixelspacing of [1, 1, 1]
   trans = (resampledPixelSpacing-oldSpacing) / 2
+  trans = numpy.append(trans, [1])
 
   # create transformation matrix to calculate new origin in the Reference (patient) Coordinate System (RCS in DICOM)
   # This transformation matrix only has to apply the direction,the translation already is in mm and not voxels (e.g. spacing = [1, 1, 1]

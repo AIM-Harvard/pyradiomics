@@ -443,10 +443,10 @@ class RadiomicsTestUtils:
     csvFile = open(fileName, 'wb')
     csvFileWriter = csv.writer(csvFile)
     # get the headers from the first row
-    header = data[data.keys()[0]].keys()
+    header = sorted(data[data.keys()[0]].keys())
     header = ['testCase'] + header
     csvFileWriter.writerow(header)
-    for testCase in data.keys():
+    for testCase in sorted(data.keys()):
       thisCase = data[testCase]
       thisCase['testCase'] = testCase
       row = []

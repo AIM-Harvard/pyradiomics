@@ -16,8 +16,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     #self.featureNames = self.getFeatureNames()
 
-    self.imageArray = sitk.GetArrayFromImage(inputImage)
-    self.maskArray = sitk.GetArrayFromImage(inputMask)
+    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
+    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
 
     (self.matrix, self.matrixCoordinates) = \
       imageoperations.padTumorMaskToCube(self.imageArray,self.maskArray)

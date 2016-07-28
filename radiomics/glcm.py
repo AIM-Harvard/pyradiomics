@@ -13,8 +13,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       if self.verbose: print('ERROR GLCM: missing input image or mask')
       return
 
-    self.imageArray = sitk.GetArrayFromImage(inputImage)
-    self.maskArray = sitk.GetArrayFromImage(inputMask)
+    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
+    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
 
     (self.matrix, self.matrixCoordinates) = \
       imageoperations.padTumorMaskToCube(self.imageArray,self.maskArray)

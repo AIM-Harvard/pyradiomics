@@ -451,7 +451,7 @@ class RadiomicsTestUtils:
       thisCase['testCase'] = testCase
       row = []
       for h in header:
-        row = row + [thisCase[h]]
+        row = row + [thisCase.get(h, "NaN")]
       csvFileWriter.writerow(row)
     csvFile.close()
     self.logger.info('Wrote to file %s', fileName)

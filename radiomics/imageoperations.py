@@ -96,7 +96,14 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   oldOrigin = numpy.array(imageNode.GetOrigin())
   oldSize = numpy.array(imageNode.GetSize())
 
+  # Recalculate the new size. Round up to prevent data loss.
   newSize = numpy.array(numpy.ceil(oldSize * oldSpacing / resampledPixelSpacing),dtype='int')
+  # Origin is located in center of first voxel, e.g. 1/2 of the spacing
+  # from Corner, which corresponds to 0 in the original Index coordinate space.
+  # The new spacing will be in 0 the new Index coordinate space. Here we use continuous
+  # index to calculate where the new 0 of the new Index coordinate space is in terms
+  # of the original spacing, and then use the ITK functionality to bring the contiuous index
+  # into the physical space (mm)
   newOriginIndex = numpy.array(.5*(resampledPixelSpacing-oldSpacing)/oldSpacing)
   newOrigin = imageNode.TransformContinuousIndexToPhysicalPoint(newOriginIndex)
 

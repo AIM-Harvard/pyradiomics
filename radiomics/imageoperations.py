@@ -78,13 +78,15 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   2 - sitkBSpline
   3 - sitkGaussian
   """
-  if imageNode == None: return None
-  if maskNode == None: return  None
+
+  if imageNode == None or maskNode == None:
+    return None
 
   oldSpacing = numpy.array(imageNode.GetSpacing())
 
   # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
-  if numpy.array_equal(oldSpacing, resampledPixelSpacing): return imageNode, maskNode
+  if numpy.array_equal(oldSpacing, resampledPixelSpacing):
+    return imageNode, maskNode
 
   oldImagePixelType = imageNode.GetPixelID()
   oldMaskPixelType = imageNode.GetPixelID()
@@ -92,50 +94,28 @@ def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=si
   imageDirection = numpy.array(imageNode.GetDirection())
 
   oldOrigin = numpy.array(imageNode.GetOrigin())
-
   oldSize = numpy.array(imageNode.GetSize())
 
-  newSize = numpy.array(oldSize * oldSpacing / resampledPixelSpacing, dtype= 'int')
-
-  # in the imageNode Coordinate system, Origin is located in center of first voxel, e.g. 1/2 voxel from Corner
-  # in mm (common between imageNode and resampledImageNode): corner = volOrigin - .5 * pixelSpacing
-  # in resampling, the volume does not move, therefore originalCorner = resampledCorner
-  # therefore: oldVolOrigin(in mm) - .5 * oldPixelSpacing = newVolOrigin(in mm) - .5 * newPixelSpacing
-  # newVolOrigin (in mm) = oldVolOrigin + .5 * (newPixelSpacing - oldPixelSpacing)
-  # newVolOrigin (in imageNode Coordinates) = oldVolOrigin + (.5 * (newPixelSpacing - oldPixelSpacing) / oldpixelspacing)
-
-  # calculate distance between the old and new origin in mm
-  # this translation is the coordinate of the new origin in the imageNode Coordinate system, but with pixelspacing of [1, 1, 1]
-  trans = (resampledPixelSpacing-oldSpacing) / 2
-  trans = numpy.append(trans, [1])
-
-  # create transformation matrix to calculate new origin in the Reference (patient) Coordinate System (RCS in DICOM)
-  # This transformation matrix only has to apply the direction,the translation already is in mm and not voxels (e.g. spacing = [1, 1, 1]
-  #[['Xx' 'Yx' 'Zx' 'Sx']
-  # ['Xy' 'Yy' 'Zy' 'Sy']
-  # ['Xz' 'Yz' 'Zz' 'Sz']]
-
-  transMat = imageDirection.reshape((3, -1), order= 'F')
-  transMat = numpy.append(transMat, oldOrigin[:, None], axis= 1)  # add origin to the transformation matrix
-
-  # calculation position of new origin in RCS
-  newOrigin = numpy.dot(transMat, trans)
+  newSize = numpy.array(numpy.ceil(oldSize * oldSpacing / resampledPixelSpacing),dtype='int')
+  newOriginIndex = numpy.array(.5*(resampledPixelSpacing-oldSpacing)/oldSpacing)
+  newOrigin = imageNode.TransformContinuousIndexToPhysicalPoint(newOriginIndex)
 
   rif = sitk.ResampleImageFilter()
 
-  rif.SetInterpolator(interpolator)
   rif.SetOutputSpacing(resampledPixelSpacing)
   rif.SetOutputDirection(imageDirection)
-  rif.SetOutputPixelType(sitk.sitkFloat32)
   rif.SetSize(newSize)
   rif.SetOutputOrigin(newOrigin)
 
+  rif.SetOutputPixelType(oldImagePixelType)
+  rif.SetInterpolator(interpolator)
   resampledImageNode = rif.Execute(imageNode)
 
+  rif.SetOutputPixelType(oldMaskPixelType)
   rif.SetInterpolator(sitk.sitkNearestNeighbor)
   resampledMaskNode = rif.Execute(maskNode)
 
-  return sitk.Cast(resampledImageNode, oldImagePixelType), sitk.Cast(resampledMaskNode, oldMaskPixelType)
+  return resampledImageNode,resampledMaskNode
 
 #
 # Use the SimpleITK LaplacianRecursiveGaussianImageFilter

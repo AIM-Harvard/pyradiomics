@@ -68,7 +68,7 @@ def padCubicMatrix(a, matrixCoordinates, padDistance):
   matrix2[matrixCoordinatesPadded] = a[matrixCoordinates]
   return (matrix2, matrixCoordinatesPadded)
 
-def interpolateImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
+def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.

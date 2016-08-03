@@ -41,7 +41,7 @@ class RadiomicsFeaturesBase(object):
     self.featureNames = self.getFeatureNames()
 
     if self.interpolator != None and self.resampledPixelSpacing != None:
-      self.inputImage, self.inputMask = imageoperations.interpolateImage(inputImage, inputMask, self.resampledPixelSpacing, self.interpolator)
+      self.inputImage, self.inputMask = imageoperations.resampleImage(inputImage, inputMask, self.resampledPixelSpacing, self.interpolator)
     else:
       self.inputImage = inputImage
       self.inputMask = inputMask

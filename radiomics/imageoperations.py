@@ -68,7 +68,7 @@ def padCubicMatrix(a, matrixCoordinates, padDistance):
   matrix2[matrixCoordinatesPadded] = a[matrixCoordinates]
   return (matrix2, matrixCoordinatesPadded)
 
-def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
+def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.
@@ -78,11 +78,51 @@ def interpolateImage(imageNode, resampledPixelSpacing, interpolator=sitk.sitkBSp
   2 - sitkBSpline
   3 - sitkGaussian
   """
+
+  if imageNode == None or maskNode == None:
+    return None
+
+  oldSpacing = numpy.array(imageNode.GetSpacing())
+
+  # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
+  if numpy.array_equal(oldSpacing, resampledPixelSpacing):
+    return imageNode, maskNode
+
+  oldImagePixelType = imageNode.GetPixelID()
+  oldMaskPixelType = imageNode.GetPixelID()
+
+  imageDirection = numpy.array(imageNode.GetDirection())
+
+  oldOrigin = numpy.array(imageNode.GetOrigin())
+  oldSize = numpy.array(imageNode.GetSize())
+
+  # Recalculate the new size. Round up to prevent data loss.
+  newSize = numpy.array(numpy.ceil(oldSize * oldSpacing / resampledPixelSpacing),dtype='int')
+  # Origin is located in center of first voxel, e.g. 1/2 of the spacing
+  # from Corner, which corresponds to 0 in the original Index coordinate space.
+  # The new spacing will be in 0 the new Index coordinate space. Here we use continuous
+  # index to calculate where the new 0 of the new Index coordinate space is in terms
+  # of the original spacing, and then use the ITK functionality to bring the contiuous index
+  # into the physical space (mm)
+  newOriginIndex = numpy.array(.5*(resampledPixelSpacing-oldSpacing)/oldSpacing)
+  newOrigin = imageNode.TransformContinuousIndexToPhysicalPoint(newOriginIndex)
+
   rif = sitk.ResampleImageFilter()
+
   rif.SetOutputSpacing(resampledPixelSpacing)
+  rif.SetOutputDirection(imageDirection)
+  rif.SetSize(newSize)
+  rif.SetOutputOrigin(newOrigin)
+
+  rif.SetOutputPixelType(oldImagePixelType)
   rif.SetInterpolator(interpolator)
   resampledImageNode = rif.Execute(imageNode)
-  return resampledImageNode
+
+  rif.SetOutputPixelType(oldMaskPixelType)
+  rif.SetInterpolator(sitk.sitkNearestNeighbor)
+  resampledMaskNode = rif.Execute(maskNode)
+
+  return resampledImageNode,resampledMaskNode
 
 #
 # Use the SimpleITK LaplacianRecursiveGaussianImageFilter

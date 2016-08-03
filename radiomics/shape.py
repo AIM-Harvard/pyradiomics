@@ -18,8 +18,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     #self.featureNames = self.getFeatureNames()
 
-    self.imageArray = sitk.GetArrayFromImage(inputImage)
-    self.maskArray = sitk.GetArrayFromImage(inputMask)
+    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
+    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
 
     # Generate a cuboid matrix of the tumor region and pad by 10 voxels in three directions
     # for surface area calculation

@@ -1,5 +1,6 @@
 import SimpleITK as sitk
 import inspect
+from radiomics import imageoperations
 
 class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -10,8 +11,6 @@ class RadiomicsFeaturesBase(object):
     SimpleITK images as input is to keep the possibility of reusing the
     optimized feature calculators implemented in SimpleITK in the future.
     '''
-    self.inputImage = inputImage
-    self.inputMask = inputMask
 
     self.binWidth = 25
     self.resampledPixelSpacing = None # no resampling
@@ -40,6 +39,12 @@ class RadiomicsFeaturesBase(object):
     self.disableAllFeatures()
 
     self.featureNames = self.getFeatureNames()
+
+    if self.interpolator != None and self.resampledPixelSpacing != None:
+      self.inputImage, self.inputMask = imageoperations.resampleImage(inputImage, inputMask, self.resampledPixelSpacing, self.interpolator)
+    else:
+      self.inputImage = inputImage
+      self.inputMask = inputMask
 
   def enableFeatureByName(self, featureName, enable=True):
     if not featureName in self.featureNames:

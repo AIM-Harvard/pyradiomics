@@ -407,7 +407,7 @@ class RadiomicsTestUtils:
 
     if math.isnan(value):
       self.diffs[self.getTestCase()][featureName] = numpy.nan
-
+      self.results[self.getTestCase()][featureName] = numpy.nan
     assert(not math.isnan(value))
 
     # save the result using the matlab class and feature names

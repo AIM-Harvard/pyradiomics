@@ -12,6 +12,7 @@ import sys, os
 import csv
 import logging
 import math
+import numpy
 from nose_parameterized import parameterized
 
 class RadiomicsTestUtils:
@@ -400,12 +401,18 @@ class RadiomicsTestUtils:
   # Use utility methods to get and test the results against the expected baseline value for this key.
   #
   def checkResult(self, key, value):
+    featureName = self.getBaselineFeatureClassAndName(key)
+
     assert(value != None)
+
+    if math.isnan(value):
+      self.diffs[self.getTestCase()][featureName] = numpy.nan
+      self.results[self.getTestCase()][featureName] = numpy.nan
     assert(not math.isnan(value))
 
     # save the result using the matlab class and feature names
     self.logger.debug('checkResults: key = %s', key)
-    featureName = self.getBaselineFeatureClassAndName(key)
+
     self.logger.debug('checkResults: featureName = %s', featureName)
     self.results[self.getTestCase()][featureName] = value
 
@@ -443,10 +450,10 @@ class RadiomicsTestUtils:
     csvFile = open(fileName, 'wb')
     csvFileWriter = csv.writer(csvFile)
     # get the headers from the first row
-    header = data[data.keys()[0]].keys()
+    header = sorted(data[data.keys()[0]].keys())
     header = ['testCase'] + header
     csvFileWriter.writerow(header)
-    for testCase in data.keys():
+    for testCase in sorted(data.keys()):
       thisCase = data[testCase]
       thisCase['testCase'] = testCase
       row = []

@@ -24,7 +24,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     # Generate a cuboid matrix of the tumor region and pad by 10 voxels in three directions
     # for surface area calculation
     (self.matrix, self.matrixCoordinates) = \
-      imageoperations.padTumorMaskToCube(self.imageArray, self.maskArray, padDistance=10)
+      imageoperations.getMatrixCoordinates(self.imageArray, self.maskArray)
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
     # Volume and Surface Area are pre-calculated

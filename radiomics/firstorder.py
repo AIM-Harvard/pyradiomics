@@ -20,7 +20,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     self.maskArray = sitk.GetArrayFromImage(self.inputMask)
 
     (self.matrix, self.matrixCoordinates) = \
-      imageoperations.padTumorMaskToCube(self.imageArray,self.maskArray)
+      imageoperations.getMatrixCoordinates(self.imageArray,self.maskArray)
 
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 

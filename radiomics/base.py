@@ -13,9 +13,7 @@ class RadiomicsFeaturesBase(object):
     '''
 
     self.binWidth = 25
-    self.resampledPixelSpacing = None # no resampling
-    self.interpolator = sitk.sitkBSpline
-    self.padDistance = 5 # no padding
+    self.padDistance = 5  # no padding
     self.padFillValue = 0
     self.verbose = True
 
@@ -23,9 +21,9 @@ class RadiomicsFeaturesBase(object):
       if key == 'binWidth':
         self.binWidth = value
       elif key == 'resampledPixelSpacing':
-        self.resampledPixelSpacing = value
+        pass  # only needed in signatures.py
       elif key == 'interpolator':
-        self.interpolator = value
+        pass  # only needed in signatures.py
       elif key == 'padDistance':
         self.padDistance = value
       elif key == 'padFillValue':
@@ -40,11 +38,8 @@ class RadiomicsFeaturesBase(object):
 
     self.featureNames = self.getFeatureNames()
 
-    if self.interpolator != None and self.resampledPixelSpacing != None:
-      self.inputImage, self.inputMask = imageoperations.resampleImage(inputImage, inputMask, self.resampledPixelSpacing, self.interpolator)
-    else:
-      self.inputImage = inputImage
-      self.inputMask = inputMask
+    self.inputImage = inputImage
+    self.inputMask = inputMask
 
   def enableFeatureByName(self, featureName, enable=True):
     if not featureName in self.featureNames:

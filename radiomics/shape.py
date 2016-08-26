@@ -39,7 +39,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getVolumeFeatureValue(self):
     """Calculate the volume of the tumor region in cubic millimeters."""
-    return (self.matrix[self.matrixCoordinates].size * self.cubicMMPerVoxel)
+    return (self.targetVoxelArray.size.size * self.cubicMMPerVoxel)
 
   def getSurfaceAreaFeatureValue(self):
     """Calculate the surface area of the tumor region in square millimeters."""
@@ -59,9 +59,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     surfaceArea = 0
     for voxel in xrange(0, self.targetVoxelArray.size):
       i, j, k = self.matrixCoordinates[0][voxel], self.matrixCoordinates[1][voxel], self.matrixCoordinates[2][voxel]
-      fxy = (numpy.array([ self.matrix[i+1,j,k], self.matrix[i-1,j,k] ]) == 0) # evaluate to 1 if true, 0 if false
-      fyz = (numpy.array([ self.matrix[i,j+1,k], self.matrix[i,j-1,k] ]) == 0) # evaluate to 1 if true, 0 if false
-      fxz = (numpy.array([ self.matrix[i,j,k+1], self.matrix[i,j,k-1] ]) == 0) # evaluate to 1 if true, 0 if false
+      fxy = (numpy.array([ self.maskArray[i+1,j,k], self.maskArray[i-1,j,k] ]) == 0) # evaluate to 1 if true, 0 if false
+      fyz = (numpy.array([ self.maskArray[i,j+1,k], self.maskArray[i,j-1,k] ]) == 0) # evaluate to 1 if true, 0 if false
+      fxz = (numpy.array([ self.maskArray[i,j,k+1], self.maskArray[i,j,k-1] ]) == 0) # evaluate to 1 if true, 0 if false
       surface = (numpy.sum(fxz) * xz) + (numpy.sum(fyz) * yz) + (numpy.sum(fxy) * xy)
       surfaceArea += surface
 

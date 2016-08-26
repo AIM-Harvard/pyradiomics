@@ -12,6 +12,10 @@ class RadiomicsFeaturesBase(object):
     optimized feature calculators implemented in SimpleITK in the future.
     '''
 
+    if inputImage == None or inputMask == None:
+      if self.verbose: print ('ERROR: missing input image or mask')
+      return
+
     self.binWidth = 25
     self.padDistance = 5  # no padding
     self.padFillValue = 0
@@ -40,6 +44,14 @@ class RadiomicsFeaturesBase(object):
 
     self.inputImage = inputImage
     self.inputMask = inputMask
+
+    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
+    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
+
+    (self.matrix, self.matrixCoordinates) = \
+      imageoperations.getMatrixCoordinates(self.imageArray,self.maskArray)
+
+    self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
   def enableFeatureByName(self, featureName, enable=True):
     if not featureName in self.featureNames:

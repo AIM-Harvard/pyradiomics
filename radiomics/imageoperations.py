@@ -1,5 +1,5 @@
 import SimpleITK as sitk
-import numpy, operator, pywt, logging
+import numpy, pywt, logging
 from itertools import chain
 
 def getHistogram(binwidth, parameterValues):
@@ -20,56 +20,67 @@ def binImage(binwidth, parameterValues, parameterMatrix = None, parameterMatrixC
 
   return parameterMatrix, histogram
 
-def imageToNumpyArray(imageFilePath):
-  sitkImage = sitk.ReadImage(imageFilePath)
-  sitkImageArray = sitk.GetArrayFromImage(sitkImage)
-  return sitkImageArray
-
-def padCubicMatrix(a, matrixCoordinates, dims):
-  # pads matrix 'a' with zeros and resizes 'a' to a cube with dimensions increased to the next greatest power of 2
-  # numpy version 1.7 has numpy.pad function
-  # center coordinates onto padded matrix
-  # consider padding with NaN or eps = numpy.spacing(1)
-  pad = tuple(map(operator.div, tuple(map(operator.sub, dims, a.shape)), ([2,2,2])))
-  matrixCoordinatesPadded = tuple(map(operator.add, matrixCoordinates, pad))
-  matrix2 = numpy.zeros(dims)
-  matrix2[matrixCoordinatesPadded] = a[matrixCoordinates]
-  return (matrix2, matrixCoordinatesPadded)
-
-def padTumorMaskToCube(imageNodeArray, labelNodeArray, padDistance=0):
+def cropTumorMaskToCube(imageNode, maskNode, padDistance= 0):
   """
-  Create a 3D matrix of the segmented region of the image based on the input label.
+  Crops image and label to the labelled region, resulting in a cuboid shape equal to the ijk boundaries of the label.
+  Optionally increases resultant shape in all dimensions with unit length equal to padDistance.
+  All voxels outside delineation also retain original image intensity values.
 
-  Create a 3D matrix of the labelled region of the image, padded to have a
-  cuboid shape equal to the ijk boundaries of the label.
+  This is achieved by resampling the image and mask using the same pixelSpacing, but with resampling grid
+  adapted to match the cropped volume. sitkNearestNeighbour is used as interpolator for both image and mask resampling.
+
+  'imageNode' and 'maskNode' are SimpleITK Objects.
   """
+
+  if imageNode == None or maskNode == None:
+    return None
+
+  #Determine bounds of cropped volume
+  labelNodeArray = sitk.GetArrayFromImage(maskNode)
   targetVoxelsCoordinates = numpy.where(labelNodeArray != 0)
   ijkMinBounds = numpy.min(targetVoxelsCoordinates, 1)
   ijkMaxBounds = numpy.max(targetVoxelsCoordinates, 1)
-  matrix = numpy.zeros(ijkMaxBounds - ijkMinBounds + 1)
-  matrixCoordinates = tuple(map(operator.sub, targetVoxelsCoordinates, tuple(ijkMinBounds)))
-  matrix[matrixCoordinates] = imageNodeArray[targetVoxelsCoordinates].astype('int64')
-  if padDistance > 0:
-    matrix, matrixCoordinates = padCubicMatrix(matrix, matrixCoordinates, padDistance)
-  return(matrix, matrixCoordinates)
 
-def padCubicMatrix(a, matrixCoordinates, padDistance):
-  """
-  Pad a 3D matrix in all dimensions with unit length equal to padDistance.
+  #size of the cropped tumor volume
+  newSize = numpy.array((ijkMaxBounds-ijkMinBounds + 1)[::-1], dtype= 'int32') + padDistance
 
-  Pads matrix 'a' with zeros and resizes 'a' to a cube with dimensions increased to
-  the next greatest power of 2 and centers coordinates onto the padded matrix.
-  """
-  dims = tuple(map(operator.add, a.shape, tuple(numpy.tile(padDistance,3))))
-  pad = tuple(map(operator.div, tuple(map(operator.sub, dims, a.shape)), ([2,2,2])))
+  newOriginIndex = numpy.array(ijkMinBounds[::-1], dtype= 'int32') - numpy.floor_divide(padDistance, 2)
+  newOrigin = imageNode.TransformIndexToPhysicalPoint(newOriginIndex)
 
-  matrixCoordinatesPadded = tuple(map(operator.add, matrixCoordinates, pad))
-  matrix2 = numpy.zeros(dims)
-  matrix2[matrixCoordinatesPadded] = a[matrixCoordinates]
-  return (matrix2, matrixCoordinatesPadded)
+  rif = sitk.ResampleImageFilter()
+
+  rif.SetOutputSpacing(imageNode.GetSpacing())
+  rif.SetOutputDirection(imageNode.GetDirection())
+  rif.SetSize(newSize)
+  rif.SetOutputOrigin(newOrigin)
+  rif.SetInterpolator(sitk.sitkNearestNeighbor)
+
+  rif.SetOutputPixelType(imageNode.GetPixelID())
+  croppedImageNode = rif.Execute(imageNode)
+
+  rif.SetOutputPixelType(imageNode.GetPixelID())
+  croppedMaskNode = rif.Execute(maskNode)
+
+  return croppedImageNode,croppedMaskNode
+
+def getMatrixCoordinates(imageNodeArray, labelNodeArray):
+    """
+    Returns a matrix similar to imageNodeArray, but with voxels outside delineation set to 0.
+    Additionally, returns the indices to the voxels inside the delineation.
+    """
+
+    matrixCoordinates =  numpy.where(labelNodeArray != 0)
+
+    # Only set voxels inside delineation to intensity value,
+    # voxels outside delineation retain padding value (= 0)
+    matrix = numpy.zeros( imageNodeArray.shape)
+    matrix[matrixCoordinates] = imageNodeArray[matrixCoordinates]
+
+    return matrix, matrixCoordinates
 
 def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
-  """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
+  """
+  Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.
   Enumerator references for interpolator:

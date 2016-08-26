@@ -9,17 +9,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLSZM,self).__init__(inputImage, inputMask, **kwargs)
 
-    if inputImage == None or inputMask == None:
-      if self.verbose: print('ERROR GLSZM: missing input image or mask')
-      return
-
-    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
-    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
-
-    (self.matrix, self.matrixCoordinates) = \
-      imageoperations.padTumorMaskToCube(self.imageArray,self.maskArray)
-
-    self.targetVoxelArray = self.matrix[self.matrixCoordinates]
     self.coefficients = {}
     self.P_glszm = {}
 

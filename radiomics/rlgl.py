@@ -8,17 +8,6 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
       super(RadiomicsRLGL,self).__init__(inputImage, inputMask, **kwargs)
 
-      if inputImage == None or inputMask == None:
-        if self.verbose: print('ERROR RLGL: missing input image or mask')
-        return
-
-      self.imageArray = sitk.GetArrayFromImage(self.inputImage)
-      self.maskArray = sitk.GetArrayFromImage(self.inputMask)
-
-      (self.matrix, self.matrixCoordinates) = \
-        imageoperations.padTumorMaskToCube(self.imageArray,self.maskArray)
-
-      self.targetVoxelArray = self.matrix[self.matrixCoordinates]
       self.coefficients = {}
       self.P_rlgl = {}
 
@@ -40,9 +29,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       P_rlgl = numpy.zeros((Ng, Nr, 13))
 
       padVal = -2000   #use eps or NaN to pad matrix
-      padMask = numpy.zeros(self.matrix.shape,dtype=bool)
-      padMask[self.matrixCoordinates] = True
-      self.matrix[~padMask] = padVal
+      self.matrix[(self.maskArray == 0)] = padVal
       
       matrixDiagonals = []
 

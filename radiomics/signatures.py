@@ -20,6 +20,7 @@ class RadiomicsSignature():
         # Try get values for interpolation and verbose. If not present in kwargs, use defaults
         self.resampledPixelSpacing = self.kwargs.get('resampledPixelSpacing', None) #  no resampling by default
         self.interpolator = self.kwargs.get('interpolator', sitk.sitkBSpline)
+        self.padDistance = self.kwargs.get('padDistance', 5)
         self.verbose = self.kwargs.get('verbose', True)
 
         self.inputImages = {}
@@ -115,7 +116,9 @@ class RadiomicsSignature():
         """
 
         if self.interpolator != None and self.resampledPixelSpacing != None:
-            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator)
+            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator, self.padDistance)
+        else:
+            image,mask = imageoperations.cropTumorMaskToCube(image, mask, self.padDistance)
 
         return image, mask
 

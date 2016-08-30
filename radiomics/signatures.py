@@ -3,12 +3,18 @@ import os
 import collections
 import numpy as np
 import SimpleITK as sitk
-from radiomics import firstorder, glcm, imageoperations, shape, rlgl, glszm
+
+import pkgutil
+import inspect
+import radiomics
+from radiomics import base, imageoperations
 
 
 class RadiomicsSignature():
 
     def __init__(self, **kwargs):
+        self.featureClasses = self.getFeatureClasses()
+
         self.kwargs = kwargs
 
         # Try get values for interpolation and verbose. If not present in kwargs, use defaults
@@ -115,110 +121,34 @@ class RadiomicsSignature():
 
     def computeFeatures(self, image, mask, **kwargs):
 
-        FeatureVector = collections.OrderedDict()
+        featureVector = collections.OrderedDict()
 
-        if self.verbose: print "\tComputing First Order"
-        FeatureVector.update( self.computeFirstOrder(image, mask, **kwargs) )
+        for featureClassName in self.getFeatureClassNames():
+            if featureClassName not in self.enabledFeatures.keys():
+                featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
+                featureClass.enableAllFeatures()
 
-        if self.verbose: print "\tComputing Shape"
-        FeatureVector.update( self.computeShape(image, mask, **kwargs) )
+            elif len(self.enabledFeatures[featureClassName]) > 0:
+                featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
+                for enabledFeature in self.enabledFeatures[featureClassName]:
+                    featureClass.enableFeatureByName(enabledFeature)
 
-        if self.verbose: print "\tComputing GLCM"
-        FeatureVector.update( self.computeGLCM(image, mask, **kwargs) )
+            else:
+                featureClass = None
 
-        if self.verbose: print "\tComputing RLGL"
-        FeatureVector.update( self.computeRLGL(image, mask, **kwargs) )
+            if featureClass != None:
+                if self.verbose: print "\tComputing %s" %(featureClassName)
+                featureClass.calculateFeatures()
+                for (featureName, featureValue) in featureClass.featureValues.iteritems():
+                    shapeFeatureName = "%s_%s" %(featureClassName, featureName)
+                    featureVector[shapeFeatureName] = featureValue
 
-        if self.verbose: print "\tComputing GLSZM"
-        FeatureVector.update( self.computeGLSZM(image, mask, **kwargs) )
-
-        return FeatureVector
-
-    def computeFirstOrder(self, image, mask, **kwargs):
-        firstOrderFeatures = firstorder.RadiomicsFirstOrder(image, mask, **kwargs)
-        if 'firstorder' in self.enabledFeatures:
-            for enabledFeature in self.enabledFeatures['firstorder']:
-                firstOrderFeatures.enableFeatureByName(enabledFeature)
-        else:
-            firstOrderFeatures.enableAllFeatures()
-        firstOrderFeatures.calculateFeatures()
-
-        firstOrderFeatureVector = collections.OrderedDict()
-        for (featureName, featureValue) in firstOrderFeatures.featureValues.iteritems():
-            firstOrderFeatureName = "firstorder_%s" %(featureName)
-            firstOrderFeatureVector[firstOrderFeatureName] = featureValue
-
-        return firstOrderFeatureVector
-
-    def computeShape(self, image, mask, **kwargs):
-        shapeFeatures = shape.RadiomicsShape(image, mask, **kwargs)
-        if 'shape' in self.enabledFeatures:
-            for enabledFeature in self.enabledFeatures['shape']:
-                shapeFeatures.enableFeatureByName(enabledFeature)
-        else:
-            shapeFeatures.enableAllFeatures()
-        shapeFeatures.calculateFeatures()
-
-        shapeFeatureVector = collections.OrderedDict()
-        for (featureName, featureValue) in shapeFeatures.featureValues.iteritems():
-            shapeFeatureName = "shape_%s" %(featureName)
-            shapeFeatureVector[shapeFeatureName] = featureValue
-
-        return shapeFeatureVector
-
-    def computeGLCM(self, image, mask, **kwargs):
-        glcmFeatures = glcm.RadiomicsGLCM(image, mask, **kwargs)
-        if 'glcm' in self.enabledFeatures:
-            for enabledFeature in self.enabledFeatures['glcm']:
-                glcmFeatures.enableFeatureByName(enabledFeature)
-        else:
-            glcmFeatures.enableAllFeatures()
-        glcmFeatures.calculateFeatures()
-
-        glcmFeatureVector = collections.OrderedDict()
-        for (featureName, featureValue) in glcmFeatures.featureValues.iteritems():
-            glcmFeatureName = "glcm_%s" %(featureName)
-            glcmFeatureVector[glcmFeatureName] = featureValue
-
-        return glcmFeatureVector
-
-    def computeRLGL(self, image, mask, **kwargs):
-        rlglFeatures = rlgl.RadiomicsRLGL(image, mask, **kwargs)
-        if 'rlgl' in self.enabledFeatures:
-            for enabledFeature in self.enabledFeatures['rlgl']:
-                rlglFeatures.enableFeatureByName(enabledFeature)
-        else:
-            rlglFeatures.enableAllFeatures()
-        rlglFeatures.calculateFeatures()
-
-        rlglFeatureVector = collections.OrderedDict()
-        for (featureName, featureValue) in rlglFeatures.featureValues.iteritems():
-            rlglFeatureName = "rlgl_%s" %(featureName)
-            rlglFeatureVector[rlglFeatureName] = featureValue
-
-        return rlglFeatureVector
-
-    def computeGLSZM(self, image, mask, **kwargs):
-        glszmFeatures = glszm.RadiomicsGLSZM(image, mask, **kwargs)
-        if 'glszm' in self.enabledFeatures:
-            for enabledFeature in self.enabledFeatures['glszm']:
-                glszmFeatures.enableFeatureByName(enabledFeature)
-        else:
-            glszmFeatures.enableAllFeatures()
-        glszmFeatures.calculateFeatures()
-
-        glszmFeatureVector = collections.OrderedDict()
-        for (featureName, featureValue) in glszmFeatures.featureValues.iteritems():
-            glszmFeatureName = "glszm_%s" %(featureName)
-            glszmFeatureVector[glszmFeatureName] = featureValue
-
-        return glszmFeatureVector
+        return featureVector
 
     def computeLoG(self, image, mask, **kwargs):
 
         logFeatureVector = collections.OrderedDict()
         sigmaValues = kwargs.get('sigma', [])
-        if 'sigma' in kwargs: del kwargs['sigma']
 
         for sigma in sigmaValues:
 
@@ -241,10 +171,6 @@ class RadiomicsSignature():
         waveletArgs['wavelet'] = kwargs.get('wavelet', 'coif1')
         waveletArgs['level'] = kwargs.get('level', 1)
         waveletArgs['start_level'] = kwargs.get('start_level', 0)
-
-        if 'wavelet' in kwargs: del kwargs['wavelet']
-        if 'level' in kwargs: del kwargs['level']
-        if 'start_level' in kwargs: del kwargs['start_level']
 
         waveletFeatureVector = collections.OrderedDict()
 
@@ -269,3 +195,29 @@ class RadiomicsSignature():
             waveletFeatureVector[waveletFeatureName] = featureValue
 
         return waveletFeatureVector
+
+    def getFeatureClasses(self):
+        """
+        Iterates over all modules of the radiomics package using pkgutil and subsequently imports those modules.
+
+        Return a dictionary of all modules containing featureClasses, with modulename as key, abstract
+        class object of the featureClass as value. Assumes only one featureClass per module
+
+        This is achieved by inspect.getmembers. Modules are added if it contains a memeber that is a class,
+        with name starting with 'Radiomics' and is inherited from radiomics.base.RadiomicsFeaturesBase.
+        """
+
+        featureClasses = {}
+        for _,mod,_ in pkgutil.iter_modules(radiomics.__path__):
+            __import__('radiomics.' + mod)
+            attributes = inspect.getmembers(eval('radiomics.' + mod), inspect.isclass)
+            for a in attributes:
+                if a[0].startswith('Radiomics'):
+                    if radiomics.base.RadiomicsFeaturesBase in inspect.getmro(a[1])[1:]:
+                        featureClasses[mod] = a[1]
+
+
+        return featureClasses
+
+    def getFeatureClassNames(self):
+        return self.featureClasses.keys()

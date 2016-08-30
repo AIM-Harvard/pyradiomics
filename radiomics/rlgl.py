@@ -164,8 +164,11 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       self.coefficients['jvector'] = jvector
 
   def getShortRunEmphasisFeatureValue(self):
-    """Calculate and return the mean Short Run Emphasis (SRE) value for all 13 RLGL matrices.
-    
+    r"""
+    Calculate and return the mean Short Run Emphasis (SRE) value for all 13 RLGL matrices.
+
+    :math:`SRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+
     A measure of the distribution of short run lengths, with a greater value indicative 
     of shorter run lengths and more fine textural textures.
     """
@@ -180,7 +183,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getLongRunEmphasisFeatureValue(self):
-    """Calculate and return the mean Long Run Emphasis (LRE) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Long Run Emphasis (LRE) value for all 13 RLGL matrices.
+
+    :math:`LRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     A measure of the distribution of long run lengths, with a greater value indicative 
     of longer run lengths and more coarse structural textures.
@@ -196,7 +202,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getGrayLevelNonUniformityFeatureValue(self):
-    """Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all 13 RLGL matrices.
+
+    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{p(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     Measures the similarity of gray-level intensity values in the image, where a lower GLN value 
     correlates with a greater similarity in intensity values.
@@ -211,7 +220,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getRunLengthNonUniformityFeatureValue(self):
-    """Calculate and return the mean Run Length Non-Uniformity (RLN) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Run Length Non-Uniformity (RLN) value for all 13 RLGL matrices.
+
+    :math:`RLN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{p(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     Measures the similarity of run lengths throughout the image, with a lower value indicating 
     more homogeneity among run lengths in the image.
@@ -226,7 +238,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getRunPercentageFeatureValue(self):
-    """Calculate and return the mean Run Percentage (RP) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Run Percentage (RP) value for all 13 RLGL matrices.
+
+    :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{N_p}}`
     
     Measures the homogeneity and distribution of runs of an image for a certain direction.
     """
@@ -239,7 +254,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getLowGrayLevelRunEmphasisFeatureValue(self):
-    """Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all 13 RLGL matrices.
+
+    :math:`LGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     Measures the distribution of low gray-level values, with a higher value indicating a greater 
     concentration of low gray-level values in the image.
@@ -255,7 +273,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getHighGrayLevelRunEmphasisFeatureValue(self):
-    """Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all 13 RLGL matrices.
+
+    :math:`HGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)i^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     Measures the distribution of the higher gray-level values, with a higher value indicating  
     a greater concentration of high gray-level values in the image.
@@ -271,7 +292,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getShortRunLowGrayLevelEmphasisFeatureValue(self):
-    """Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all 13 RLGL matrices.
+
+    :math:`SRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     Measures the joint distribution of shorter run lengths with lower gray-level values.
     """    
@@ -286,7 +310,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getShortRunHighGrayLevelEmphasisFeatureValue(self):
-    """Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all 13 RLGL matrices.
+
+    :math:`SRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     Measures the joint distribution of shorter run lengths with higher gray-level values.
     """    
@@ -301,7 +328,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getLongRunLowGrayLevelEmphasisFeatureValue(self):
-    """Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all 13 RLGL matrices.
+
+    :math:`LRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     Measures the joint distribution of long run lengths with lower gray-level values.
     """    
@@ -316,7 +346,10 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       return numpy.core.nan
 
   def getLongRunHighGrayLevelEmphasisFeatureValue(self):
-    """Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all 13 RLGL matrices.
+    r"""
+    Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all 13 RLGL matrices.
+
+    :math:`LRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
     Measures the joint distribution of long run lengths with higher gray-level values.
     """    

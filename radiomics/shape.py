@@ -42,7 +42,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return (self.matrix[self.matrixCoordinates].size * self.cubicMMPerVoxel)
 
   def getSurfaceAreaFeatureValue(self):
-    """Calculate the surface area of the tumor region in square millimeters."""
+    r"""
+    Calculate the surface area of the tumor region in square millimeters.
+
+    :math:`A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\textbf{a}_i\textbf{b}_i x \textbf{a}_i\textbf{c}_i|}`
+    """
     x, y, z = self.pixelSpacing
     xz = x*z
     yz = y*z
@@ -68,12 +72,18 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return (surfaceArea)
 
   def getSurfaceVolumeRatioFeatureValue(self):
-    """Calculate the surface area to volume ratio of the tumor region"""
+    r"""
+    Calculate the surface area to volume ratio of the tumor region
+
+    :math:`surface\ to\ volume\ ratio = \frac{A}{V}`
+    """
     return (self.SurfaceArea/self.Volume)
 
   def getCompactness1FeatureValue(self):
-    """
+    r"""
     Calculate the compactness (1) of the tumor region.
+
+    :math:`compactness\ 1 = \frac{V}{\sqrt{\pi}A^{\frac{2}{3}}}`
 
     Compactness 1 is a measure of how compact the shape of the tumor is
     relative to a sphere (most compact). It is a dimensionless measure,
@@ -84,8 +94,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return ( (self.Volume) / ((self.SurfaceArea)**(2.0/3.0) * numpy.sqrt(numpy.pi)) )
 
   def getCompactness2FeatureValue(self):
-    """
+    r"""
     Calculate the Compactness (2) of the tumor region.
+
+    :math:`compactness\ 2 = 36\pi\frac{V^2}{A^3}`
 
     Compactness 2 is a measure of how compact the shape of the tumor is
     relative to a sphere (most compact). It is a dimensionless measure,
@@ -95,7 +107,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return ((36.0 * numpy.pi) * ((self.Volume)**2.0)/((self.SurfaceArea)**3.0))
 
   def getMaximum3DDiameterFeatureValue(self):
-    """Calculate the largest pairwise euclidean distance between tumor surface voxels"""
+    r"""
+    Calculate the largest pairwise euclidean distance between tumor surface voxels.
+    """
     x, y, z = self.pixelSpacing
 
     minBounds = numpy.array([numpy.min(self.matrixCoordinates[0]), numpy.min(self.matrixCoordinates[1]), numpy.min(self.matrixCoordinates[2])])
@@ -114,8 +128,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return(maxDiameter)
 
   def getSphericalDisproportionFeatureValue(self):
-    """
+    r"""
     Calculate the Spherical Disproportion of the tumor region.
+
+    :math:`spherical\ disproportion = \frac{A}{4\pi R^2}`
 
     Spherical Disproportion is the ratio of the surface area of the
     tumor region to the surface area of a sphere with the same
@@ -125,8 +141,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return ( (self.SurfaceArea)/(4.0*numpy.pi*(R**2.0)) )
 
   def getSphericityFeatureValue(self):
-    """
+    r"""
     Calculate the Sphericity of the tumor region.
+
+    :math:`sphericity = \frac{\pi^{\frac{1}{3}}(6V)^{\frac{2}{3}}}{A}`
 
     Sphericity is a measure of the roundness of the shape of the tumor region
     relative to a sphere. This is another measure of the compactness of a tumor.

@@ -40,8 +40,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       return numpy.mean(s, axis)
 
   def getEnergyFeatureValue(self):
-    """
+    r"""
     Calculate the Energy of the image array.
+
+    :math:`energy = \displaystyle\sum^{n}_{i=1}{\textbf{X}(i)^2}`
 
     Energy is a measure of the magnitude of voxel values in
     an image. A larger values implies a greater sum of the
@@ -51,8 +53,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return (numpy.sum(shiftedParameterArray**2))
 
   def getTotalEnergyFeatureValue(self):
-    """
+    r"""
     Calculate the Total Energy of the image array.
+
+    :math:`total\ energy = V_{voxel}\displaystyle\sum^{n}_{i=1}{\textbf{X}(i)^2}`
 
     Total Energy is a measure of the magnitude of voxel values
     and voxel volumes in an image. A larger values implies
@@ -63,8 +67,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return(cubicMMPerVoxel*numpy.sum(shiftedParameterArray**2))
 
   def getEntropyFeatureValue(self):
-    """
+    r"""
     Calculate the Entropy of the image array.
+
+    :math:`entropy = -\displaystyle\sum^{N_l}_{i=1}{\textbf{P}(i)\log_2\textbf{P}(i)}`
 
     Entropy Specifies the uncertainty/randomness in the
     image values. It measures the average amount of
@@ -86,7 +92,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return (numpy.max(self.targetVoxelArray))
 
   def getMeanFeatureValue(self):
-    """Calculate the Mean Value for the image array."""
+    r"""
+    Calculate the Mean Value for the image array.
+
+    :math:`mean = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)}`
+    """
     return (numpy.mean(self.targetVoxelArray))
 
   def getMedianFeatureValue (self):
@@ -98,8 +108,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return (numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))
 
   def getMeanDeviationFeatureValue(self):
-    """
+    r"""
     Calculate the Mean Deviation for the image array.
+
+    :math:`mean\ deviation = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}`
 
     Mean Deviation is the mean distance of all intensity values
     from the Mean Value of the image array.
@@ -107,8 +119,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return ( numpy.mean(numpy.absolute( (numpy.mean(self.targetVoxelArray) - self.targetVoxelArray) )) )
 
   def getRootMeanSquaredFeatureValue(self):
-    """
+    r"""
     Calculate the Root Mean Squared of the image array.
+
+    :math:`RMS = \sqrt{\frac{\sum^{N}_{i=1}{\textbf{X}(i)^2}}{N}}`
 
     RMS is the square-root of the mean of all the squared
     intensity values. It is another measure of the magnitude
@@ -118,8 +132,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return ( numpy.sqrt((numpy.sum(shiftedParameterArray**2))/float(shiftedParameterArray.size)) )
 
   def getStandardDeviationFeatureValue(self):
-    """
+    r"""
     Calculate the Standard Deviation of the image array.
+
+    :math:`standard\ deviation = \sqrt{\frac{1}{N-1}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}`
 
     Standard Deviation measures the amount of variation
     or dispersion from the Mean Value.
@@ -127,10 +143,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return (numpy.std(self.targetVoxelArray, ddof= 1))
 
   def getSkewnessFeatureValue(self, axis=0):
-    """
+    r"""
     Calculate the Skewness of the image array.
 
-    :math:`\\gamma_1 = \\frac{\\frac{1}{N}\sum^{N}_{i=1}{(\\bf{X}(i)-\\bar{X}})^3}{(\sum^{N}_{i=1}{(\\bf{X}(i)-\\bar{X}})^2)^3}`
+    :math:`\gamma_1 = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^3}{(\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2)^3}`
 
     Skewness measures the asymmetry of the distribution of
     values about the Mean value. Depending
@@ -152,7 +168,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Kurtosis of the image array.
 
-    :math:`Kurt[X] = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\bf{X}(i)-\bar{X}})^4}{(\sum^{N}_{i=1}{(\bf{X}(i)-\bar{X}})^2)^2}`
+    :math:`Kurt[X] = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^4}{(\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2)^2}`
 
     Kurtosis is a measure of the 'peakedness' of the distribution
     of values in the image ROI. A higher kurtosis implies that the
@@ -173,8 +189,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return m4 / m2**2.0
 
   def getVarianceFeatureValue(self):
-    """
+    r"""
     Calculate the Variance in the image array.
+
+    :math:`variance = \frac{1}{N-1}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}`
 
     Variance is the the mean of the squared distances of each intensity
     value from the Mean value. This is a measure of the spread
@@ -183,8 +201,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return (numpy.std(self.targetVoxelArray, ddof= 1)**2)
 
   def getUniformityFeatureValue(self):
-    """
+    r"""
     Calculate the Uniformity of the image array.
+
+    :math:`uniformity = \displaystyle\sum^{N_l}_{i=1}{\textbf{P}(i)^2}`
 
     Uniformity is a measure of the sum of the squares of each intensity
     value. This is a measure of the heterogeneity of the image array,

@@ -80,7 +80,7 @@ class RadiomicsSignature():
             if self.verbose: print "Computing Original"
             args = self.kwargs.copy()
             args.update(self.inputImages['original'])
-            featureVector.update(self.computeFeatures(image, mask, **args))
+            featureVector.update(self.computeOriginal(image, mask, **args))
         if 'log' in self.inputImages:
             if self.verbose: print "Computing LoG"
             args = self.kwargs.copy()
@@ -154,6 +154,15 @@ class RadiomicsSignature():
 
         return featureVector
 
+    def computeOriginal(self, image, mask, **kwargs):
+        originalFeatureVector = collections.OrderedDict()
+
+        for (featureName, featureValue) in self.computeFeatures(image, mask, **kwargs).iteritems():
+            featureName = 'original_%s' %featureName
+            originalFeatureVector[featureName] = featureValue
+
+        return originalFeatureVector
+
     def computeLoG(self, image, mask, **kwargs):
 
         logFeatureVector = collections.OrderedDict()
@@ -169,7 +178,7 @@ class RadiomicsSignature():
 
             for (featureName, featureValue) in logSigmaFeatureVector.iteritems():
 
-                laplacianFeatureName = "log_sigma_%s_mm_3D_%s" %(str(sigma).replace('.','_'), featureName)
+                laplacianFeatureName = "log-sigma-%s-mm-3D_%s" %(str(sigma).replace('.','-'), featureName)
                 logFeatureVector[laplacianFeatureName] = featureValue
 
         return logFeatureVector
@@ -192,16 +201,16 @@ class RadiomicsSignature():
                 waveletDecompositionFeatureVector.update( self.computeFeatures(decompositionImage, mask, **kwargs) )
 
                 for (featureName, featureValue) in waveletDecompositionFeatureVector.iteritems():
-                    if idx == 1: waveletFeatureName = "wavelet_%s_%s" %(decompositionName, featureName)
-                    else: waveletFeatureName = "wavelet%s_%s_%s" %(idx, decompositionName, featureName)
+                    if idx == 1: waveletFeatureName = "wavelet-%s_%s" %(decompositionName, featureName)
+                    else: waveletFeatureName = "wavelet%s-%s_%s" %(idx, decompositionName, featureName)
                     waveletFeatureVector[waveletFeatureName] = featureValue
 
         waveletDecompositionFeatureVector = collections.OrderedDict()
         waveletDecompositionFeatureVector.update( self.computeFeatures(approx, mask, **kwargs) )
 
         for (featureName, featureValue) in waveletDecompositionFeatureVector.iteritems():
-            if len(ret) == 1: waveletFeatureName = "wavelet_LLL_%s" %(featureName)
-            else: waveletFeatureName = "wavelet%s_LLL_%s" %(len(ret), featureName)
+            if len(ret) == 1: waveletFeatureName = "wavelet-LLL_%s" %(featureName)
+            else: waveletFeatureName = "wavelet%s-LLL_%s" %(len(ret), featureName)
             waveletFeatureVector[waveletFeatureName] = featureValue
 
         return waveletFeatureVector

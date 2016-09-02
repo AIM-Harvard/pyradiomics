@@ -32,6 +32,7 @@ def main():
     kwargs['resampledPixelSpacing'] = None #[3,3,3]
     kwargs['interpolator'] = sitk.sitkBSpline
     kwargs['verbose'] = True
+    kwargs['weigthingNorm'] = 'euclidean'
 
     extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
     extractor.enableInputImages(original= {})

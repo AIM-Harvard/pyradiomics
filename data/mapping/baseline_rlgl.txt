@@ -1,9 +1,9 @@
 0:lowGrayLevelRunEmphasis
 1:grayLevelNonuniformity
-2:shortRunHighGrayLevEmpha
+2:longRunEmphasis
 3:longRunLowGrayLevEmpha
 4:shortRunLowGrayLevEmpha
-5:longRunEmphasis
+5:shortRunHighGrayLevEmpha
 6:longRunHighGrayLevEmpha
 7:runLengthNonuniformity
 8:shortRunEmphasis

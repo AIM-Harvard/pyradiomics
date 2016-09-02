@@ -1,10 +1,10 @@
-0:volume
+0:maxDiameter3D_pdist
 1:maxDiameter2Dy
 2:maxDiameter2Dx
 3:maxDiameter2Dz
 4:sphericity
 5:surface
-6:maxDiameter3D_pdist
+6:volume
 7:spherDisprop
 8:compactness
 9:volumeNumber

@@ -18,8 +18,8 @@ from radiomics import base, firstorder, glcm, imageoperations, shape, rlgl, glsz
 import sys, os
 
 dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","data")
-matlabFeaturesFile = os.path.join(dataDir,"MatlabFeatures.csv")
-addBaselineFeaturesFile = os.path.join(dataDir, "AddBaselineFeatures.csv")
+matlabFeaturesFile = os.path.join(dataDir,"MatlabBaselineFeatures.csv")
+addBaselineFeaturesFile = os.path.join(dataDir, "AdditionalBaselineFeatures.csv")
 outputDir = os.path.join(dataDir,'mapping')
 
 # mapping from the feature class names used in Matlab into pyradiomics class

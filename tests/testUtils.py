@@ -38,8 +38,8 @@ class RadiomicsTestUtils:
     self.dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","data")
     self.mappingDir = os.path.join(self.dataDir,'mapping')
 
-    self.matlabFeaturesFile = os.path.join(self.dataDir,'MatlabFeatures.csv')
-    self.addBaselineFeaturesFile = os.path.join(self.dataDir, 'AddBaselineFeatures.csv')
+    self.matlabFeaturesFile = os.path.join(self.dataDir,'MatlabBaselineFeatures.csv')
+    self.addBaselineFeaturesFile = os.path.join(self.dataDir, 'AdditionalBaselineFeatures.csv')
 
     self.baseline2PyradiomicsFeatureClassesFile = os.path.join(self.mappingDir, 'baseline2pyradiomics_featureClasses.txt')
     self.baseline2PyradiomicsFile = None

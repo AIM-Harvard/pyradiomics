@@ -1,0 +1,11 @@
+0:smallAreaEmphasis
+1:lowIntensityEmphasis
+2:largeAreaEmphasis
+3:zonePercentage
+4:sizeZoneVariability
+5:lowIntensityLargeAreaEmp
+6:highIntensityEmphasis
+7:lowIntensitySmallAreaEmp
+8:intensityVariability
+9:highIntensityLarteAreaEmp
+10:highIntensitySmallAreaEmp

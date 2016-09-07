@@ -2,10 +2,10 @@
 1:md
 2:skewness
 3:uniformity
-4:min
-5:rms
-6:max
-7:energy
+4:rms
+5:max
+6:energy
+7:min
 8:median
 9:totalenergy
 10:range

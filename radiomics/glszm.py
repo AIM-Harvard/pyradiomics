@@ -24,22 +24,27 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def calculateGLSZM(self):
     """
-    Number of times a 26-connected region with a
+    Number of times a region with a
     gray level and voxel count occurs in an image. P_glszm[level, voxel_count] = # occurrences
+
+    For 3D-images this concerns a 26-connected region, for 2D an 8-connected region
     """
     angles = numpy.array([ (0, 0, 1),
                            (0, 1, 0),
                            (0, 1, 1),
-                           (0, 1, -1),
-                           (1, 0, 0),
-                           (1, 0, 1),
-                           (1, 0, -1),
-                           (1, 1, 0),
-                           (1, 1, 1),
-                           (1, 1, -1),
-                           (1, -1, 0),
-                           (1, -1, 1),
-                           (1, -1, -1) ])
+                           (0, 1, -1) ])
+    # if the image is only a 2D slice, do not add 3D angles
+    if self.is3D:
+      angles3D = numpy.array([(-1, 1, 0),
+                              (-1, 0, 0),
+                              (-1, -1, 0),
+                              (-1, 0, -1),
+                              (1, 0, -1),
+                              (-1, 1, -1),
+                              (1, -1, -1),
+                              (-1, -1, -1),
+                              (1, 1, -1)])
+      angles = numpy.concatenate((angles, angles3D))
 
     # Empty GLSZ matrix
     P_glszm = numpy.zeros((self.coefficients['grayLevels'].size, self.coefficients['Np']))

@@ -1,4 +1,5 @@
 import SimpleITK as sitk
+import numpy
 import inspect
 from radiomics import imageoperations
 
@@ -12,26 +13,8 @@ class RadiomicsFeaturesBase(object):
     optimized feature calculators implemented in SimpleITK in the future.
     '''
 
-    self.binWidth = 25
-    self.padDistance = 5  # no padding
-    self.padFillValue = 0
-    self.verbose = True
-
-    for key,value in kwargs.iteritems():
-      if key == 'binWidth':
-        self.binWidth = value
-      elif key == 'resampledPixelSpacing':
-        pass  # only needed in signatures.py
-      elif key == 'interpolator':
-        pass  # only needed in signatures.py
-      elif key == 'padDistance':
-        self.padDistance = value
-      elif key == 'padFillValue':
-        self.padFillValue = value
-      elif key == 'verbose':
-        self.verbose = value
-      elif self.verbose:
-        print 'Warning: unknown parameter:',key
+    self.binWidth = kwargs.get('binWidth', 25)
+    self.verbose = kwargs.get('verbose', True)
 
     # all features are disabled by default
     self.disableAllFeatures()
@@ -40,6 +23,18 @@ class RadiomicsFeaturesBase(object):
 
     self.inputImage = inputImage
     self.inputMask = inputMask
+
+    if inputImage == None or inputMask == None:
+      if self.verbose: print('ERROR: missing input image or mask')
+      return
+
+    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
+    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
+
+    self.matrix = self.imageArray.astype('int64')
+    self.matrixCoordinates = numpy.where(self.maskArray != 0)
+
+    self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
   def enableFeatureByName(self, featureName, enable=True):
     if not featureName in self.featureNames:

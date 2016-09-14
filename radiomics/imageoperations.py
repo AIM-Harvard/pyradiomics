@@ -1,5 +1,5 @@
 import SimpleITK as sitk
-import numpy, operator, pywt, logging
+import numpy, pywt, logging
 from itertools import chain
 
 def getHistogram(binwidth, parameterValues):
@@ -20,53 +20,38 @@ def binImage(binwidth, parameterValues, parameterMatrix = None, parameterMatrixC
 
   return parameterMatrix, histogram
 
-def imageToNumpyArray(imageFilePath):
-  sitkImage = sitk.ReadImage(imageFilePath)
-  sitkImageArray = sitk.GetArrayFromImage(sitkImage)
-  return sitkImageArray
-
-def padCubicMatrix(a, matrixCoordinates, dims):
-  # pads matrix 'a' with zeros and resizes 'a' to a cube with dimensions increased to the next greatest power of 2
-  # numpy version 1.7 has numpy.pad function
-  # center coordinates onto padded matrix
-  # consider padding with NaN or eps = numpy.spacing(1)
-  pad = tuple(map(operator.div, tuple(map(operator.sub, dims, a.shape)), ([2,2,2])))
-  matrixCoordinatesPadded = tuple(map(operator.add, matrixCoordinates, pad))
-  matrix2 = numpy.zeros(dims)
-  matrix2[matrixCoordinatesPadded] = a[matrixCoordinates]
-  return (matrix2, matrixCoordinatesPadded)
-
-def padTumorMaskToCube(imageNodeArray, labelNodeArray, padDistance=0):
+def cropToTumorMask(imageNode, maskNode):
   """
-  Create a 3D matrix of the segmented region of the image based on the input label.
+  Create a sitkImage of the segmented region of the image based on the input label.
 
-  Create a 3D matrix of the labelled region of the image, padded to have a
+  Create a sitkImage of the labelled region of the image, cropped to have a
   cuboid shape equal to the ijk boundaries of the label.
-  """
-  targetVoxelsCoordinates = numpy.where(labelNodeArray != 0)
-  ijkMinBounds = numpy.min(targetVoxelsCoordinates, 1)
-  ijkMaxBounds = numpy.max(targetVoxelsCoordinates, 1)
-  matrix = numpy.zeros(ijkMaxBounds - ijkMinBounds + 1)
-  matrixCoordinates = tuple(map(operator.sub, targetVoxelsCoordinates, tuple(ijkMinBounds)))
-  matrix[matrixCoordinates] = imageNodeArray[targetVoxelsCoordinates].astype('int64')
-  if padDistance > 0:
-    matrix, matrixCoordinates = padCubicMatrix(matrix, matrixCoordinates, padDistance)
-  return(matrix, matrixCoordinates)
 
-def padCubicMatrix(a, matrixCoordinates, padDistance):
+  Returns both the cropped version of the image and the cropped version of the labelmap.
   """
-  Pad a 3D matrix in all dimensions with unit length equal to padDistance.
 
-  Pads matrix 'a' with zeros and resizes 'a' to a cube with dimensions increased to
-  the next greatest power of 2 and centers coordinates onto the padded matrix.
-  """
-  dims = tuple(map(operator.add, a.shape, tuple(numpy.tile(padDistance,3))))
-  pad = tuple(map(operator.div, tuple(map(operator.sub, dims, a.shape)), ([2,2,2])))
+  oldMaskID = maskNode.GetPixelID()
+  maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
+  size = numpy.array(maskNode.GetSize())
 
-  matrixCoordinatesPadded = tuple(map(operator.add, matrixCoordinates, pad))
-  matrix2 = numpy.zeros(dims)
-  matrix2[matrixCoordinatesPadded] = a[matrixCoordinates]
-  return (matrix2, matrixCoordinatesPadded)
+  #Determine bounds
+  lsif = sitk.LabelStatisticsImageFilter()
+  lsif.Execute(imageNode, maskNode)
+  bb = lsif.GetBoundingBox(1)
+
+  ijkMinBounds = bb[0::2]
+  ijkMaxBounds = size - bb[1::2] - 1
+
+  #Crop Image
+  cif = sitk.CropImageFilter()
+  cif.SetLowerBoundaryCropSize(ijkMinBounds)
+  cif.SetUpperBoundaryCropSize(ijkMaxBounds)
+  croppedImageNode = cif.Execute(imageNode)
+  croppedMaskNode = cif.Execute(maskNode)
+
+  croppedMaskNode = sitk.Cast(croppedMaskNode, oldMaskID)
+
+  return croppedImageNode, croppedMaskNode
 
 def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
@@ -84,28 +69,45 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 
   oldSpacing = numpy.array(imageNode.GetSpacing())
 
-  # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
+  # If current spacing is equal to resampledPixelSpacing, no interpolation is needed,
+  # crop/pad image using cropTumorMaskToCube
   if numpy.array_equal(oldSpacing, resampledPixelSpacing):
-    return imageNode, maskNode
+    return cropToTumorMask(imageNode, maskNode)
 
-  oldImagePixelType = imageNode.GetPixelID()
-  oldMaskPixelType = imageNode.GetPixelID()
+  spacingRatio = oldSpacing / resampledPixelSpacing
 
-  imageDirection = numpy.array(imageNode.GetDirection())
+  # Determine bounds of cropped volume in terms of original Index coordinate space
+  lsif = sitk.LabelStatisticsImageFilter()
+  lsif.Execute(imageNode, maskNode)
+  bb = numpy.array(lsif.GetBoundingBox(1))  # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
 
-  oldOrigin = numpy.array(imageNode.GetOrigin())
-  oldSize = numpy.array(imageNode.GetSize())
+  # Determine bounds of cropped volume in terms of new Index coordinate space,
+  # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
+  # Pad with an extra .5 to prevent data loss in case of upsampling
+  bbNewLBound = numpy.floor( (bb[0::2] - 0.5) * spacingRatio)
+  bbNewUBound = numpy.ceil( (bb[1::2] + 0.5) * spacingRatio)
 
-  # Recalculate the new size. Round up to prevent data loss.
-  newSize = numpy.array(numpy.ceil(oldSize * oldSpacing / resampledPixelSpacing),dtype='int')
+  # Calculate the new size. Cast to int32 to prevent error in sitk.
+  newSize = numpy.array(bbNewUBound - bbNewLBound+1, dtype= 'int32')
+
+  # Determine continuous index of bbNewLBound in terms of the original Index coordinate space
+  bbOriginalLBound = bbNewLBound / spacingRatio
+
   # Origin is located in center of first voxel, e.g. 1/2 of the spacing
   # from Corner, which corresponds to 0 in the original Index coordinate space.
   # The new spacing will be in 0 the new Index coordinate space. Here we use continuous
-  # index to calculate where the new 0 of the new Index coordinate space is in terms
-  # of the original spacing, and then use the ITK functionality to bring the contiuous index
-  # into the physical space (mm)
+  # index to calculate where the new 0 of the new Index coordinate space (of the original volume
+  # in terms of the original spacing, and add the minimum bounds of the cropped area to
+  # get the new Index coordinate space of the cropped volume in terms of the original Index coordinate space.
+  # Then use the ITK functionality to bring the contiuous index into the physical space (mm)
   newOriginIndex = numpy.array(.5*(resampledPixelSpacing-oldSpacing)/oldSpacing)
-  newOrigin = imageNode.TransformContinuousIndexToPhysicalPoint(newOriginIndex)
+  newCroppedOriginIndex = newOriginIndex + bbOriginalLBound
+  newOrigin = imageNode.TransformContinuousIndexToPhysicalPoint(newCroppedOriginIndex)
+
+  oldImagePixelType = imageNode.GetPixelID()
+  oldMaskPixelType = maskNode.GetPixelID()
+
+  imageDirection = numpy.array(imageNode.GetDirection())
 
   rif = sitk.ResampleImageFilter()
 

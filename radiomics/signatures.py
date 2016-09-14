@@ -116,6 +116,8 @@ class RadiomicsSignature():
 
         if self.interpolator != None and self.resampledPixelSpacing != None:
             image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator)
+        else:
+            image,mask = imageoperations.cropToTumorMask(image, mask)
 
         return image, mask
 

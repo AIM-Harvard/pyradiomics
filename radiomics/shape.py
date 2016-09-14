@@ -9,23 +9,22 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsShape,self).__init__(inputImage,inputMask, **kwargs)
 
-    if inputImage == None or inputMask == None:
-      if self.verbose: print('ERROR Shape: missing input image or mask')
-      return
-
     self.pixelSpacing = inputImage.GetSpacing()
     self.cubicMMPerVoxel = reduce(lambda x,y: x*y , self.pixelSpacing)
 
     #self.featureNames = self.getFeatureNames()
 
-    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
-    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
+    # Pad inputMask to prevent index-out-of-range errors
+    cpif = sitk.ConstantPadImageFilter()
 
-    # Generate a cuboid matrix of the tumor region and pad by 10 voxels in three directions
-    # for surface area calculation
-    (self.matrix, self.matrixCoordinates) = \
-      imageoperations.padTumorMaskToCube(self.imageArray, self.maskArray, padDistance=10)
-    self.targetVoxelArray = self.matrix[self.matrixCoordinates]
+    padding = numpy.tile(1, 3)
+    cpif.SetPadLowerBound(padding)
+    cpif.SetPadUpperBound(padding)
+
+    self.inputMask = cpif.Execute(self.inputMask)
+
+    # Reassign self.maskArray using the now-padded self.inputMask
+    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
 
     # Volume and Surface Area are pre-calculated
     self.Volume = self.getVolumeFeatureValue()

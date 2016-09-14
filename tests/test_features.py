@@ -24,8 +24,6 @@ featureClass = None
 # set testing arguments
 kwargs = {}
 kwargs['binWidth'] = 25
-kwargs['padDistance'] = 5
-kwargs['padFillValue'] = 0
 
 testUtils.setResampling(resampledPixelSpacing= None,interpolator= sitk.sitkBSpline)  # resampledPixelSpacing= [3, 3, 3]
 

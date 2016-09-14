@@ -14,8 +14,17 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     #self.featureNames = self.getFeatureNames()
 
-    # set voxels outside delineation to 0
-    self.matrix[(self.maskArray == 0)] = 0
+    # Pad inputMask to prevent index-out-of-range errors
+    cpif = sitk.ConstantPadImageFilter()
+
+    padding = numpy.tile(1, 3)
+    cpif.SetPadLowerBound(padding)
+    cpif.SetPadUpperBound(padding)
+
+    self.inputMask = cpif.Execute(self.inputMask)
+
+    # Reassign self.maskArray using the now-padded self.inputMask
+    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
 
     # Volume and Surface Area are pre-calculated
     self.Volume = self.getVolumeFeatureValue()

@@ -40,7 +40,7 @@ def cropToTumorMask(imageNode, maskNode):
   bb = lsif.GetBoundingBox(1)
 
   ijkMinBounds = bb[0::2]
-  ijkMaxBounds = size - bb[1::2]
+  ijkMaxBounds = size - bb[1::2] - 1
 
   #Crop Image
   cif = sitk.CropImageFilter()
@@ -53,7 +53,7 @@ def cropToTumorMask(imageNode, maskNode):
 
   return croppedImageNode, croppedMaskNode
 
-def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, padDistance= 0):
+def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.
@@ -72,27 +72,36 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # If current spacing is equal to resampledPixelSpacing, no interpolation is needed,
   # crop/pad image using cropTumorMaskToCube
   if numpy.array_equal(oldSpacing, resampledPixelSpacing):
-    return cropTumorMaskToCube(imageNode, maskNode, padDistance)
+    return cropToTumorMask(imageNode, maskNode)
 
-  # Determine bounds of cropped volume
-  labelNodeArray = sitk.GetArrayFromImage(maskNode)
-  targetVoxelsCoordinates = numpy.where(labelNodeArray != 0)
-  ijkMinBounds = numpy.min(targetVoxelsCoordinates, 1) - padDistance
-  ijkMaxBounds = numpy.max(targetVoxelsCoordinates, 1) + padDistance
+  spacingRatio = oldSpacing / resampledPixelSpacing
 
-  oldSize =  ijkMaxBounds-ijkMinBounds + 1  # size of the cropped and padded tumorvolume
+  # Determine bounds of cropped volume in terms of original Index coordinate space
+  lsif = sitk.LabelStatisticsImageFilter()
+  lsif.Execute(imageNode, maskNode)
+  bb = numpy.array(lsif.GetBoundingBox(1))  # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
 
-  # Recalculate the new size. Round up to prevent data loss.
-  newSize = numpy.array(numpy.ceil(oldSize * oldSpacing / resampledPixelSpacing),dtype='int')
+  # Determine bounds of cropped volume in terms of new Index coordinate space,
+  # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
+  # Pad with an extra .5 to prevent data loss in case of upsampling
+  bbNewLBound = numpy.floor( (bb[0::2] - 0.5) * spacingRatio)
+  bbNewUBound = numpy.ceil( (bb[1::2] + 0.5) * spacingRatio)
+
+  # Calculate the new size. Cast to int32 to prevent error in sitk.
+  newSize = numpy.array(bbNewUBound - bbNewLBound+1, dtype= 'int32')
+
+  # Determine continuous index of bbNewLBound in terms of the original Index coordinate space
+  bbOriginalLBound = bbNewLBound / spacingRatio
+
   # Origin is located in center of first voxel, e.g. 1/2 of the spacing
   # from Corner, which corresponds to 0 in the original Index coordinate space.
   # The new spacing will be in 0 the new Index coordinate space. Here we use continuous
   # index to calculate where the new 0 of the new Index coordinate space (of the original volume
   # in terms of the original spacing, and add the minimum bounds of the cropped area to
-  # get the new Index coordinate space of the cropped volume in terms of the original spacing.
+  # get the new Index coordinate space of the cropped volume in terms of the original Index coordinate space.
   # Then use the ITK functionality to bring the contiuous index into the physical space (mm)
   newOriginIndex = numpy.array(.5*(resampledPixelSpacing-oldSpacing)/oldSpacing)
-  newCroppedOriginIndex = newOriginIndex + numpy.array(ijkMinBounds[::-1])
+  newCroppedOriginIndex = newOriginIndex + bbOriginalLBound
   newOrigin = imageNode.TransformContinuousIndexToPhysicalPoint(newCroppedOriginIndex)
 
   oldImagePixelType = imageNode.GetPixelID()

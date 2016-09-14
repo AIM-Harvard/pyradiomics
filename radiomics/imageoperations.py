@@ -20,59 +20,27 @@ def binImage(binwidth, parameterValues, parameterMatrix = None, parameterMatrixC
 
   return parameterMatrix, histogram
 
-def padImage(imageNode, maskNode, padDistance= 0):
-  """
-  imageNode is padded in all directions with unit length equal to padDistance using
-  MirrorPadImageFilter. This means border pixel intensities are replicated.
-  maskNode is padded in a similar way, but with padding value fixed at 0.
-  """
-
-  mpif = sitk.MirrorPadImageFilter()
-  cpif = sitk.ConstantPadImageFilter()
-
-  padding = numpy.tile(padDistance, 3)
-
-  mpif.SetPadLowerBound(padding)
-  mpif.SetPadUpperBound(padding)
-
-  cpif.SetPadLowerBound(padding)
-  cpif.SetPadUpperBound(padding)
-
-  padImage = mpif.Execute(imageNode)
-  padMask = cpif.Execute(maskNode)
-
-  return padImage, padMask
-
-def cropTumorMaskToCube(imageNode, maskNode, padDistance=0):
+def cropToTumorMask(imageNode, maskNode):
   """
   Create a sitkImage of the segmented region of the image based on the input label.
 
-  Create a sitkImage of the labelled region of the image, padded to have a
+  Create a sitkImage of the labelled region of the image, cropped to have a
   cuboid shape equal to the ijk boundaries of the label.
 
-  imageNode is padded in all directions with unit length equal to padDistance using
-  MirrorPadImageFilter. This means border pixel intensities of the original are replicated.
-  imageNode is then cropped to a cuboid shape equal to the ijk boundaries + padding.
-  This ensures that, where possible, original image intensity values are retained.
-
-  maskNode is padded and cropped in a similar way, but with padding value fixed at 0.
+  Returns both the cropped version of the image and the cropped version of the labelmap.
   """
-  if padDistance > 0:
-    imageNode, maskNode = padImage(imageNode, maskNode, padDistance)
 
   oldMaskID = maskNode.GetPixelID()
   maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
-  size = maskNode.GetSize()
+  size = numpy.array(maskNode.GetSize())
 
   #Determine bounds
   lsif = sitk.LabelStatisticsImageFilter()
   lsif.Execute(imageNode, maskNode)
   bb = lsif.GetBoundingBox(1)
 
-  ijkMinBounds = (max(0, bb[0] - padDistance), max(0, bb[2] - padDistance), max(0, bb[4] - padDistance))
-  ijkMaxBounds = (size[0] - min(size[0], bb[1] + padDistance + 1),
-                  size[1] - min(size[1], bb[3] + padDistance + 1),
-                  size[2] - min(size[2], bb[5] + padDistance + 1))
+  ijkMinBounds = bb[0::2]
+  ijkMaxBounds = size - bb[1::2]
 
   #Crop Image
   cif = sitk.CropImageFilter()

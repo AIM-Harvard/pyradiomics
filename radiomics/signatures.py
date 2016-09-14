@@ -28,6 +28,8 @@ class RadiomicsSignature():
         self.inputImages['wavelet'] = {}
 
         self.enabledFeatures = {}
+        for featureClassName in self.getFeatureClassNames():
+            self.enabledFeatures[featureClassName] = []
 
     def enableInputImages(self, **inputImages):
         self.inputImages = inputImages
@@ -35,6 +37,14 @@ class RadiomicsSignature():
     def enableAllFeatures(self):
         """
         Enable all classes and all features.
+        """
+
+        for featureClassName in self.getFeatureClassNames():
+            self.enabledFeatures[featureClassName] = []
+
+    def disableAllFeatures(self):
+        """
+        Disable all classes.
         """
 
         self.enabledFeatures = {}
@@ -45,17 +55,18 @@ class RadiomicsSignature():
         """
 
         if enabled:
-            if featureClass in self.enabledFeatures: del self.enabledFeatures[featureClass]
-        else:
             self.enabledFeatures[featureClass] = []
+        else:
+            if featureClass in self.enabledFeatures: del self.enabledFeatures[featureClass]
 
     def enableFeaturesByName(self, **enabledFeatures):
         """
         Specify which features to enable. Key is feature class name, value is a list of enabled feature names.
 
-        To disable all features for a class, provide the class name with an empty list as value.
-        Only settings for feature classes specified in enabledFeatures.keys are updated.
-        To enable the entire class, use enableFeatureClassByName instead.
+        To enable all features for a class, provide the class name with an empty list as value.
+        Settings for feature classes specified in enabledFeatures.keys are updated, settings for feature classes
+        not yet present in enabledFeatures.keys are added.
+        To disable the entire class, use disableAllFeatures or enableFeatureClassByName instead.
         """
 
         self.enabledFeatures.update(enabledFeatures)
@@ -66,16 +77,17 @@ class RadiomicsSignature():
         image, mask = self.loadImage(imageFilepath, maskFilepath)
 
         if 'original' in self.inputImages:
+            if self.verbose: print "Computing Original"
             args = self.kwargs.copy()
             args.update(self.inputImages['original'])
             featureVector.update(self.computeFeatures(image, mask, **args))
         if 'log' in self.inputImages:
-            if self.verbose: print "\tComputing LoG"
+            if self.verbose: print "Computing LoG"
             args = self.kwargs.copy()
             args.update(self.inputImages['log'])
             featureVector.update(self.computeLoG(image, mask, **args))
         if 'wavelet' in self.inputImages:
-            if self.verbose: print "\tComputing Wavelet"
+            if self.verbose: print "Computing Wavelet"
             args = self.kwargs.copy()
             args.update(self.inputImages['wavelet'])
             featureVector.update(self.computeWavelet(image, mask, **args))
@@ -124,22 +136,17 @@ class RadiomicsSignature():
     def computeFeatures(self, image, mask, **kwargs):
 
         featureVector = collections.OrderedDict()
-
-        for featureClassName in self.getFeatureClassNames():
-            if featureClassName not in self.enabledFeatures.keys():
+        for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
+            if featureClassName in self.getFeatureClassNames():
                 featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
-                featureClass.enableAllFeatures()
 
-            elif len(self.enabledFeatures[featureClassName]) > 0:
-                featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
-                for enabledFeature in self.enabledFeatures[featureClassName]:
-                    featureClass.enableFeatureByName(enabledFeature)
+                if len(enabledFeatures) == 0:
+                    featureClass.enableAllFeatures()
+                else:
+                    for feature in enabledFeatures:
+                        featureClass.enableFeatureByName(feature)
 
-            else:
-                featureClass = None
-
-            if featureClass != None:
-                if self.verbose: print "\tComputing %s" %(featureClassName)
+                if self.verbose: print "\t\tComputing %s" %(featureClassName)
                 featureClass.calculateFeatures()
                 for (featureName, featureValue) in featureClass.featureValues.iteritems():
                     shapeFeatureName = "%s_%s" %(featureClassName, featureName)
@@ -153,7 +160,7 @@ class RadiomicsSignature():
         sigmaValues = kwargs.get('sigma', [])
 
         for sigma in sigmaValues:
-
+            if self.verbose: print "\tComputing LoG with sigma %s" %(str(sigma))
             logSigmaFeatureVector = collections.OrderedDict()
 
             logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
@@ -180,6 +187,7 @@ class RadiomicsSignature():
 
         for idx, wl in enumerate(ret, start= 1):
             for decompositionName, decompositionImage in wl.items():
+                if self.verbose: print "\tComputing Wavelet %s" %(decompositionName)
                 waveletDecompositionFeatureVector = collections.OrderedDict()
                 waveletDecompositionFeatureVector.update( self.computeFeatures(decompositionImage, mask, **kwargs) )
 

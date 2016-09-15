@@ -5,8 +5,36 @@ import pdb
 from tqdm import trange
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
-  """GLSZM feature calculation."""
+  r"""
+  A Gray Level Size Zone (GLSZM) quantifies gray level zones in an image.
+  A gray level zone is defined as a the number of connected voxels that share the same
+  gray level intensity. In a gray level size zone matrix :math:`P(i,j)` the :math:`(i,j)\text{th}`
+  element describes the number of times a gray level zone with gray level :math:`i` and size :math:`j`
+  appears in image.
+
+  As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
+
+  :math:`I = \begin{bmatrix} 5 & 2 & 5 & 4 & 4\\ 3 & 3 & 3 & 1 & 3\\ 2 & 1 & 1 & 1 & 3\\ 4 & 2 & 2 & 2 & 3\\ 3 & 5 & 3 & 3 & 2 \end{bmatrix}`
+
+  The GLSZM then becomes:
+
+  :math:`P = \begin{bmatrix} 0 & 0 & 0 & 1 & 0\\ 1 & 0 & 0 & 0 & 1\\ 1 & 0 & 1 & 0 & 1\\ 1 & 1 & 0 & 0 & 0\\ 3 & 0 & 0 & 0 & 0 \end{bmatrix}`
+
+  Let:
+
+  :math:`P(i,j)` be the run length matrix for an arbitrary direction :math:`\theta`
+
+  :math:`N_g` be the number of discreet intensity values in the image
+
+  :math:`N_s` be the number of discreet zone sizes in the image
+
+  :math:`N_p` be the number of voxels in the image
+  """
+
   def __init__(self, inputImage, inputMask, **kwargs):
+    r"""
+    Initialization, no additional settings possible for this class.
+    """
     super(RadiomicsGLSZM,self).__init__(inputImage, inputMask, **kwargs)
 
     self.coefficients = {}
@@ -19,7 +47,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     self.calculateGLSZM()
     self.calculateCoefficients()
-
 
   def calculateGLSZM(self):
     """

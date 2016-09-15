@@ -10,9 +10,38 @@ import radiomics
 from radiomics import base, imageoperations
 
 
-class RadiomicsSignature():
+class RadiomicsSignature:
+    """
+    Wrapper class for calculation of a radiomics signature.
+    At and after initialisation various settings can be used to customize the resultant signature.
+    This includes which classes and features to use, as well as what should be done in terms of preprocessing the image
+    and what images (original and/or filtered) should be used as input.
+
+    Then a call to computeSignature generates the radiomics signature specified by these settings for the passed
+    image and labelmap combination. This function can be called repeatedly in a batch process to calculate the radiomics
+    signature for all image and labelmap combinations.
+    """
 
     def __init__(self, **kwargs):
+        """
+        Initialisation, the following general settings can be specified in kwargs:
+
+        - verbose [True]: Boolean, set to False to disable status update printing.
+        - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
+        - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
+        - interpolator [sitk.sitkBSpline]: Simple ITK constant, sets interpolator to use for resampling.
+
+        N.B. Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
+
+        In addition to these general settings, filter or featureclass specific settings can be defined here also.
+        For more information on possible settings, see the respective filters and feature classes.
+
+        By default, all features in all feature classes are enabled.
+        By default, all input image types are enabled (original, wavelet, log)
+        N.B. for log, the sigma is set to range 0.5-5.0, step size 0.5
+
+        :param kwargs: dictionary of settings ("settingsName":value).
+        """
         self.featureClasses = self.getFeatureClasses()
 
         self.kwargs = kwargs
@@ -30,20 +59,28 @@ class RadiomicsSignature():
         self.enabledFeatures = {}
 
     def enableInputImages(self, **inputImages):
+        """
+        Enable inputimages, with optionally custom settings, which are applied to the respective input image.
+        Settings specified here override those in kwargs.
+        The following settings are not customizable:
+
+        - resampledPixelSpacing
+        - binWidth
+
+        :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings (dictionary)
+        """
         self.inputImages = inputImages
 
     def enableAllFeatures(self):
         """
         Enable all classes and all features.
         """
-
         self.enabledFeatures = {}
 
     def enableFeatureClassByName(self, featureClass, enabled= True):
         """
         Enable or disable all features in given class.
         """
-
         if enabled:
             if featureClass in self.enabledFeatures: del self.enabledFeatures[featureClass]
         else:
@@ -57,12 +94,17 @@ class RadiomicsSignature():
         Only settings for feature classes specified in enabledFeatures.keys are updated.
         To enable the entire class, use enableFeatureClassByName instead.
         """
-
         self.enabledFeatures.update(enabledFeatures)
 
     def computeSignature(self, imageFilepath, maskFilepath):
-        featureVector = collections.OrderedDict()
+        """
+        Compute radiomics signature for provide image and mask combination.
 
+        :param imageFilepath: SimpleITK Image, or string pointing to image file location
+        :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
+        :returns: dictionary containing calculated signature ("featureName":value).
+        """
+        featureVector = collections.OrderedDict()
         image, mask = self.loadImage(imageFilepath, maskFilepath)
 
         if 'original' in self.inputImages:
@@ -83,6 +125,16 @@ class RadiomicsSignature():
         return featureVector
 
     def loadImage(self, ImageFilePath, MaskFilePath):
+        """
+        Preprocess the image and labelmap.
+        If ImageFilePath is a string, it is loaded as SimpleITK Image and assigned to image,
+        if it already is a SimpleITK Image, it is just assigned to image.
+        All other cases are ignored (nothing calculated).
+        Equal approach is used for assignment of mask using MaskFilePath.
+
+        After assignment of image and mask, both are cropped to tumor mask, or, if resampling is enabled,
+        resampled and cropped to tumor mask.
+        """
         if isinstance(ImageFilePath, basestring) and os.path.exists(ImageFilePath):
             image = sitk.ReadImage(ImageFilePath)
         elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
@@ -122,19 +174,23 @@ class RadiomicsSignature():
         return image, mask
 
     def computeFeatures(self, image, mask, **kwargs):
-
+        """
+        Compute signature using image, mask, **kwargs settings
+        This function computes the signature for just the passed image (original or filtered),
+        does not preprocess or apply a filter to the passed image.
+        Features / Classes to use for calculation of signature are defined in self.enabledFeatures.
+        see also enableFeaturesByName.
+        """
         featureVector = collections.OrderedDict()
 
         for featureClassName in self.getFeatureClassNames():
             if featureClassName not in self.enabledFeatures.keys():
                 featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
                 featureClass.enableAllFeatures()
-
             elif len(self.enabledFeatures[featureClassName]) > 0:
                 featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
                 for enabledFeature in self.enabledFeatures[featureClassName]:
                     featureClass.enableFeatureByName(enabledFeature)
-
             else:
                 featureClass = None
 
@@ -148,27 +204,54 @@ class RadiomicsSignature():
         return featureVector
 
     def computeLoG(self, image, mask, **kwargs):
+        """
+        Apply Laplacian of Gaussian filter to input image and compute signature for each filtered image.
 
+        Following settings are possible:
+
+        - sigma: List of floats or integers, must be greater than 0. Sigma values to use for the
+            filter (determines coarseness).
+
+        N.B. Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
+        will return an empty dictionary.
+
+        Feature names are changed to reflect LoG settings:
+        log-sigma-<sigmaValue>-3D-<featureName>.
+
+        :return: dictionary containing calculated features ("featureName":value).
+        """
         logFeatureVector = collections.OrderedDict()
         sigmaValues = kwargs.get('sigma', [])
 
         for sigma in sigmaValues:
-
             logSigmaFeatureVector = collections.OrderedDict()
-
             logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
-
             logSigmaFeatureVector.update( self.computeFeatures(logImage, mask, **kwargs))
 
             for (featureName, featureValue) in logSigmaFeatureVector.iteritems():
-
                 laplacianFeatureName = "log_sigma_%s_mm_3D_%s" %(str(sigma).replace('.','_'), featureName)
                 logFeatureVector[laplacianFeatureName] = featureValue
 
         return logFeatureVector
 
     def computeWavelet(self, image, mask, **kwargs):
+        """
+        Apply wavelet filter to image and compute signature for each filtered image.
 
+        Following settings are possible:
+
+        - start_level [0]: integer, 0 based level of wavelet which should be used as first set of decompositions
+          from which a signature is calculated
+        - level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
+        - wavelet ["coif1"]: string, type of wavelet decomposition
+
+        Feature names are changed to reflect wavelet type:
+        wavelet[level]-<decompositionName>-<featureName>
+
+        N.B. only levels greater than the first level are entered into the name.
+
+        :return: dictionary containing calculated features ("featureName":value).
+        """
         waveletArgs = {}
         waveletArgs['wavelet'] = kwargs.get('wavelet', 'coif1')
         waveletArgs['level'] = kwargs.get('level', 1)
@@ -208,7 +291,6 @@ class RadiomicsSignature():
         This is achieved by inspect.getmembers. Modules are added if it contains a memeber that is a class,
         with name starting with 'Radiomics' and is inherited from radiomics.base.RadiomicsFeaturesBase.
         """
-
         featureClasses = {}
         for _,mod,_ in pkgutil.iter_modules(radiomics.__path__):
             __import__('radiomics.' + mod)
@@ -218,8 +300,10 @@ class RadiomicsSignature():
                     if radiomics.base.RadiomicsFeaturesBase in inspect.getmro(a[1])[1:]:
                         featureClasses[mod] = a[1]
 
-
         return featureClasses
 
     def getFeatureClassNames(self):
+        """
+        Returns a list of all possible feature class names.
+        """
         return self.featureClasses.keys()

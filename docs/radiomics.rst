@@ -36,14 +36,6 @@ radiomics.glszm module
     :undoc-members:
     :show-inheritance:
 
-radiomics.imageoperations module
---------------------------------
-
-.. automodule:: radiomics.imageoperations
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 radiomics.rlgl module
 ---------------------
 
@@ -56,6 +48,22 @@ radiomics.shape module
 ----------------------
 
 .. automodule:: radiomics.shape
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+radiomics.imageoperations module
+--------------------------------
+
+.. automodule:: radiomics.imageoperations
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+radiomics.signatures module
+---------------------
+
+.. automodule:: radiomics.signatures
     :members:
     :undoc-members:
     :show-inheritance:

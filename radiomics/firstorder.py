@@ -4,22 +4,25 @@ from radiomics import base, imageoperations
 import SimpleITK as sitk
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
+  r"""
+  First-order statistics describe the distribution of voxel intensities within the image through commonly used and basic metrics.
+  Let X denote the three dimensional image matrix with N voxels and P the first order histogram with Nl discrete intensity levels.
+  The following first order statistics were extracted:
+  """
 
   def __init__(self, inputImage, inputMask, **kwargs):
+    r"""
+    Initialization, no additional settings possible for this class.
+    """
     super(RadiomicsFirstOrder,self).__init__(inputImage,inputMask,**kwargs)
 
     self.pixelSpacing = inputImage.GetSpacing()
 
-    #self.featureNames = self.getFeatureNames()
-
-    #self.InitializeFeatureVector()
-    #for f in self.getFeatureNames():
-    #  self.enabledFeatures[f] = True
-
-    # TODO: add an option to instantiate the class that reuses initialization
-
   def _moment(self, a, moment=1, axis=0):
-    """Calculate n-order moment of an array for a given axis"""
+    r"""
+    Calculate n-order moment of an array for a given axis
+    """
+
     if moment == 1:
       return numpy.float64(0.0)
     else:
@@ -31,12 +34,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Energy of the image array.
 
-    :math:`energy = \displaystyle\sum^{n}_{i=1}{\textbf{X}(i)^2}`
+    :math:`energy = \displaystyle\sum^{N}_{i=1}{\textbf{X}(i)^2}`
 
     Energy is a measure of the magnitude of voxel values in
     an image. A larger values implies a greater sum of the
     squares of these values.
     """
+
     shiftedParameterArray = self.targetVoxelArray + 2000
     return (numpy.sum(shiftedParameterArray**2))
 
@@ -44,12 +48,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Total Energy of the image array.
 
-    :math:`total\ energy = V_{voxel}\displaystyle\sum^{n}_{i=1}{\textbf{X}(i)^2}`
+    :math:`total\ energy = V_{voxel}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)^2}`
 
     Total Energy is a measure of the magnitude of voxel values
     and voxel volumes in an image. A larger values implies
     a greater sum of the squares of these values.
     """
+
     shiftedParameterArray = self.targetVoxelArray + 2000
     cubicMMPerVoxel = reduce(lambda x,y: x*y , self.pixelSpacing)
     return(cubicMMPerVoxel*numpy.sum(shiftedParameterArray**2))
@@ -64,6 +69,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     image values. It measures the average amount of
     information required to encode the image values
     """
+
     eps = numpy.spacing(1)
 
     bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
@@ -72,11 +78,17 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     return (-1.0 * numpy.sum(bins*numpy.log2(bins)))
 
   def getMinimumFeatureValue(self):
-    """Calculate the Minimum Value in the image array."""
+    r"""
+    Calculate the Minimum Value in the image array.
+    """
+
     return (numpy.min(self.targetVoxelArray))
 
   def getMaximumFeatureValue(self):
-    """Calculate the Maximum Value in the image array."""
+    r"""
+    Calculate the Maximum Value in the image array.
+    """
+
     return (numpy.max(self.targetVoxelArray))
 
   def getMeanFeatureValue(self):
@@ -85,14 +97,23 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`mean = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)}`
     """
+
     return (numpy.mean(self.targetVoxelArray))
 
   def getMedianFeatureValue (self):
-    """Calculate the Median Value for the image array."""
+    r"""
+    Calculate the Median Value for the image array.
+    """
+
     return (numpy.median(self.targetVoxelArray))
 
   def getRangeFeatureValue (self):
-    """Calculate the Range of Values in the image array."""
+    r"""
+    Calculate the Range of Values in the image array.
+
+    :math:`range = \max(X) - \min(X)`
+    """
+
     return (numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))
 
   def getMeanDeviationFeatureValue(self):
@@ -104,6 +125,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Mean Deviation is the mean distance of all intensity values
     from the Mean Value of the image array.
     """
+
     return ( numpy.mean(numpy.absolute( (numpy.mean(self.targetVoxelArray) - self.targetVoxelArray) )) )
 
   def getRootMeanSquaredFeatureValue(self):
@@ -116,6 +138,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     intensity values. It is another measure of the magnitude
     of the image values.
     """
+
     shiftedParameterArray = self.targetVoxelArray + 2000
     return ( numpy.sqrt((numpy.sum(shiftedParameterArray**2))/float(shiftedParameterArray.size)) )
 
@@ -128,6 +151,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Standard Deviation measures the amount of variation
     or dispersion from the Mean Value.
     """
+
     return (numpy.std(self.targetVoxelArray, ddof= 1))
 
   def getSkewnessFeatureValue(self, axis=0):
@@ -145,6 +169,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     https://en.wikipedia.org/wiki/Skewness
     """
+
     m2 = self._moment(self.targetVoxelArray, 2, axis)
     m3 = self._moment(self.targetVoxelArray, 3, axis)
 
@@ -169,6 +194,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     https://en.wikipedia.org/wiki/Kurtosis
     """
+
     m2 = self._moment(self.targetVoxelArray,2,axis)
     m4 = self._moment(self.targetVoxelArray,4,axis)
 
@@ -186,6 +212,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     value from the Mean value. This is a measure of the spread
     of the distribution about the mean..
     """
+
     return (numpy.std(self.targetVoxelArray, ddof= 1)**2)
 
   def getUniformityFeatureValue(self):

@@ -3,22 +3,51 @@ import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
 
-class RadiomicsRLGL(base.RadiomicsFeaturesBase):
-  """RLGL feature calculation."""
+class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
+  r"""
+  A Gray Level Run Length Matrix (GLRLM) quantifies gray level runs in an image.
+  A gray level run is defined as the length in number of pixels,
+  of consecutive pixels that have the same gray level value. In a gray level run length matrix :math:`P(i,j|\theta)`,
+  the :math:`(i,j)\text{th}` element describes the number of times a gray level appears consecutively
+  in the direction specified by :math:`\theta`, and :math:`N_g` is the number of discrete gray level intensities.
+
+  As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
+
+  :math:`I = \begin{bmatrix} 5 & 2 & 5 & 4 & 4\\ 3 & 3 & 3 & 1 & 3\\ 2 & 1 & 1 & 1 & 3\\ 4 & 2 & 2 & 2 & 3\\ 3 & 5 & 3 & 3 & 2 \end{bmatrix}`
+
+  The GLRLM for :math:`\theta = 0`, where 0 degrees is the horizontal direction, then becomes:
+
+  :math:`P = \begin{bmatrix} 1 & 0 & 1 & 0 & 0\\ 3 & 0 & 1 & 0 & 0\\ 4 & 1 & 1 & 0 & 0\\ 1 & 1 & 0 & 0 & 0\\ 3 & 0 & 0 & 0 & 0 \end{bmatrix}`
+
+  Let:
+
+  :math:`P(i,j)` be the run length matrix for an arbitrary direction :math:`\theta`
+
+  :math:`N_g` be the number of discreet intensity values in the image
+
+  :math:`N_r` be the number of discreet run lengths in the image
+
+  :math:`N_p` be the number of voxels in the image
+
+  """
+
   def __init__(self, inputImage, inputMask, **kwargs):
-      super(RadiomicsRLGL,self).__init__(inputImage, inputMask, **kwargs)
+    r"""
+    Initialization, no additional settings possible for this class.
+    """
+    super(RadiomicsGLRLM,self).__init__(inputImage, inputMask, **kwargs)
 
-      self.coefficients = {}
-      self.P_rlgl = {}
+    self.coefficients = {}
+    self.P_rlgl = {}
 
-      # binning
-      self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
-      self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
-      self.coefficients['Nr'] = numpy.max(self.matrix.shape)
-      self.coefficients['Np'] = self.targetVoxelArray.size
+    # binning
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
+    self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
+    self.coefficients['Nr'] = numpy.max(self.matrix.shape)
+    self.coefficients['Np'] = self.targetVoxelArray.size
 
-      self.calculateRLGL()
-      self.calculateCoefficients()
+    self.calculateRLGL()
+    self.calculateCoefficients()
 
   def calculateRLGL(self):
     Ng = self.coefficients['Ng']
@@ -106,7 +135,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getShortRunEmphasisFeatureValue(self):
     r"""
-    Calculate and return the mean Short Run Emphasis (SRE) value for all 13 RLGL matrices.
+    Calculate and return the mean Short Run Emphasis (SRE) value for all GLRLMs.
 
     :math:`SRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
 
@@ -125,7 +154,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getLongRunEmphasisFeatureValue(self):
     r"""
-    Calculate and return the mean Long Run Emphasis (LRE) value for all 13 RLGL matrices.
+    Calculate and return the mean Long Run Emphasis (LRE) value for all GLRLMs.
 
     :math:`LRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
@@ -144,7 +173,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getGrayLevelNonUniformityFeatureValue(self):
     r"""
-    Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all 13 RLGL matrices.
+    Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all GLRLMs.
 
     :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{p(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
@@ -162,7 +191,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getRunLengthNonUniformityFeatureValue(self):
     r"""
-    Calculate and return the mean Run Length Non-Uniformity (RLN) value for all 13 RLGL matrices.
+    Calculate and return the mean Run Length Non-Uniformity (RLN) value for all GLRLMs.
 
     :math:`RLN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{p(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
@@ -180,7 +209,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getRunPercentageFeatureValue(self):
     r"""
-    Calculate and return the mean Run Percentage (RP) value for all 13 RLGL matrices.
+    Calculate and return the mean Run Percentage (RP) value for all GLRLMs.
 
     :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{N_p}}`
     
@@ -196,7 +225,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getLowGrayLevelRunEmphasisFeatureValue(self):
     r"""
-    Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all 13 RLGL matrices.
+    Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all GLRLMs.
 
     :math:`LGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
@@ -215,7 +244,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getHighGrayLevelRunEmphasisFeatureValue(self):
     r"""
-    Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all 13 RLGL matrices.
+    Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all GLRLMs.
 
     :math:`HGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)i^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
@@ -234,7 +263,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getShortRunLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all 13 RLGL matrices.
+    Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all GLRLMs.
 
     :math:`SRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
@@ -252,7 +281,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getShortRunHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all 13 RLGL matrices.
+    Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all GLRLMs.
 
     :math:`SRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
@@ -270,7 +299,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getLongRunLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all 13 RLGL matrices.
+    Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all GLRLMs.
 
     :math:`LRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     
@@ -288,7 +317,7 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
 
   def getLongRunHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all 13 RLGL matrices.
+    Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all GLRLMs.
 
     :math:`LRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
     

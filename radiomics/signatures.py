@@ -240,3 +240,10 @@ class RadiomicsSignature():
 
     def getFeatureClassNames(self):
         return self.featureClasses.keys()
+
+    def GetFeaturesFromClass(self, featureClassName):
+        """
+        Returns a list of all possible features in provided featureClass
+        """
+
+        return self.featureClasses[featureClassName].getFeatureNames()

@@ -292,3 +292,47 @@ def decompose_k(data, wavelet):
   H = numpy.dstack(H).reshape(data.shape)
   L = numpy.dstack(L).reshape(data.shape)
   return H, L
+
+def applySquare(inputImage):
+  im = sitk.GetArrayFromImage(inputImage)
+  im = im.astype('float64')
+
+  im_max = numpy.max(im)
+  im = im ** 2
+  # to prevent overflow effects
+  im[im<0] = im_max
+  im = im * (im_max / numpy.max(im))
+  im = sitk.GetImageFromArray(im)
+  im.CopyInformation(inputImage)
+  return im
+
+def applySquareRoot(inputImage):
+  im = sitk.GetArrayFromImage(inputImage)
+  im = im.astype('float64')
+
+  im_max = numpy.max(im)
+  im = numpy.sqrt(numpy.abs(im))
+  im = im * (im_max / numpy.max(im))
+  im = sitk.GetImageFromArray(im)
+  im.CopyInformation(inputImage)
+  return im
+
+def applyLogarithm(inputImage):
+  im = sitk.GetArrayFromImage(inputImage)
+  im = im.astype('float64')
+
+  im_max = numpy.max(im)
+  im = numpy.log(numpy.abs(im) + 1 )
+  im = im * (im_max / numpy.max(im))
+  im = sitk.GetImageFromArray(im)
+  im.CopyInformation(inputImage)
+  return im
+
+def applyExponential(inputImage):
+  im = sitk.GetArrayFromImage(inputImage)
+  im = im.astype('float64')
+  coeff = numpy.log(numpy.max(im))/numpy.max(im)
+  im = numpy.exp(coeff*im)
+  im = sitk.GetImageFromArray(im)
+  im.CopyInformation(inputImage)
+  return im

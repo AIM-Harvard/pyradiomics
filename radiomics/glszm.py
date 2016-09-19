@@ -15,7 +15,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
-    self.coefficients['grayLevels'] = numpy.linspace(1,self.coefficients['Ng'],num=self.coefficients['Ng'])
     self.coefficients['Np'] = self.targetVoxelArray.size
 
     self.calculateGLSZM()
@@ -29,28 +28,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     For 3D-images this concerns a 26-connected region, for 2D an 8-connected region
     """
-    angles = numpy.array([ (0, 0, 1),
-                           (0, 1, 0),
-                           (0, 1, 1),
-                           (0, 1, -1) ])
-    # if the image is only a 2D slice, do not add 3D angles
-    if self.is3D:
-      angles3D = numpy.array([(-1, 1, 0),
-                              (-1, 0, 0),
-                              (-1, -1, 0),
-                              (-1, 0, -1),
-                              (1, 0, -1),
-                              (-1, 1, -1),
-                              (1, -1, -1),
-                              (-1, -1, -1),
-                              (1, 1, -1)])
-      angles = numpy.concatenate((angles, angles3D))
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
 
     # Empty GLSZ matrix
-    P_glszm = numpy.zeros((self.coefficients['grayLevels'].size, self.coefficients['Np']))
+    P_glszm = numpy.zeros((self.coefficients['Ng'], self.coefficients['Np']))
 
     # Iterate over all gray levels in the image
-    numGrayLevels = self.coefficients['grayLevels'].size+1
+    numGrayLevels = self.coefficients['Ng']+1
 
     if self.verbose: bar = trange(numGrayLevels-1, desc= 'calculate GLSZM')
 

@@ -36,9 +36,6 @@ class RadiomicsFeaturesBase(object):
 
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
-    # if the maximum z-index is not equal to the minimum z-index, then the image is a 3D volume
-    self.is3D = kwargs.get('is3D', (self.matrixCoordinates[0].max() != self.matrixCoordinates[0].min()))
-
   def enableFeatureByName(self, featureName, enable=True):
     if not featureName in self.featureNames:
       raise LookupError('Feature not found: '+featureName)

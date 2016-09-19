@@ -74,12 +74,16 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   if numpy.array_equal(oldSpacing, resampledPixelSpacing):
     return cropToTumorMask(imageNode, maskNode)
 
-  spacingRatio = oldSpacing / resampledPixelSpacing
-
   # Determine bounds of cropped volume in terms of original Index coordinate space
   lsif = sitk.LabelStatisticsImageFilter()
   lsif.Execute(imageNode, maskNode)
   bb = numpy.array(lsif.GetBoundingBox(1))  # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
+
+  # Do not resample in those directions where labelmap spans only one slice.
+  oldSize = bb[1::2] - bb[0::2] + 1
+  resampledPixelSpacing = numpy.where(oldSize != 1, resampledPixelSpacing, oldSpacing)
+
+  spacingRatio = oldSpacing / resampledPixelSpacing
 
   # Determine bounds of cropped volume in terms of new Index coordinate space,
   # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)

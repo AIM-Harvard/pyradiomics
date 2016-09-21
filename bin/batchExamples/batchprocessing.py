@@ -3,7 +3,7 @@ import csv
 import collections
 import traceback
 import SimpleITK as sitk
-from radiomics import signatures
+from radiomics import featuresextractor
 
 
 def main():
@@ -33,9 +33,9 @@ def main():
     kwargs['interpolator'] = sitk.sitkBSpline
     kwargs['verbose'] = True
 
-    Sig = signatures.RadiomicsSignature(**kwargs)
-    Sig.enableInputImages(original= {})
-    #Sig.enableInputImages(wavelet= {'level': 2})
+    extractor = featuresextractor.RadiomicsFeaturesExtractor(**kwargs)
+    extractor.enableInputImages(original= {})
+    #extractor.enableInputImages(wavelet= {'level': 2})
     for idx, entry in enumerate(flists, start= 1):
 
         with open(progress_filename,mode='a') as printfile:
@@ -54,7 +54,7 @@ def main():
             featureVector['mask'] = os.path.basename(maskFilepath)
 
             try:
-                featureVector.update(Sig.computeSignature(imageFilepath, maskFilepath))
+                featureVector.update(extractor.execute(imageFilepath, maskFilepath))
 
                 with open(outputFilepath, 'ab') as outputFile:
                     writer = csv.writer(outputFile, lineterminator = '\n')

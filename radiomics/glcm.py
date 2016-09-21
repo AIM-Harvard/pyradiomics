@@ -9,6 +9,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLCM,self).__init__(inputImage, inputMask, **kwargs)
 
+    self.symmetricalGLCM = kwargs.get('symmetricalGLCM', True)
+
     self.coefficients = {}
     self.P_glcm = {}
 
@@ -55,6 +57,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
             self.P_glcm[i_idx, j_idx, angles_idx] += 1
 
     if self.verbose: bar.close()
+
+    # Optionally make GLCMs symmetrical for each angle
+    if self.symmetricalGLCM:
+      self.P_glcm += numpy.transpose(self.P_glcm, (1, 0, 2))
 
     sumGlcm = numpy.sum(self.P_glcm, (0,1))
 

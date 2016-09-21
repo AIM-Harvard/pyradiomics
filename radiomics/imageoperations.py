@@ -20,6 +20,35 @@ def binImage(binwidth, parameterValues, parameterMatrix = None, parameterMatrixC
 
   return parameterMatrix, histogram
 
+def generateAngles(size, maxDistance= 1):
+  """
+  Generate all possible angles from distance 1 until maxDistance in 3D.
+  E.g. for d = 1, 13 angles are generated (representing the 26-connected region).
+  For d = 2, 13 + 49 = 62 angles are generated (representing the 26 connected region for distance 1, and the 98
+  connected region for distance 2)
+
+  Impossible angles (where 'neighbouring' voxels will always be outside delineation) are deleted.
+
+  :param size: dimensions (z, x, y) of the bounding box of the tumor mask.
+  :param maxDistance: [1] Maximum distance between center voxel and neighbour
+  :return: numpy array with shape (N, 3), where N is the number of unique angles
+  """
+
+  angles = []
+
+  for z in xrange(1, maxDistance+1):
+    angles.append((0, 0, z))
+    for y in xrange(-maxDistance, maxDistance+1):
+      angles.append((0, z, y))
+      for x in xrange(-maxDistance, maxDistance+1):
+        angles.append((z, y, x))
+
+  angles = numpy.array(angles)
+
+  angles = numpy.delete(angles, numpy.where(numpy.min(size - numpy.abs(angles), 1) <= 0), 0)
+
+  return angles
+
 def cropToTumorMask(imageNode, maskNode):
   """
   Create a sitkImage of the segmented region of the image based on the input label.
@@ -74,12 +103,16 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   if numpy.array_equal(oldSpacing, resampledPixelSpacing):
     return cropToTumorMask(imageNode, maskNode)
 
-  spacingRatio = oldSpacing / resampledPixelSpacing
-
   # Determine bounds of cropped volume in terms of original Index coordinate space
   lsif = sitk.LabelStatisticsImageFilter()
   lsif.Execute(imageNode, maskNode)
   bb = numpy.array(lsif.GetBoundingBox(1))  # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
+
+  # Do not resample in those directions where labelmap spans only one slice.
+  oldSize = bb[1::2] - bb[0::2] + 1
+  resampledPixelSpacing = numpy.where(oldSize != 1, resampledPixelSpacing, oldSpacing)
+
+  spacingRatio = oldSpacing / resampledPixelSpacing
 
   # Determine bounds of cropped volume in terms of new Index coordinate space,
   # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)

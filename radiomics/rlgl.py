@@ -14,7 +14,6 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       # binning
       self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
       self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
-      self.coefficients['grayLevels'] = numpy.linspace(1,self.coefficients['Ng'],num=self.coefficients['Ng'])
       self.coefficients['Nr'] = numpy.max(self.matrix.shape)
       self.coefficients['Np'] = self.targetVoxelArray.size
 
@@ -22,105 +21,54 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
       self.calculateCoefficients()
 
   def calculateRLGL(self):
-      Ng = self.coefficients['Ng']
-      Nr = self.coefficients['Nr']
-      grayLevels = self.coefficients['grayLevels']
+    Ng = self.coefficients['Ng']
+    Nr = self.coefficients['Nr']
 
-      P_rlgl = numpy.zeros((Ng, Nr, 13))
-
-      padVal = -2000   #use eps or NaN to pad matrix
-      self.matrix[(self.maskArray == 0)] = padVal
+    padVal = -2000   #use eps or NaN to pad matrix
+    self.matrix[(self.maskArray == 0)] = padVal
       
-      matrixDiagonals = []
+    matrixDiagonals = []
 
-      #(1,0,0), (-1,0,0)
-      aDiags = chain.from_iterable(numpy.transpose(self.matrix,(1,2,0)))
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, aDiags) )
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
 
-      #(0,1,0), (0,-1,0)
-      bDiags = chain.from_iterable(numpy.transpose(self.matrix,(0,2,1)))
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, bDiags) )
+    for angle in angles:
+        staticDims, = numpy.where(angle == 0)  # indices for static dimensions for current angle (z, y, x)
+        movingDims, = numpy.where(angle != 0)  # indices for moving dimensions for current angle (z, y, x)
 
-      #(0,0,1), (0,0,-1)
-      cDiags = chain.from_iterable(numpy.transpose(self.matrix,(0,1,2)))
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, cDiags) )
+        if len(movingDims) == 1:  # movement in one dimension, e.g. angle (0, 0, 1)
+            T = tuple(numpy.append(staticDims, movingDims))
+            diags = chain.from_iterable(numpy.transpose(self.matrix, T))
 
-      #(1,1,0), (-1,-1,0)
-      lowBound = -self.matrix.shape[0]+1
-      highBound = self.matrix.shape[1]
-      dDiags = chain.from_iterable([self.matrix.diagonal(a,0,1) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, dDiags) )
+        elif len(movingDims) == 2:  # movement in two dimension, e.g. angle (0, 1, 1)
+            d1 = movingDims[0]
+            d2 = movingDims[1]
+            direction = numpy.where(angle < 0, -1, 1)
+            diags = chain.from_iterable([self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, d1, d2)
+                                         for a in xrange(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
 
-      #(1,0,1), (-1,0-1)
-      lowBound = -self.matrix.shape[0]+1
-      highBound = self.matrix.shape[2]
-      eDiags = chain.from_iterable([self.matrix.diagonal(a,0,2) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, eDiags) )
+        else:  # movement in 3 dimensions, e.g. angle (1, 1, 1)
+            diags = []
+            direction = numpy.where(angle < 0, -1, 1)
+            for h in [self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, 0, 1)
+                      for a in xrange(-self.matrix.shape[0] + 1, self.matrix.shape[1])]:
+                diags.extend([h.diagonal(b, 0, 1) for b in xrange(-h.shape[0] + 1, h.shape[1])])
 
-      #(0,1,1), (0,-1,-1)
-      lowBound = -self.matrix.shape[1]+1
-      highBound = self.matrix.shape[2]
-      fDiags = chain.from_iterable([self.matrix.diagonal(a,1,2) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, fDiags) )
+        matrixDiagonals.append( filter(lambda diag: numpy.nonzero(diag != padVal)[0].size > 0, diags) )
 
-      #(1,-1,0), (-1,1,0)
-      lowBound = -self.matrix.shape[0]+1
-      highBound = self.matrix.shape[1]
-      gDiags = chain.from_iterable([self.matrix[:,::-1,:].diagonal(a,0,1) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, gDiags) )
+    P_rlgl = numpy.zeros( (Ng, Nr, int(len(matrixDiagonals))) )
 
-      #(-1,0,1), (1,0,-1)
-      lowBound = -self.matrix.shape[0]+1
-      highBound = self.matrix.shape[2]
-      hDiags = chain.from_iterable([self.matrix[:,:,::-1].diagonal(a,0,2) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, hDiags) )
-
-      #(0,1,-1), (0,-1,1)
-      lowBound = -self.matrix.shape[1]+1
-      highBound = self.matrix.shape[2]
-      iDiags = chain.from_iterable([self.matrix[:,:,::-1].diagonal(a,1,2) for a in xrange(lowBound, highBound)])
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, iDiags) )
-
-      #(1,1,1), (-1,-1,-1)
-      lowBound = -self.matrix.shape[0]+1
-      highBound = self.matrix.shape[1]
-      jDiags = []
-      for h in [self.matrix.diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
-        for x in xrange(-h.shape[0]+1, h.shape[1]):
-          jDiags.append(numpy.diagonal(h,x,0,1))    
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, jDiags) )
-
-      #(-1,1,-1), #(1,-1,1),
-      lowBound = -self.matrix.shape[0]+1
-      highBound = self.matrix.shape[1]
-      kDiags = []
-      for h in [self.matrix[:,::-1,:].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
-        for x in xrange(-h.shape[0]+1, h.shape[1]):
-          kDiags.append(numpy.diagonal(h,x,0,1))   
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, kDiags) )
-
-      #(1,1,-1), #(-1,-1,1),
-      lowBound = -self.matrix.shape[0]+1
-      highBound = self.matrix.shape[1]
-      lDiags = []
-      for h in [self.matrix[:,:,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
-        for x in xrange(-h.shape[0]+1, h.shape[1]):
-          lDiags.append(numpy.diagonal(h,x,0,1))    
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, lDiags) )
-
-      #(-1,1,1), #(1,-1,-1),
-      lowBound = -self.matrix.shape[0]+1
-      highBound = self.matrix.shape[1]
-      mDiags = []
-      for h in [self.matrix[:,::-1,::-1].diagonal(a,0,1) for a in xrange(lowBound, highBound)]:
-        for x in xrange(-h.shape[0]+1, h.shape[1]):
-          mDiags.append(numpy.diagonal(h,x,0,1))    
-      matrixDiagonals.append( filter(lambda x: numpy.nonzero(x != padVal)[0].size>0, mDiags) )
-      
-      # Run-Length Encoding (rle) for the 13 list of diagonals
-      # (1 list per 3D direction/angle)
-      for angle_idx, angle in enumerate(matrixDiagonals):
-        P = P_rlgl[:,:,angle_idx]
+    # Run-Length Encoding (rle) for the list of diagonals
+    # (1 list per direction/angle)
+    for angle_idx, angle in enumerate(matrixDiagonals):
+      P = P_rlgl[:,:,angle_idx]
+      # Check whether delineation is 2D for current angle (all diagonals contain 0 or 1 non-pad value)
+      isMultiElement = False
+      for d in angle:
+        if numpy.where(d != padVal)[0].shape[0] > 1:
+            isMultiElement = True
+            break
+      if isMultiElement:
         for diagonal in angle:
           pos, = numpy.where(numpy.diff(diagonal) != 0)
           pos = numpy.concatenate(([0], pos+1, [len(diagonal)]))
@@ -128,27 +76,33 @@ class RadiomicsRLGL(base.RadiomicsFeaturesBase):
           for level, run_length in rle:
             if level != padVal:
               P[level-1, run_length-1] += 1
-      
-      # Crop gray-level axis of RLGL matrix to between minimum and maximum observed gray-levels
-      # Crop run-length axis of RLGL matrix up to maximum observed run-length
-      P_rlgl_bounds = numpy.argwhere(P_rlgl)
-      (xstart, ystart, zstart), (xstop, ystop, zstop) = P_rlgl_bounds.min(0), P_rlgl_bounds.max(0) + 1
-      self.P_rlgl = P_rlgl[xstart:xstop,:ystop,:]
-      
+
+    # Crop gray-level axis of RLGL matrix to between minimum and maximum observed gray-levels
+    # Crop run-length axis of RLGL matrix up to maximum observed run-length
+    P_rlgl_bounds = numpy.argwhere(P_rlgl)
+    (xstart, ystart, zstart), (xstop, ystop, zstop) = P_rlgl_bounds.min(0), P_rlgl_bounds.max(0) + 1
+    self.P_rlgl = P_rlgl[xstart:xstop,:ystop,:]
+
+    # Delete empty angles
+    sumP_rlgl = numpy.sum(self.P_rlgl, (0, 1))
+
+    self.P_rlgl = numpy.delete(self.P_rlgl, numpy.where(sumP_rlgl == 0), 2)
+    sumP_rlgl = numpy.delete(sumP_rlgl, numpy.where(sumP_rlgl == 0), 0)
+
+    self.coefficients['sumP_rlgl'] = sumP_rlgl
+
   def calculateCoefficients(self):
-      sumP_rlgl = numpy.sum( numpy.sum(self.P_rlgl, 0), 0 )
 
-      pr = numpy.sum(self.P_rlgl, 0)
-      pg = numpy.sum(self.P_rlgl, 1)
+    pr = numpy.sum(self.P_rlgl, 0)
+    pg = numpy.sum(self.P_rlgl, 1)
 
-      ivector = numpy.arange(1, self.P_rlgl.shape[0] + 1, dtype=numpy.float64)
-      jvector = numpy.arange(1, self.P_rlgl.shape[1] + 1, dtype=numpy.float64)
+    ivector = numpy.arange(1, self.P_rlgl.shape[0] + 1, dtype=numpy.float64)
+    jvector = numpy.arange(1, self.P_rlgl.shape[1] + 1, dtype=numpy.float64)
 
-      self.coefficients['sumP_rlgl'] = sumP_rlgl
-      self.coefficients['pr'] = pr
-      self.coefficients['pg'] = pg
-      self.coefficients['ivector'] = ivector
-      self.coefficients['jvector'] = jvector
+    self.coefficients['pr'] = pr
+    self.coefficients['pg'] = pg
+    self.coefficients['ivector'] = ivector
+    self.coefficients['jvector'] = jvector
 
   def getShortRunEmphasisFeatureValue(self):
     r"""

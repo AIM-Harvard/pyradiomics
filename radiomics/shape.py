@@ -38,7 +38,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getVolumeFeatureValue(self):
     """Calculate the volume of the tumor region in cubic millimeters."""
-    return (self.targetVoxelArray.size.size * self.cubicMMPerVoxel)
+    return (self.targetVoxelArray.size * self.cubicMMPerVoxel)
 
   def getSurfaceAreaFeatureValue(self):
     r"""

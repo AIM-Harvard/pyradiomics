@@ -20,28 +20,24 @@ class RadiomicsSignature:
     Then a call to computeSignature generates the radiomics signature specified by these settings for the passed
     image and labelmap combination. This function can be called repeatedly in a batch process to calculate the radiomics
     signature for all image and labelmap combinations.
+    The following general settings can be specified in kwargs:
+
+    - verbose [True]: Boolean, set to False to disable status update printing.
+    - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
+    - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
+    - interpolator [sitk.sitkBSpline]: Simple ITK constant, sets interpolator to use for resampling.
+
+    N.B. Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
+
+    In addition to these general settings, filter or featureclass specific settings can be defined here also.
+    For more information on possible settings, see the respective filters and feature classes.
+
+    By default, all features in all feature classes are enabled.
+    By default, all input image types are enabled (original, wavelet, log)
+    N.B. for log, the sigma is set to range 0.5-5.0, step size 0.5
     """
 
     def __init__(self, **kwargs):
-        """
-        Initialisation, the following general settings can be specified in kwargs:
-
-        - verbose [True]: Boolean, set to False to disable status update printing.
-        - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
-        - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
-        - interpolator [sitk.sitkBSpline]: Simple ITK constant, sets interpolator to use for resampling.
-
-        N.B. Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
-
-        In addition to these general settings, filter or featureclass specific settings can be defined here also.
-        For more information on possible settings, see the respective filters and feature classes.
-
-        By default, all features in all feature classes are enabled.
-        By default, all input image types are enabled (original, wavelet, log)
-        N.B. for log, the sigma is set to range 0.5-5.0, step size 0.5
-
-        :param kwargs: dictionary of settings ("settingsName":value).
-        """
         self.featureClasses = self.getFeatureClasses()
 
         self.kwargs = kwargs
@@ -209,8 +205,8 @@ class RadiomicsSignature:
 
         Following settings are possible:
 
-        - sigma: List of floats or integers, must be greater than 0. Sigma values to use for the
-            filter (determines coarseness).
+        - sigma: List of floats or integers, must be greater than 0. Sigma values to
+          use for the filter (determines coarseness).
 
         N.B. Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
         will return an empty dictionary.

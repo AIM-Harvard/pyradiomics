@@ -56,15 +56,14 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   :math:`HXY1 =  -\sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{\textbf{P}(i,j)\log_2\big(p_x(i)p_y(j)\big)}`
 
   :math:`HXY2 =  -\sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p_x(i)p_y(j)\log_2\big(p_x(i)p_y(j)\big)}`
+
+  The following class specific settings are possible:
+
+  - symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
+    which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
-    r"""
-    Initialization, the following class specific settings are possible:
-
-     - symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
-        which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`.
-    """
     super(RadiomicsGLCM,self).__init__(inputImage, inputMask, **kwargs)
 
     self.symmetricalGLCM = kwargs.get('symmetricalGLCM', True)

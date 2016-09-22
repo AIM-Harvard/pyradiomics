@@ -32,9 +32,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
-    r"""
-    Initialization, no additional settings possible for this class.
-    """
     super(RadiomicsGLSZM,self).__init__(inputImage, inputMask, **kwargs)
 
     self.coefficients = {}
@@ -45,10 +42,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['Np'] = self.targetVoxelArray.size
 
-    self.calculateGLSZM()
-    self.calculateCoefficients()
+    self._calculateGLSZM()
+    self._calculateCoefficients()
 
-  def calculateGLSZM(self):
+  def _calculateGLSZM(self):
     """
     Number of times a region with a
     gray level and voxel count occurs in an image. P_glszm[level, voxel_count] = # occurrences
@@ -113,7 +110,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1
     self.P_glszm = P_glszm[xstart:xstop,:ystop]
 
-  def calculateCoefficients(self):
+  def _calculateCoefficients(self):
     sumP_glszm = numpy.sum(self.P_glszm, (0, 1) )
 
     # set sum to numpy.spacing(1) if sum is 0?

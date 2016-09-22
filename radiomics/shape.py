@@ -12,9 +12,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
-    r"""
-    Initialization, no additional settings possible for this class.
-    """
     super(RadiomicsShape,self).__init__(inputImage,inputMask, **kwargs)
 
     self.pixelSpacing = inputImage.GetSpacing()

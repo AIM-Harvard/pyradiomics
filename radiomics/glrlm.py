@@ -32,9 +32,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
-    r"""
-    Initialization, no additional settings possible for this class.
-    """
     super(RadiomicsGLRLM,self).__init__(inputImage, inputMask, **kwargs)
 
     self.coefficients = {}
@@ -46,10 +43,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
 
-    self.calculateRLGL()
-    self.calculateCoefficients()
+    self._calculateGLRLM()
+    self._calculateCoefficients()
 
-  def calculateRLGL(self):
+  def _calculateGLRLM(self):
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
 
@@ -120,7 +117,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     self.coefficients['sumP_rlgl'] = sumP_rlgl
 
-  def calculateCoefficients(self):
+  def _calculateCoefficients(self):
 
     pr = numpy.sum(self.P_rlgl, 0)
     pg = numpy.sum(self.P_rlgl, 1)

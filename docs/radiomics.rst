@@ -36,10 +36,10 @@ radiomics.glszm module
     :undoc-members:
     :show-inheritance:
 
-radiomics.rlgl module
+radiomics.glrlm module
 ---------------------
 
-.. automodule:: radiomics.rlgl
+.. automodule:: radiomics.glrlm
     :members:
     :undoc-members:
     :show-inheritance:

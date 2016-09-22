@@ -1,4 +1,4 @@
-from radiomics import firstorder, glcm, imageoperations, shape, rlgl, glszm
+from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm
 import SimpleITK as sitk
 import sys, os
 

@@ -1,4 +1,4 @@
-from radiomics import firstorder, glcm, imageoperations, shape, rlgl, glszm
+from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm
 import SimpleITK as sitk
 import sys, os
 
@@ -115,7 +115,7 @@ for (key,val) in glcmFeatures.featureValues.iteritems():
 #
 # Show RLGL features
 #
-rlglFeatures = rlgl.RadiomicsRLGL(image, mask, binWidth=25)
+rlglFeatures = glrlm.RadiomicsGLRLM(image, mask, binWidth=25)
 rlglFeatures.enableAllFeatures()
 
 print 'Will calculate the following RLGL features: '

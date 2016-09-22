@@ -1,5 +1,5 @@
 GLCM:glcm
 Shape:shape
-RLGL:rlgl
+RLGL:glrlm
 Stats:firstorder
 GLSZM:glszm

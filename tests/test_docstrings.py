@@ -2,7 +2,7 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_docstrings.py
 
-from radiomics import firstorder, glcm, rlgl, shape, glszm
+from radiomics import firstorder, glcm, glrlm, shape, glszm
 from testUtils import RadiomicsTestUtils
 import SimpleITK as sitk
 import sys, os
@@ -40,7 +40,7 @@ class TestDocStrings:
     @parameterized.expand(generate_scenarios(firstorder.RadiomicsFirstOrder))
     def test_firstOrder(self, featureName):
       logging.info('%s', featureName)
-      features = firstorder.RadiomicsFirstOrder(None, None)
+      features = firstorder.RadiomicsFirstOrder
       doc = eval('features.get'+featureName+'FeatureValue.__doc__')
       logging.info('%s', doc)
       assert(doc != None)
@@ -49,16 +49,16 @@ class TestDocStrings:
     @parameterized.expand(generate_scenarios(glcm.RadiomicsGLCM))
     def test_glcm(self, featureName):
       logging.info('%s', featureName)
-      features = glcm.RadiomicsGLCM(None, None)
+      features = glcm.RadiomicsGLCM
       doc = eval('features.get'+featureName+'FeatureValue.__doc__')
       logging.info('%s', doc)
       assert(doc != None)
 
 
-    @parameterized.expand(generate_scenarios(rlgl.RadiomicsRLGL))
-    def test_rlgl(self, featureName):
+    @parameterized.expand(generate_scenarios(glrlm.RadiomicsGLRLM))
+    def test_glrlm(self, featureName):
       logging.info('%s', featureName)
-      features = rlgl.RadiomicsRLGL(None, None)
+      features = glrlm.RadiomicsGLRLM
       doc = eval('features.get'+featureName+'FeatureValue.__doc__')
       logging.info('%s', doc)
       assert(doc != None)
@@ -66,15 +66,15 @@ class TestDocStrings:
     @parameterized.expand(generate_scenarios(shape.RadiomicsShape))
     def test_shape(self, featureName):
        logging.info('%s', featureName)
-       features = shape.RadiomicsShape(None, None)
+       features = shape.RadiomicsShape
        doc = eval('features.get'+featureName+'FeatureValue.__doc__')
        logging.info('%s', doc)
        assert(doc != None)
 
     @parameterized.expand(generate_scenarios(glszm.RadiomicsGLSZM))
-    def test_shape(self, featureName):
+    def test_glszm(self, featureName):
        logging.info('%s', featureName)
-       features = glszm.RadiomicsGLSZM(None, None)
+       features = glszm.RadiomicsGLSZM
        doc = eval('features.get'+featureName+'FeatureValue.__doc__')
        logging.info('%s', doc)
        assert(doc != None)

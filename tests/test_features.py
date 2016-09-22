@@ -24,6 +24,7 @@ featureClass = None
 # set testing arguments
 kwargs = {}
 kwargs['binWidth'] = 25
+kwargs['symmetricalGLCM'] = False  # Current baseline is based upon assymetrical GLCM
 
 testUtils.setResampling(resampledPixelSpacing= None,interpolator= sitk.sitkBSpline)  # resampledPixelSpacing= [3, 3, 3]
 

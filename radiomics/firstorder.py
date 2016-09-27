@@ -225,8 +225,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
 
     bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
-    bins = bins/(float(bins.sum()))
     try:
+      bins = bins/(float(bins.sum()))
       return (numpy.sum(bins**2))
     except ZeroDivisionError:
       return numpy.core.nan

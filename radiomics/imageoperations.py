@@ -82,7 +82,7 @@ def cropToTumorMask(imageNode, maskNode):
 
   return croppedImageNode, croppedMaskNode
 
-def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
+def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, padDistance= 5):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.
@@ -117,8 +117,8 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Determine bounds of cropped volume in terms of new Index coordinate space,
   # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
   # Pad with an extra .5 to prevent data loss in case of upsampling. For Ubound this is (-1 + 0.5 = -0.5)
-  bbNewLBound = numpy.floor( (bb[:3] - 0.5) * spacingRatio)
-  bbNewUBound = numpy.ceil( (bb[:3] + bb[3:] - 0.5) * spacingRatio)
+  bbNewLBound = numpy.floor( (bb[:3] - 0.5) * spacingRatio - padDistance)
+  bbNewUBound = numpy.ceil( (bb[:3] + bb[3:] - 0.5) * spacingRatio + padDistance)
 
   # Calculate the new size. Cast to int to prevent error in sitk.
   newSize = numpy.array(bbNewUBound - bbNewLBound + 1, dtype='int')

@@ -47,6 +47,7 @@ class RadiomicsFeaturesExtractor:
         self.resampledPixelSpacing = self.kwargs.get('resampledPixelSpacing', None) #  no resampling by default
         self.interpolator = self.kwargs.get('interpolator', sitk.sitkBSpline)
         self.verbose = self.kwargs.get('verbose', True)
+        self.padDistance = self.kwargs.get('padDistance', 5)
 
         self.inputImages = {}
         for imageType in self.getInputImageTypes():
@@ -170,9 +171,7 @@ class RadiomicsFeaturesExtractor:
             mask = None
 
         if self.interpolator != None and self.resampledPixelSpacing != None:
-            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator)
-        else:
-            image, mask = imageoperations.cropToTumorMask(image, mask)
+            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator, self.padDistance)
 
         return image, mask
 
@@ -184,6 +183,7 @@ class RadiomicsFeaturesExtractor:
         Features / Classes to use for calculation of signature are defined in self.enabledFeatures.
         see also enableFeaturesByName.
         """
+        image,mask = imageoperations.cropToTumorMask(image, mask)
         featureVector = collections.OrderedDict()
         for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
             # Handle calculation of shape features separately

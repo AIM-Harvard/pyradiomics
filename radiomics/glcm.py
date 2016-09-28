@@ -14,13 +14,15 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   that are separated by a distance of :math:`\delta` pixels in direction :math:`\alpha`, and :math:`N_g`
   is the number of discrete gray level intensities.
 
+  Note that pyradiomics always computes symmetrical GLCM!
+
   As a two dimensional example, let the following matrix :math:`I` represent a 5x5 image, having 5 discrete grey levels:
 
   :math:`I = \begin{bmatrix} 1 & 2 & 5 & 2 & 3\\ 3 & 2 & 1 & 3 & 1\\ 1 & 3 & 5 & 5 & 2\\ 1 & 1 & 1 & 1 & 2\\ 1 & 2 & 4 & 3 & 5 \end{bmatrix}`
 
   For distance :math:`\delta = 1` (considering pixels with a distance of 1 pixel from each other)
   in direction :math:`\alpha = 0`, where 0 degrees is the horizontal direction
-  (i.e., to the left from the pixel with the given value), the following GLCM is obtained:
+  (i.e., to the left and right from the pixel with the given value), the following symmetrical GLCM is obtained:
 
   :math:`P = \begin{bmatrix} 6 & 4 & 3 & 0 & 0\\ 4 & 0 & 2 & 1 & 3\\ 3 & 2 & 0 & 1 & 2\\ 0 & 1 & 1 & 0 & 0\\ 0 & 3 & 2 & 0 & 2 \end{bmatrix}`
 

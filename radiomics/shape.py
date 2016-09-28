@@ -50,23 +50,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     xz = x*z
     yz = y*z
     xy = x*y
-    voxelTotalSA = (2*xy + 2*xz + 2*yz)
-    totalSA = self.targetVoxelArray.size * voxelTotalSA
 
-    # in matrixCoordinates:
-    # i corresponds to height (z)
-    # j corresponds to vertical (y)
-    # k corresponds to horizontal (x)
+    surf_x = numpy.sum(numpy.abs(self.maskArray[:,:,1:] - self.maskArray[:,:,:-1])) # faces in x direction
+    surf_y = numpy.sum(numpy.abs(self.maskArray[:,1:,:] - self.maskArray[:,:-1,:])) # faces in y direction
+    surf_z = numpy.sum(numpy.abs(self.maskArray[1:,:,:] - self.maskArray[:-1,:,:])) # faces in z direction
 
-    i, j, k = 0, 0, 0
-    surfaceArea = 0
-    for voxel in xrange(0, self.targetVoxelArray.size):
-      i, j, k = self.matrixCoordinates[0][voxel], self.matrixCoordinates[1][voxel], self.matrixCoordinates[2][voxel]
-      fxy = (numpy.array([ self.maskArray[i+1,j,k], self.maskArray[i-1,j,k] ]) == 0) # evaluate to 1 if true, 0 if false
-      fyz = (numpy.array([ self.maskArray[i,j+1,k], self.maskArray[i,j-1,k] ]) == 0) # evaluate to 1 if true, 0 if false
-      fxz = (numpy.array([ self.maskArray[i,j,k+1], self.maskArray[i,j,k-1] ]) == 0) # evaluate to 1 if true, 0 if false
-      surface = (numpy.sum(fxz) * xz) + (numpy.sum(fyz) * yz) + (numpy.sum(fxy) * xy)
-      surfaceArea += surface
+    surfaceArea = surf_x * yz
+    surfaceArea += surf_y * xz
+    surfaceArea += surf_z * xy
 
     return (surfaceArea)
 
@@ -116,11 +107,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     a = numpy.array(zip(*self.matrixCoordinates))
     edgeVoxelsMinCoords = numpy.vstack([a[a[:,0]==minBounds[0]], a[a[:,1]==minBounds[1]], a[a[:,2]==minBounds[2]]]) * [z,y,x]
-    edgeVoxelsMaxCoords = numpy.vstack([(a[a[:,0]==maxBounds[0]]+1), (a[a[:,1]==maxBounds[1]]+1), (a[a[:,2]==maxBounds[2]]+1)]) * [z,y,x]
+    edgeVoxelsMaxCoords = numpy.vstack([(a[a[:,0]==maxBounds[0]]), (a[a[:,1]==maxBounds[1]]), (a[a[:,2]==maxBounds[2]])]) * [z,y,x]
 
     maxDiameter = 1
     for voxel1 in edgeVoxelsMaxCoords:
-      voxelDistances = numpy.sqrt(numpy.sum((edgeVoxelsMinCoords-voxel1)**2))
+      voxelDistances = numpy.sqrt(numpy.sum((edgeVoxelsMinCoords-voxel1)**2, 1))
       if voxelDistances.max() > maxDiameter:
         maxDiameter = voxelDistances.max()
 

@@ -7,19 +7,22 @@ from tqdm import  trange
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   r"""
-  A Gray Level Co-occurrence Matrix (GLCM) describes the second-order joint probability function of an image and
-  is defined as :math:`P(i,j|\delta,\alpha)`, a matrix with size :math:`N_g \times N_g`.
-  The :math:`(i,j)\text{th}` element represents the number of times the combination of
+  A Gray Level Co-occurrence Matrix (GLCM) of size :math:`N_g \times N_g` describes the second-order joint probability function of an image region
+  constrained by the mask and is defined as :math:`P(i,j|\delta,\alpha)`.
+  The :math:`(i,j)\text{th}` element of this matrix represents the number of times the combination of
   levels :math:`i` and :math:`j` occur in two pixels in the image,
   that are separated by a distance of :math:`\delta` pixels in direction :math:`\alpha`, and :math:`N_g`
   is the number of discrete gray level intensities.
 
-  As a two dimensional example, let the following matrix :math:`I` represent a 5x5 image, having 5 discreet grey levels:
+  Note that pyradiomics always computes symmetrical GLCM!
+
+  As a two dimensional example, let the following matrix :math:`I` represent a 5x5 image, having 5 discrete grey levels:
 
   :math:`I = \begin{bmatrix} 1 & 2 & 5 & 2 & 3\\ 3 & 2 & 1 & 3 & 1\\ 1 & 3 & 5 & 5 & 2\\ 1 & 1 & 1 & 1 & 2\\ 1 & 2 & 4 & 3 & 5 \end{bmatrix}`
 
   For distance :math:`\delta = 1` (considering pixels with a distance of 1 pixel from each other)
-  in direction :math:`\alpha = 0`, where 0 degrees is the horizontal direction, the following GLCM is obtained:
+  in directions :math:`\alpha=0^\circ` and opposite :math:`\alpha=180^\circ`
+  (i.e., to the left and right from the pixel with the given value), the following symmetrical GLCM is obtained:
 
   :math:`P = \begin{bmatrix} 6 & 4 & 3 & 0 & 0\\ 4 & 0 & 2 & 1 & 3\\ 3 & 2 & 0 & 1 & 2\\ 0 & 1 & 1 & 0 & 0\\ 0 & 3 & 2 & 0 & 2 \end{bmatrix}`
 
@@ -61,6 +64,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   - symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
     which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`.
+
+  References
+  * https://en.wikipedia.org/wiki/Co-occurrence_matrix
+  * http://www.fp.ucalgary.ca/mhallbey/the_glcm.htm
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

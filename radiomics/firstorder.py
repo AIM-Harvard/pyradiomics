@@ -5,9 +5,10 @@ import SimpleITK as sitk
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   r"""
-  First-order statistics describe the distribution of voxel intensities within the image through commonly used and basic metrics.
-  Let X denote the three dimensional image matrix with N voxels and P the first order histogram with Nl discrete intensity levels.
-  The following first order statistics were extracted:
+  First-order statistics describe the distribution of voxel intensities within the image region defined by the mask through commonly used and basic metrics.
+  Let :math:`\textbf{X}` denote the three dimensional image matrix with :math:`N` voxels and :math:`\textbf{P}` the first order histogram with :math:`N_l` discrete intensity levels, where :math:`l` is defined by the number of levels is calculated based on the binWidth parameter of the constructor.
+
+  Based on the definitions above, the following first order statistics can be extracted.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -47,9 +48,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`total\ energy = V_{voxel}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)^2}`
 
-    Total Energy is a measure of the magnitude of voxel values
-    and voxel volumes in an image. A larger values implies
-    a greater sum of the squares of these values.
+    Total Energy is the value of Energy feature scaled by the volume of the voxel in cubic mm.
     """
 
     shiftedParameterArray = self.targetVoxelArray + 2000
@@ -62,9 +61,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`entropy = -\displaystyle\sum^{N_l}_{i=1}{\textbf{P}(i)\log_2\textbf{P}(i)}`
 
-    Entropy Specifies the uncertainty/randomness in the
+    Entropy specifies the uncertainty/randomness in the
     image values. It measures the average amount of
-    information required to encode the image values
+    information required to encode the image values.
     """
 
     eps = numpy.spacing(1)
@@ -129,7 +128,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Root Mean Squared of the image array.
 
-    :math:`RMS = \sqrt{\frac{\sum^{N}_{i=1}{\textbf{X}(i)^2}}{N}}`
+    :math:`RMS = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{\textbf{X}(i)^2}}`
 
     RMS is the square-root of the mean of all the squared
     intensity values. It is another measure of the magnitude
@@ -178,7 +177,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Kurtosis of the image array.
 
-    :math:`Kurt[X] = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^4}{(\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2)^2}`
+    :math:`kurtosis = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^4}{(\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2)^2}`
 
     Kurtosis is a measure of the 'peakedness' of the distribution
     of values in the image ROI. A higher kurtosis implies that the
@@ -225,8 +224,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
 
     bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
-    bins = bins/(float(bins.sum()))
     try:
+      bins = bins/(float(bins.sum()))
       return (numpy.sum(bins**2))
     except ZeroDivisionError:
       return numpy.core.nan

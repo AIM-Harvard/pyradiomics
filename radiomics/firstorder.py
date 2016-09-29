@@ -55,10 +55,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     Total Energy is the value of Energy feature scaled by the volume of the voxel in cubic mm.
     """
-
-    shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
-    cubicMMPerVoxel = reduce(lambda x,y: x*y , self.pixelSpacing)
-    return(cubicMMPerVoxel*numpy.sum(shiftedParameterArray**2))
+    x, y, z = self.pixelSpacing
+    cubicMMPerVoxel = x * y * z
+    return(cubicMMPerVoxel*self.getEnergyFeatureValue())
 
   def getEntropyFeatureValue(self):
     r"""
@@ -117,11 +116,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     return (numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))
 
-  def getMeanDeviationFeatureValue(self):
+  def getMeanAbsoluteDeviationFeatureValue(self):
     r"""
-    Calculate the Mean Deviation for the image array.
+    Calculate the Mean Absolute Deviation for the image array.
 
-    :math:`mean\ deviation = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}`
+    :math:`mean\ absolute\ deviation = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}`
 
     Mean Deviation is the mean distance of all intensity values
     from the Mean Value of the image array.

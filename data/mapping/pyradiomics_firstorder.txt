@@ -2,7 +2,7 @@
 1:Entropy
 2:Kurtosis
 3:Maximum
-4:MeanDeviation
+4:MeanAbsoluteDeviation
 5:Mean
 6:Median
 7:Minimum

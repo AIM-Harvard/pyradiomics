@@ -13,8 +13,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   levels :math:`i` and :math:`j` occur in two pixels in the image,
   that are separated by a distance of :math:`\delta` pixels in direction :math:`\alpha`, and :math:`N_g`
   is the number of discrete gray level intensities.
+  The distance :math:`\delta` from the center voxel is defined as the distance according to the infinity norm.
+  For :math:`\delta=1`, this assumes 26-connectivity in 3D and for :math:`\delta=2` a 98-connectivity.
 
-  Note that pyradiomics always computes symmetrical GLCM!
+  Note that pyradiomics by default computes symmetrical GLCM!
 
   As a two dimensional example, let the following matrix :math:`I` represent a 5x5 image, having 5 discrete grey levels:
 
@@ -34,9 +36,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   :math:`\mu` be the mean of :math:`P(i,j)`
 
-  :math:`P_x(i) = \sum^{N_g}_{j=1}{P(i,j)}` be the marginal row probabilities
+  :math:`p_x(i) = \sum^{N_g}_{j=1}{P(i,j)}` be the marginal row probabilities
 
-  :math:`P_y(j) = \sum^{N_g}_{i=1}{P(i,j)}` be the marginal column probabilities
+  :math:`p_y(j) = \sum^{N_g}_{i=1}{P(i,j)}` be the marginal column probabilities
 
   :math:`\mu_x` be the mean of :math:`p_x`
 
@@ -46,9 +48,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   :math:`\sigma_y` be the standard deviation of :math:`p_y`
 
-  :math:`p_{x+y} = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{\textbf{P}(i,j)},i+j=k,k=2,3,\dots,2N_g`
+  :math:`p_{x+y}(k) = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{\textbf{P}(i,j)},\text{ where }i+j=k,\text{ and }k=2,3,\dots,2N_g`
 
-  :math:`p_{x-y} = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{\textbf{P}(i,j)},|i-j|=k,k=0,1,\dots,N_g-1`
+  :math:`p_{x-y}(k) = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{\textbf{P}(i,j)},\text{ where }|i-j|=k,\text{ and }k=0,1,\dots,N_g-1`
 
   :math:`HX =  -\sum^{N_g}_{i=1}{p_x(i)\log_2\big(p_x(i)\big)}` be the entropy of :math:`p_x`
 

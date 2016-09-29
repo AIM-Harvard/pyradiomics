@@ -9,12 +9,17 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   Let :math:`\textbf{X}` denote the three dimensional image matrix with :math:`N` voxels and :math:`\textbf{P}` the first order histogram with :math:`N_l` discrete intensity levels, where :math:`l` is defined by the number of levels is calculated based on the binWidth parameter of the constructor.
 
   Based on the definitions above, the following first order statistics can be extracted.
+
+  Following addiotional settings are possible:
+  - voxelArrayShift [2000]: This amount is added to the gray level intensity in Energy, Total Energy and RMS, this is
+    to prevent negative values from occuring when using CT data.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsFirstOrder,self).__init__(inputImage,inputMask,**kwargs)
 
     self.pixelSpacing = inputImage.GetSpacing()
+    self.voxelArrayShift = kwargs.get('voxelArrayShift', 2000)
 
   def _moment(self, a, moment=1, axis=0):
     r"""
@@ -39,7 +44,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     squares of these values.
     """
 
-    shiftedParameterArray = self.targetVoxelArray + 2000
+    shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
     return (numpy.sum(shiftedParameterArray**2))
 
   def getTotalEnergyFeatureValue(self):
@@ -51,7 +56,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Total Energy is the value of Energy feature scaled by the volume of the voxel in cubic mm.
     """
 
-    shiftedParameterArray = self.targetVoxelArray + 2000
+    shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
     cubicMMPerVoxel = reduce(lambda x,y: x*y , self.pixelSpacing)
     return(cubicMMPerVoxel*numpy.sum(shiftedParameterArray**2))
 
@@ -135,7 +140,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     of the image values.
     """
 
-    shiftedParameterArray = self.targetVoxelArray + 2000
+    shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
     return ( numpy.sqrt((numpy.sum(shiftedParameterArray**2))/float(shiftedParameterArray.size)) )
 
   def getStandardDeviationFeatureValue(self):

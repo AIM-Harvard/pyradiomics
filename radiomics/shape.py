@@ -86,7 +86,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Compactness 1 is a measure of how compact the shape of the tumor is
     relative to a sphere (most compact). It is a dimensionless measure,
     independent of scale and orientation. Compactness 1 is defined as the
-    ratio of volume to the :math:`\sqrt{\text{surface area}^3}. This is a measure of the
+    ratio of volume to the :math:`\sqrt{\text{surface area}^3}`. This is a measure of the
     compactness of the shape of the image ROI
     """
     return ( (self.Volume) / ((self.SurfaceArea)**(2.0/3.0) * numpy.sqrt(numpy.pi)) )

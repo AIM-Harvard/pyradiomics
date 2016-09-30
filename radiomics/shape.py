@@ -161,19 +161,83 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     r"""
     Calculate the largest pairwise euclidean distance between tumor surface voxels.
     """
+    a = numpy.array(zip(*self.matrixCoordinates))
+    minBounds = numpy.min(a, 0)
+    maxBounds = numpy.max(a, 0)
+    edgeVoxelsMinCoords = numpy.vstack([a[a[:,0]==minBounds[0]], a[a[:,1]==minBounds[1]], a[a[:,2]==minBounds[2]]]) * self.pixelSpacing
+    edgeVoxelsMaxCoords = numpy.vstack([a[a[:,0]==maxBounds[0]], a[a[:,1]==maxBounds[1]], a[a[:,2]==maxBounds[2]]]) * self.pixelSpacing
 
-    minBounds = numpy.array([numpy.min(self.matrixCoordinates[0]), numpy.min(self.matrixCoordinates[1]), numpy.min(self.matrixCoordinates[2])])
-    maxBounds = numpy.array([numpy.max(self.matrixCoordinates[0]), numpy.max(self.matrixCoordinates[1]), numpy.max(self.matrixCoordinates[2])])
+    distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
+    maxDiameter = numpy.max(distances)
+
+    return(maxDiameter)
+
+  def getMaximum2DDiameterSliceFeatureValue(self):
+    r"""
+    Calculate the largest pairwise euclidean distance between tumor surface voxels in the row-column plane.
+    """
 
     a = numpy.array(zip(*self.matrixCoordinates))
-    edgeVoxelsMinCoords = numpy.vstack([a[a[:,0]==minBounds[0]], a[a[:,1]==minBounds[1]], a[a[:,2]==minBounds[2]]]) * self.pixelSpacing
-    edgeVoxelsMaxCoords = numpy.vstack([(a[a[:,0]==maxBounds[0]]), (a[a[:,1]==maxBounds[1]]), (a[a[:,2]==maxBounds[2]])]) * self.pixelSpacing
 
-    maxDiameter = 1
-    for voxel1 in edgeVoxelsMaxCoords:
-      voxelDistances = numpy.sqrt(numpy.sum((edgeVoxelsMinCoords-voxel1)**2, 1))
-      if voxelDistances.max() > maxDiameter:
-        maxDiameter = voxelDistances.max()
+    maxDiameter = 0
+    for z in numpy.unique(a[:, 0]):
+      zSlice = a[numpy.where(a[:, 0] == z)]
+      minBounds = numpy.min(zSlice, 0)
+      maxBounds = numpy.max(zSlice, 0)
+
+      edgeVoxelsMinCoords = numpy.vstack([zSlice[zSlice[:,1]==minBounds[1]], zSlice[zSlice[:,2]==minBounds[2]]]) * self.pixelSpacing
+      edgeVoxelsMaxCoords = numpy.vstack([zSlice[zSlice[:,1]==maxBounds[1]], zSlice[zSlice[:,2]==maxBounds[2]]]) * self.pixelSpacing
+
+      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
+      tempMax = numpy.max(distances)
+      if tempMax > maxDiameter:
+          maxDiameter = tempMax
+
+    return(maxDiameter)
+
+  def getMaximum2DDiameterColumnFeatureValue(self):
+    r"""
+    Calculate the largest pairwise euclidean distance between tumor surface voxels in the row-slice plane.
+    """
+
+    a = numpy.array(zip(*self.matrixCoordinates))
+
+    maxDiameter = 0
+    for y in numpy.unique(a[:, 1]):
+      ySlice = a[numpy.where(a[:, 1] == y)]
+      minBounds = numpy.min(ySlice, 0)
+      maxBounds = numpy.max(ySlice, 0)
+
+      edgeVoxelsMinCoords = numpy.vstack([ySlice[ySlice[:,0]==minBounds[0]], ySlice[ySlice[:,2]==minBounds[2]]]) * self.pixelSpacing
+      edgeVoxelsMaxCoords = numpy.vstack([ySlice[ySlice[:,0]==maxBounds[0]], ySlice[ySlice[:,2]==maxBounds[2]]]) * self.pixelSpacing
+
+      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
+      tempMax = numpy.max(distances)
+      if tempMax > maxDiameter:
+          maxDiameter = tempMax
+
+    return(maxDiameter)
+
+  def getMaximum2DDiameterRowFeatureValue(self):
+    r"""
+    Calculate the largest pairwise euclidean distance between tumor surface voxels in the column-slice plane.
+    """
+
+    a = numpy.array(zip(*self.matrixCoordinates))
+
+    maxDiameter = 0
+    for x in numpy.unique(a[:, 2]):
+      xSlice = a[numpy.where(a[:, 2] == x)]
+      minBounds = numpy.min(xSlice, 0)
+      maxBounds = numpy.max(xSlice, 0)
+
+      edgeVoxelsMinCoords = numpy.vstack([xSlice[xSlice[:,0]==minBounds[0]], xSlice[xSlice[:,1]==minBounds[1]]]) * self.pixelSpacing
+      edgeVoxelsMaxCoords = numpy.vstack([xSlice[xSlice[:,0]==maxBounds[0]], xSlice[xSlice[:,1]==maxBounds[1]]]) * self.pixelSpacing
+
+      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
+      tempMax = numpy.max(distances)
+      if tempMax > maxDiameter:
+          maxDiameter = tempMax
 
     return(maxDiameter)
 

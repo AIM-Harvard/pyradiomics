@@ -44,6 +44,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Calculate the surface area of the tumor region in square millimeters.
 
     :math:`A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\textbf{a}_i\textbf{b}_i \times \textbf{a}_i\textbf{c}_i|}`
+
+    Where:
+
+    :math:`N` is the number of triangles forming the surface of the volume
+
+    :math:`a_ib_i` and :math:`a_ic_i` are the edges of the :math:`i\text{th}` triangle formed by points :math:`a_i`,
+    :math:`b_i` and :math:`c_i`
+
     """
     x, y, z = self.pixelSpacing
     xz = x*z

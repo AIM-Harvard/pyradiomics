@@ -104,24 +104,24 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
     return cropToTumorMask(imageNode, maskNode)
 
   # Determine bounds of cropped volume in terms of original Index coordinate space
-  lsif = sitk.LabelStatisticsImageFilter()
-  lsif.Execute(imageNode, maskNode)
-  bb = numpy.array(lsif.GetBoundingBox(1))  # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
+  lssif = sitk.LabelShapeStatisticsImageFilter()
+  lssif.Execute(maskNode)
+  bb = numpy.array(lssif.GetBoundingBox(1))  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
 
   # Do not resample in those directions where labelmap spans only one slice.
-  oldSize = bb[1::2] - bb[0::2] + 1
+  oldSize = bb[3:]
   resampledPixelSpacing = numpy.where(oldSize != 1, resampledPixelSpacing, oldSpacing)
 
   spacingRatio = oldSpacing / resampledPixelSpacing
 
   # Determine bounds of cropped volume in terms of new Index coordinate space,
   # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
-  # Pad with an extra .5 to prevent data loss in case of upsampling
-  bbNewLBound = numpy.floor( (bb[0::2] - 0.5) * spacingRatio)
-  bbNewUBound = numpy.ceil( (bb[1::2] + 0.5) * spacingRatio)
+  # Pad with an extra .5 to prevent data loss in case of upsampling. For Ubound this is (-1 + 0.5 = -0.5)
+  bbNewLBound = numpy.floor( (bb[:3] - 0.5) * spacingRatio)
+  bbNewUBound = numpy.ceil( (bb[:3] + bb[3:] - 0.5) * spacingRatio)
 
-  # Calculate the new size. Cast to int32 to prevent error in sitk.
-  newSize = numpy.array(bbNewUBound - bbNewLBound+1, dtype= 'int')
+  # Calculate the new size. Cast to int to prevent error in sitk.
+  newSize = numpy.array(bbNewUBound - bbNewLBound + 1, dtype='int')
 
   # Determine continuous index of bbNewLBound in terms of the original Index coordinate space
   bbOriginalLBound = bbNewLBound / spacingRatio

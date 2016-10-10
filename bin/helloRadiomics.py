@@ -38,7 +38,7 @@ Sig.disableAllFeatures()
 # Only enable mean and skewness in firstorder
 Sig.enableFeaturesByName(firstorder= ['Mean', 'Skewness'])
 
-for f in Sig.GetFeaturesFromClass('firstorder'):
+for f in Sig.getFeaturesFromClass('firstorder'):
   print "Feature: %s" %(f)
   print eval('Sig.featureClasses["firstorder"].get'+f+'FeatureValue.__doc__')
 

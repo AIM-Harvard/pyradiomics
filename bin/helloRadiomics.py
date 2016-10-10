@@ -1,6 +1,6 @@
-from radiomics import signatures
+import os
 import SimpleITK as sitk
-import sys, os
+from radiomics import signatures
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
 #imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')

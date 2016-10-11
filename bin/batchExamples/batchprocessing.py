@@ -31,8 +31,6 @@ def main():
     kwargs['binWidth'] = 25
     kwargs['resampledPixelSpacing'] = None #[3,3,3]
     kwargs['interpolator'] = sitk.sitkBSpline
-    kwargs['padDistance'] = 5
-    kwargs['padFillValue'] = 0
     kwargs['verbose'] = True
 
     Sig = signatures.RadiomicsSignature(**kwargs)

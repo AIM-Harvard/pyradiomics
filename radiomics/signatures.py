@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import collections
+from itertools import chain
 import numpy as np
 import SimpleITK as sitk
 
@@ -48,11 +49,12 @@ class RadiomicsSignature:
         self.verbose = self.kwargs.get('verbose', True)
 
         self.inputImages = {}
-        self.inputImages['original'] = {}
-        self.inputImages['log'] = {'sigma': np.arange(5.,0.,-.5)}
-        self.inputImages['wavelet'] = {}
+        for imageType in self.getInputImageTypes():
+            self.inputImages[imageType] = {}
 
         self.enabledFeatures = {}
+        for featureClassName in self.getFeatureClassNames():
+            self.enabledFeatures[featureClassName] = []
 
     def enableInputImages(self, **inputImages):
         """
@@ -71,6 +73,13 @@ class RadiomicsSignature:
         """
         Enable all classes and all features.
         """
+        for featureClassName in self.getFeatureClassNames():
+            self.enabledFeatures[featureClassName] = []
+
+    def disableAllFeatures(self):
+        """
+        Disable all classes.
+        """
         self.enabledFeatures = {}
 
     def enableFeatureClassByName(self, featureClass, enabled= True):
@@ -78,17 +87,18 @@ class RadiomicsSignature:
         Enable or disable all features in given class.
         """
         if enabled:
-            if featureClass in self.enabledFeatures: del self.enabledFeatures[featureClass]
-        else:
             self.enabledFeatures[featureClass] = []
+        else:
+            if featureClass in self.enabledFeatures: del self.enabledFeatures[featureClass]
 
     def enableFeaturesByName(self, **enabledFeatures):
         """
         Specify which features to enable. Key is feature class name, value is a list of enabled feature names.
 
-        To disable all features for a class, provide the class name with an empty list as value.
-        Only settings for feature classes specified in enabledFeatures.keys are updated.
-        To enable the entire class, use enableFeatureClassByName instead.
+        To enable all features for a class, provide the class name with an empty list as value.
+        Settings for feature classes specified in enabledFeatures.keys are updated, settings for feature classes
+        not yet present in enabledFeatures.keys are added.
+        To disable the entire class, use disableAllFeatures or enableFeatureClassByName instead.
         """
         self.enabledFeatures.update(enabledFeatures)
 
@@ -103,20 +113,16 @@ class RadiomicsSignature:
         featureVector = collections.OrderedDict()
         image, mask = self.loadImage(imageFilepath, maskFilepath)
 
-        if 'original' in self.inputImages:
+        # Make generators for all enabled input image types
+        imageGenerators = []
+        for imageType, customKwargs in self.inputImages.iteritems():
             args = self.kwargs.copy()
-            args.update(self.inputImages['original'])
-            featureVector.update(self.computeFeatures(image, mask, **args))
-        if 'log' in self.inputImages:
-            if self.verbose: print "\tComputing LoG"
-            args = self.kwargs.copy()
-            args.update(self.inputImages['log'])
-            featureVector.update(self.computeLoG(image, mask, **args))
-        if 'wavelet' in self.inputImages:
-            if self.verbose: print "\tComputing Wavelet"
-            args = self.kwargs.copy()
-            args.update(self.inputImages['wavelet'])
-            featureVector.update(self.computeWavelet(image, mask, **args))
+            args.update(customKwargs)
+            imageGenerators = chain(imageGenerators, eval('self.generate_%s(image, mask, **args)' %(imageType)))
+
+        # Calculate features for all (filtered) images in the generator
+        for inputImage, inputMask, inputImageName, inputKwargs in imageGenerators:
+            featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
 
         return featureVector
 
@@ -147,29 +153,14 @@ class RadiomicsSignature:
             if self.verbose: print "Error reading mask Filepath or SimpleITK object"
             mask = None
 
-        """
-        imageArray = sitk.GetArrayFromImage(image)
-        maskArray = sitk.GetArrayFromImage(mask)
-        tumorVoxels = imageArray[np.where(maskArray==1)]
-        mean = np.mean(tumorVoxels)
-        std = np.std(tumorVoxels)
-        minBound = mean - 3*std
-        maxBound = mean + 3*std
-        maskArray[np.where(imageArray < minBound)] = 0
-        maskArray[np.where(imageArray > maxBound)] = 0
-        mask_normalized = sitk.GetImageFromArray(maskArray)
-        mask_normalized.CopyInformation(mask)
-        mask = mask_normalized
-        """
-
         if self.interpolator != None and self.resampledPixelSpacing != None:
             image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator)
         else:
-            image,mask = imageoperations.cropToTumorMask(image, mask)
+            image, mask = imageoperations.cropToTumorMask(image, mask)
 
         return image, mask
 
-    def computeFeatures(self, image, mask, **kwargs):
+    def computeFeatures(self, image, mask, inputImageName, **kwargs):
         """
         Compute signature using image, mask, **kwargs settings
         This function computes the signature for just the passed image (original or filtered),
@@ -178,28 +169,28 @@ class RadiomicsSignature:
         see also enableFeaturesByName.
         """
         featureVector = collections.OrderedDict()
-
-        for featureClassName in self.getFeatureClassNames():
-            if featureClassName not in self.enabledFeatures.keys():
+        for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
+            if featureClassName in self.getFeatureClassNames():
                 featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
-                featureClass.enableAllFeatures()
-            elif len(self.enabledFeatures[featureClassName]) > 0:
-                featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
-                for enabledFeature in self.enabledFeatures[featureClassName]:
-                    featureClass.enableFeatureByName(enabledFeature)
-            else:
-                featureClass = None
 
-            if featureClass != None:
-                if self.verbose: print "\tComputing %s" %(featureClassName)
+                if len(enabledFeatures) == 0:
+                    featureClass.enableAllFeatures()
+                else:
+                    for feature in enabledFeatures:
+                        featureClass.enableFeatureByName(feature)
+
+                if self.verbose: print "\t\tComputing %s" %(featureClassName)
                 featureClass.calculateFeatures()
                 for (featureName, featureValue) in featureClass.featureValues.iteritems():
-                    shapeFeatureName = "%s_%s" %(featureClassName, featureName)
-                    featureVector[shapeFeatureName] = featureValue
+                    newFeatureName = "%s_%s_%s" %(inputImageName, featureClassName, featureName)
+                    featureVector[newFeatureName] = featureValue
 
         return featureVector
 
-    def computeLoG(self, image, mask, **kwargs):
+    def generate_original(self, image, mask, **kwargs):
+        yield image, mask, 'original', kwargs
+
+    def generate_log(self, image, mask, **kwargs):
         """
         Apply Laplacian of Gaussian filter to input image and compute signature for each filtered image.
 
@@ -216,21 +207,16 @@ class RadiomicsSignature:
 
         :return: dictionary containing calculated features ("featureName":value).
         """
-        logFeatureVector = collections.OrderedDict()
-        sigmaValues = kwargs.get('sigma', [])
+        sigmaValues = kwargs.get('sigma', np.arange(5.,0.,-.5))
 
         for sigma in sigmaValues:
-            logSigmaFeatureVector = collections.OrderedDict()
+            if self.verbose: print "\tComputing LoG with sigma %s" %(str(sigma))
             logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
-            logSigmaFeatureVector.update( self.computeFeatures(logImage, mask, **kwargs))
 
-            for (featureName, featureValue) in logSigmaFeatureVector.iteritems():
-                laplacianFeatureName = "log_sigma_%s_mm_3D_%s" %(str(sigma).replace('.','_'), featureName)
-                logFeatureVector[laplacianFeatureName] = featureValue
+            inputImageName = "log-sigma-%s-mm-3D" %(str(sigma).replace('.','-'))
+            yield logImage, mask, inputImageName, kwargs
 
-        return logFeatureVector
-
-    def computeWavelet(self, image, mask, **kwargs):
+    def generate_wavelet(self, image, mask, **kwargs):
         """
         Apply wavelet filter to image and compute signature for each filtered image.
 
@@ -253,29 +239,29 @@ class RadiomicsSignature:
         waveletArgs['level'] = kwargs.get('level', 1)
         waveletArgs['start_level'] = kwargs.get('start_level', 0)
 
-        waveletFeatureVector = collections.OrderedDict()
-
         approx, ret = imageoperations.swt3(image, **waveletArgs)
 
         for idx, wl in enumerate(ret, start= 1):
             for decompositionName, decompositionImage in wl.items():
-                waveletDecompositionFeatureVector = collections.OrderedDict()
-                waveletDecompositionFeatureVector.update( self.computeFeatures(decompositionImage, mask, **kwargs) )
+                if self.verbose: print "\tComputing Wavelet %s" %(decompositionName)
 
-                for (featureName, featureValue) in waveletDecompositionFeatureVector.iteritems():
-                    if idx == 1: waveletFeatureName = "wavelet_%s_%s" %(decompositionName, featureName)
-                    else: waveletFeatureName = "wavelet%s_%s_%s" %(idx, decompositionName, featureName)
-                    waveletFeatureVector[waveletFeatureName] = featureValue
+                if idx == 1:
+                    inputImageName = 'wavelet-%s' %(decompositionName)
+                else:
+                    inputImageName = 'wavelet%s-%s' %(idx, decompositionName)
+                yield decompositionImage, mask, inputImageName, kwargs
 
-        waveletDecompositionFeatureVector = collections.OrderedDict()
-        waveletDecompositionFeatureVector.update( self.computeFeatures(approx, mask, **kwargs) )
+        if len(ret) == 1:
+            inputImageName = 'wavelet-LLL'
+        else:
+            inputImageName = 'wavelet%s-LLL' % (len(ret))
+        yield approx, mask, inputImageName, kwargs
 
-        for (featureName, featureValue) in waveletDecompositionFeatureVector.iteritems():
-            if len(ret) == 1: waveletFeatureName = "wavelet_LLL_%s" %(featureName)
-            else: waveletFeatureName = "wavelet%s_LLL_%s" %(len(ret), featureName)
-            waveletFeatureVector[waveletFeatureName] = featureValue
-
-        return waveletFeatureVector
+    def getInputImageTypes(self):
+        """
+        Returns a list of possible input image types.
+        """
+        return [member[9:] for member in dir(self) if member.startswith('generate_')]
 
     def getFeatureClasses(self):
         """
@@ -299,7 +285,10 @@ class RadiomicsSignature:
         return featureClasses
 
     def getFeatureClassNames(self):
-        """
-        Returns a list of all possible feature class names.
-        """
         return self.featureClasses.keys()
+
+    def getFeaturesNames(self, featureClassName):
+        """
+        Returns a list of all possible features in provided featureClass
+        """
+        return self.featureClasses[featureClassName].getFeatureNames()

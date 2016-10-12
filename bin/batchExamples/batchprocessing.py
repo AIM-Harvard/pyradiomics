@@ -3,7 +3,7 @@ import csv
 import collections
 import traceback
 import SimpleITK as sitk
-from radiomics import featuresextractor
+from radiomics import featureextractor
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
     kwargs['interpolator'] = sitk.sitkBSpline
     kwargs['verbose'] = True
 
-    extractor = featuresextractor.RadiomicsFeaturesExtractor(**kwargs)
+    extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
     extractor.enableInputImages(original= {})
     #extractor.enableInputImages(wavelet= {'level': 2})
     for idx, entry in enumerate(flists, start= 1):

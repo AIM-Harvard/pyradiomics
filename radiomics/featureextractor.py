@@ -11,7 +11,7 @@ import radiomics
 from radiomics import base, imageoperations
 
 
-class RadiomicsSignature():
+class RadiomicsFeaturesExtractor():
 
     def __init__(self, **kwargs):
         self.featureClasses = self.getFeatureClasses()
@@ -67,7 +67,7 @@ class RadiomicsSignature():
         """
         self.enabledFeatures.update(enabledFeatures)
 
-    def computeSignature(self, imageFilepath, maskFilepath):
+    def execute(self, imageFilepath, maskFilepath):
         featureVector = collections.OrderedDict()
 
         image, mask = self.loadImage(imageFilepath, maskFilepath)

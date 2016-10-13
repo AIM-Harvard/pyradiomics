@@ -2,7 +2,7 @@
 import os
 import collections
 from itertools import chain
-import numpy as np
+import numpy
 import SimpleITK as sitk
 
 import pkgutil
@@ -227,7 +227,14 @@ class RadiomicsFeaturesExtractor:
 
         :return: dictionary containing calculated features ("featureName":value).
         """
-        sigmaValues = kwargs.get('sigma', np.arange(5.,0.,-.5))
+        # Check if size of image is > 4 in all 3D directions (otherwise, LoG filter will fail)
+        size = numpy.array(image.GetSize())
+        if numpy.min(size) < 4:
+            # TODO: write this to a log file
+            print 'Image too small to apply LoG filter'
+            return
+
+        sigmaValues = kwargs.get('sigma', numpy.arange(5.,0.,-.5))
 
         for sigma in sigmaValues:
             if self.verbose: print "\tComputing LoG with sigma %s" %(str(sigma))

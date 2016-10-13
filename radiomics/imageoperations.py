@@ -120,6 +120,11 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   bbNewLBound = numpy.floor( (bb[:3] - 0.5) * spacingRatio - padDistance)
   bbNewUBound = numpy.ceil( (bb[:3] + bb[3:] - 0.5) * spacingRatio + padDistance)
 
+  # Ensure resampling is not performed outside bounds of original image
+  maxUbound = numpy.ceil(numpy.array(imageNode.GetSize()) * spacingRatio) - 1
+  bbNewLBound = numpy.where(bbNewLBound < 0, 0, bbNewLBound)
+  bbNewUBound = numpy.where(bbNewUBound > maxUbound, maxUbound, bbNewUBound)
+
   # Calculate the new size. Cast to int to prevent error in sitk.
   newSize = numpy.array(bbNewUBound - bbNewLBound + 1, dtype='int')
 

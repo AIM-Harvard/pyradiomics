@@ -172,13 +172,19 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 #
 def applyLoG(inputImage, sigmaValue=0.5):
   if sigmaValue > 0.0:
-    lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
-    lrgif.SetNormalizeAcrossScale(True)
-    lrgif.SetSigma(sigmaValue)
-    return lrgif.Execute(inputImage)
+    size = numpy.array(inputImage.GetSize())
+    spacing = numpy.array(inputImage.GetSpacing())
+    if numpy.all(size >= numpy.ceil(sigmaValue / spacing) + 1):
+      lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
+      lrgif.SetNormalizeAcrossScale(True)
+      lrgif.SetSigma(sigmaValue)
+      return lrgif.Execute(inputImage)
+    else:
+      logging.info('applyLoG: sigma/spacing + 1 must be greater than the size of the inputImage: %g', sigmaValue)
+      return None
   else:
     logging.info('applyLoG: sigma must be greater than 0.0: %g', sigmaValue)
-    return inputImage
+    return None
 
 def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
   # this mode is useful to generate the mask of thresholded voxels

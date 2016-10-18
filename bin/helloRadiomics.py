@@ -40,7 +40,7 @@ extractor.enableFeaturesByName(firstorder= ['Mean', 'Skewness'])
 
 for f in extractor.getFeaturesNames('firstorder'):
   print "Feature: %s" %(f)
-  print eval('Sig.featureClasses["firstorder"].get'+f+'FeatureValue.__doc__')
+  print eval('extractor.featureClasses["firstorder"].get'+f+'FeatureValue.__doc__')
 
 print "Calculating features"
 featureVector = extractor.execute(imageName, maskName)

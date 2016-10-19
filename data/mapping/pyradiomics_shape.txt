@@ -1,8 +1,11 @@
 0:Compactness1
 1:Compactness2
-2:Maximum3DDiameter
-3:SphericalDisproportion
-4:Sphericity
-5:SurfaceArea
-6:SurfaceVolumeRatio
-7:Volume
+2:Maximum2DDiameterSlice
+3:Maximum2DDiameterColumn
+4:Maximum2DDiameterRow
+5:Maximum3DDiameter
+6:SphericalDisproportion
+7:Sphericity
+8:SurfaceArea
+9:SurfaceVolumeRatio
+10:Volume

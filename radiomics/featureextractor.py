@@ -11,7 +11,7 @@ import radiomics
 from radiomics import base, imageoperations
 
 
-class RadiomicsSignature:
+class RadiomicsFeaturesExtractor:
     """
     Wrapper class for calculation of a radiomics signature.
     At and after initialisation various settings can be used to customize the resultant signature.
@@ -102,7 +102,7 @@ class RadiomicsSignature:
         """
         self.enabledFeatures.update(enabledFeatures)
 
-    def computeSignature(self, imageFilepath, maskFilepath):
+    def execute(self, imageFilepath, maskFilepath):
         """
         Compute radiomics signature for provide image and mask combination.
 
@@ -112,6 +112,22 @@ class RadiomicsSignature:
         """
         featureVector = collections.OrderedDict()
         image, mask = self.loadImage(imageFilepath, maskFilepath)
+
+        # If shape should be calculation, handle it separately here
+        if 'shape' in self.enabledFeatures.keys():
+            enabledFeatures = self.enabledFeatures['shape']
+            shapeClass = self.featureClasses['shape'](image, mask, **self.kwargs)
+            if len(enabledFeatures) == 0:
+                shapeClass.enableAllFeatures()
+            else:
+                for feature in enabledFeatures:
+                    shapeClass.enableFeatureByName(feature)
+
+            if self.verbose: print "\t\tComputing shape"
+            shapeClass.calculateFeatures()
+            for (featureName, featureValue) in shapeClass.featureValues.iteritems():
+                newFeatureName = "original_shape_%s" %(featureName)
+                featureVector[newFeatureName] = featureValue
 
         # Make generators for all enabled input image types
         imageGenerators = []
@@ -170,6 +186,10 @@ class RadiomicsSignature:
         """
         featureVector = collections.OrderedDict()
         for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
+            # Handle calculation of shape features separately
+            if featureClassName == 'shape':
+                continue
+
             if featureClassName in self.getFeatureClassNames():
                 featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
 

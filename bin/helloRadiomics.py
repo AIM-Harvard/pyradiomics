@@ -1,6 +1,6 @@
 import os
 import SimpleITK as sitk
-from radiomics import signatures
+from radiomics import featureextractor
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
 #imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
@@ -24,26 +24,26 @@ kwargs['interpolator'] = sitk.sitkBSpline
 kwargs['verbose'] = True
 
 # Initialize wrapperClass to generate signature
-Sig = signatures.RadiomicsSignature(**kwargs)
+extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
 
 # Only enable the original image as input (disables LoG, Wavelet)
-Sig.enableInputImages(original= {})
+extractor.enableInputImages(original= {})
 
 # Disable all classes except firstorder
-Sig.disableAllFeatures()
+extractor.disableAllFeatures()
 
 # Enable all features in firstorder
 # Sig.enableFeatureClassByName('firstorder')
 
 # Only enable mean and skewness in firstorder
-Sig.enableFeaturesByName(firstorder= ['Mean', 'Skewness'])
+extractor.enableFeaturesByName(firstorder= ['Mean', 'Skewness'])
 
-for f in Sig.getFeaturesNames('firstorder'):
+for f in extractor.getFeaturesNames('firstorder'):
   print "Feature: %s" %(f)
-  print eval('Sig.featureClasses["firstorder"].get'+f+'FeatureValue.__doc__')
+  print eval('extractor.featureClasses["firstorder"].get'+f+'FeatureValue.__doc__')
 
 print "Calculating features"
-featureVector = Sig.computeSignature(imageName, maskName)
+featureVector = extractor.execute(imageName, maskName)
 
 for featureName in featureVector.keys():
   print "Computed %s: %s" %(featureName, featureVector[featureName])

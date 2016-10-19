@@ -4,7 +4,12 @@ import collections
 from radiomics import base, imageoperations
 import SimpleITK as sitk
 
+
 class RadiomicsShape(base.RadiomicsFeaturesBase):
+  r"""
+  In this group of features we included descriptors of the three-dimensional size and shape of the tumor region.
+  Let in the following definitions denote :math:`V` the volume and :math:`A` the surface area of the volume of interest.
+  """
 
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsShape,self).__init__(inputImage,inputMask, **kwargs)
@@ -12,8 +17,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.pixelSpacing = inputImage.GetSpacing()[::-1]
     z, x, y = self.pixelSpacing
     self.cubicMMPerVoxel = z * x * y
-
-    #self.featureNames = self.getFeatureNames()
 
     # Pad inputMask to prevent index-out-of-range errors
     cpif = sitk.ConstantPadImageFilter()
@@ -31,12 +34,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     # Volume and Surface Area are pre-calculated
     self.Volume = self._calculateVolume()
     self.SurfaceArea = self._calculateSurfaceArea()
-
-    #self.InitializeFeatureVector()
-    #for f in self.getFeatureNames():
-    #  self.enabledFeatures[f] = True
-
-    # TODO: add an option to instantiate the class that reuses initialization
 
   def _calculateVolume(self):
     return (self.targetVoxelArray.size * self.cubicMMPerVoxel)
@@ -111,14 +108,24 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return S_A
 
   def getVolumeFeatureValue(self):
-    """Calculate the volume of the tumor region in cubic millimeters."""
+    r"""
+    Calculate the volume of the tumor region in cubic millimeters.
+    """
     return self.Volume
 
   def getSurfaceAreaFeatureValue(self):
     r"""
     Calculate the surface area of the tumor region in square millimeters.
 
-    :math:`A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\textbf{a}_i\textbf{b}_i x \textbf{a}_i\textbf{c}_i|}`
+    :math:`A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\textbf{a}_i\textbf{b}_i \times \textbf{a}_i\textbf{c}_i|}`
+
+    Where:
+
+    :math:`N` is the number of triangles forming the surface of the volume
+
+    :math:`a_ib_i` and :math:`a_ic_i` are the edges of the :math:`i\text{th}` triangle formed by points :math:`a_i`,
+    :math:`b_i` and :math:`c_i`
+
     """
     return (self.SurfaceArea)
 
@@ -139,7 +146,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Compactness 1 is a measure of how compact the shape of the tumor is
     relative to a sphere (most compact). It is a dimensionless measure,
     independent of scale and orientation. Compactness 1 is defined as the
-    ratio of volume to the (surface area)^(1.5). This is a measure of the
+    ratio of volume to the :math:`\sqrt{\text{surface area}^3}`. This is a measure of the
     compactness of the shape of the image ROI
     """
     return ( (self.Volume) / ((self.SurfaceArea)**(2.0/3.0) * numpy.sqrt(numpy.pi)) )
@@ -274,6 +281,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Calculate the Spherical Disproportion of the tumor region.
 
     :math:`spherical\ disproportion = \frac{A}{4\pi R^2}`
+
+    Where :math:`R` is the radius of a sphere with the same volume as the tumor.
 
     Spherical Disproportion is the ratio of the surface area of the
     tumor region to the surface area of a sphere with the same

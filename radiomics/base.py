@@ -5,13 +5,13 @@ from radiomics import imageoperations
 
 class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):
-    '''
+    """
     Initialization
 
     inputImage and inputMask are SimpleITK images. The motivation for using
     SimpleITK images as input is to keep the possibility of reusing the
     optimized feature calculators implemented in SimpleITK in the future.
-    '''
+    """
 
     self.binWidth = kwargs.get('binWidth', 25)
     self.verbose = kwargs.get('verbose', True)

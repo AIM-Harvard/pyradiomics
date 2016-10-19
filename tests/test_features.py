@@ -2,7 +2,7 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_features.py
 
-from radiomics import imageoperations, firstorder, glcm, rlgl, shape, glszm
+from radiomics import imageoperations, firstorder, glcm, glrlm, shape, glszm
 from testUtils import RadiomicsTestUtils
 import sys, os
 import logging
@@ -12,12 +12,12 @@ from itertools import product
 
 testUtils = RadiomicsTestUtils()
 defaultTestCases = testUtils.getTestCases()
-defaultFeatures = ["firstorder", "glcm", "rlgl", "shape", "glszm"]
+defaultFeatures = ["firstorder", "glcm", "glrlm", "shape", "glszm"]
 
 testCases = defaultTestCases
 # testCases = ["breast1"]
 features = defaultFeatures
-# features = ["firstorder", "rlgl", "glszm", "glcm", "shape"]
+# features = ["firstorder", "glrlm", "glszm", "glcm"]
 
 featureClass = None
 
@@ -41,8 +41,8 @@ class TestFeatures:
           featureNames = firstorder.RadiomicsFirstOrder.getFeatureNames()
         elif feature == 'glcm':
           featureNames = glcm.RadiomicsGLCM.getFeatureNames()
-        elif feature == 'rlgl':
-          featureNames = rlgl.RadiomicsRLGL.getFeatureNames()
+        elif feature == 'glrlm':
+          featureNames = glrlm.RadiomicsGLRLM.getFeatureNames()
         elif feature == 'shape':
           featureNames = shape.RadiomicsShape.getFeatureNames()
         elif feature == 'glszm':
@@ -73,9 +73,9 @@ class TestFeatures:
       elif featureClassName == 'glcm':
         logging.debug('Init GLCM')
         featureClass = glcm.RadiomicsGLCM(testImage, testMask, **kwargs)
-      elif featureClassName == 'rlgl':
-        logging.debug('Init RLGL')
-        featureClass = rlgl.RadiomicsRLGL(testImage, testMask, **kwargs)
+      elif featureClassName == 'glrlm':
+        logging.debug('Init GLRLM')
+        featureClass = glrlm.RadiomicsGLRLM(testImage, testMask, **kwargs)
       elif featureClassName == 'shape':
         logging.debug('Init Shape')
         featureClass = shape.RadiomicsShape(testImage, testMask, **kwargs)

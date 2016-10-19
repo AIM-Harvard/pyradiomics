@@ -2,7 +2,7 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_matching.py
 
-from radiomics import imageoperations, firstorder, glcm, rlgl, shape, glszm
+from radiomics import imageoperations, firstorder, glcm, glrlm, shape, glszm
 from testUtils import RadiomicsTestUtils
 import sys, os
 import logging
@@ -11,7 +11,7 @@ from itertools import product
 
 testUtils = RadiomicsTestUtils()
 defaultTestCases = testUtils.getTestCases()
-defaultFeatures = ["firstorder", "glcm", "rlgl", "shape", "glszm"]
+defaultFeatures = ["firstorder", "glcm", "glrlm", "shape", "glszm"]
 
 testCases = defaultTestCases
 # testCases = ["breast1"]
@@ -33,8 +33,8 @@ class TestMapping:
           featureNames = firstorder.RadiomicsFirstOrder.getFeatureNames()
         elif feature == 'glcm':
           featureNames = glcm.RadiomicsGLCM.getFeatureNames()
-        elif feature == 'rlgl':
-          featureNames = rlgl.RadiomicsRLGL.getFeatureNames()
+        elif feature == 'glrlm':
+          featureNames = glrlm.RadiomicsGLRLM.getFeatureNames()
         elif feature == 'shape':
           featureNames = shape.RadiomicsShape.getFeatureNames()
         elif feature == 'glszm':

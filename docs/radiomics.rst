@@ -1,6 +1,7 @@
 radiomics package
 =================
 
+
 Submodules
 ----------
 
@@ -11,6 +12,7 @@ radiomics.base module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 radiomics.firstorder module
 ---------------------------
@@ -19,6 +21,7 @@ radiomics.firstorder module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 radiomics.glcm module
 ---------------------
@@ -27,6 +30,7 @@ radiomics.glcm module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 radiomics.glszm module
 ----------------------
@@ -35,22 +39,16 @@ radiomics.glszm module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
-radiomics.imageoperations module
---------------------------------
-
-.. automodule:: radiomics.imageoperations
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-radiomics.rlgl module
+radiomics.glrlm module
 ---------------------
 
-.. automodule:: radiomics.rlgl
+.. automodule:: radiomics.glrlm
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 radiomics.shape module
 ----------------------
@@ -59,6 +57,25 @@ radiomics.shape module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
+
+radiomics.imageoperations module
+--------------------------------
+
+.. automodule:: radiomics.imageoperations
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
+radiomics.signatures module
+---------------------
+
+.. automodule:: radiomics.signatures
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
 
 radiomics.test module
 ---------------------
@@ -67,6 +84,7 @@ radiomics.test module
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 
 Module contents

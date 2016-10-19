@@ -170,7 +170,7 @@ class RadiomicsFeaturesExtractor:
             if self.verbose: print "Error reading mask Filepath or SimpleITK object"
             mask = None
 
-        if self.interpolator != None and self.resampledPixelSpacing != None:
+        if self.interpolator is not None and self.resampledPixelSpacing is not None:
             image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator, self.padDistance)
 
         return image, mask
@@ -239,7 +239,7 @@ class RadiomicsFeaturesExtractor:
         for sigma in sigmaValues:
             if self.verbose: print "\tComputing LoG with sigma %s" %(str(sigma))
             logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
-            if logImage != None:
+            if logImage is not None:
                 inputImageName = "log-sigma-%s-mm-3D" %(str(sigma).replace('.','-'))
                 yield logImage, mask, inputImageName, kwargs
             else:

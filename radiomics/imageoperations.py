@@ -93,7 +93,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   3 - sitkGaussian
   """
 
-  if imageNode == None or maskNode == None:
+  if imageNode is None or maskNode is None:
     return None
 
   oldSpacing = numpy.array(imageNode.GetSpacing())

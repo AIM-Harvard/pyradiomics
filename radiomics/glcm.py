@@ -68,8 +68,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`.
 
   References
-  * https://en.wikipedia.org/wiki/Co-occurrence_matrix
-  * http://www.fp.ucalgary.ca/mhallbey/the_glcm.htm
+
+  - https://en.wikipedia.org/wiki/Co-occurrence_matrix
+  
+  - http://www.fp.ucalgary.ca/mhallbey/the_glcm.htm
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

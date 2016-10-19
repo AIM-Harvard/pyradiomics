@@ -2,7 +2,7 @@
 import os
 import collections
 from itertools import chain
-import numpy as np
+import numpy
 import SimpleITK as sitk
 
 import pkgutil
@@ -47,6 +47,7 @@ class RadiomicsFeaturesExtractor:
         self.resampledPixelSpacing = self.kwargs.get('resampledPixelSpacing', None) #  no resampling by default
         self.interpolator = self.kwargs.get('interpolator', sitk.sitkBSpline)
         self.verbose = self.kwargs.get('verbose', True)
+        self.padDistance = self.kwargs.get('padDistance', 5)
 
         self.inputImages = {}
         for imageType in self.getInputImageTypes():
@@ -170,9 +171,7 @@ class RadiomicsFeaturesExtractor:
             mask = None
 
         if self.interpolator != None and self.resampledPixelSpacing != None:
-            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator)
-        else:
-            image, mask = imageoperations.cropToTumorMask(image, mask)
+            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator, self.padDistance)
 
         return image, mask
 
@@ -184,6 +183,7 @@ class RadiomicsFeaturesExtractor:
         Features / Classes to use for calculation of signature are defined in self.enabledFeatures.
         see also enableFeaturesByName.
         """
+        image,mask = imageoperations.cropToTumorMask(image, mask)
         featureVector = collections.OrderedDict()
         for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
             # Handle calculation of shape features separately
@@ -227,14 +227,23 @@ class RadiomicsFeaturesExtractor:
 
         :return: dictionary containing calculated features ("featureName":value).
         """
-        sigmaValues = kwargs.get('sigma', np.arange(5.,0.,-.5))
+        # Check if size of image is > 4 in all 3D directions (otherwise, LoG filter will fail)
+        size = numpy.array(image.GetSize())
+        if numpy.min(size) < 4:
+            # TODO: write this to a log file
+            print 'Image too small to apply LoG filter'
+            return
+
+        sigmaValues = kwargs.get('sigma', numpy.arange(5.,0.,-.5))
 
         for sigma in sigmaValues:
             if self.verbose: print "\tComputing LoG with sigma %s" %(str(sigma))
             logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
-
-            inputImageName = "log-sigma-%s-mm-3D" %(str(sigma).replace('.','-'))
-            yield logImage, mask, inputImageName, kwargs
+            if logImage != None:
+                inputImageName = "log-sigma-%s-mm-3D" %(str(sigma).replace('.','-'))
+                yield logImage, mask, inputImageName, kwargs
+            else:
+                print 'Application of LoG filter failed (sigma: %s)'%(sigma)
 
     def generate_wavelet(self, image, mask, **kwargs):
         """

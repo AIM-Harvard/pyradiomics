@@ -82,7 +82,7 @@ def cropToTumorMask(imageNode, maskNode):
 
   return croppedImageNode, croppedMaskNode
 
-def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline):
+def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, padDistance= 5):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.
@@ -117,8 +117,13 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Determine bounds of cropped volume in terms of new Index coordinate space,
   # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
   # Pad with an extra .5 to prevent data loss in case of upsampling. For Ubound this is (-1 + 0.5 = -0.5)
-  bbNewLBound = numpy.floor( (bb[:3] - 0.5) * spacingRatio)
-  bbNewUBound = numpy.ceil( (bb[:3] + bb[3:] - 0.5) * spacingRatio)
+  bbNewLBound = numpy.floor( (bb[:3] - 0.5) * spacingRatio - padDistance)
+  bbNewUBound = numpy.ceil( (bb[:3] + bb[3:] - 0.5) * spacingRatio + padDistance)
+
+  # Ensure resampling is not performed outside bounds of original image
+  maxUbound = numpy.ceil(numpy.array(imageNode.GetSize()) * spacingRatio) - 1
+  bbNewLBound = numpy.where(bbNewLBound < 0, 0, bbNewLBound)
+  bbNewUBound = numpy.where(bbNewUBound > maxUbound, maxUbound, bbNewUBound)
 
   # Calculate the new size. Cast to int to prevent error in sitk.
   newSize = numpy.array(bbNewUBound - bbNewLBound + 1, dtype='int')
@@ -167,13 +172,19 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 #
 def applyLoG(inputImage, sigmaValue=0.5):
   if sigmaValue > 0.0:
-    lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
-    lrgif.SetNormalizeAcrossScale(True)
-    lrgif.SetSigma(sigmaValue)
-    return lrgif.Execute(inputImage)
+    size = numpy.array(inputImage.GetSize())
+    spacing = numpy.array(inputImage.GetSpacing())
+    if numpy.all(size >= numpy.ceil(sigmaValue / spacing) + 1):
+      lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
+      lrgif.SetNormalizeAcrossScale(True)
+      lrgif.SetSigma(sigmaValue)
+      return lrgif.Execute(inputImage)
+    else:
+      logging.info('applyLoG: sigma/spacing + 1 must be greater than the size of the inputImage: %g', sigmaValue)
+      return None
   else:
     logging.info('applyLoG: sigma must be greater than 0.0: %g', sigmaValue)
-    return inputImage
+    return None
 
 def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
   # this mode is useful to generate the mask of thresholded voxels

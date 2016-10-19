@@ -24,7 +24,7 @@ class RadiomicsFeaturesBase(object):
     self.inputImage = inputImage
     self.inputMask = inputMask
 
-    if inputImage == None or inputMask == None:
+    if inputImage is None or inputMask is None:
       if self.verbose: print('ERROR: missing input image or mask')
       return
 

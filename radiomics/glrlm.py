@@ -8,7 +8,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
   A Gray Level Run Length Matrix (GLRLM) quantifies gray level runs in an image.
   A gray level run is defined as the length in number of pixels,
   of consecutive pixels that have the same gray level value. In a gray level run length matrix :math:`P(i,j|\theta)`,
-  the :math:`(i,j)\text{th}` element describes the number of times a gray level appears consecutively
+  the :math:`(i,j)\text{th}` element describes the number of times a gray level :math:`i` appears consecutively :math:`j` times
   in the direction specified by :math:`\theta`, and :math:`N_g` is the number of discrete gray level intensities.
 
   As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
@@ -29,6 +29,11 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   :math:`N_p` be the number of voxels in the image
 
+  References
+
+  - Galloway MM. 1975. Texture analysis using gray level run lengths. Computer Graphics and Image Processing 4:172-179.
+
+  - Tang X. 1998. Texture information in run-length matrices. IEEE Transactions on Image Processing 7(11):1602-1609.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -52,7 +57,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     padVal = -2000   #use eps or NaN to pad matrix
     self.matrix[(self.maskArray == 0)] = padVal
-      
+
     matrixDiagonals = []
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
@@ -136,7 +141,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     :math:`SRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
 
-    A measure of the distribution of short run lengths, with a greater value indicative 
+    A measure of the distribution of short run lengths, with a greater value indicative
     of shorter run lengths and more fine textural textures.
     """
     pr = self.coefficients['pr']
@@ -154,10 +159,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Calculate and return the mean Long Run Emphasis (LRE) value for all GLRLMs.
 
     :math:`LRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
-    A measure of the distribution of long run lengths, with a greater value indicative 
+
+    A measure of the distribution of long run lengths, with a greater value indicative
     of longer run lengths and more coarse structural textures.
-    """  
+    """
     pr =  self.coefficients['pr']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -173,8 +178,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all GLRLMs.
 
     :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{p(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
-    Measures the similarity of gray-level intensity values in the image, where a lower GLN value 
+
+    Measures the similarity of gray-level intensity values in the image, where a lower GLN value
     correlates with a greater similarity in intensity values.
     """
     pg = self.coefficients['pg']
@@ -191,8 +196,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Calculate and return the mean Run Length Non-Uniformity (RLN) value for all GLRLMs.
 
     :math:`RLN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{p(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
-    Measures the similarity of run lengths throughout the image, with a lower value indicating 
+
+    Measures the similarity of run lengths throughout the image, with a lower value indicating
     more homogeneity among run lengths in the image.
     """
     pr = self.coefficients['pr']
@@ -209,7 +214,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Calculate and return the mean Run Percentage (RP) value for all GLRLMs.
 
     :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{N_p}}`
-    
+
     Measures the homogeneity and distribution of runs of an image for a certain direction.
     """
     Np = self.coefficients['Np']
@@ -225,10 +230,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all GLRLMs.
 
     :math:`LGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
-    Measures the distribution of low gray-level values, with a higher value indicating a greater 
+
+    Measures the distribution of low gray-level values, with a higher value indicating a greater
     concentration of low gray-level values in the image.
-    """    
+    """
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -244,10 +249,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all GLRLMs.
 
     :math:`HGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)i^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
-    Measures the distribution of the higher gray-level values, with a higher value indicating  
+
+    Measures the distribution of the higher gray-level values, with a higher value indicating
     a greater concentration of high gray-level values in the image.
-    """    
+    """
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -262,10 +267,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all GLRLMs.
 
-    :math:`SRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
+    :math:`SRLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+
     Measures the joint distribution of shorter run lengths with lower gray-level values.
-    """    
+    """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -280,10 +285,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all GLRLMs.
 
-    :math:`SRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
+    :math:`SRHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+
     Measures the joint distribution of shorter run lengths with higher gray-level values.
-    """    
+    """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -299,9 +304,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all GLRLMs.
 
     :math:`LRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
+
     Measures the joint distribution of long run lengths with lower gray-level values.
-    """    
+    """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']
@@ -317,9 +322,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all GLRLMs.
 
     :math:`LRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
-    
+
     Measures the joint distribution of long run lengths with higher gray-level values.
-    """    
+    """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
     sumP_rlgl = self.coefficients['sumP_rlgl']

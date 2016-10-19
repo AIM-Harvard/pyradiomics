@@ -12,7 +12,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   Following addiotional settings are possible:
   - voxelArrayShift [2000]: This amount is added to the gray level intensity in Energy, Total Energy and RMS, this is
-    to prevent negative values from occuring when using CT data.
+  to prevent negative values from occuring when using CT data.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

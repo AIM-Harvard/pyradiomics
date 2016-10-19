@@ -64,4 +64,7 @@ class RadiomicsFeaturesBase(object):
   def calculateFeatures(self):
     for feature in self.enabledFeatures.keys():
       call = 'self.get'+feature+'FeatureValue()'
-      self.featureValues[feature] = eval(call)
+      try:
+        self.featureValues[feature] = eval(call)
+      except Exception:
+        self.featureValues[feature] = numpy.nan

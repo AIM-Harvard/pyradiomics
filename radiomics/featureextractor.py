@@ -243,7 +243,7 @@ class RadiomicsFeaturesExtractor:
                 inputImageName = "log-sigma-%s-mm-3D" %(str(sigma).replace('.','-'))
                 yield logImage, mask, inputImageName, kwargs
             else:
-                print 'Sigma to large for this image: %g' %(sigma)
+                print 'Application of LoG filter failed (sigma: %s)'%(sigma)
 
     def generate_wavelet(self, image, mask, **kwargs):
         """

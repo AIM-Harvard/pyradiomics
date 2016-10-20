@@ -11,6 +11,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   Based on the definitions above, the following first order statistics can be extracted.
 
   Following addiotional settings are possible:
+
   - voxelArrayShift [2000]: This amount is added to the gray level intensity in Energy, Total Energy and RMS, this is
   to prevent negative values from occuring when using CT data.
   """

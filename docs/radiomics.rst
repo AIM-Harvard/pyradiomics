@@ -14,6 +14,14 @@ radiomics.base module
     :show-inheritance:
     :member-order: bysource
 
+radiomics.featureextractor module
+---------------------------------
+.. automodule:: radiomics.featureextractor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
 radiomics.firstorder module
 ---------------------------
 
@@ -67,25 +75,6 @@ radiomics.imageoperations module
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
-
-radiomics.signatures module
----------------------
-
-.. automodule:: radiomics.signatures
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-radiomics.test module
----------------------
-
-.. automodule:: radiomics.test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
 
 Module contents
 ---------------

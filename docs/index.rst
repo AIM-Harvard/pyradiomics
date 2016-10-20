@@ -18,13 +18,32 @@ Specifically, the formulation of the individual feature calculation is covered
 in this supplement:
 http://www.nature.com/ncomms/2014/140603/ncomms5006/extref/ncomms5006-s1.pdf
 
+Installation
+------------
+
+* Clone the repository
+
+  * ``git clone git://github.com/Radiomics/pyradiomics``
+
+* Install on your system, with prerequisites:
+
+  * ``cd pyradiomics``
+  * ``sudo python setup.py install``
+
+* For more detailed installation instructions see :ref:`Installation Details<installation-label>`
+
 .. toctree::
    :maxdepth: 2
+   :caption: Table of Contents
 
-Indices and tables
-==================
+   installation
+   usage
+   radiomics
 
-* :ref:`genindex`
+Pyradiomics Indices and Tables
+------------------------------
+
 * :ref:`modindex`
+* :ref:`genindex`
 * :ref:`search`
 

@@ -317,10 +317,12 @@ def _scaleToOriginalRange(originalImage, filteredImage):
   mmif = sitk.MinimumMaximumImageFilter
   mmif.Execute(originalImage)
   im_max = mmif.GetMaximum()
+  mmif.Execute(filteredImage)
+  fl_max = mmif.GetMaximum()
 
-  im = sitk.GetArrayFromImage(filteredImage)
-  im = im.astype('float64')
-  im *= (im_max / numpy.max(im))
-  im = sitk.GetImageFromArray(im)
+  ssif = sitk.ShiftScaleImageFilter()
+  ssif.SetScale(im_max / fl_max)
+
+  im = ssif.Execute(filteredImage)
   im.CopyInformation(originalImage)
   return im

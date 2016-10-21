@@ -49,7 +49,7 @@ def generateAngles(size, maxDistance= 1):
 
   return angles
 
-def cropToTumorMask(imageNode, maskNode):
+def cropToTumorMask(imageNode, maskNode, label=1):
   """
   Create a sitkImage of the segmented region of the image based on the input label.
 
@@ -66,7 +66,7 @@ def cropToTumorMask(imageNode, maskNode):
   #Determine bounds
   lsif = sitk.LabelStatisticsImageFilter()
   lsif.Execute(imageNode, maskNode)
-  bb = lsif.GetBoundingBox(1)
+  bb = lsif.GetBoundingBox(label)
 
   ijkMinBounds = bb[0::2]
   ijkMaxBounds = size - bb[1::2] - 1
@@ -82,7 +82,7 @@ def cropToTumorMask(imageNode, maskNode):
 
   return croppedImageNode, croppedMaskNode
 
-def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, padDistance= 5):
+def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, label=1, padDistance=5):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing.
@@ -106,7 +106,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Determine bounds of cropped volume in terms of original Index coordinate space
   lssif = sitk.LabelShapeStatisticsImageFilter()
   lssif.Execute(maskNode)
-  bb = numpy.array(lssif.GetBoundingBox(1))  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
+  bb = numpy.array(lssif.GetBoundingBox(label))  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
 
   # Do not resample in those directions where labelmap spans only one slice.
   oldSize = bb[3:]

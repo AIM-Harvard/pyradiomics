@@ -48,6 +48,7 @@ class RadiomicsFeaturesExtractor:
         self.interpolator = self.kwargs.get('interpolator', sitk.sitkBSpline)
         self.verbose = self.kwargs.get('verbose', True)
         self.padDistance = self.kwargs.get('padDistance', 5)
+        self.label = self.kwargs.get('label', 1)
 
         self.inputImages = {}
         for imageType in self.getInputImageTypes():
@@ -103,7 +104,7 @@ class RadiomicsFeaturesExtractor:
         """
         self.enabledFeatures.update(enabledFeatures)
 
-    def execute(self, imageFilepath, maskFilepath):
+    def execute(self, imageFilepath, maskFilepath, label=None):
         """
         Compute radiomics signature for provide image and mask combination.
 
@@ -111,13 +112,18 @@ class RadiomicsFeaturesExtractor:
         :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
         :returns: dictionary containing calculated signature ("featureName":value).
         """
+        if label is not None:
+            self.kwargs.update({'label': label})
+            self.label = label
+
         featureVector = collections.OrderedDict()
         image, mask = self.loadImage(imageFilepath, maskFilepath)
 
         # If shape should be calculation, handle it separately here
         if 'shape' in self.enabledFeatures.keys():
+            croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, self.label)
             enabledFeatures = self.enabledFeatures['shape']
-            shapeClass = self.featureClasses['shape'](image, mask, **self.kwargs)
+            shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
             if len(enabledFeatures) == 0:
                 shapeClass.enableAllFeatures()
             else:
@@ -171,7 +177,7 @@ class RadiomicsFeaturesExtractor:
             mask = None
 
         if self.interpolator is not None and self.resampledPixelSpacing is not None:
-            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator, self.padDistance)
+            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator, self.label, self.padDistance)
 
         return image, mask
 
@@ -183,7 +189,7 @@ class RadiomicsFeaturesExtractor:
         Features / Classes to use for calculation of signature are defined in self.enabledFeatures.
         see also enableFeaturesByName.
         """
-        image,mask = imageoperations.cropToTumorMask(image, mask)
+        image,mask = imageoperations.cropToTumorMask(image, mask, self.label)
         featureVector = collections.OrderedDict()
         for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
             # Handle calculation of shape features separately

@@ -14,6 +14,7 @@ class RadiomicsFeaturesBase(object):
     """
 
     self.binWidth = kwargs.get('binWidth', 25)
+    self.label = kwargs.get('label', 1)
     self.verbose = kwargs.get('verbose', True)
 
     # all features are disabled by default
@@ -29,7 +30,7 @@ class RadiomicsFeaturesBase(object):
       return
 
     self.imageArray = sitk.GetArrayFromImage(self.inputImage)
-    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
+    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
 
     self.matrix = self.imageArray.astype('int64')
     self.matrixCoordinates = numpy.where(self.maskArray != 0)

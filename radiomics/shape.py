@@ -292,6 +292,24 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     """
     return ( ((numpy.pi)**(1.0/3.0) * (6.0 * self.Volume)**(2.0/3.0)) / (self.SurfaceArea) )
 
+  def getElongationFeatureValue(self):
+      """
+
+      """
+      return self.lssif.GetElongation(self.label)
+
+  def getFlatnessFeatureValue(self):
+      """
+
+      """
+      return self.lssif.GetFlatness(self.label)
+
+  def getRoundnessFeatureValue(self):
+      """
+
+      """
+      return self.lssif.GetRoundness(self.label)
+
   def _interpolate(self, grid, p1, p2):
     diff = (.5 - self.maskArray[tuple(grid[p1])])/(self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])
     return (grid[p1] + ((grid[p2] - grid[p1])  * diff)) * self.pixelSpacing

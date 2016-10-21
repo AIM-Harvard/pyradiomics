@@ -294,45 +294,33 @@ def decompose_k(data, wavelet):
   return H, L
 
 def applySquare(inputImage):
-  im = sitk.GetArrayFromImage(inputImage)
-  im = im.astype('float64')
-
-  im_max = numpy.max(im)
-  im = im ** 2
-  # to prevent overflow effects
-  im[im<0] = im_max
-  im = im * (im_max / numpy.max(im))
-  im = sitk.GetImageFromArray(im)
-  im.CopyInformation(inputImage)
-  return im
+  sif = sitk.SquareImageFilter()
+  im = sif.Execute(inputImage)
+  return _scaleToOriginalRange(inputImage, im)
 
 def applySquareRoot(inputImage):
-  im = sitk.GetArrayFromImage(inputImage)
-  im = im.astype('float64')
-
-  im_max = numpy.max(im)
-  im = numpy.sqrt(numpy.abs(im))
-  im = im * (im_max / numpy.max(im))
-  im = sitk.GetImageFromArray(im)
-  im.CopyInformation(inputImage)
-  return im
+  srif = sitk.SqrtImageFilter()
+  im = srif.Execute(inputImage)
+  return _scaleToOriginalRange(inputImage, im)
 
 def applyLogarithm(inputImage):
-  im = sitk.GetArrayFromImage(inputImage)
-  im = im.astype('float64')
-
-  im_max = numpy.max(im)
-  im = numpy.log(numpy.abs(im) + 1 )
-  im = im * (im_max / numpy.max(im))
-  im = sitk.GetImageFromArray(im)
-  im.CopyInformation(inputImage)
-  return im
+  lif = sitk.LogImageFilter()
+  im = lif.Execute(inputImage)
+  return _scaleToOriginalRange(inputImage, im)
 
 def applyExponential(inputImage):
-  im = sitk.GetArrayFromImage(inputImage)
+  eif = sitk.ExpImageFilter()
+  im = eif.Execute(inputImage)
+  return _scaleToOriginalRange(inputImage, im)
+
+def _scaleToOriginalRange(originalImage, filteredImage):
+  mmif = sitk.MinimumMaximumImageFilter
+  mmif.Execute(originalImage)
+  im_max = mmif.GetMaximum()
+
+  im = sitk.GetArrayFromImage(filteredImage)
   im = im.astype('float64')
-  coeff = numpy.log(numpy.max(im))/numpy.max(im)
-  im = numpy.exp(coeff*im)
+  im *= (im_max / numpy.max(im))
   im = sitk.GetImageFromArray(im)
-  im.CopyInformation(inputImage)
+  im.CopyInformation(originalImage)
   return im

@@ -292,3 +292,37 @@ def decompose_k(data, wavelet):
   H = numpy.dstack(H).reshape(data.shape)
   L = numpy.dstack(L).reshape(data.shape)
   return H, L
+
+def applySquare(inputImage):
+  sif = sitk.SquareImageFilter()
+  im = sif.Execute(inputImage)
+  return _scaleToOriginalRange(inputImage, im)
+
+def applySquareRoot(inputImage):
+  srif = sitk.SqrtImageFilter()
+  im = srif.Execute(inputImage)
+  return _scaleToOriginalRange(inputImage, im)
+
+def applyLogarithm(inputImage):
+  lif = sitk.LogImageFilter()
+  im = lif.Execute(inputImage)
+  return _scaleToOriginalRange(inputImage, im)
+
+def applyExponential(inputImage):
+  eif = sitk.ExpImageFilter()
+  im = eif.Execute(inputImage)
+  return _scaleToOriginalRange(inputImage, im)
+
+def _scaleToOriginalRange(originalImage, filteredImage):
+  mmif = sitk.MinimumMaximumImageFilter
+  mmif.Execute(originalImage)
+  im_max = mmif.GetMaximum()
+  mmif.Execute(filteredImage)
+  fl_max = mmif.GetMaximum()
+
+  ssif = sitk.ShiftScaleImageFilter()
+  ssif.SetScale(im_max / fl_max)
+
+  im = ssif.Execute(filteredImage)
+  im.CopyInformation(originalImage)
+  return im

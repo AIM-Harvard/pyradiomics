@@ -44,7 +44,7 @@ class RadiomicsFeaturesExtractor:
         self.kwargs = kwargs
 
         # Try get values for interpolation and verbose. If not present in kwargs, use defaults
-        self.resampledPixelSpacing = self.kwargs.get('resampledPixelSpacing', None) #  no resampling by default
+        self.resampledPixelSpacing = self.kwargs.get('resampledPixelSpacing', None)  # no resampling by default
         self.interpolator = self.kwargs.get('interpolator', sitk.sitkBSpline)
         self.verbose = self.kwargs.get('verbose', True)
         self.padDistance = self.kwargs.get('padDistance', 5)
@@ -285,6 +285,44 @@ class RadiomicsFeaturesExtractor:
         else:
             inputImageName = 'wavelet%s-LLL' % (len(ret))
         yield approx, mask, inputImageName, kwargs
+
+    def generate_square(self, image, mask, **kwargs):
+        """
+        Computes the square of the image intensities.
+
+        Max intensity is set in case of overflow.
+
+        Resulting values are rescaled on the range of the initial original image.
+        """
+        squareImage = imageoperations.applySquare(image)
+        yield squareImage, mask, 'square', kwargs
+
+    def generate_squareroot(self, image, mask, **kwargs):
+        """
+        Computes the square root of the absolute value of image intensities.
+
+        Resulting values are rescaled on the range of the initial original image.
+        """
+        squarerootImage = imageoperations.applySquareRoot(image)
+        yield squarerootImage, mask, 'squareroot', kwargs
+
+    def generate_logarithm(self, image, mask, **kwargs):
+        """
+        Computes the logarithm of the absolute value of the original image.
+
+        Resulting values are rescaled on the range of the initial original image.
+        """
+        logarithmImage = imageoperations.applyLogarithm(image)
+        yield logarithmImage, mask, 'logarithm', kwargs
+
+    def generate_exponential(self, image, mask, **kwargs):
+        """
+        Computes the exponential of the original image.
+
+        Resulting values are rescaled on the range of the initial original image.
+        """
+        exponentialImage = imageoperations.applyExponential(image)
+        yield exponentialImage, mask, 'exponential', kwargs
 
     def getInputImageTypes(self):
         """

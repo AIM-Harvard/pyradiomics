@@ -18,6 +18,13 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     z, x, y = self.pixelSpacing
     self.cubicMMPerVoxel = z * x * y
 
+    self.label = 1
+
+    # Use SimpleITK for some shape features
+    self.lssif = sitk.LabelShapeStatisticsImageFilter()
+    self.lssif.SetComputeFeretDiameter(True)
+    self.lssif.Execute(inputMask)
+
     # Pad inputMask to prevent index-out-of-range errors
     cpif = sitk.ConstantPadImageFilter()
 
@@ -32,11 +39,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
     # Volume and Surface Area are pre-calculated
-    self.Volume = self._calculateVolume()
+    self.Volume = self.lssif.GetPhysicalSize(1)
     self.SurfaceArea = self._calculateSurfaceArea()
-
-  def _calculateVolume(self):
-    return (self.targetVoxelArray.size * self.cubicMMPerVoxel)
 
   def _calculateSurfaceArea(self):
     # define relative locations of the 8 voxels of a sampling cube
@@ -167,23 +171,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   def getMaximum3DDiameterFeatureValue(self):
     r"""
     Calculate the largest pairwise euclidean distance between tumor surface voxels.
+    Also known as Feret Diameter.
     """
-    a = numpy.array(zip(*self.matrixCoordinates))
-    minBounds = numpy.min(a, 0)
-    maxBounds = numpy.max(a, 0)
-
-    # Generate 2 sets of indices: one set of indices where at least the x, y or z component of the index is equal to the
-    # minimum index, and one set of indices where at least one element it is equal to the maximum
-    edgeVoxelsMinCoords = numpy.vstack([a[a[:,0]==minBounds[0]], a[a[:,1]==minBounds[1]], a[a[:,2]==minBounds[2]]]) * self.pixelSpacing
-    edgeVoxelsMaxCoords = numpy.vstack([a[a[:,0]==maxBounds[0]], a[a[:,1]==maxBounds[1]], a[a[:,2]==maxBounds[2]]]) * self.pixelSpacing
-
-    # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-    # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-    # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-    distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-    maxDiameter = numpy.max(distances)
-
-    return(maxDiameter)
+    return self.lssif.GetFeretDiameter(self.label)
 
   def getMaximum2DDiameterSliceFeatureValue(self):
     r"""
@@ -288,7 +278,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     tumor region to the surface area of a sphere with the same
     volume as the tumor region.
     """
-    R = ( (3.0*self.Volume)/(4.0*numpy.pi) )**(1.0/3.0)
+    R = self.lssif.GetEquivalentSphericalRadius(self.label)
     return ( (self.SurfaceArea)/(4.0*numpy.pi*(R**2.0)) )
 
   def getSphericityFeatureValue(self):

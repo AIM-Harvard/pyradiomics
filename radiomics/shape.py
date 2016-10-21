@@ -18,8 +18,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     z, x, y = self.pixelSpacing
     self.cubicMMPerVoxel = z * x * y
 
-    self.label = 1
-
     # Use SimpleITK for some shape features
     self.lssif = sitk.LabelShapeStatisticsImageFilter()
     self.lssif.SetComputeFeretDiameter(True)

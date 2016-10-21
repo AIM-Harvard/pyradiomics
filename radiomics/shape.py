@@ -27,8 +27,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     self.inputMask = cpif.Execute(self.inputMask)
 
-    # Reassign self.maskArray using the now-padded self.inputMask
-    self.maskArray = sitk.GetArrayFromImage(self.inputMask)
+    # Reassign self.maskArray using the now-padded self.inputMask and make it binary
+    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
     self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
     # Volume and Surface Area are pre-calculated

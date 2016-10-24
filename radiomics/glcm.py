@@ -98,31 +98,38 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     Ng = self.coefficients['Ng']
 
+    # Exclude voxels outside segmentation, due to binning, no negative values will be encountered inside the mask
+    self.matrix[self.maskArray != self.label] = -1
+
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
 
     self.P_glcm = numpy.zeros( (Ng, Ng, int(angles.shape[0])), dtype='float64' )
 
-    indices = zip(*self.matrixCoordinates)
+    if self.verbose: bar = trange(Ng, desc='calculate GLCM')
 
-    if self.verbose: bar = trange(len(indices), desc= 'calculate GLCM')
-
-    for h, c, r in indices:
+    # iterate over gray levels for center voxel
+    for i in xrange(1, Ng + 1):
+      # give some progress
       if self.verbose: bar.update()
 
-      for angles_idx, angle in enumerate(angles):
-        i = self.matrix[h, c, r]
-        i_idx = int(i-1)
+      # get the indices to all voxels which have the current gray level i
+      i_indices = numpy.where(self.matrix == i)
 
-        row = r + angle[2]
-        col = c + angle[1]
-        height = h + angle[0]
+      # iterate over gray levels for neighbouring voxel
+      for j in xrange(1, Ng + 1):
+        # get the indices to all voxels which have the current gray level j
+        j_indices = set(zip(*numpy.where(self.matrix == j)))
 
-        if tuple((height, col, row)) in indices:
-          j = self.matrix[height, col, row]
-          j_idx = int(j-1)
-          self.P_glcm[i_idx, j_idx, angles_idx] += 1
+        for a_idx, a in enumerate(angles):
+          # get the corresponding indices of the neighbours for angle a
+          neighbour_indices = set(zip(*(i_indices + a[:, None])))
 
+          # The following intersection yields the indices to voxels with gray level j
+          # that are also a neighbour of a voxel with gray level i for angle a.
+          # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
+          count = len(neighbour_indices.intersection(j_indices))
+          self.P_glcm[i-1, j-1, a_idx] = count
     if self.verbose: bar.close()
 
     # Optionally make GLCMs symmetrical for each angle

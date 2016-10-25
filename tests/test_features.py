@@ -15,9 +15,7 @@ defaultTestCases = testUtils.getTestCases()
 defaultFeatures = ["firstorder", "glcm", "glrlm", "shape", "glszm"]
 
 testCases = defaultTestCases
-# testCases = ["breast1"]
 features = defaultFeatures
-# features = ["firstorder", "glrlm", "glszm", "glcm"]
 
 featureClass = None
 

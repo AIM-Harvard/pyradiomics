@@ -18,6 +18,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     z, x, y = self.pixelSpacing
     self.cubicMMPerVoxel = z * x * y
 
+    # Use SimpleITK for some shape features
+    self.lssif = sitk.LabelShapeStatisticsImageFilter()
+    self.lssif.SetComputeFeretDiameter(True)
+    self.lssif.Execute(inputMask)
+
     # Pad inputMask to prevent index-out-of-range errors
     cpif = sitk.ConstantPadImageFilter()
 
@@ -32,11 +37,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
     # Volume and Surface Area are pre-calculated
-    self.Volume = self._calculateVolume()
+    self.Volume = self.lssif.GetPhysicalSize(1)
     self.SurfaceArea = self._calculateSurfaceArea()
-
-  def _calculateVolume(self):
-    return (self.targetVoxelArray.size * self.cubicMMPerVoxel)
 
   def _calculateSurfaceArea(self):
     # define relative locations of the 8 voxels of a sampling cube
@@ -107,6 +109,37 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     return S_A
 
+  def _getMaximum2Ddiameter(self, dim):
+    otherDims = tuple(set([0, 1, 2]) - set([dim]))
+
+    a = numpy.array(zip(*self.matrixCoordinates))
+
+    maxDiameter = 0
+    # Check maximum diameter in every slice, retain the overall maximum
+    for i in numpy.unique(a[:, dim]):
+      # Retrieve all indices of mask in current slice
+      plane = a[numpy.where(a[:, dim] == i)]
+
+      minBounds = numpy.min(plane, 0)
+      maxBounds = numpy.max(plane, 0)
+
+      # Generate 2 sets of indices: one set of indices in zSlice where at least the x or y component of the index is equal to the
+      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
+      edgeVoxelsMinCoords = numpy.vstack(
+        [plane[plane[:, otherDims[0]] == minBounds[otherDims[0]]], plane[plane[:, otherDims[1]] == minBounds[otherDims[1]]]]) * self.pixelSpacing
+      edgeVoxelsMaxCoords = numpy.vstack(
+        [plane[plane[:, otherDims[0]] == maxBounds[otherDims[0]]], plane[plane[:, otherDims[1]] == maxBounds[otherDims[1]]]]) * self.pixelSpacing
+
+      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
+      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
+      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
+      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
+      tempMax = numpy.max(distances)
+      if tempMax > maxDiameter:
+        maxDiameter = tempMax
+
+    return maxDiameter
+
   def getVolumeFeatureValue(self):
     r"""
     Calculate the volume of the tumor region in cubic millimeters.
@@ -167,114 +200,30 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   def getMaximum3DDiameterFeatureValue(self):
     r"""
     Calculate the largest pairwise euclidean distance between tumor surface voxels.
+    Also known as Feret Diameter.
     """
-    a = numpy.array(zip(*self.matrixCoordinates))
-    minBounds = numpy.min(a, 0)
-    maxBounds = numpy.max(a, 0)
-
-    # Generate 2 sets of indices: one set of indices where at least the x, y or z component of the index is equal to the
-    # minimum index, and one set of indices where at least one element it is equal to the maximum
-    edgeVoxelsMinCoords = numpy.vstack([a[a[:,0]==minBounds[0]], a[a[:,1]==minBounds[1]], a[a[:,2]==minBounds[2]]]) * self.pixelSpacing
-    edgeVoxelsMaxCoords = numpy.vstack([a[a[:,0]==maxBounds[0]], a[a[:,1]==maxBounds[1]], a[a[:,2]==maxBounds[2]]]) * self.pixelSpacing
-
-    # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-    # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-    # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-    distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-    maxDiameter = numpy.max(distances)
-
-    return(maxDiameter)
+    return self.lssif.GetFeretDiameter(self.label)
 
   def getMaximum2DDiameterSliceFeatureValue(self):
     r"""
     Calculate the largest pairwise euclidean distance between tumor surface voxels in the row-column plane.
     """
 
-    a = numpy.array(zip(*self.matrixCoordinates))
-
-    maxDiameter = 0
-    # Check maximum diameter in every slice, retain the overall maximum
-    for z in numpy.unique(a[:, 0]):
-      # Retrieve all indices of mask in current slice
-      zSlice = a[numpy.where(a[:, 0] == z)]
-
-      minBounds = numpy.min(zSlice, 0)
-      maxBounds = numpy.max(zSlice, 0)
-
-      # Generate 2 sets of indices: one set of indices in zSlice where at least the x or y component of the index is equal to the
-      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
-      edgeVoxelsMinCoords = numpy.vstack([zSlice[zSlice[:,1]==minBounds[1]], zSlice[zSlice[:,2]==minBounds[2]]]) * self.pixelSpacing
-      edgeVoxelsMaxCoords = numpy.vstack([zSlice[zSlice[:,1]==maxBounds[1]], zSlice[zSlice[:,2]==maxBounds[2]]]) * self.pixelSpacing
-
-      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-      tempMax = numpy.max(distances)
-      if tempMax > maxDiameter:
-          maxDiameter = tempMax
-
-    return(maxDiameter)
+    return self._getMaximum2Ddiameter(0)
 
   def getMaximum2DDiameterColumnFeatureValue(self):
     r"""
     Calculate the largest pairwise euclidean distance between tumor surface voxels in the row-slice plane.
     """
 
-    a = numpy.array(zip(*self.matrixCoordinates))
-
-    maxDiameter = 0
-    # Check maximum diameter in every column, retain the overall maximum
-    for y in numpy.unique(a[:, 1]):
-      # Retrieve all indices of mask in current column
-      ySlice = a[numpy.where(a[:, 1] == y)]
-      minBounds = numpy.min(ySlice, 0)
-      maxBounds = numpy.max(ySlice, 0)
-
-      # Generate 2 sets of indices: one set of indices in ySlice where at least the x or z component of the index is equal to the
-      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
-      edgeVoxelsMinCoords = numpy.vstack([ySlice[ySlice[:,0]==minBounds[0]], ySlice[ySlice[:,2]==minBounds[2]]]) * self.pixelSpacing
-      edgeVoxelsMaxCoords = numpy.vstack([ySlice[ySlice[:,0]==maxBounds[0]], ySlice[ySlice[:,2]==maxBounds[2]]]) * self.pixelSpacing
-
-      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-      tempMax = numpy.max(distances)
-      if tempMax > maxDiameter:
-          maxDiameter = tempMax
-
-    return(maxDiameter)
+    return self._getMaximum2Ddiameter(1)
 
   def getMaximum2DDiameterRowFeatureValue(self):
     r"""
     Calculate the largest pairwise euclidean distance between tumor surface voxels in the column-slice plane.
     """
 
-    a = numpy.array(zip(*self.matrixCoordinates))
-
-    maxDiameter = 0
-    # Check maximum diameter in every row, retain the overall maximum
-    for x in numpy.unique(a[:, 2]):
-      # Retrieve all indices of mask in current row
-      xSlice = a[numpy.where(a[:, 2] == x)]
-      minBounds = numpy.min(xSlice, 0)
-      maxBounds = numpy.max(xSlice, 0)
-
-      # Generate 2 sets of indices: one set of indices in zSlice where at least the y or z component of the index is equal to the
-      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
-      edgeVoxelsMinCoords = numpy.vstack([xSlice[xSlice[:,0]==minBounds[0]], xSlice[xSlice[:,1]==minBounds[1]]]) * self.pixelSpacing
-      edgeVoxelsMaxCoords = numpy.vstack([xSlice[xSlice[:,0]==maxBounds[0]], xSlice[xSlice[:,1]==maxBounds[1]]]) * self.pixelSpacing
-
-      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-      tempMax = numpy.max(distances)
-      if tempMax > maxDiameter:
-          maxDiameter = tempMax
-
-    return(maxDiameter)
+    return self._getMaximum2Ddiameter(2)
 
   def getSphericalDisproportionFeatureValue(self):
     r"""
@@ -288,7 +237,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     tumor region to the surface area of a sphere with the same
     volume as the tumor region.
     """
-    R = ( (3.0*self.Volume)/(4.0*numpy.pi) )**(1.0/3.0)
+    R = self.lssif.GetEquivalentSphericalRadius(self.label)
     return ( (self.SurfaceArea)/(4.0*numpy.pi*(R**2.0)) )
 
   def getSphericityFeatureValue(self):
@@ -301,6 +250,24 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     relative to a sphere. This is another measure of the compactness of a tumor.
     """
     return ( ((numpy.pi)**(1.0/3.0) * (6.0 * self.Volume)**(2.0/3.0)) / (self.SurfaceArea) )
+
+  def getElongationFeatureValue(self):
+      """
+
+      """
+      return self.lssif.GetElongation(self.label)
+
+  def getFlatnessFeatureValue(self):
+      """
+
+      """
+      return self.lssif.GetFlatness(self.label)
+
+  def getRoundnessFeatureValue(self):
+      """
+
+      """
+      return self.lssif.GetRoundness(self.label)
 
   def _interpolate(self, grid, p1, p2):
     diff = (.5 - self.maskArray[tuple(grid[p1])])/(self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])

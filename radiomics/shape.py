@@ -109,6 +109,37 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     return S_A
 
+  def _getMaximum2Ddiameter(self, dim):
+    otherDims = tuple(set([0, 1, 2]) - set([dim]))
+
+    a = numpy.array(zip(*self.matrixCoordinates))
+
+    maxDiameter = 0
+    # Check maximum diameter in every slice, retain the overall maximum
+    for i in numpy.unique(a[:, dim]):
+      # Retrieve all indices of mask in current slice
+      plane = a[numpy.where(a[:, dim] == i)]
+
+      minBounds = numpy.min(plane, 0)
+      maxBounds = numpy.max(plane, 0)
+
+      # Generate 2 sets of indices: one set of indices in zSlice where at least the x or y component of the index is equal to the
+      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
+      edgeVoxelsMinCoords = numpy.vstack(
+        [plane[plane[:, otherDims[0]] == minBounds[otherDims[0]]], plane[plane[:, otherDims[1]] == minBounds[otherDims[1]]]]) * self.pixelSpacing
+      edgeVoxelsMaxCoords = numpy.vstack(
+        [plane[plane[:, otherDims[0]] == maxBounds[otherDims[0]]], plane[plane[:, otherDims[1]] == maxBounds[otherDims[1]]]]) * self.pixelSpacing
+
+      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
+      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
+      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
+      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
+      tempMax = numpy.max(distances)
+      if tempMax > maxDiameter:
+        maxDiameter = tempMax
+
+    return maxDiameter
+
   def getVolumeFeatureValue(self):
     r"""
     Calculate the volume of the tumor region in cubic millimeters.
@@ -178,91 +209,21 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Calculate the largest pairwise euclidean distance between tumor surface voxels in the row-column plane.
     """
 
-    a = numpy.array(zip(*self.matrixCoordinates))
-
-    maxDiameter = 0
-    # Check maximum diameter in every slice, retain the overall maximum
-    for z in numpy.unique(a[:, 0]):
-      # Retrieve all indices of mask in current slice
-      zSlice = a[numpy.where(a[:, 0] == z)]
-
-      minBounds = numpy.min(zSlice, 0)
-      maxBounds = numpy.max(zSlice, 0)
-
-      # Generate 2 sets of indices: one set of indices in zSlice where at least the x or y component of the index is equal to the
-      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
-      edgeVoxelsMinCoords = numpy.vstack([zSlice[zSlice[:,1]==minBounds[1]], zSlice[zSlice[:,2]==minBounds[2]]]) * self.pixelSpacing
-      edgeVoxelsMaxCoords = numpy.vstack([zSlice[zSlice[:,1]==maxBounds[1]], zSlice[zSlice[:,2]==maxBounds[2]]]) * self.pixelSpacing
-
-      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-      tempMax = numpy.max(distances)
-      if tempMax > maxDiameter:
-          maxDiameter = tempMax
-
-    return(maxDiameter)
+    return self._getMaximum2Ddiameter(0)
 
   def getMaximum2DDiameterColumnFeatureValue(self):
     r"""
     Calculate the largest pairwise euclidean distance between tumor surface voxels in the row-slice plane.
     """
 
-    a = numpy.array(zip(*self.matrixCoordinates))
-
-    maxDiameter = 0
-    # Check maximum diameter in every column, retain the overall maximum
-    for y in numpy.unique(a[:, 1]):
-      # Retrieve all indices of mask in current column
-      ySlice = a[numpy.where(a[:, 1] == y)]
-      minBounds = numpy.min(ySlice, 0)
-      maxBounds = numpy.max(ySlice, 0)
-
-      # Generate 2 sets of indices: one set of indices in ySlice where at least the x or z component of the index is equal to the
-      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
-      edgeVoxelsMinCoords = numpy.vstack([ySlice[ySlice[:,0]==minBounds[0]], ySlice[ySlice[:,2]==minBounds[2]]]) * self.pixelSpacing
-      edgeVoxelsMaxCoords = numpy.vstack([ySlice[ySlice[:,0]==maxBounds[0]], ySlice[ySlice[:,2]==maxBounds[2]]]) * self.pixelSpacing
-
-      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-      tempMax = numpy.max(distances)
-      if tempMax > maxDiameter:
-          maxDiameter = tempMax
-
-    return(maxDiameter)
+    return self._getMaximum2Ddiameter(1)
 
   def getMaximum2DDiameterRowFeatureValue(self):
     r"""
     Calculate the largest pairwise euclidean distance between tumor surface voxels in the column-slice plane.
     """
 
-    a = numpy.array(zip(*self.matrixCoordinates))
-
-    maxDiameter = 0
-    # Check maximum diameter in every row, retain the overall maximum
-    for x in numpy.unique(a[:, 2]):
-      # Retrieve all indices of mask in current row
-      xSlice = a[numpy.where(a[:, 2] == x)]
-      minBounds = numpy.min(xSlice, 0)
-      maxBounds = numpy.max(xSlice, 0)
-
-      # Generate 2 sets of indices: one set of indices in zSlice where at least the y or z component of the index is equal to the
-      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
-      edgeVoxelsMinCoords = numpy.vstack([xSlice[xSlice[:,0]==minBounds[0]], xSlice[xSlice[:,1]==minBounds[1]]]) * self.pixelSpacing
-      edgeVoxelsMaxCoords = numpy.vstack([xSlice[xSlice[:,0]==maxBounds[0]], xSlice[xSlice[:,1]==maxBounds[1]]]) * self.pixelSpacing
-
-      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-      tempMax = numpy.max(distances)
-      if tempMax > maxDiameter:
-          maxDiameter = tempMax
-
-    return(maxDiameter)
+    return self._getMaximum2Ddiameter(2)
 
   def getSphericalDisproportionFeatureValue(self):
     r"""

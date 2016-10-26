@@ -21,7 +21,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   Let:
 
-  :math:`P(i,j)` be the run length matrix for an arbitrary direction :math:`\theta`
+  :math:`P(i,j|\theta)` be the run length matrix for an arbitrary direction :math:`\theta`
+
+  :math:`p(i,j|\theta)` be the normalized run length matrix, defined as :math:`p(i,j) = \frac{P(i,j|\theta)}{\sum{P(i,j|\theta)}}`
 
   :math:`N_g` be the number of discreet intensity values in the image
 
@@ -226,7 +228,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Gray Level Non-Uniformity Normalized (GLNN) value.
 
-    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{P(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j)}^2}`
+    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{P(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}^2}`
 
     Measures the similarity of gray-level intensity values in the image, where a lower GLNN value
     correlates with a greater similarity in intensity values..
@@ -296,9 +298,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Gray Level Variance (GLV) value.
 
-    :math:`GLV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j)(i - \mu)^2}`, where
+    :math:`GLV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)(i - \mu)^2}`, where
 
-    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{ip(i,j)}`
+    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{ip(i,j|\theta)}`
 
     Measures the variance in runs for the grey levels.
     """
@@ -312,9 +314,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Run Variance (RV) value.
 
-    :math:`RV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j)(j - \mu)^2}`, where
+    :math:`RV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)(j - \mu)^2}`, where
 
-    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{jp(i,j)}`
+    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{jp(i,j|\theta)}`
 
     Measures the variance in runs for the run lengths.
     """
@@ -328,7 +330,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""1
     Calculate and return the Run Entropy (RE) value.
 
-    :math:`RE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j)\log_{2}(p(i,j)+\eps)}`
+    :math:`RE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)\log_{2}(p(i,j|\theta)+\eps)}`
     """
     eps = numpy.spacing(1)
     p_glrlm = self.P_glrlm / self.coefficients['sumP_glrlm']

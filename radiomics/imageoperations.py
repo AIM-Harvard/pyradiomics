@@ -314,7 +314,7 @@ def applyExponential(inputImage):
   return _scaleToOriginalRange(inputImage, im)
 
 def _scaleToOriginalRange(originalImage, filteredImage):
-  mmif = sitk.MinimumMaximumImageFilter
+  mmif = sitk.MinimumMaximumImageFilter()
   mmif.Execute(originalImage)
   im_max = mmif.GetMaximum()
   mmif.Execute(filteredImage)

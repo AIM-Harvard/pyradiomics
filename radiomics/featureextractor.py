@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import logging
 import collections
 from itertools import chain
 import numpy
@@ -39,6 +40,8 @@ class RadiomicsFeaturesExtractor:
     """
 
     def __init__(self, **kwargs):
+        self.logger = logging.getLogger(__name__)
+
         self.featureClasses = self.getFeatureClasses()
 
         self.kwargs = kwargs
@@ -116,6 +119,8 @@ class RadiomicsFeaturesExtractor:
             self.kwargs.update({'label': label})
             self.label = label
 
+        self.logger.info('Calculating features with label: %d', self.label)
+
         featureVector = collections.OrderedDict()
         image, mask = self.loadImage(imageFilepath, maskFilepath)
 
@@ -139,6 +144,7 @@ class RadiomicsFeaturesExtractor:
         # Make generators for all enabled input image types
         imageGenerators = []
         for imageType, customKwargs in self.inputImages.iteritems():
+            self.logger.debug('Applying filter: %s' %(imageType))
             args = self.kwargs.copy()
             args.update(customKwargs)
             imageGenerators = chain(imageGenerators, eval('self.generate_%s(image, mask, **args)' %(imageType)))
@@ -165,6 +171,7 @@ class RadiomicsFeaturesExtractor:
         elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
             image = ImageFilePath
         else:
+            self.logger.warning('Error reading image Filepath or SimpleITK object')
             if self.verbose: print "Error reading image Filepath or SimpleITK object"
             image = None
 
@@ -173,6 +180,7 @@ class RadiomicsFeaturesExtractor:
         elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
             mask = MaskFilePath
         else:
+            self.logger.warning('Error reading mask Filepath or SimpleITK object')
             if self.verbose: print "Error reading mask Filepath or SimpleITK object"
             mask = None
 
@@ -236,20 +244,22 @@ class RadiomicsFeaturesExtractor:
         # Check if size of image is > 4 in all 3D directions (otherwise, LoG filter will fail)
         size = numpy.array(image.GetSize())
         if numpy.min(size) < 4:
-            # TODO: write this to a log file
-            print 'Image too small to apply LoG filter'
+            self.logger.warning('Image too small to apply LoG filter, size: %s', size)
+            if self.verbose: print 'Image too small to apply LoG filter'
             return
 
         sigmaValues = kwargs.get('sigma', numpy.arange(5.,0.,-.5))
 
         for sigma in sigmaValues:
-            if self.verbose: print "\tComputing LoG with sigma %s" %(str(sigma))
+            self.logger.debug('Computing LoG with sigma %g', sigma)
+            if self.verbose: print "\tComputing LoG with sigma %g" %(sigma)
             logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
             if logImage is not None:
                 inputImageName = "log-sigma-%s-mm-3D" %(str(sigma).replace('.','-'))
                 yield logImage, mask, inputImageName, kwargs
             else:
-                print 'Application of LoG filter failed (sigma: %s)'%(sigma)
+                # No log record needed here, this is handled by logging in imageoperations
+                if self.verbose: print 'Application of LoG filter failed (sigma: %g)'%(sigma)
 
     def generate_wavelet(self, image, mask, **kwargs):
         """
@@ -278,6 +288,7 @@ class RadiomicsFeaturesExtractor:
 
         for idx, wl in enumerate(ret, start= 1):
             for decompositionName, decompositionImage in wl.items():
+                self.logger.debug('Computing Wavelet %s', decompositionName)
                 if self.verbose: print "\tComputing Wavelet %s" %(decompositionName)
 
                 if idx == 1:

@@ -1,8 +1,10 @@
 import os
+import logging
 import csv
 import collections
 import traceback
 import SimpleITK as sitk
+import radiomics
 from radiomics import featureextractor
 
 
@@ -13,6 +15,24 @@ def main():
     outputFilepath      = outPath + os.path.sep + "radiomics_features.csv"
     progress_filename   = outPath + os.path.sep + "pyrad_log.txt"
 
+    # Enable writing out the log using radiomics logger
+    logging.getLogger().setLevel(logging.INFO)  # Prints out log messages in this script
+
+    # Write out all log entries to log file
+    handler = logging.FileHandler(filename=progress_filename, mode='w')
+    formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
+    handler.setFormatter(formatter)
+    logging.getLogger().addHandler(handler)
+
+    # Package logging
+    # radiomics.debug()  # Switch on radiomics logging from level=DEBUG (default level=WARNING)
+    # Alternative: specify level
+    radiomics.logger.setLevel(logging.INFO)
+
+    # Prevent radiomics logger from printing out log entries with level < WARNING to the console
+    radiomics.logger.handlers[0].setLevel(logging.WARNING)
+
+    logging.info('Loading CSV')
     print "Loading CSV"
 
     flists = []
@@ -21,8 +41,7 @@ def main():
             cr = csv.reader(inFile, lineterminator= '\n')
             flists = [row for row in cr]
     except Exception:
-        with open(progress_filename,mode='a') as printfile:
-            printfile.write('\tFAILED%s\n\n' %(traceback.format_exc()))
+        logging.error('CSV READ FAILED:\n%s', traceback.format_exc())
 
     print "Loading Done"
     print ("Patients: " + str(len(flists)))
@@ -33,14 +52,15 @@ def main():
     kwargs['interpolator'] = sitk.sitkBSpline
     kwargs['verbose'] = True
 
+    logging.info('Extracting features with kwarg settings: %s', str(kwargs))
+
     extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
     extractor.enableInputImages(original= {})
     #extractor.enableInputImages(wavelet= {'level': 2})
     for idx, entry in enumerate(flists, start= 1):
 
-        with open(progress_filename,mode='a') as printfile:
-            print "(%s/%s) Processing Patient: %s, Study: %s, Reader: %s" %(str(idx), str(len(flists)), entry[0], entry[1], entry[2])
-            printfile.write("(%s/%s) Processing Patient: %s, Study: %s, Reader: %s\n" %(str(idx), str(len(flists)), entry[0], entry[1], entry[2]))
+        print "(%d/%d) Processing Patient: %s, Study: %s, Reader: %s" %(idx, len(flists), entry[0], entry[1], entry[2])
+        logging.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1], entry[2])
 
         imageFilepath = entry[3]
         maskFilepath = entry[4]
@@ -61,7 +81,6 @@ def main():
                     if idx==1: writer.writerow(featureVector.keys())
                     writer.writerow(featureVector.values())
             except Exception:
-                with open(progress_filename,mode='a') as printfile:
-                    printfile.write('\tFAILED%s\n\n' %(traceback.format_exc()))
+                logging.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
 
 main()

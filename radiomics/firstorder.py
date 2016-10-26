@@ -84,6 +84,20 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     return (numpy.min(self.targetVoxelArray))
 
+  def get10PercentileFeatureValue(self):
+    r"""
+    Calculate the 10\ :sup:`th` percentile in the image array.
+    """
+
+    return (numpy.percentile(self.targetVoxelArray, 10))
+
+  def get90PercentileFeatureValue(self):
+    r"""
+    Calculate the 90\ :sup:`th` percentile in the image array.
+    """
+
+    return (numpy.percentile(self.targetVoxelArray, 90))
+
   def getMaximumFeatureValue(self):
     r"""
     Calculate the Maximum Value in the image array.
@@ -107,6 +121,16 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     return (numpy.median(self.targetVoxelArray))
 
+  def getInterquartileRangeFeatureValue(self):
+    r"""
+    Calculate the interquartile range of the image array.
+
+    :math:`interquartile range = P_{75} - P_{25}`, where P\ :sub:`25` and P\ :sub:`75` are the
+    25\ :sup:`th` and 75\ :sup:`th` percentile of the image array, respectively.
+    """
+
+    return numpy.percentile(self.targetVoxelArray, 75) - numpy.percentile(self.targetVoxelArray, 25)
+
   def getRangeFeatureValue (self):
     r"""
     Calculate the Range of Values in the image array.
@@ -122,11 +146,26 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`mean\ absolute\ deviation = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}`
 
-    Mean Deviation is the mean distance of all intensity values
+    Mean Absolute Deviation is the mean distance of all intensity values
     from the Mean Value of the image array.
     """
 
     return ( numpy.mean(numpy.absolute( (numpy.mean(self.targetVoxelArray) - self.targetVoxelArray) )) )
+
+  def getRobustMeanAbsoluteDeviationFeatureValue(self):
+    r"""
+    Calculate the Robust Mean Absolute Deviation for the image array.
+
+    :math:`robust\ mean\ absolute\ deviation = \frac{1}{N_{10-90}}\displaystyle\sum^{N_{10-90}}_{i=1}{|\textbf{X_{10-90}}(i)-\bar{X_{10-90}}|}`
+
+    Robust Mean Absolute Deviation is the mean distance of all intensity values
+    from the Mean Value calculated on the subset of image array with gray levels in between, or equal
+    to the 10\ :sub:`th` and 90\ :sub:`th` percentile.
+    """
+    prcnt10 = self.get10PercentileFeatureValue()
+    prcnt90 = self.get90PercentileFeatureValue()
+    percentileArray = self.targetVoxelArray[(self.targetVoxelArray >= prcnt10) * (self.targetVoxelArray <= prcnt90)]
+    return numpy.mean(numpy.absolute(percentileArray - numpy.mean(percentileArray)))
 
   def getRootMeanSquaredFeatureValue(self):
     r"""

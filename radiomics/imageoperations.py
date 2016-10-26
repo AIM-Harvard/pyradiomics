@@ -12,7 +12,10 @@ def getHistogram(binwidth, parameterValues):
 
   binedges = numpy.arange(lowBound, highBound, binwidth)
 
-  binedges[-1] += 1 # ensures that max(self.targertVoxelArray) is binned to upper bin by numpy.digitize
+  binedges[-1] += 1  # ensures that max(self.targertVoxelArray) is binned to upper bin by numpy.digitize
+
+  if len(binedges) == 1:  # Flat region, ensure that there is 1 bin
+    binedges = 1
 
   return numpy.histogram(parameterValues, bins=binedges)
 

@@ -35,7 +35,7 @@ class RadiomicsFeaturesBase(object):
     self.imageArray = sitk.GetArrayFromImage(self.inputImage)
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
 
-    self.matrix = self.imageArray.astype('int64')
+    self.matrix = self.imageArray.astype('float')
     self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]

@@ -53,7 +53,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
     self.coefficients = {}
-    self.P_rlgl = {}
+    self.P_glrlm = {}
 
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
@@ -100,12 +100,12 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
         matrixDiagonals.append( filter(lambda diag: numpy.nonzero(diag != padVal)[0].size > 0, diags) )
 
-    P_rlgl = numpy.zeros( (Ng, Nr, int(len(matrixDiagonals))) )
+    P_glrlm = numpy.zeros( (Ng, Nr, int(len(matrixDiagonals))) )
 
     # Run-Length Encoding (rle) for the list of diagonals
     # (1 list per direction/angle)
     for angle_idx, angle in enumerate(matrixDiagonals):
-      P = P_rlgl[:,:,angle_idx]
+      P = P_glrlm[:,:,angle_idx]
       # Check whether delineation is 2D for current angle (all diagonals contain 0 or 1 non-pad value)
       isMultiElement = False
       for d in angle:
@@ -123,9 +123,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Crop gray-level axis of RLGL matrix to between minimum and maximum observed gray-levels
     # Crop run-length axis of RLGL matrix up to maximum observed run-length
-    P_rlgl_bounds = numpy.argwhere(P_rlgl)
-    (xstart, ystart, zstart), (xstop, ystop, zstop) = P_rlgl_bounds.min(0), P_rlgl_bounds.max(0) + 1
-    self.P_rlgl = P_rlgl[xstart:xstop,:ystop,:]
+    P_glrlm_bounds = numpy.argwhere(P_glrlm)
+    (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1
+    self.P_glrlm = P_glrlm[xstart:xstop,:ystop,:]
 
     # Optionally apply a weighting factor
     if not self.weightingNorm is None:
@@ -142,24 +142,24 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
           self.logger.warning('weigthing norm "%s" is unknown, weighting factor is set to 1', self.weightingNorm)
           weights[a_idx] = 1
 
-      self.P_rlgl = numpy.sum(self.P_rlgl * weights[None, None, :], 2, keepdims=True)
+      self.P_glrlm = numpy.sum(self.P_glrlm * weights[None, None, :], 2, keepdims=True)
 
-    sumP_rlgl = numpy.sum(self.P_rlgl, (0, 1))
+    sumP_glrlm = numpy.sum(self.P_glrlm, (0, 1))
 
     # Delete empty angles if no weighting is applied
-    if self.P_rlgl.shape[2] > 1:
-      self.P_rlgl = numpy.delete(self.P_rlgl, numpy.where(sumP_rlgl == 0), 2)
-      sumP_rlgl = numpy.delete(sumP_rlgl, numpy.where(sumP_rlgl == 0), 0)
+    if self.P_glrlm.shape[2] > 1:
+      self.P_glrlm = numpy.delete(self.P_glrlm, numpy.where(sumP_glrlm == 0), 2)
+      sumP_glrlm = numpy.delete(sumP_glrlm, numpy.where(sumP_glrlm == 0), 0)
 
-    self.coefficients['sumP_rlgl'] = sumP_rlgl
+    self.coefficients['sumP_glrlm'] = sumP_glrlm
 
   def _calculateCoefficients(self):
 
-    pr = numpy.sum(self.P_rlgl, 0)
-    pg = numpy.sum(self.P_rlgl, 1)
+    pr = numpy.sum(self.P_glrlm, 0)
+    pg = numpy.sum(self.P_glrlm, 1)
 
-    ivector = numpy.arange(1, self.P_rlgl.shape[0] + 1, dtype=numpy.float64)
-    jvector = numpy.arange(1, self.P_rlgl.shape[1] + 1, dtype=numpy.float64)
+    ivector = numpy.arange(1, self.P_glrlm.shape[0] + 1, dtype=numpy.float64)
+    jvector = numpy.arange(1, self.P_glrlm.shape[1] + 1, dtype=numpy.float64)
 
     self.coefficients['pr'] = pr
     self.coefficients['pg'] = pg
@@ -170,17 +170,17 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Short Run Emphasis (SRE) value for all GLRLMs.
 
-    :math:`SRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`SRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     A measure of the distribution of short run lengths, with a greater value indicative
     of shorter run lengths and more fine textural textures.
     """
     pr = self.coefficients['pr']
     jvector = self.coefficients['jvector']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      sre = numpy.sum( (pr/(jvector[:,None]**2)), 0 ) / sumP_rlgl
+      sre = numpy.sum( (pr/(jvector[:,None]**2)), 0 ) / sumP_glrlm
       return (sre.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -189,17 +189,17 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Long Run Emphasis (LRE) value for all GLRLMs.
 
-    :math:`LRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`LRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     A measure of the distribution of long run lengths, with a greater value indicative
     of longer run lengths and more coarse structural textures.
     """
     pr =  self.coefficients['pr']
     jvector = self.coefficients['jvector']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      lre = numpy.sum( (pr*(jvector[:,None]**2)), 0 ) / sumP_rlgl
+      lre = numpy.sum( (pr*(jvector[:,None]**2)), 0 ) / sumP_glrlm
       return (lre.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -208,17 +208,35 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all GLRLMs.
 
-    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{p(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{P(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     Measures the similarity of gray-level intensity values in the image, where a lower GLN value
     correlates with a greater similarity in intensity values.
     """
     pg = self.coefficients['pg']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      gln = numpy.sum( (pg**2) , 0 ) / sumP_rlgl
+      gln = numpy.sum( (pg**2) , 0 ) / sumP_glrlm
       return (gln.mean())
+    except ZeroDivisionError:
+      return numpy.core.nan
+
+  def getGrayLevelNonUniformityNormalizedFeatureValue(self):
+    r"""
+    Calculate and return the Gray Level Non-Uniformity Normalized (GLNN) value.
+
+    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{P(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j)}^2}`
+
+    Measures the similarity of gray-level intensity values in the image, where a lower GLNN value
+    correlates with a greater similarity in intensity values..
+    """
+    pg = self.coefficients['pg']
+    sumP_gldm = self.coefficients['sumP_glrlm']
+
+    try:
+      glnn = numpy.sum(pg**2, 0) / (sumP_gldm**2)
+      return glnn.mean()
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -226,17 +244,35 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Run Length Non-Uniformity (RLN) value for all GLRLMs.
 
-    :math:`RLN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{p(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`RLN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{P(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     Measures the similarity of run lengths throughout the image, with a lower value indicating
     more homogeneity among run lengths in the image.
     """
     pr = self.coefficients['pr']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      rln = numpy.sum( (pr**2) , 0 ) / sumP_rlgl
+      rln = numpy.sum( (pr**2) , 0 ) / sumP_glrlm
       return (rln.mean())
+    except ZeroDivisionError:
+      return numpy.core.nan
+
+  def getRunLengthNonUniformityNormalizedFeatureValue(self):
+    r"""
+    Calculate and return the mean Run Length Non-Uniformity Normalized (RLNN) value for all GLRLMs.
+
+    :math:`RLNN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{P(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+
+    Measures the similarity of run lengths throughout the image, with a lower value indicating
+    more homogeneity among run lengths in the image.
+    """
+    pr = self.coefficients['pr']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
+
+    try:
+      rlnn = numpy.sum( (pr**2) , 0 ) / sumP_glrlm**2
+      return (rlnn.mean())
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -244,33 +280,76 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Run Percentage (RP) value for all GLRLMs.
 
-    :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{N_p}}`
+    :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)}{N_p}}`
 
     Measures the homogeneity and distribution of runs of an image for a certain direction.
     """
     Np = self.coefficients['Np']
 
     try:
-      rp = numpy.sum( (self.P_rlgl/(Np)) , (0, 1) )
+      rp = numpy.sum( (self.P_glrlm/(Np)) , (0, 1) )
       return (rp.mean())
     except ZeroDivisionError:
       return numpy.core.nan
+
+  def getGrayLevelVarianceFeatureValue(self):
+    r"""
+    Calculate and return the Gray Level Variance (GLV) value.
+
+    :math:`GLV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j)(i - \mu)^2}`, where
+
+    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{ip(i,j)}`
+
+    Measures the variance in runs for the grey levels.
+    """
+    ivector = self.coefficients['ivector']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
+    u_i = numpy.sum(self.coefficients['pg'] * ivector[:, None], 0) / sumP_glrlm
+    glv = numpy.sum(self.coefficients['pg'] * (ivector[:, None] - u_i[None, :])**2, 0) / sumP_glrlm
+    return glv.mean()
+
+  def getRunVarianceFeatureValue(self):
+    r"""
+    Calculate and return the Run Variance (RV) value.
+
+    :math:`RV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j)(j - \mu)^2}`, where
+
+    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{jp(i,j)}`
+
+    Measures the variance in runs for the run lengths.
+    """
+    jvector = self.coefficients['jvector']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
+    u_j = numpy.sum(self.coefficients['pr'] * jvector[:, None], 0) / sumP_glrlm
+    rv = numpy.sum(self.coefficients['pr'] * (jvector[:, None] - u_j[None, :])**2, 0) / sumP_glrlm
+    return rv.mean()
+
+  def getRunEntropyFeatureValue(self):
+    r"""1
+    Calculate and return the Run Entropy (RE) value.
+
+    :math:`RE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j)\log_{2}(p(i,j)+\eps)}`
+    """
+    eps = numpy.spacing(1)
+    p_glrlm = self.P_glrlm / self.coefficients['sumP_glrlm']
+    re = -numpy.sum(p_glrlm * numpy.log2(p_glrlm + eps), (0, 1))
+    return re.mean()
 
   def getLowGrayLevelRunEmphasisFeatureValue(self):
     r"""
     Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all GLRLMs.
 
-    :math:`LGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`LGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     Measures the distribution of low gray-level values, with a higher value indicating a greater
     concentration of low gray-level values in the image.
     """
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      lglre = numpy.sum( (pg/(ivector[:,None]**2)) , 0 ) / sumP_rlgl
+      lglre = numpy.sum( (pg/(ivector[:,None]**2)) , 0 ) / sumP_glrlm
       return (lglre.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -279,17 +358,17 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all GLRLMs.
 
-    :math:`HGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)i^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`HGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)i^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     Measures the distribution of the higher gray-level values, with a higher value indicating
     a greater concentration of high gray-level values in the image.
     """
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      hglre = numpy.sum( (pg*(ivector[:,None]**2)) , 0 ) / sumP_rlgl
+      hglre = numpy.sum( (pg*(ivector[:,None]**2)) , 0 ) / sumP_glrlm
       return (hglre.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -298,16 +377,16 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all GLRLMs.
 
-    :math:`SRLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`SRLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     Measures the joint distribution of shorter run lengths with lower gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      srlgle = numpy.sum( (self.P_rlgl/((ivector[:,None,None]**2)*(jvector[None,:,None]**2))) , (0, 1) ) / sumP_rlgl
+      srlgle = numpy.sum( (self.P_glrlm/((ivector[:,None,None]**2)*(jvector[None,:,None]**2))) , (0, 1) ) / sumP_glrlm
       return (srlgle.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -316,16 +395,16 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all GLRLMs.
 
-    :math:`SRHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`SRHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     Measures the joint distribution of shorter run lengths with higher gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      srhgle = numpy.sum( (self.P_rlgl*(ivector[:,None,None]**2)/(jvector[None,:,None]**2)) , (0, 1) ) / sumP_rlgl
+      srhgle = numpy.sum( (self.P_glrlm*(ivector[:,None,None]**2)/(jvector[None,:,None]**2)) , (0, 1) ) / sumP_glrlm
       return (srhgle.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -334,16 +413,16 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all GLRLMs.
 
-    :math:`LRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{p(i,j|\theta)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`LRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     Measures the joint distribution of long run lengths with lower gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      lrlgle = numpy.sum( (self.P_rlgl*(jvector[None,:,None]**2)/(ivector[:,None,None]**2)) , (0, 1) ) / sumP_rlgl
+      lrlgle = numpy.sum( (self.P_glrlm*(jvector[None,:,None]**2)/(ivector[:,None,None]**2)) , (0, 1) ) / sumP_glrlm
       return (lrlgle.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -352,16 +431,16 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all GLRLMs.
 
-    :math:`LRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{p(i,j|\theta)}}`
+    :math:`LRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
 
     Measures the joint distribution of long run lengths with higher gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    sumP_rlgl = self.coefficients['sumP_rlgl']
+    sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      lrhgle = numpy.sum( (self.P_rlgl*((jvector[None,:,None]**2)*(ivector[:,None,None]**2))) , (0, 1) ) / sumP_rlgl
+      lrhgle = numpy.sum( (self.P_glrlm*((jvector[None,:,None]**2)*(ivector[:,None,None]**2))) , (0, 1) ) / sumP_glrlm
       return (lrhgle.mean())
     except ZeroDivisionError:
       return numpy.core.nan

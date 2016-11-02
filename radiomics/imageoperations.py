@@ -2,6 +2,8 @@ import SimpleITK as sitk
 import numpy, pywt, logging
 from itertools import chain
 
+logger = logging.getLogger(__name__)
+
 def getHistogram(binwidth, parameterValues):
   # Start binning form the first value lesser than or equal to the minimum value and evenly dividable by binwidth
   lowBound = min(parameterValues) - (min(parameterValues) % binwidth)
@@ -58,6 +60,7 @@ def cropToTumorMask(imageNode, maskNode, label=1):
 
   Returns both the cropped version of the image and the cropped version of the labelmap.
   """
+  global logger
 
   oldMaskID = maskNode.GetPixelID()
   maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
@@ -66,12 +69,13 @@ def cropToTumorMask(imageNode, maskNode, label=1):
   #Determine bounds
   lsif = sitk.LabelStatisticsImageFilter()
   lsif.Execute(imageNode, maskNode)
-  bb = lsif.GetBoundingBox(label)
+  bb = numpy.array(lsif.GetBoundingBox(label))
 
   ijkMinBounds = bb[0::2]
   ijkMaxBounds = size - bb[1::2] - 1
 
   #Crop Image
+  logger.debug('Cropping to size %s', (bb[1::2] - bb[0::2]) + 1)
   cif = sitk.CropImageFilter()
   cif.SetLowerBoundaryCropSize(ijkMinBounds)
   cif.SetUpperBoundaryCropSize(ijkMaxBounds)
@@ -92,6 +96,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   2 - sitkBSpline
   3 - sitkGaussian
   """
+  global logger
 
   if imageNode is None or maskNode is None:
     return None
@@ -147,6 +152,8 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 
   imageDirection = numpy.array(imageNode.GetDirection())
 
+  logger.debug('Applying resampling (spacing %s and size %s)', resampledPixelSpacing, newSize)
+
   rif = sitk.ResampleImageFilter()
 
   rif.SetOutputSpacing(resampledPixelSpacing)
@@ -171,6 +178,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 # If sigmaValue is not greater than zero, return the input image.
 #
 def applyLoG(inputImage, sigmaValue=0.5):
+  global logger
   if sigmaValue > 0.0:
     size = numpy.array(inputImage.GetSize())
     spacing = numpy.array(inputImage.GetSpacing())
@@ -180,10 +188,10 @@ def applyLoG(inputImage, sigmaValue=0.5):
       lrgif.SetSigma(sigmaValue)
       return lrgif.Execute(inputImage)
     else:
-      logging.info('applyLoG: sigma/spacing + 1 must be greater than the size of the inputImage: %g', sigmaValue)
+      logger.warning('applyLoG: sigma/spacing + 1 must be greater than the size of the inputImage: %g', sigmaValue)
       return None
   else:
-    logging.info('applyLoG: sigma must be greater than 0.0: %g', sigmaValue)
+    logger.warning('applyLoG: sigma must be greater than 0.0: %g', sigmaValue)
     return None
 
 def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):

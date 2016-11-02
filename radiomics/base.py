@@ -1,3 +1,5 @@
+import logging
+import traceback
 import SimpleITK as sitk
 import numpy
 import inspect
@@ -12,7 +14,7 @@ class RadiomicsFeaturesBase(object):
     SimpleITK images as input is to keep the possibility of reusing the
     optimized feature calculators implemented in SimpleITK in the future.
     """
-
+    self.logger = logging.getLogger(self.__module__)
     self.binWidth = kwargs.get('binWidth', 25)
     self.label = kwargs.get('label', 1)
     self.verbose = kwargs.get('verbose', True)
@@ -26,6 +28,7 @@ class RadiomicsFeaturesBase(object):
     self.inputMask = inputMask
 
     if inputImage is None or inputMask is None:
+      self.logger.warning('Missing input image or mask')
       if self.verbose: print('ERROR: missing input image or mask')
       return
 
@@ -63,9 +66,11 @@ class RadiomicsFeaturesBase(object):
     return features
   
   def calculateFeatures(self):
+    self.logger.debug('Calculating features')
     for feature in self.enabledFeatures.keys():
       call = 'self.get'+feature+'FeatureValue()'
       try:
         self.featureValues[feature] = eval(call)
       except Exception:
         self.featureValues[feature] = numpy.nan
+        self.logger.error('FAILED: %s', traceback.format_exc())

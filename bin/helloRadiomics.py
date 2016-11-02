@@ -1,6 +1,8 @@
 import os
+import logging
 import SimpleITK as sitk
 from radiomics import featureextractor
+import radiomics
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
 #imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
@@ -33,10 +35,24 @@ extractor.enableInputImages(original= {})
 extractor.disableAllFeatures()
 
 # Enable all features in firstorder
-# Sig.enableFeatureClassByName('firstorder')
+# extractor.enableFeatureClassByName('firstorder')
 
 # Only enable mean and skewness in firstorder
 extractor.enableFeaturesByName(firstorder= ['Mean', 'Skewness'])
+
+# Enable writing out the log using radiomics logger
+radiomics.debug()  # Switch on radiomics logging from level=DEBUG (default level=WARNING)
+
+# Prevent radiomics logger from printing out log entries with level<WARNING to the console
+logger = logging.getLogger('radiomics')
+logger.handlers[0].setLevel(logging.WARNING)
+logger.propagate = False  # Do not pass log messages on to root logger
+
+# Write out all log entries to a file
+handler = logging.FileHandler(filename='testLog.txt', mode='w')
+formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 for f in extractor.getFeaturesNames('firstorder'):
   print "Feature: %s" %(f)

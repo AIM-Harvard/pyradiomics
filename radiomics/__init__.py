@@ -3,18 +3,25 @@ if sys.version_info < (2, 6, 0):
     raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
 in_py3 = sys.version_info[0] > 2
 
-# Set up logging system for the whole package.
-# In each module, set logger=logging.getLogger('pyradiomics')  and the same instance
-#     will be used by all
-# At command line, turn on debugging for all pyradiomics functions with:
-#        import radiomics
-#        radiomics.debug()
-#  Turn off debugging with
-#       radiomics.debug(False)
 import logging
 
 
 def debug(debug_on=True):
+    """
+    Set up logging system for the whole package.
+    By default, module hierarchy is reflected in log, as child loggers are created by module
+    This is achieved by the following line in base.py: ``self.logger = logging.getLogger(self.__module__)``
+    To use same instance in each module, set ``self.logger=logging.getLogger('radiomics')``.
+
+    At command line, turn on debugging for all pyradiomics functions with:
+
+    ``import radiomics``\n
+    ``radiomics.debug()``
+
+    Turn off debugging with:
+
+    ``radiomics.debug(False)``
+    """
     global logger, debugging
     if debug_on:
         logger.setLevel(logging.DEBUG)
@@ -23,9 +30,10 @@ def debug(debug_on=True):
         logger.setLevel(logging.WARNING)
         debugging = False
 
-logger = logging.getLogger('pyradiomics')
+debugging = True
+logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
-# formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M") #'%(asctime)s %(levelname)s %(message)s'
+# formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M")
 formatter = logging.Formatter("%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)

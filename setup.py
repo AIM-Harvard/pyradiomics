@@ -1,7 +1,10 @@
+import versioneer
+
 from setuptools import setup
 
 setup(name='pyradiomics',
-      version='0.0.1dev',
+      version=versioneer.get_version(),
+      cmdclass=versioneer.get_cmdclass(),
       packages=['radiomics'],
       install_requires=['numpy==1.11.0',
                         'SimpleITK==0.9.1',

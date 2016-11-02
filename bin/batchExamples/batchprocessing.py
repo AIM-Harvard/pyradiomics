@@ -51,6 +51,7 @@ def main():
     kwargs['resampledPixelSpacing'] = None #[3,3,3]
     kwargs['interpolator'] = sitk.sitkBSpline
     kwargs['verbose'] = True
+    kwargs['weigthingNorm'] = 'euclidean'
 
     logging.info('Extracting features with kwarg settings: %s', str(kwargs))
 

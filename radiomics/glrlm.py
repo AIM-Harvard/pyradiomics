@@ -29,6 +29,17 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   :math:`N_p` be the number of voxels in the image
 
+  By default, the value of a feature is calculated on the GLRLM for each angle separately, after which the mean of these
+  values is returned. If distance weighting is enabled, GLRLMs are weighted by the distance between neighbouring voxels
+  and then summed and normalised. Features are then calculated on the resultant matrix. The distance between
+  neighbouring voxels is calculated for each angle using the norm specified in 'weightingNorm'.
+
+  The following class specific settings are possible:
+
+  - weightingNorm [None]: string, indicates which norm should be used when applying distance weighting. possible values
+  are 'manhattan' for first order norm, 'euclidean' for second order norm and 'infinity' for infinity norm. If set to
+  None, no weighting is applied. In case of other values, an warning is logged and GLCMs are all weighted by factor 1.
+
   References
 
   - Galloway MM. 1975. Texture analysis using gray level run lengths. Computer Graphics and Image Processing 4:172-179.
@@ -38,6 +49,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLRLM,self).__init__(inputImage, inputMask, **kwargs)
+
+    self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
     self.coefficients = {}
     self.P_rlgl = {}
@@ -114,11 +127,29 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     (xstart, ystart, zstart), (xstop, ystop, zstop) = P_rlgl_bounds.min(0), P_rlgl_bounds.max(0) + 1
     self.P_rlgl = P_rlgl[xstart:xstop,:ystop,:]
 
-    # Delete empty angles
+    # Optionally apply a weighting factor
+    if not self.weightingNorm is None:
+      pixelSpacing = self.inputImage.GetSpacing()[::-1]
+      weights = numpy.empty(len(angles))
+      for a_idx, a in enumerate(angles):
+        if self.weightingNorm == 'infinity':
+          weights[a_idx] = max(numpy.abs(a) * pixelSpacing)
+        elif self.weightingNorm == 'euclidean':
+          weights[a_idx] = numpy.sqrt(numpy.sum((numpy.abs(a) * pixelSpacing) ** 2))
+        elif self.weightingNorm == 'manhattan':
+          weights[a_idx] = numpy.sum(numpy.abs(a) * pixelSpacing)
+        else:
+          self.logger.warning('weigthing norm "%s" is unknown, weighting factor is set to 1', self.weightingNorm)
+          weights[a_idx] = 1
+
+      self.P_rlgl = numpy.sum(self.P_rlgl * weights[None, None, :], 2, keepdims=True)
+
     sumP_rlgl = numpy.sum(self.P_rlgl, (0, 1))
 
-    self.P_rlgl = numpy.delete(self.P_rlgl, numpy.where(sumP_rlgl == 0), 2)
-    sumP_rlgl = numpy.delete(sumP_rlgl, numpy.where(sumP_rlgl == 0), 0)
+    # Delete empty angles if no weighting is applied
+    if self.P_rlgl.shape[2] > 1:
+      self.P_rlgl = numpy.delete(self.P_rlgl, numpy.where(sumP_rlgl == 0), 2)
+      sumP_rlgl = numpy.delete(sumP_rlgl, numpy.where(sumP_rlgl == 0), 0)
 
     self.coefficients['sumP_rlgl'] = sumP_rlgl
 

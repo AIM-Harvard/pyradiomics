@@ -62,10 +62,21 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   :math:`HXY2 =  -\sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p_x(i)p_y(j)\log_2\big(p_x(i)p_y(j)\big)}`
 
+  By default, the value of a feature is calculated on the GLCM for each angle separately, after which the mean of these
+  values is returned. If distance weighting is enabled, GLCM matrices are weighted by weighting factor W and
+  then summed and normalised. Features are then calculated on the resultant matrix.
+  Weighting factor W is calculated for the distance between neighbouring voxels by:
+
+  :math:`W = e^{-\|d\|^2}`, where d is the distance for the associated angle according
+  to the norm specified in setting 'weightingNorm'.
+
   The following class specific settings are possible:
 
   - symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
     which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`.
+  - weightingNorm [None]: string, indicates which norm should be used when applying distance weighting. possible values
+    are 'manhattan' for first order norm, 'euclidean' for second order norm and 'infinity' for infinity norm. If set to
+    None, no weighting is applied. In case of other values, an warning is logged and GLCMs are all weighted by factor 1.
 
   References
 
@@ -78,6 +89,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLCM,self).__init__(inputImage, inputMask, **kwargs)
 
     self.symmetricalGLCM = kwargs.get('symmetricalGLCM', True)
+    self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
     self.coefficients = {}
     self.P_glcm = {}
@@ -136,14 +148,32 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     if self.symmetricalGLCM:
       self.P_glcm += numpy.transpose(self.P_glcm, (1, 0, 2))
 
-    sumGlcm = numpy.sum(self.P_glcm, (0,1))
+    # Optionally apply a weighting factor
+    if not self.weightingNorm is None:
+      pixelSpacing = self.inputImage.GetSpacing()[::-1]
+      weights = numpy.empty(len(angles))
+      for a_idx, a in enumerate(angles):
+        if self.weightingNorm == 'infinity':
+          weights[a_idx] = numpy.exp(-max(numpy.abs(a) * pixelSpacing) ** 2)
+        elif self.weightingNorm == 'euclidean':
+          weights[a_idx] = numpy.exp(-numpy.sum((numpy.abs(a) * pixelSpacing) ** 2))  # sqrt ^ 2 = 1
+        elif self.weightingNorm == 'manhattan':
+          weights[a_idx] = numpy.exp(-numpy.sum(numpy.abs(a) * pixelSpacing) ** 2)
+        else:
+          self.logger.warning('weigthing norm "%s" is unknown, W is set to 1', self.weightingNorm)
+          weights[a_idx] = 1
 
-    # Delete empty angles
-    self.P_glcm = numpy.delete(self.P_glcm, numpy.where(sumGlcm == 0), 2)
-    sumGlcm = numpy.delete(sumGlcm, numpy.where(sumGlcm == 0), 0)
+      self.P_glcm = numpy.sum(self.P_glcm * weights[None, None, :], 2, keepdims=True)
+
+    sumGlcm = numpy.sum(self.P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
+
+    # Delete empty angles if no weighting is applied
+    if self.P_glcm.shape[2] > 1:
+      self.P_glcm = numpy.delete(self.P_glcm, numpy.where(sumGlcm == 0), 2)
+      sumGlcm = numpy.delete(sumGlcm, numpy.where(sumGlcm == 0), 0)
 
     # Normalize each glcm
-    self.P_glcm = self.P_glcm/sumGlcm[None, None, :]
+    self.P_glcm = self.P_glcm/sumGlcm
 
   # check if ivector and jvector can be replaced
   def _calculateCoefficients(self):

@@ -7,23 +7,36 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
   r"""
   A Gray Level Run Length Matrix (GLRLM) quantifies gray level runs in an image.
   A gray level run is defined as the length in number of pixels,
-  of consecutive pixels that have the same gray level value. In a gray level run length matrix :math:`P(i,j|\theta)`,
-  the :math:`(i,j)\text{th}` element describes the number of times a gray level :math:`i` appears consecutively :math:`j` times
-  in the direction specified by :math:`\theta`, and :math:`N_g` is the number of discrete gray level intensities.
+  of consecutive pixels that have the same gray level value. In a gray level run length matrix
+  :math:`\textbf{P}(i,j|\theta)`, the :math:`(i,j)`\ :sup:`th` element describes the number of times
+  a gray level :math:`i` appears consecutively :math:`j` times in the direction specified by :math:`\theta`.
 
   As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
 
-  :math:`I = \begin{bmatrix} 5 & 2 & 5 & 4 & 4\\ 3 & 3 & 3 & 1 & 3\\ 2 & 1 & 1 & 1 & 3\\ 4 & 2 & 2 & 2 & 3\\ 3 & 5 & 3 & 3 & 2 \end{bmatrix}`
+  .. math::
+    \textbf{I} = \begin{bmatrix}
+    5 & 2 & 5 & 4 & 4\\
+    3 & 3 & 3 & 1 & 3\\
+    2 & 1 & 1 & 1 & 3\\
+    4 & 2 & 2 & 2 & 3\\
+    3 & 5 & 3 & 3 & 2 \end{bmatrix}
 
   The GLRLM for :math:`\theta = 0`, where 0 degrees is the horizontal direction, then becomes:
 
-  :math:`P = \begin{bmatrix} 1 & 0 & 1 & 0 & 0\\ 3 & 0 & 1 & 0 & 0\\ 4 & 1 & 1 & 0 & 0\\ 1 & 1 & 0 & 0 & 0\\ 3 & 0 & 0 & 0 & 0 \end{bmatrix}`
+  .. math::
+    \textbf{P} = \begin{bmatrix}
+    1 & 0 & 1 & 0 & 0\\
+    3 & 0 & 1 & 0 & 0\\
+    4 & 1 & 1 & 0 & 0\\
+    1 & 1 & 0 & 0 & 0\\
+    3 & 0 & 0 & 0 & 0 \end{bmatrix}
 
   Let:
 
-  :math:`P(i,j|\theta)` be the run length matrix for an arbitrary direction :math:`\theta`
+  :math:`\textbf{P}(i,j|\theta)` be the run length matrix for an arbitrary direction :math:`\theta`
 
-  :math:`p(i,j|\theta)` be the normalized run length matrix, defined as :math:`p(i,j) = \frac{P(i,j|\theta)}{\sum{P(i,j|\theta)}}`
+  :math:`p(i,j|\theta)` be the normalized run length matrix, defined as :math:`p(i,j|\theta) =
+  \frac{\textbf{P}(i,j|\theta)}{\sum{\textbf{P}(i,j|\theta)}}`
 
   :math:`N_g` be the number of discreet intensity values in the image
 
@@ -123,8 +136,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
             if level != padVal:
               P[level-1, run_length-1] += 1
 
-    # Crop gray-level axis of RLGL matrix to between minimum and maximum observed gray-levels
-    # Crop run-length axis of RLGL matrix up to maximum observed run-length
+    # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
+    # Crop run-length axis of GLRLMs up to maximum observed run-length
     P_glrlm_bounds = numpy.argwhere(P_glrlm)
     (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1
     self.P_glrlm = P_glrlm[xstart:xstop,:ystop,:]
@@ -172,7 +185,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Short Run Emphasis (SRE) value for all GLRLMs.
 
-    :math:`SRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`SRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     A measure of the distribution of short run lengths, with a greater value indicative
     of shorter run lengths and more fine textural textures.
@@ -191,7 +204,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Long Run Emphasis (LRE) value for all GLRLMs.
 
-    :math:`LRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`LRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     A measure of the distribution of long run lengths, with a greater value indicative
     of longer run lengths and more coarse structural textures.
@@ -210,7 +223,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Gray Level Non-Uniformity (GLN) value for all GLRLMs.
 
-    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{P(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the similarity of gray-level intensity values in the image, where a lower GLN value
     correlates with a greater similarity in intensity values.
@@ -228,10 +241,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Gray Level Non-Uniformity Normalized (GLNN) value.
 
-    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{P(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}^2}`
+    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}^2}`
 
     Measures the similarity of gray-level intensity values in the image, where a lower GLNN value
-    correlates with a greater similarity in intensity values..
+    correlates with a greater similarity in intensity values. This is the normalized version of the GLN formula.
     """
     pg = self.coefficients['pg']
     sumP_gldm = self.coefficients['sumP_glrlm']
@@ -246,7 +259,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Run Length Non-Uniformity (RLN) value for all GLRLMs.
 
-    :math:`RLN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{P(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`RLN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the similarity of run lengths throughout the image, with a lower value indicating
     more homogeneity among run lengths in the image.
@@ -264,10 +277,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Run Length Non-Uniformity Normalized (RLNN) value for all GLRLMs.
 
-    :math:`RLNN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{P(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`RLNN = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j|\theta)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the similarity of run lengths throughout the image, with a lower value indicating
-    more homogeneity among run lengths in the image.
+    more homogeneity among run lengths in the image. This is the normalized version of the RLN formula.
     """
     pr = self.coefficients['pr']
     sumP_glrlm = self.coefficients['sumP_glrlm']
@@ -282,9 +295,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Run Percentage (RP) value for all GLRLMs.
 
-    :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)}{N_p}}`
+    :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{N_p}}`
 
-    Measures the homogeneity and distribution of runs of an image for a certain direction.
+    Measures the homogeneity and distribution of runs of an image.
     """
     Np = self.coefficients['Np']
 
@@ -300,9 +313,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     :math:`GLV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)(i - \mu)^2}`, where
 
-    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{ip(i,j|\theta)}`
+    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)i}`
 
-    Measures the variance in runs for the grey levels.
+    Measures the variance in gray level intensity for the runs.
     """
     ivector = self.coefficients['ivector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
@@ -316,7 +329,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     :math:`RV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)(j - \mu)^2}`, where
 
-    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{jp(i,j|\theta)}`
+    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)j}`
 
     Measures the variance in runs for the run lengths.
     """
@@ -330,7 +343,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""1
     Calculate and return the Run Entropy (RE) value.
 
-    :math:`RE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)\log_{2}(p(i,j|\theta)+\eps)}`
+    :math:`RE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)\log_{2}(p(i,j|\theta)+\epsilon)}`
     """
     eps = numpy.spacing(1)
     p_glrlm = self.P_glrlm / self.coefficients['sumP_glrlm']
@@ -341,7 +354,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Low Gray Level Run Emphasis (LGLRE) value for all GLRLMs.
 
-    :math:`LGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`LGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the distribution of low gray-level values, with a higher value indicating a greater
     concentration of low gray-level values in the image.
@@ -360,7 +373,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean High Gray Level Run Emphasis (HGLRE) value for all GLRLMs.
 
-    :math:`HGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)i^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`HGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)i^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the distribution of the higher gray-level values, with a higher value indicating
     a greater concentration of high gray-level values in the image.
@@ -379,7 +392,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Short Run Low Gray Level Emphasis (SRLGLE) value for all GLRLMs.
 
-    :math:`SRLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`SRLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the joint distribution of shorter run lengths with lower gray-level values.
     """
@@ -397,7 +410,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Short Run High Gray Level Emphasis (SRHGLE) value for all GLRLMs.
 
-    :math:`SRHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`SRHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the joint distribution of shorter run lengths with higher gray-level values.
     """
@@ -415,7 +428,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Long Run Low Gray Level Emphasis (LRLGLE) value for all GLRLMs.
 
-    :math:`LRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{P(i,j|\theta)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`LRLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the joint distribution of long run lengths with lower gray-level values.
     """
@@ -433,7 +446,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Long Run High Gray Level Emphasis (LRHGLE) value for all GLRLMs.
 
-    :math:`LRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{P(i,j|\theta)}}`
+    :math:`LRHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}`
 
     Measures the joint distribution of long run lengths with higher gray-level values.
     """

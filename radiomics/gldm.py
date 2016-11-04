@@ -5,7 +5,50 @@ from radiomics import base, imageoperations
 
 class RadiomicsGLDM(base.RadiomicsFeaturesBase):
   r"""
+  A Gray Level Dependence Matrix (GLDM) quantifies gray level dependencies in an image.
+  A gray level dependency is defined as a the number of connected voxels within distance :math:`\delta` that are
+  dependent on the center voxel.
+  A neighbouring voxel with gray level :math:`j` is considered dependent on center voxel with gray level :math:`i`
+  if :math:`|i-j|\le\alpha`. In a gray level dependence matrix :math:`\textbf{P}(i,j)` the :math:`(i,j)`\ :sup:`th`
+  element describes the number of times a voxel with gray level :math:`i` with :math:`j` dependent voxels
+  in its neighbourhood appears in image.
 
+  As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
+
+  .. math::
+    \textbf{I} = \begin{bmatrix}
+    5 & 2 & 5 & 4 & 4\\
+    3 & 3 & 3 & 1 & 3\\
+    2 & 1 & 1 & 1 & 3\\
+    4 & 2 & 2 & 2 & 3\\
+    3 & 5 & 3 & 3 & 2 \end{bmatrix}
+
+  For :math:`\alpha=0` and :math:`\delta = 1`, the GLDM then becomes:
+
+  .. math::
+    \textbf{P} = \begin{bmatrix}
+    0 & 1 & 2 & 1 \\
+    1 & 2 & 3 & 0 \\
+    1 & 4 & 4 & 0 \\
+    1 & 2 & 0 & 0 \\
+    3 & 0 & 0 & 0 \end{bmatrix}
+
+  Let:
+
+  :math:`\textbf{P}(i,j)` be the dependence matrix
+
+  :math:`p(i,j)` be the normalized dependence matrix, defined as :math:`p(i,j) = \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
+
+  :math:`N_g` be the number of discreet intensity values in the image
+
+  :math:`N_d` be the number of discreet dependency sizes in the image
+
+  :math:`N_p` be the number of voxels in the image
+
+  The following class specific settings are possible:
+
+  - gldm_a [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is considered
+    dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -102,11 +145,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
   def getSmallDependenceEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Small Dependence Emphasis (SDE) value for all GLRLMs.
+    Calculate and return the Small Dependence Emphasis (SDE) value.
 
-    :math:`SDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{P(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`SDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
-    A measure of the distribution of small dependence, with a greater value indicative
+    A measure of the distribution of small dependencies, with a greater value indicative
     of smaller dependence and less homogeneous textures.
     """
     pd = self.coefficients['pd']
@@ -123,9 +166,9 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Large Dependence Emphasis (LDE) value.
 
-    :math:`LDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)j^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`LDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)j^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
-    A measure of the distribution of large dependence, with a greater value indicative
+    A measure of the distribution of large dependencies, with a greater value indicative
     of larger dependence and more homogeneous textures.
     """
     pd =  self.coefficients['pd']
@@ -142,7 +185,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Gray Level Non-Uniformity (GLN) value.
 
-    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{P(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the similarity of gray-level intensity values in the image, where a lower GLN value
     correlates with a greater similarity in intensity values.
@@ -160,10 +203,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Gray Level Non-Uniformity Normalized (GLNN) value.
 
-    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{P(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}^2}`
+    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
 
     Measures the similarity of gray-level intensity values in the image, where a lower GLNN value
-    correlates with a greater similarity in intensity values..
+    correlates with a greater similarity in intensity values. This is the normalized version of the GLN formula.
     """
     pg = self.coefficients['pg']
     sumP_gldm = self.coefficients['sumP_gldm']
@@ -176,37 +219,37 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
   def getDependenceNonUniformityFeatureValue(self):
     r"""
-    Calculate and return the Dependence Non-Uniformity (DLN) value.
+    Calculate and return the Dependence Non-Uniformity (DN) value.
 
-    :math:`DLN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{P(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`DN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the similarity of dependence throughout the image, with a lower value indicating
-    more homogeneity among dependence in the image.
+    more homogeneity among dependencies in the image.
     """
     pd = self.coefficients['pd']
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      dln = numpy.sum(pd**2) / sumP_gldm
-      return dln
+      dn = numpy.sum(pd**2) / sumP_gldm
+      return dn
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getDependenceNonUniformityNormalizedFeatureValue(self):
     r"""
-    Calculate and return the Dependence Non-Uniformity Normalized (DLNN) value.
+    Calculate and return the Dependence Non-Uniformity Normalized (DNN) value.
 
-    :math:`DLNN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{P(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}^2}`
+    :math:`DNN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
 
     Measures the similarity of dependence throughout the image, with a lower value indicating
-    more homogeneity among dependence in the image. This is the normalized version of the DLN formula.
+    more homogeneity among dependencies in the image. This is the normalized version of the DLN formula.
     """
     pd = self.coefficients['pd']
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      dlnn = numpy.sum(pd**2) / (sumP_gldm**2)
-      return dlnn
+      dnn = numpy.sum(pd**2) / (sumP_gldm**2)
+      return dnn
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -218,7 +261,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
     :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{ip(i,j)}`
 
-    Measures the variance in dependence counts for the grey levels.
+    Measures the variance in grey level in the image.
     """
     ivector = self.coefficients['ivector']
     sumP_gldm = self.coefficients['sumP_gldm']
@@ -235,7 +278,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
     :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{jp(i,j)}`
 
-    Measures the variance in dependence counts for the dependence sizes.
+    Measures the variance in dependence size in the image.
     """
     jvector = self.coefficients['jvector']
     sumP_gldm = self.coefficients['sumP_gldm']
@@ -247,7 +290,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Dependence Entropy (DE) value.
 
-    :math:`Dependence Entropy = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)\log_{2}(p(i,j)+\eps)}`
+    :math:`Dependence Entropy = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}`
     """
     eps = numpy.spacing(1)
     p_gldm = self.P_gldm / self.coefficients['sumP_gldm']
@@ -257,7 +300,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Low Gray Level Emphasis (LGLE) value.
 
-    :math:`LGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{P(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`LGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the distribution of low gray-level values, with a higher value indicating a greater
     concentration of low gray-level values in the image.
@@ -276,7 +319,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the High Gray Level Emphasis (HGLE) value.
 
-    :math:`HGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)i^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`HGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)i^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the distribution of the higher gray-level values, with a higher value indicating
     a greater concentration of high gray-level values in the image.
@@ -295,7 +338,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Small Dependence Low Gray Level Emphasis (SDLGLE) value.
 
-    :math:`SDLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{P(i,j)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`SDLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the joint distribution of small dependence with lower gray-level values.
     """
@@ -313,9 +356,9 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Small Dependence High Gray Level Emphasis (SDHGLE) value.
 
-    :math:`SDHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{P(i,j)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`SDHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
-    Measures the joint distribution of shorter run lengths with higher gray-level values.
+    Measures the joint distribution of small dependence with higher gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
@@ -331,7 +374,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Large Dependence Low Gray Level Emphasis (LDLGLE) value.
 
-    :math:`LDLGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{P(i,j)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`LDLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the joint distribution of large dependence with lower gray-level values.
     """
@@ -349,7 +392,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Large Dependence High Gray Level Emphasis (LDHGLE) value.
 
-    :math:`LDHGLRE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{P(i,j)}}`
+    :math:`LDHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the joint distribution of large dependence with higher gray-level values.
     """

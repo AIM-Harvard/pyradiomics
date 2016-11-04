@@ -49,6 +49,17 @@ radiomics.glcm module
     :show-inheritance:
     :member-order: bysource
 
+.. _radiomics-gldm-label:
+
+radiomics.gldm module
+---------------------
+
+.. automodule:: radiomics.gldm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
 .. _radiomics-glszm-label:
 
 radiomics.glszm module

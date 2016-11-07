@@ -4,7 +4,67 @@ from radiomics import base, imageoperations
 
 class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
   r"""
-  GLDZM feature calculation.
+  The Gray Level Distance Zone Matrix (GLDZM) quantifies the relationship between the location and gray level of the
+  connected zones in an image. A zone consists of connected neighbours which have the same gray level intensity.
+  Furthermore, a connected neighbour is classified using 6-connectedness for 3D and 4-connectedness for 2D images,
+  meaning only voxels that share a face are considered neighbours.
+
+  The 6 and 4-connectedness is also used to create a distance map, where voxel on the edge of the
+  Region of Interest (ROI) are given a distance of 1, and then work stepwise inward, assigning to each voxel the number
+  of edges that need to be crossed to get to the edge of the ROI.
+
+  The location of a zone is the defined minimum distance value of the voxels contained within the zone.
+
+  In a GLDZM :math:`\textbf{P}(i,j)`, the :math:`(i,j)`\ :sup:`th` element describes the number of zones in an image
+  with gray level :math:`i` and located at distance :math:`j` from the edge of the ROI.
+
+  As a 2 dimensional example, consider the following 7x7 image, with 5 discreet gray values and where a value of
+  :math:`N` indicates a pixel not belonging to the ROI:
+
+  .. math::
+    \textbf{I} = \begin{bmatrix}
+    N & N & N & 4 & 4 & 4 & N\\
+    N & N & 3 & 1 & 3 & 4 & N\\
+    2 & 1 & 1 & 1 & 3 & 2 & N\\
+    4 & 4 & 2 & 2 & 3 & 3 & 1\\
+    3 & 5 & 3 & 3 & 2 & 1 & 1\\
+    3 & 5 & 3 & 3 & 2 & 4 & N\\
+    3 & 1 & N & N & N & 4 & N\end{bmatrix}
+
+  Then the corresponding distance map is:
+
+  .. math::
+    \textbf{D} = \begin{bmatrix}
+    N & N & N & 1 & 1 & 1 & N\\
+    N & N & 1 & 2 & 2 & 1 & N\\
+    1 & 1 & 2 & 3 & 2 & 1 & N\\
+    1 & 2 & 3 & 3 & 3 & 2 & 1\\
+    1 & 2 & 2 & 2 & 2 & 2 & 1\\
+    1 & 2 & 1 & 1 & 1 & 1 & N\\
+    1 & 1 & N & N & N & 1 & N\end{bmatrix}
+
+  And the GLDZM then becomes:
+
+  .. math::
+    \textbf{P}=\begin{bmatrix}
+    3 & 0 & 0\\
+    3 & 0 & 1\\
+    3 & 1 & 0\\
+    2 & 0 & 0\\
+    1 & 1 & 0\end{bmatrix}
+
+  Let
+
+  :math:`\textbf{P}(i,j)` be the distance zone matrix
+
+  :math:`p(i,j)` be the normalized distance zone matrix, defined as :math:`p(i,j) =
+  \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
+
+  :math:`N_g` be the number of discreet intensity values in the image
+
+  :math:`N_d` be the number of discreet distances in the image
+
+  :math:`N_p` be the number of voxels in the image
 
   References
 
@@ -31,7 +91,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     Number of times a region with a gray level :math:`i` and occurs with a minimum distance :math:`j` in an image.
     P_gldzm[level, distance] = # occurrences
 
-    For 3D-images this concerns a 26-connected region, for 2D an 8-connected region
+    For 3D-images this concerns a 6-connected region, for 2D a 4-connected region
     """
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
@@ -131,14 +191,14 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     if sumP_gldzm == 0:
       sumP_gldzm = 1
 
-    pr = numpy.sum(self.P_gldzm, 0)
+    pd = numpy.sum(self.P_gldzm, 0)
     pg = numpy.sum(self.P_gldzm, 1)
 
     ivector = numpy.arange(1, self.P_gldzm.shape[0] + 1, dtype=numpy.float64)
     jvector = numpy.arange(1, self.P_gldzm.shape[1] + 1, dtype=numpy.float64)
 
     self.coefficients['sumP_gldzm'] = sumP_gldzm
-    self.coefficients['pr'] = pr
+    self.coefficients['pd'] = pd
     self.coefficients['pg'] = pg
     self.coefficients['ivector'] = ivector
     self.coefficients['jvector'] = jvector
@@ -147,13 +207,13 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Small Distance Emphasis (SDE) value.
 
-    :math:`SDE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`SDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     A measure of the distribution of small distance zones, with a greater value indicative
     of more smaller distances.
     """
     try:
-      sde = numpy.sum(self.coefficients['pr']/(self.coefficients['jvector']**2)) / self.coefficients['sumP_gldzm']
+      sde = numpy.sum(self.coefficients['pd']/(self.coefficients['jvector']**2)) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       sde = numpy.core.numeric.NaN
     return (sde)
@@ -162,13 +222,13 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Large Distance Emphasis (LDE) value.
 
-    :math:`LDE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)j^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`LDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)j^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     A measure of the distribution of large distance zones, with a greater value indicative
     of larger distances.
     """
     try:
-      lde = numpy.sum(self.coefficients['pr']*(self.coefficients['jvector']**2)) / self.coefficients['sumP_gldzm']
+      lde = numpy.sum(self.coefficients['pd']*(self.coefficients['jvector']**2)) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       lde = numpy.core.numeric.NaN
     return (lde)
@@ -177,7 +237,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Intensity Variability (IV) value.
 
-    :math:`IV = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`IV = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the variability of gray-level intensity values in the image, where a lower IV value
     correlates with more homogeneity in intensity values.
@@ -192,7 +252,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Intensity Variability Normalized (IVN) value.
 
-    :math:`IVN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+    :math:`IVN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
 
     Measures the variability of gray-level intensity values in the image, where a lower IVN value
     correlates with a greater similarity in intensity values.
@@ -207,12 +267,12 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Distance-Zone Variability (DZV) value.
 
-    :math:`DZV = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`DZV = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the variability of distances in the image.
     """
     try:
-      szv = numpy.sum(self.coefficients['pr']**2) / self.coefficients['sumP_gldzm']
+      szv = numpy.sum(self.coefficients['pd']**2) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       szv = numpy.core.numeric.NaN
     return (szv)
@@ -221,13 +281,13 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Distance-Zone Variability Normalized (DZVN) value.
 
-    :math:`DZVN = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+    :math:`DZVN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
 
     Measures the variability of distances throughout the image, with a lower value indicating
     more homogeneity among distances in the image. This is the normalized version of the DZVN formula.
     """
     try:
-      szv = numpy.sum(self.coefficients['pr'] ** 2) / self.coefficients['sumP_gldzm']**2
+      szv = numpy.sum(self.coefficients['pd'] ** 2) / self.coefficients['sumP_gldzm']**2
     except ZeroDivisionError:
       szv = numpy.core.numeric.NaN
     return (szv)
@@ -236,12 +296,12 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Zone Percentage (ZP) value.
 
-    :math:`ZP = \sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{N_p}}`
+    :math:`ZP = \sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{N_p}}`
 
     Measures the homogeneity of the distribution of distances in an image among the observed gray-levels.
     """
     try:
-      zp = self.coefficients['sumP_gldzm'] / numpy.sum(self.coefficients['pr']*self.coefficients['jvector'])
+      zp = self.coefficients['sumP_gldzm'] / self.coefficients['Np']
     except ZeroDivisionError:
       zp = numpy.core.numeric.NaN
     return (zp)
@@ -272,25 +332,25 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     Measures the variance in distance counts for the dependence sizes.
     """
     jvector = self.coefficients['jvector']
-    u_j = numpy.sum(self.coefficients['pr'] * jvector) / self.coefficients['sumP_gldzm']
-    dv = numpy.sum(self.coefficients['pr'] * (jvector - u_j)**2) / self.coefficients['sumP_gldzm']
+    u_j = numpy.sum(self.coefficients['pd'] * jvector) / self.coefficients['sumP_gldzm']
+    dv = numpy.sum(self.coefficients['pd'] * (jvector - u_j)**2) / self.coefficients['sumP_gldzm']
     return dv
 
   def getDistanceEntropy(self):
     r"""
     Calculate and return the Distance Entropy (DE) value.
 
-    :math:`DE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)\log_{2}(p(i,j)+\eps)}`
+    :math:`DE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}`
     """
     eps = numpy.spacing(1)
-    p_gldzm = self.P_gldzm  / self.coefficients['sumP_gldzm']
+    p_gldzm = self.P_gldzm / self.coefficients['sumP_gldzm']
     return -numpy.sum(p_gldzm * numpy.log2(p_gldzm + eps))
 
   def getLowIntensityEmphasisFeatureValue(self):
     r"""
     Calculate and return the Low Intensity Emphasis (LIE) value.
 
-    :math:`LIE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`LIE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the distribution of lower gray-level distance zones, with a higher value indicating a greater
     proportion of lower gray-level values and distance zones in the image.
@@ -305,7 +365,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the High Intensity Emphasis (HIE) value.
 
-    :math:`HIE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`HIE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)i^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the distribution of the higher gray-level values, with a higher value indicating
     a greater proportion of higher gray-level values and distance zones in the image.
@@ -320,7 +380,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Low Intensity Distance Area Emphases (LISDE) value.
 
-    :math:`LISDE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`LISDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the proportion in the image of the joint distribution of smaller distance zones with lower gray-level values.
     """
@@ -334,7 +394,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the High Intensity Distance Area Emphases (HISDE) value.
 
-    :math:`HISDE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`HISDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the proportion in the image of the joint distribution of smaller distance zones with higher gray-level values.
     """
@@ -348,7 +408,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the Low Intensity Large Distance Emphases (LILDE) value.
 
-    :math:`LILDE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`LILDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the proportion in the image of the joint distribution of larger distance zones with lower gray-level values.
     """
@@ -362,7 +422,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the High Intensity Large Area Emphases (HILDE) value.
 
-    :math:`HILDE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`HILDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the proportion in the image of the joint distribution of larger distance zones with higher gray-level values.
     """

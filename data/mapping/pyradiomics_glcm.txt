@@ -18,7 +18,6 @@
 17:MaximumProbability
 18:SumAverage
 19:SumEntropy
-20:SumSquares2
 21:SumSquares
 22:SumVariance2
 23:SumVariance

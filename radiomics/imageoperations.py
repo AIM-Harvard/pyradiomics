@@ -1,6 +1,9 @@
-import SimpleITK as sitk
-import numpy, pywt, logging
 from itertools import chain
+import logging
+import json
+import SimpleITK as sitk
+import numpy
+import pywt
 
 logger = logging.getLogger(__name__)
 
@@ -334,3 +337,57 @@ def _scaleToOriginalRange(originalImage, filteredImage):
   im = ssif.Execute(filteredImage)
   im.CopyInformation(originalImage)
   return im
+
+def parseParameters(filePath):
+  """
+  Read specified parameters file, extract parameters and return 3 dictionaries (one for each parameter type)
+
+  Parameters must adhere to the following convention:
+  - A parameter should be on a single line
+  - A parameter should be enclosed in brackets, start with the name and followed by the value,
+    separated by spaces: (<parameter type> <parameter name> <value>). Additional spaces in <value> are ignored.
+  - <value> is represented in JSON format:
+    - Multiple values are enclosed by square brackets and comma separated: [..., ...]
+    - Dictionary values are enclosed by curly braces, where key:value pairs are comma separated and keys and values
+      are separated by a semicolon: {key:value, key:value, ...}
+    - String values should be enclosed by quotes: "..."
+    - Numbers should not be quoted: 3.14
+
+  Parameter type refers to the type of the parameter. This can be one of the following:
+  - setting: Setting to use for preprocessing and class specific settings. if no <value> is specified, the value for this
+    setting is set to None.
+  - featureClass: Feature class to enable, <value> is list of strings representing enabled features. If no <value> is
+    specified or <value> is an empty list, all features for this class are enabled.
+  - inputImage: input image to calculate features on. <value> is custom kwarg settings (dictionary). if no <value> is
+    specified or <value> is an empty dictionary, no custom settings are added for this input image.
+  """
+  kwargs = {}
+  enabledFeatures = {}
+  inputImages = {}
+
+  dec = json.JSONDecoder()
+
+  with open(filePath, 'r') as paramFile:
+    lines = paramFile.readlines()
+    paramFile.close()
+
+  for line in lines:
+    if line.startswith('(') and ')' in line:
+      param = line[1:line.find(')')].split(' ', 2)
+      if param[0] == 'setting':
+        if len(param) == 2:
+          kwargs[param[1]] = None
+        elif len(param) > 2:
+          kwargs[param[1]] = dec.decode(param[2])
+      elif param[0] == 'featureClass':
+        if len(param) == 2:
+          enabledFeatures[param[1]] = []
+        elif len(param) > 2:
+          enabledFeatures[param[1]] = dec.decode(param[2])
+      elif param[0] == 'inputImage':
+        if len(param) == 2:
+          inputImages[param[1]] = {}
+        elif len(param) > 2:
+          inputImages[param[1]] = dec.decode(param[2])
+
+  return kwargs, enabledFeatures, inputImages

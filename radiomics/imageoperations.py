@@ -1,6 +1,9 @@
-import SimpleITK as sitk
-import numpy, pywt, logging
 from itertools import chain
+import logging
+import json
+import SimpleITK as sitk
+import numpy
+import pywt
 
 logger = logging.getLogger(__name__)
 

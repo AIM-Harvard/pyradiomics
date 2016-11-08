@@ -5,7 +5,7 @@ import collections
 from itertools import chain
 import numpy
 import SimpleITK as sitk
-
+import traceback
 import pkgutil
 import inspect
 import radiomics
@@ -28,6 +28,11 @@ class RadiomicsFeaturesExtractor:
     - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
     - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
     - interpolator [sitk.sitkBSpline]: Simple ITK constant, sets interpolator to use for resampling.
+    - padDistance [5]: Integer, set the number of voxels pad cropped tumor volume with during resampling. Padding occurs
+        in new feature space and is done on all faces, i.e. size increases in x, y and z direction by 2*padDistance.
+        Padding is needed for some filters (e.g. LoG). After application of filters image is cropped again without
+        padding. Value of padded voxels are set to original gray level intensity, padding does not exceed original image
+        boundaries.
 
     N.B. Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
 
@@ -35,7 +40,7 @@ class RadiomicsFeaturesExtractor:
     For more information on possible settings, see the respective filters and feature classes.
 
     By default, all features in all feature classes are enabled.
-    By default, all input image types are enabled (original, wavelet, log)
+    By default, only original input image is enabled
     N.B. for log, the sigma is set to range 0.5-5.0, step size 0.5
     """
 
@@ -53,26 +58,54 @@ class RadiomicsFeaturesExtractor:
         self.padDistance = self.kwargs.get('padDistance', 5)
         self.label = self.kwargs.get('label', 1)
 
-        self.inputImages = {}
-        for imageType in self.getInputImageTypes():
-            self.inputImages[imageType] = {}
+        self.inputImages = {'original': {}}
 
         self.enabledFeatures = {}
         for featureClassName in self.getFeatureClassNames():
             self.enabledFeatures[featureClassName] = []
 
+    def enableAllInputImages(self):
+        """
+        Enable all possible input images without any custom settings.
+        """
+        for imageType in self.getInputImageTypes():
+            self.inputImages[imageType] = {}
+
+    def disableAllInputImages(self):
+        """
+        Disable all input images.
+        """
+        self.inputImages = {}
+
+    def enableInputImageByName(self, inputImage, enabled=True, customArgs=None):
+        """
+        Enable or disable specified input image. If enabling input image, optional custom settings can be specified in
+        customArgs.
+        """
+        if enabled:
+            if customArgs is None:
+                customArgs = {}
+            self.inputImages[inputImage] = customArgs
+        elif inputImage in self.inputImages:
+            del self.inputImages[inputImage]
+
     def enableInputImages(self, **inputImages):
         """
-        Enable inputimages, with optionally custom settings, which are applied to the respective input image.
+        Enable input images, with optionally custom settings, which are applied to the respective input image.
         Settings specified here override those in kwargs.
         The following settings are not customizable:
 
+        - interpolator
         - resampledPixelSpacing
-        - binWidth
+        - padDistance
+
+        Updates current settings: If necessary, enables input image. Always overrides custom settings specified
+        for input images passed in inputImages.
+        To disable input images, use enableInputImageByName or disableAllInputImages instead.
 
         :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings (dictionary)
         """
-        self.inputImages = inputImages
+        self.inputImages.update(inputImages)
 
     def enableAllFeatures(self):
         """
@@ -93,8 +126,8 @@ class RadiomicsFeaturesExtractor:
         """
         if enabled:
             self.enabledFeatures[featureClass] = []
-        else:
-            if featureClass in self.enabledFeatures: del self.enabledFeatures[featureClass]
+        elif featureClass in self.enabledFeatures:
+            del self.enabledFeatures[featureClass]
 
     def enableFeaturesByName(self, **enabledFeatures):
         """
@@ -110,9 +143,16 @@ class RadiomicsFeaturesExtractor:
     def execute(self, imageFilepath, maskFilepath, label=None):
         """
         Compute radiomics signature for provide image and mask combination.
+        First, image and mask are loaded and resampled if necessary. Next shape features are calculated on a
+        cropped (no padding) version of the original image. Then other featureclasses are calculated on using all
+        specified filters in inputImages. Images are cropped to tumor mask (no padding) after application of filter and
+        before being passed to the feature class.
+        Finally, a dictionary containing all calculated features is returned.
 
         :param imageFilepath: SimpleITK Image, or string pointing to image file location
         :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
+        :param label: Integer, value of the label for which to extract features. If not specified, last specified label
+            is used. Default label is 1.
         :returns: dictionary containing calculated signature ("featureName":value).
         """
         if label is not None:
@@ -163,8 +203,8 @@ class RadiomicsFeaturesExtractor:
         All other cases are ignored (nothing calculated).
         Equal approach is used for assignment of mask using MaskFilePath.
 
-        After assignment of image and mask, both are cropped to tumor mask, or, if resampling is enabled,
-        resampled and cropped to tumor mask.
+        If resampling is enabled, both image and mask are resampled and cropped to the tumormask (with additional
+        padding as specified in padDistance) after assignment of image and mask.
         """
         if isinstance(ImageFilePath, basestring) and os.path.exists(ImageFilePath):
             image = sitk.ReadImage(ImageFilePath)

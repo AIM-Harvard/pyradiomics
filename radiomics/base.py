@@ -17,7 +17,7 @@ class RadiomicsFeaturesBase(object):
     self.logger = logging.getLogger(self.__module__)
     self.binWidth = kwargs.get('binWidth', 25)
     self.label = kwargs.get('label', 1)
-    self.verbose = kwargs.get('verbose', True)
+    self.verbose = kwargs.get('verbose', False)
 
     # all features are disabled by default
     self.disableAllFeatures()

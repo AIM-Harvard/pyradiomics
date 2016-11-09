@@ -9,15 +9,15 @@ import json
 from radiomics import featureextractor
 
 parser = argparse.ArgumentParser()
-parser.add_argument('inFile', metavar='Patient List', type=argparse.FileType('r'),
+parser.add_argument('inFile', metavar='In', type=argparse.FileType('r'),
                     help='CSV file containing combinations of image and mask. Each row represents one combination with '
                     'the following elements: (1) Patient Name, (2) Image type, (3) Reader, (4) Image location and '
                     '(5) Mask location')
-parser.add_argument('outFile', metavar='Features List', type=argparse.FileType('w'), help='File to write results to')
+parser.add_argument('outFile', metavar='Out', type=argparse.FileType('w'), help='File to write results to')
 parser.add_argument('--format', '-f', choices=['csv', 'json'], default='csv', help='Format for the output. '
-                    'Default is csv: one row of feature names, followed by one row of feature values for each '
-                    'image-mask combination. For JSON: Features are written in a JSON format dictionary {name:value}, '
-                    'one line per image-mask combination')
+                    'Default is "csv": one row of feature names, followed by one row of feature values for each '
+                    'image-mask combination. For "json": Features are written in a JSON format dictionary '
+                    '"{name:value}", one line per image-mask combination')
 parser.add_argument('--param', '-p', metavar='FILE', nargs=1, default=None,
                     help='Parameter file containing the settings to be used in extraction')
 parser.add_argument('--label', '-l', metavar='N', nargs=1, default=None, type=int,
@@ -27,11 +27,8 @@ parser.add_argument('--logging-level', metavar='LEVEL', choices=['NOTSET', 'DEBU
 parser.add_argument('--log-file', metavar='FILE', nargs='?', type=argparse.FileType('a'), default=sys.stderr,
                     help='File to append logger output to')
 
-args = parser.parse_args()
-# args = parser.parse_args(r'..\TestFiles.csv ..\TestFeatures.csv -p R:\Params.txt'.split())
-
 def main():
-  global args
+  args = parser.parse_args()
 
   # Initialize Logging
   logLevel = eval('logging.' + args.logging_level)

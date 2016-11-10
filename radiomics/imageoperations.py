@@ -343,10 +343,12 @@ def parseParameters(filePath):
   Read specified parameters file, extract parameters and return 3 dictionaries (one for each parameter type)
 
   Parameters must adhere to the following convention:
+
   - A parameter should be on a single line
   - A parameter should be enclosed in brackets, start with the name and followed by the value,
     separated by spaces: (<parameter type> <parameter name> <value>). Additional spaces in <value> are ignored.
   - <value> is represented in JSON format:
+
     - Multiple values are enclosed by square brackets and comma separated: [..., ...]
     - Dictionary values are enclosed by curly braces, where key:value pairs are comma separated and keys and values
       are separated by a semicolon: {key:value, key:value, ...}
@@ -354,6 +356,7 @@ def parseParameters(filePath):
     - Numbers should not be quoted: 3.14
 
   Parameter type refers to the type of the parameter. This can be one of the following:
+
   - setting: Setting to use for preprocessing and class specific settings. if no <value> is specified, the value for this
     setting is set to None.
   - featureClass: Feature class to enable, <value> is list of strings representing enabled features. If no <value> is

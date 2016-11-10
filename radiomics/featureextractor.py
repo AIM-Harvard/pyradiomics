@@ -29,10 +29,10 @@ class RadiomicsFeaturesExtractor:
     - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
     - interpolator [sitk.sitkBSpline]: Simple ITK constant, sets interpolator to use for resampling.
     - padDistance [5]: Integer, set the number of voxels pad cropped tumor volume with during resampling. Padding occurs
-        in new feature space and is done on all faces, i.e. size increases in x, y and z direction by 2*padDistance.
-        Padding is needed for some filters (e.g. LoG). After application of filters image is cropped again without
-        padding. Value of padded voxels are set to original gray level intensity, padding does not exceed original image
-        boundaries.
+      in new feature space and is done on all faces, i.e. size increases in x, y and z direction by 2*padDistance.
+      Padding is needed for some filters (e.g. LoG). After application of filters image is cropped again without
+      padding. Value of padded voxels are set to original gray level intensity, padding does not exceed original image
+      boundaries.
 
     N.B. Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
 
@@ -67,6 +67,7 @@ class RadiomicsFeaturesExtractor:
         """
         Parse specified parameters file and use it to update settings in kwargs, enabled feature(Classes) and input
         images:
+
         - If fromDefault = True, kwarg settings not specified in parameters are set to their default value. Otherwise,
           current kwarg settings are updated with settings specified in parameters.
         - enabledFeatures are replaced by those in parameters. If no featureClass parameters were specified, all

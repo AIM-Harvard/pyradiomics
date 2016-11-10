@@ -13,7 +13,7 @@ parser.add_argument('image', metavar='Image', help='Features are extracted from 
 parser.add_argument('mask', metavar='Mask', help='Mask identifying the ROI in the Image')
 
 parser.add_argument('--out', '-o', metavar='FILE', nargs='?', type=argparse.FileType('a'), default=sys.stdout, help='File to append output to')
-parser.add_argument('--format', '-f', choices=['txt', 'csv', 'json'], default='csv', help='Format for the output. '
+parser.add_argument('--format', '-f', choices=['txt', 'csv', 'json'], default='txt', help='Format for the output. '
                     'Default is "txt": one feature per line in format "name:value". For "csv": one row of feature names, '
                     'followed by one row of feature values. For "json": Features are written in a JSON format dictionary "{name:value}"')
 parser.add_argument('--param', '-p', metavar='FILE', nargs=1, default=None,

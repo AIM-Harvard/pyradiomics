@@ -49,14 +49,13 @@ class RadiomicsFeaturesExtractor:
 
         self.featureClasses = self.getFeatureClasses()
 
-        self.kwargs = kwargs
-
-        # Try get values for interpolation and verbose. If not present in kwargs, use defaults
-        self.resampledPixelSpacing = self.kwargs.get('resampledPixelSpacing', None)  # no resampling by default
-        self.interpolator = self.kwargs.get('interpolator', sitk.sitkBSpline)
-        self.verbose = self.kwargs.get('verbose', False)
-        self.padDistance = self.kwargs.get('padDistance', 5)
-        self.label = self.kwargs.get('label', 1)
+        # Set default settings and update with and changed settings contained in kwargs
+        self.kwargs = {'resampledPixelSpacing': None,  # No resampling by default
+                       'interpolator': sitk.sitkBSpline,
+                       'padDistance': 5,
+                       'label': 1,
+                       'verbose': False}
+        self.kwargs.update(kwargs)
 
         self.inputImages = {'original': {}}
 
@@ -64,11 +63,12 @@ class RadiomicsFeaturesExtractor:
         for featureClassName in self.getFeatureClassNames():
             self.enabledFeatures[featureClassName] = []
 
-    def loadParams(self, paramsFile):
+    def loadParams(self, paramsFile, fromDefault=True):
         """
         Parse specified parameters file and use it to update settings in kwargs, enabled feature(Classes) and input
         images:
-        - kwarg settings not specified in parameters are set to their default value.
+        - If fromDefault = True, kwarg settings not specified in parameters are set to their default value. Otherwise,
+          current kwarg settings are updated with settings specified in parameters.
         - enabledFeatures are replaced by those in parameters. If no featureClass parameters were specified, all
           featureClasses and features are enabled.
         - inputImages are replaced by those in parameters. If no inputImage parameters were specified, only original
@@ -77,14 +77,14 @@ class RadiomicsFeaturesExtractor:
         try:
             kwargs, enabledFeatures, inputImages = imageoperations.parseParameters(paramsFile)
 
-            self.kwargs = kwargs
-
-            # Try get values for interpolation and verbose. If not present in kwargs, use defaults
-            self.resampledPixelSpacing = self.kwargs.get('resampledPixelSpacing', None)  # no resampling by default
-            self.interpolator = self.kwargs.get('interpolator', sitk.sitkBSpline)
-            self.verbose = self.kwargs.get('verbose', True)
-            self.padDistance = self.kwargs.get('padDistance', 5)
-            self.label = self.kwargs.get('label', 1)
+            # If fromDefault, settings not in parameters should be reset to default value
+            if fromDefault:
+                self.kwargs = {'resampledPixelSpacing': None,  # No resampling by default
+                               'interpolator': sitk.sitkBSpline,
+                               'padDistance': 5,
+                               'label': 1,
+                               'verbose': False}
+            self.kwargs.update(kwargs)
 
             if len(enabledFeatures) == 0:
                 self.enabledFeatures = {}
@@ -193,16 +193,15 @@ class RadiomicsFeaturesExtractor:
         """
         if label is not None:
             self.kwargs.update({'label': label})
-            self.label = label
 
-        self.logger.info('Calculating features with label: %d', self.label)
+        self.logger.info('Calculating features with label: %d', self.kwargs['label'])
 
         featureVector = collections.OrderedDict()
         image, mask = self.loadImage(imageFilepath, maskFilepath)
 
         # If shape should be calculation, handle it separately here
         if 'shape' in self.enabledFeatures.keys():
-            croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, self.label)
+            croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, self.kwargs['label'])
             enabledFeatures = self.enabledFeatures['shape']
             shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
             if len(enabledFeatures) == 0:
@@ -211,7 +210,7 @@ class RadiomicsFeaturesExtractor:
                 for feature in enabledFeatures:
                     shapeClass.enableFeatureByName(feature)
 
-            if self.verbose: print "\t\tComputing shape"
+            if self.kwargs['verbose']: print "\t\tComputing shape"
             shapeClass.calculateFeatures()
             for (featureName, featureValue) in shapeClass.featureValues.iteritems():
                 newFeatureName = "original_shape_%s" %(featureName)
@@ -248,7 +247,7 @@ class RadiomicsFeaturesExtractor:
             image = ImageFilePath
         else:
             self.logger.warning('Error reading image Filepath or SimpleITK object')
-            if self.verbose: print "Error reading image Filepath or SimpleITK object"
+            if self.kwargs['verbose']: print "Error reading image Filepath or SimpleITK object"
             image = None
 
         if isinstance(MaskFilePath, basestring) and os.path.exists(MaskFilePath):
@@ -257,11 +256,15 @@ class RadiomicsFeaturesExtractor:
             mask = MaskFilePath
         else:
             self.logger.warning('Error reading mask Filepath or SimpleITK object')
-            if self.verbose: print "Error reading mask Filepath or SimpleITK object"
+            if self.kwargs['verbose']: print "Error reading mask Filepath or SimpleITK object"
             mask = None
 
-        if self.interpolator is not None and self.resampledPixelSpacing is not None:
-            image, mask = imageoperations.resampleImage(image, mask, self.resampledPixelSpacing, self.interpolator, self.label, self.padDistance)
+        if self.kwargs['interpolator'] is not None and self.kwargs['resampledPixelSpacing'] is not None:
+            image, mask = imageoperations.resampleImage(image, mask,
+                                                        self.kwargs['resampledPixelSpacing'],
+                                                        self.kwargs['interpolator'],
+                                                        self.kwargs['label'],
+                                                        self.kwargs['padDistance'])
 
         return image, mask
 
@@ -273,7 +276,7 @@ class RadiomicsFeaturesExtractor:
         Features / Classes to use for calculation of signature are defined in self.enabledFeatures.
         see also enableFeaturesByName.
         """
-        image,mask = imageoperations.cropToTumorMask(image, mask, self.label)
+        image,mask = imageoperations.cropToTumorMask(image, mask, self.kwargs['label'])
         featureVector = collections.OrderedDict()
         for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
             # Handle calculation of shape features separately
@@ -289,7 +292,7 @@ class RadiomicsFeaturesExtractor:
                     for feature in enabledFeatures:
                         featureClass.enableFeatureByName(feature)
 
-                if self.verbose: print "\t\tComputing %s" %(featureClassName)
+                if self.kwargs['verbose']: print "\t\tComputing %s" %(featureClassName)
                 featureClass.calculateFeatures()
                 for (featureName, featureValue) in featureClass.featureValues.iteritems():
                     newFeatureName = "%s_%s_%s" %(inputImageName, featureClassName, featureName)
@@ -321,21 +324,21 @@ class RadiomicsFeaturesExtractor:
         size = numpy.array(image.GetSize())
         if numpy.min(size) < 4:
             self.logger.warning('Image too small to apply LoG filter, size: %s', size)
-            if self.verbose: print 'Image too small to apply LoG filter'
+            if self.kwargs['verbose']: print 'Image too small to apply LoG filter'
             return
 
         sigmaValues = kwargs.get('sigma', numpy.arange(5.,0.,-.5))
 
         for sigma in sigmaValues:
             self.logger.debug('Computing LoG with sigma %g', sigma)
-            if self.verbose: print "\tComputing LoG with sigma %g" %(sigma)
+            if self.kwargs['verbose']: print "\tComputing LoG with sigma %g" %(sigma)
             logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
             if logImage is not None:
                 inputImageName = "log-sigma-%s-mm-3D" %(str(sigma).replace('.','-'))
                 yield logImage, mask, inputImageName, kwargs
             else:
                 # No log record needed here, this is handled by logging in imageoperations
-                if self.verbose: print 'Application of LoG filter failed (sigma: %g)'%(sigma)
+                if self.kwargs['verbose']: print 'Application of LoG filter failed (sigma: %g)'%(sigma)
 
     def generate_wavelet(self, image, mask, **kwargs):
         """
@@ -365,7 +368,7 @@ class RadiomicsFeaturesExtractor:
         for idx, wl in enumerate(ret, start= 1):
             for decompositionName, decompositionImage in wl.items():
                 self.logger.debug('Computing Wavelet %s', decompositionName)
-                if self.verbose: print "\tComputing Wavelet %s" %(decompositionName)
+                if self.kwargs['verbose']: print "\tComputing Wavelet %s" %(decompositionName)
 
                 if idx == 1:
                     inputImageName = 'wavelet-%s' %(decompositionName)

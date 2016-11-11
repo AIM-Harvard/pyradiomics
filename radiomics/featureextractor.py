@@ -49,7 +49,7 @@ class RadiomicsFeaturesExtractor:
         # Try get values for interpolation and verbose. If not present in kwargs, use defaults
         self.resampledPixelSpacing = self.kwargs.get('resampledPixelSpacing', None)  # no resampling by default
         self.interpolator = self.kwargs.get('interpolator', sitk.sitkBSpline)
-        self.verbose = self.kwargs.get('verbose', True)
+        self.verbose = self.kwargs.get('verbose', False)
         self.padDistance = self.kwargs.get('padDistance', 5)
         self.label = self.kwargs.get('label', 1)
 

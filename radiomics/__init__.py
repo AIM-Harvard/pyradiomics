@@ -5,7 +5,6 @@ in_py3 = sys.version_info[0] > 2
 
 import logging
 
-
 def debug(debug_on=True):
     """
     Set up logging system for the whole package.
@@ -42,5 +41,6 @@ debug(False)  # force level=WARNING, in case logging default is set differently 
 # For convenience, import the most used packages into the "pyradiomics" namespace
 import collections, numpy
 
-__version__ = "0.0.1"
-__version_info__ = (0, 0, 1)
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions

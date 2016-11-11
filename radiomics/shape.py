@@ -156,7 +156,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     :math:`N` is the number of triangles forming the surface of the volume
 
-    :math:`a_ib_i` and :math:`a_ic_i` are the edges of the :math:`i\text{th}` triangle formed by points :math:`a_i`,
+    :math:`a_ib_i` and :math:`a_ic_i` are the edges of the :math:`i`\ :sup:`th` triangle formed by points :math:`a_i`,
     :math:`b_i` and :math:`c_i`
 
     """

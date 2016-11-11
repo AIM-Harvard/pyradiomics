@@ -6,9 +6,15 @@ import SimpleITK as sitk
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   r"""
   First-order statistics describe the distribution of voxel intensities within the image region defined by the mask through commonly used and basic metrics.
-  Let :math:`\textbf{X}` denote the three dimensional image matrix with :math:`N` voxels and :math:`\textbf{P}` the first order histogram with :math:`N_l` discrete intensity levels, where :math:`l` is defined by the number of levels is calculated based on the binWidth parameter of the constructor.
 
-  Based on the definitions above, the following first order statistics can be extracted.
+  Let:
+
+  :math:`\textbf{X}` denote the three dimensional image matrix with :math:`N` voxels
+
+  :math:`\textbf{P}(i)` the first order histogram with :math:`N_l` discrete intensity levels,
+  where :math:`l` is defined by the number of levels is calculated based on the binWidth parameter of the constructor.
+
+  :math:`p(i)` be the normalized first order histogram and equal to :math:`\frac{\textbf{P}(i)}{\sum{\textbf{P}(i)}}`
 
   Following addiotional settings are possible:
 
@@ -63,7 +69,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Entropy of the image array.
 
-    :math:`entropy = -\displaystyle\sum^{N_l}_{i=1}{\textbf{P}(i)\log_2\textbf{P}(i)}`
+    :math:`entropy = -\displaystyle\sum^{N_l}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}`
 
     Entropy specifies the uncertainty/randomness in the
     image values. It measures the average amount of
@@ -73,9 +79,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     eps = numpy.spacing(1)
 
     bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
-    bins = bins + eps
-    bins = bins/float(bins.sum())
-    return (-1.0 * numpy.sum(bins*numpy.log2(bins)))
+
+    try:
+      bins = bins + eps
+      bins = bins / float(bins.sum())
+      return (-1.0 * numpy.sum(bins * numpy.log2(bins)))
+    except ZeroDivisionError:
+      return numpy.core.nan
 
   def getMinimumFeatureValue(self):
     r"""
@@ -125,8 +135,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the interquartile range of the image array.
 
-    :math:`interquartile range = P_{75} - P_{25}`, where P\ :sub:`25` and P\ :sub:`75` are the
-    25\ :sup:`th` and 75\ :sup:`th` percentile of the image array, respectively.
+    :math:`interquartile\ range = \textbf{P}_{75} - \textbf{P}_{25}`, where :math:`\textbf{P}_{25}` and
+    :math:`\textbf{P}_{75}` are the 25\ :sup:`th` and 75\ :sup:`th` percentile of the image array, respectively.
     """
 
     return numpy.percentile(self.targetVoxelArray, 75) - numpy.percentile(self.targetVoxelArray, 25)
@@ -135,7 +145,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Range of Values in the image array.
 
-    :math:`range = \max(X) - \min(X)`
+    :math:`range = \max(\textbf{X}) - \min(\textbf{X})`
     """
 
     return (numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))
@@ -156,7 +166,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Robust Mean Absolute Deviation for the image array.
 
-    :math:`robust\ mean\ absolute\ deviation = \frac{1}{N_{10-90}}\displaystyle\sum^{N_{10-90}}_{i=1}{|\textbf{X_{10-90}}(i)-\bar{X_{10-90}}|}`
+    :math:`robust\ mean\ absolute\ deviation = \frac{1}{N_{10-90}}\displaystyle\sum^{N_{10-90}}_{i=1}{|\textbf{X}_{10-90}(i)-\bar{X}_{10-90}|}`
 
     Robust Mean Absolute Deviation is the mean distance of all intensity values
     from the Mean Value calculated on the subset of image array with gray levels in between, or equal
@@ -197,10 +207,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Skewness of the image array.
 
-    :math:`\gamma_1 = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^3}{(\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2)^3}`
+    :math:`skewness = \displaystyle\frac{\mu_3}{\sigma^3}
+    = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^3}}
+    {\left(\sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}\right)^3}`
 
-    Skewness measures the asymmetry of the distribution of
-    values about the Mean value. Depending
+    Where :math:`\mu_3` is the 3\ :sup:`rd` central moment.
+
+    Skewness measures the asymmetry of the distribution of values about the Mean value. Depending
     on where the tail is elongated and the mass of the distribution
     is concentrated, this value can be positive or negative.
 
@@ -220,7 +233,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Kurtosis of the image array.
 
-    :math:`kurtosis = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^4}{(\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2)^2}`
+    :math:`kurtosis = \displaystyle\frac{\mu_4}{\sigma^4}
+    = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^4}}
+    {\left(\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2\right)^2}`
+
+    Where :math:`\mu_4` is the 4\ :sup:`th` central moment.
 
     Kurtosis is a measure of the 'peakedness' of the distribution
     of values in the image ROI. A higher kurtosis implies that the
@@ -245,11 +262,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Variance in the image array.
 
-    :math:`variance = \frac{1}{N-1}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}`
+    :math:`variance = \sigma^2 = \frac{1}{N-1}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}`
 
     Variance is the the mean of the squared distances of each intensity
     value from the Mean value. This is a measure of the spread
-    of the distribution about the mean..
+    of the distribution about the mean.
     """
 
     return (numpy.std(self.targetVoxelArray, ddof= 1)**2)
@@ -258,7 +275,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Uniformity of the image array.
 
-    :math:`uniformity = \displaystyle\sum^{N_l}_{i=1}{\textbf{P}(i)^2}`
+    :math:`uniformity = \displaystyle\sum^{N_l}_{i=1}{p(i)^2}`
 
     Uniformity is a measure of the sum of the squares of each intensity
     value. This is a measure of the heterogeneity of the image array,

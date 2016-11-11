@@ -1,40 +1,25 @@
-Example of parameters file
+{
+"inputImage":
+    {
+    "original":{},
+    "log":{},
+    "wavelet":{}
+    },
 
-Parameters must be specified using following convention:
-- A parameter should be on a single line
-- A parameter should be enclosed in brackets, start with the name and followed by the value,
-  separated by spaces: (<parameter type> <parameter name> <value>). Additional spaces in <value> are ignored.
-- <value> is represented in JSON format:
-    - Multiple values are enclosed by square brackets and comma separated: [..., ...]
-    - Dictionary values are enclosed by curly braces, where key:value pairs are comma separated and keys and values
-      are separated by a semicolon: {key:value, key:value, ...}
-    - String values should be enclosed by quotes: "..."
-    - Numbers should not be quoted: 3.14
+"featureClass":
+    {
+    "shape":[],
+    "firstorder":[],
+    "glcm":[],
+    "glrlm":[],
+    "glszm":[]
+    },
 
-Parameter type refers to the type of the parameter. This can be one of the following:
-- setting: Setting to use for preprocessing and class specific settings. if no <value> is specified, the value for this
-  setting is set to None.
-- featureClass: Feature class to enable, <value> is list of strings representing enabled features. If no <value> is
-  specified or <value> is an empty list, all features for this class are enabled.
-- inputImage: input image to calculate features on. <value> is custom kwarg settings (dictionary). if no <value> is
-  specified or <value> is an empty dictionary, no custom settings are added for this input image.
-
-\\ Input Images
-\\ Enable filter specific settings by specifying a dictionary of "setting":<value>, e.g. {"binWidth": 10, "verbose":true}
-(inputImage original)
-(inputImage log)
-(inputImage wavelet)
-
-\\ Featureclasses
-\\ Limit features calculated by class by specifying list of strings, e.g. ["Mean", "Skewness"] in firstorder
-(featureClass shape)
-(featureClass firstorder)
-(featureClass glcm)
-(featureClass glrlm)
-(featureClass glszm)
-
-\\ Settings
-(setting binWidth 25)
-(setting interpolator 3) \\ sitk.sitkBSpline
-(setting resampledPixelSpacing null) \\ No resampling, set to [3, 3, 3] to enable resampling to 3 x 3 x 3 mm voxels
-(setting verbose false)
+"setting":
+    {
+    "binWidth":25,
+    "interpolator":3,
+    "resampledPixelSpacing":null,
+    "verbose":false
+    }
+}

@@ -98,7 +98,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
 
     # Set voxels outside delineation to padding value
     padVal = numpy.nan
-    self.matrix[(self.maskArray != self.label)] = padVal
+    self.matrix[(self.maskArray == 0)] = padVal
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)

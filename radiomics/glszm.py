@@ -1,7 +1,6 @@
 import numpy
-import SimpleITK as sitk
-from radiomics import base, imageoperations
-import pdb
+import radiomics
+from radiomics import base, imageoperations, _cmatrices
 from tqdm import trange
 
 
@@ -58,7 +57,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['Np'] = self.targetVoxelArray.size
 
-    self._calculateGLSZM()
+    if radiomics.debugging:
+      self._calculateGLSZM()
+    else:
+      self._calculateCGLSZM()
     self._calculateCoefficients()
 
   def _calculateGLSZM(self):
@@ -118,6 +120,19 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
         P_glszm[i - 1, regionSize - 1] += 1
 
     if self.verbose: bar.close()
+
+    # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
+    # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area
+    P_glszm_bounds = numpy.argwhere(P_glszm)
+    (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1
+    self.P_glszm = P_glszm[xstart:xstop, :ystop]
+
+  def _calculateCGLSZM(self):
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
+    Ng = self.coefficients['Ng']
+
+    P_glszm = _cmatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng)
 
     # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area

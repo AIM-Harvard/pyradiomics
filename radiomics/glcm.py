@@ -205,14 +205,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def _calculateCGLCM(self):
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size).astype('int')
-    C_glcm = _cmatrices.calculate_glcm(self.matrix.astype('int'), self.maskArray.astype('int'), angles, self.coefficients['Ng'])
-
-    Ng = self.coefficients['Ng']
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
+    Ng = self.coefficients['Ng']
 
-    self.P_glcm = _cmatrices.calculate_glcm(self.matrix.astype('int'), self.maskArray.astype('int'), angles, Ng)
+    self.P_glcm = _cmatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
 
     # Optionally make GLCMs symmetrical for each angle
     if self.symmetricalGLCM:

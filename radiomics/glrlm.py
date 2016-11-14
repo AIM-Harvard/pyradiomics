@@ -1,6 +1,5 @@
 from itertools import chain
 import numpy
-import SimpleITK as sitk
 from radiomics import base, imageoperations
 
 

@@ -3,7 +3,6 @@ import traceback
 import SimpleITK as sitk
 import numpy
 import inspect
-from radiomics import imageoperations
 
 
 class RadiomicsFeaturesBase(object):

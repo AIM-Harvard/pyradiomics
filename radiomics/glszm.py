@@ -1,7 +1,8 @@
 import numpy
 import radiomics
 from radiomics import base, imageoperations, _cmatrices
-from tqdm import trange
+if radiomics.debugging:  # Only import tqdm if using python matrix calculation
+  from tqdm import trange
 
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):

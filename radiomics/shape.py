@@ -1,7 +1,5 @@
 import numpy
-import operator
-import collections
-from radiomics import base, imageoperations
+from radiomics import base
 import SimpleITK as sitk
 
 

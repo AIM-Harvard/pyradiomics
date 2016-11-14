@@ -1,4 +1,4 @@
-#include <C:\Python27\include\Python.h>
+#include <Python.h>
 #include "cmatrices.h"
 
 int calculate_glcm(int *image, int *mask, int Sx, int Sy, int Sz, int *angles, int Na, double *glcm, int Ng)

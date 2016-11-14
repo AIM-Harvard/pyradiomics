@@ -1,6 +1,7 @@
 import numpy
 import radiomics
-from radiomics import base, imageoperations, _cmatrices
+from radiomics import base, imageoperations
+import _cmatrices
 if radiomics.debugging:  # Only import tqdm if using python matrix calculation
   from tqdm import trange
 

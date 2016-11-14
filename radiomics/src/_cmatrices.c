@@ -1,5 +1,5 @@
 #include <Python.h>
-#include <numpy\core\include\numpy\arrayobject.h>
+#include <numpy/arrayobject.h>
 #include "cmatrices.h"
 
 static char module_docstring[] = "";
@@ -41,9 +41,9 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
 		return NULL;
 
 	// Interpret the input as numpy arrays
-	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 
 	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
 	{
@@ -122,9 +122,9 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
 		return NULL;
 
 	// Interpret the input as numpy arrays
-	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 
 	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
 	{
@@ -203,9 +203,9 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
 		return NULL;
 
 	// Interpret the input as numpy arrays
-	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 
 	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
 	{
@@ -284,9 +284,9 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 		return NULL;
 
 	// Interpret the input as numpy arrays
-	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_ENSURECOPY |NPY_IN_ARRAY);
-	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_ENSURECOPY |NPY_IN_ARRAY);
+	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 
 	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
 	{

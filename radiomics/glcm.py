@@ -1,7 +1,6 @@
 import numpy
-import collections
-from radiomics import base, imageoperations
-import SimpleITK as sitk
+import radiomics
+from radiomics import base, imageoperations, _cmatrices
 from tqdm import trange
 
 
@@ -122,7 +121,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
 
-    self._calculateGLCM()
+    if radiomics.debugging:
+      self._calculateGLCM()
+    else:
+      self._calculateCGLCM()
     self._calculateCoefficients()
 
   def _calculateGLCM(self):
@@ -185,6 +187,48 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           weights[a_idx] = numpy.exp(-numpy.sum(numpy.abs(a) * pixelSpacing) ** 2)
         elif self.weightingNorm == 'no_weighting':
           weights[a_idx] = 1
+        else:
+          self.logger.warning('weigthing norm "%s" is unknown, W is set to 1', self.weightingNorm)
+          weights[a_idx] = 1
+
+      self.P_glcm = numpy.sum(self.P_glcm * weights[None, None, :], 2, keepdims=True)
+
+    sumGlcm = numpy.sum(self.P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
+
+    # Delete empty angles if no weighting is applied
+    if self.P_glcm.shape[2] > 1:
+      self.P_glcm = numpy.delete(self.P_glcm, numpy.where(sumGlcm == 0), 2)
+      sumGlcm = numpy.delete(sumGlcm, numpy.where(sumGlcm == 0), 0)
+
+    # Normalize each glcm
+    self.P_glcm = self.P_glcm/sumGlcm
+
+  def _calculateCGLCM(self):
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size).astype('int')
+    C_glcm = _cmatrices.calculate_glcm(self.matrix.astype('int'), self.maskArray.astype('int'), angles, self.coefficients['Ng'])
+
+    Ng = self.coefficients['Ng']
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
+
+    self.P_glcm = _cmatrices.calculate_glcm(self.matrix.astype('int'), self.maskArray.astype('int'), angles, Ng)
+
+    # Optionally make GLCMs symmetrical for each angle
+    if self.symmetricalGLCM:
+      self.P_glcm += numpy.transpose(self.P_glcm, (1, 0, 2))
+
+    # Optionally apply a weighting factor
+    if not self.weightingNorm is None:
+      pixelSpacing = self.inputImage.GetSpacing()[::-1]
+      weights = numpy.empty(len(angles))
+      for a_idx, a in enumerate(angles):
+        if self.weightingNorm == 'infinity':
+          weights[a_idx] = numpy.exp(-max(numpy.abs(a) * pixelSpacing) ** 2)
+        elif self.weightingNorm == 'euclidean':
+          weights[a_idx] = numpy.exp(-numpy.sum((numpy.abs(a) * pixelSpacing) ** 2))  # sqrt ^ 2 = 1
+        elif self.weightingNorm == 'manhattan':
+          weights[a_idx] = numpy.exp(-numpy.sum(numpy.abs(a) * pixelSpacing) ** 2)
         else:
           self.logger.warning('weigthing norm "%s" is unknown, W is set to 1', self.weightingNorm)
           weights[a_idx] = 1

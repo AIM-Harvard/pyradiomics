@@ -2,6 +2,7 @@ import numpy
 import SimpleITK as sitk
 from six.moves import range
 
+import radiomics
 from radiomics import base
 
 
@@ -14,7 +15,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsShape, self).__init__(inputImage, inputMask, **kwargs)
 
-    self.pixelSpacing = inputImage.GetSpacing()[::-1]
+    self.pixelSpacing = numpy.array(inputImage.GetSpacing()[::-1])
     z, x, y = self.pixelSpacing
     self.cubicMMPerVoxel = z * x * y
 
@@ -43,7 +44,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     # Volume and Surface Area are pre-calculated
     self.Volume = self.lssif.GetPhysicalSize(self.label)
-    self.SurfaceArea = self._calculateSurfaceArea()
+    if radiomics.cMatsEnabled:
+      self.SurfaceArea = self._calculateCSurfaceArea()
+    else:
+      self.SurfaceArea = self._calculateSurfaceArea()
 
   def _calculateSurfaceArea(self):
     # define relative locations of the 8 voxels of a sampling cube
@@ -115,6 +119,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
             S_A += .5 * numpy.sqrt(numpy.sum(c ** 2))
 
     return S_A
+
+  def _calculateCSurfaceArea(self):
+    return radiomics.cShape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
 
   def _getMaximum2Ddiameter(self, dim):
     otherDims = tuple(set([0, 1, 2]) - set([dim]))

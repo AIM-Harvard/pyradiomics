@@ -226,12 +226,17 @@ int calculate_glszm(int *image, signed char *mask, int Sx, int Sy, int Sz, int *
 						}
 						else
 						{
+						    int ref_idx = cur_idx;
+						    cur_idx ++; // cur_idx doesn't have to be checked
 						    // try to find the next voxel that has been marked for processing (-1)
                             // If none are found, current region is complete
-                            cur_idx = i;
                             // increment cur_idx until end of image or a voxel that has been marked is found
                             while (cur_idx < Ni && !(mask[cur_idx] == -1)) cur_idx++;
-                            if (cur_idx == Ni) cur_idx = -1;
+                            if (cur_idx == Ni) cur_idx = ref_idx; // no voxel found, check between ref_idx and i
+                            {
+                                while (cur_idx > i && !(mask[cur_idx] == -1)) cur_idx--;
+                                if (cur_idx == i) cur_idx = -1;
+                            }
                         }
 					} // while region
 

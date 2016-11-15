@@ -133,8 +133,9 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
     Ng = self.coefficients['Ng']
+    Ns = self.coefficients['Np']
 
-    P_glszm = _cmatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng)
+    P_glszm = _cmatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
 
     # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area

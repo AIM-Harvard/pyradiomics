@@ -42,7 +42,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
 
 	// Interpret the input as numpy arrays
 	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BOOL, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 
 	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
@@ -86,7 +86,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
 
 	// Get arrays in Ctype
 	int *image = (int *)PyArray_DATA(image_arr);
-	int *mask = (int *)PyArray_DATA(mask_arr);
+	char *mask = (char *)PyArray_DATA(mask_arr);
 	int *angles = (int *)PyArray_DATA(angles_arr);
 	double *glcm = (double *)PyArray_DATA(glcm_arr);
 
@@ -115,15 +115,15 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
 
 static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
 {
-	int Ng, Nd, alpha;
+	int Ng, alpha;
 	PyObject *image_obj, *mask_obj, *angles_obj;
 	// Parse the input tuple
-	if (!PyArg_ParseTuple(args, "OOOiii", &image_obj, &mask_obj, &angles_obj, &Ng, &Nd, &alpha))
+	if (!PyArg_ParseTuple(args, "OOOii", &image_obj, &mask_obj, &angles_obj, &Ng, &alpha))
 		return NULL;
 
 	// Interpret the input as numpy arrays
 	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BOOL, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 
 	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
@@ -162,21 +162,21 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
 	}
 
 	// Initialize output array (elements not set)
-	int dims[2] = { Ng, Nd };
+	int dims[2] = { Ng, Na * 2 + 1 };
 	PyArrayObject *gldm_arr = (PyArrayObject *)PyArray_FromDims(2, (int*)dims, NPY_DOUBLE);
 
 	// Get arrays in Ctype
 	int *image = (int *)PyArray_DATA(image_arr);
-	int *mask = (int *)PyArray_DATA(mask_arr);
+	char *mask = (char *)PyArray_DATA(mask_arr);
 	int *angles = (int *)PyArray_DATA(angles_arr);
 	double *gldm = (double *)PyArray_DATA(gldm_arr);
 
 	// Set all elements to 0
-	int gldm_size = Ng * Nd;
+	int gldm_size = Ng * (Na * 2 + 1);
 	for (int k = 0; k < gldm_size; k++) gldm[k] = 0;
 
 	//Calculate GLDM
-	if (!calculate_gldm(image, mask, Sx, Sy, Sz, angles, Na, gldm, Ng, Nd, alpha))
+	if (!calculate_gldm(image, mask, Sx, Sy, Sz, angles, Na, gldm, Ng, alpha))
 	{
 		Py_DECREF(image_arr);
 		Py_DECREF(mask_arr);
@@ -204,7 +204,7 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
 
 	// Interpret the input as numpy arrays
 	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
-	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BOOL, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 
 	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
@@ -248,7 +248,7 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
 
 	// Get arrays in Ctype
 	int *image = (int *)PyArray_DATA(image_arr);
-	int *mask = (int *)PyArray_DATA(mask_arr);
+	char *mask = (char *)PyArray_DATA(mask_arr);
 	int *angles = (int *)PyArray_DATA(angles_arr);
 	double *ngtdm = (double *)PyArray_DATA(ngtdm_arr);
 
@@ -277,15 +277,15 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
 
 static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 {
-	int Ng;
+	int Ng, Ns;
 	PyObject *image_obj, *mask_obj, *angles_obj;
 	// Parse the input tuple
-	if (!PyArg_ParseTuple(args, "OOOi", &image_obj, &mask_obj, &angles_obj, &Ng))
+	if (!PyArg_ParseTuple(args, "OOOii", &image_obj, &mask_obj, &angles_obj, &Ng, &Ns))
 		return NULL;
 
 	// Interpret the input as numpy arrays
-	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_ENSURECOPY |NPY_IN_ARRAY);
-	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	PyArrayObject *image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY |NPY_IN_ARRAY);
+	PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_UBYTE, NPY_FORCECAST | NPY_ENSURECOPY | NPY_IN_ARRAY);
 	PyArrayObject *angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
 
 	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
@@ -310,7 +310,6 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 	int Sx = (int)PyArray_DIM(image_arr, 2);
 	int Sy = (int)PyArray_DIM(image_arr, 1);
 	int Sz = (int)PyArray_DIM(image_arr, 0);
-	int Ns = Sx * Sy * Sz;
 
 	int Na = (int)PyArray_DIM(angles_arr, 0);
 
@@ -324,35 +323,54 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 		return NULL;
 	}
 
-	// Initialize output array (elements not set)
-	int dims[2] = { Ng, Ns };
-	PyArrayObject *glszm_arr = (PyArrayObject *)PyArray_FromDims(2, (int*)dims, NPY_DOUBLE);
+	// Initialize temporary output array (elements not set)
+	int tempDims[2] = { Ns, 2 };
+	PyArrayObject *temp_arr = (PyArrayObject *)PyArray_FromDims(2, (int*)tempDims, NPY_INT);
 
 	// Get arrays in Ctype
 	int *image = (int *)PyArray_DATA(image_arr);
-	int *mask = (int *)PyArray_DATA(mask_arr);
+	signed char *mask = (signed char *)PyArray_DATA(mask_arr);
 	int *angles = (int *)PyArray_DATA(angles_arr);
-	double *glszm = (double *)PyArray_DATA(glszm_arr);
+	int *tempData = (int *)PyArray_DATA(temp_arr);
 
 	// Set all elements to 0
-	int ngtdm_size = Ng * Ns;
-	for (int k = 0; k < ngtdm_size; k++) glszm[k] = 0;
+	int tempData_size = Ns * 2;
+	for (int k = 0; k < tempData_size; k++) tempData[k] = -1;
 
-	//Calculate NGTDM
-	if (!calculate_glszm(image, mask, Sx, Sy, Sz, angles, Na, glszm, Ng, Ns))
+	//Calculate GLSZM
+	int maxRegion = 0;
+	maxRegion = calculate_glszm(image, mask, Sx, Sy, Sz, angles, Na, tempData, Ng, Ns);
+	if (maxRegion == -1) // Error occured
 	{
 		Py_DECREF(image_arr);
 		Py_DECREF(mask_arr);
 		Py_DECREF(angles_arr);
-		Py_DECREF(glszm_arr);
+		Py_DECREF(temp_arr);
 		PyErr_SetString(PyExc_RuntimeError, "Calculation of GLSZM Failed.");
 		return NULL;
 	}
 
-	// Clean up
+	// Clean up image, mask and angles arrays (not needed anymore)
 	Py_DECREF(image_arr);
 	Py_DECREF(mask_arr);
 	Py_DECREF(angles_arr);
+
+	// Initialize temporary output array (elements not set)
+	if (maxRegion == 0) maxRegion = 1;
+	int dims[2] = { Ng, maxRegion };
+	PyArrayObject *glszm_arr = (PyArrayObject *)PyArray_FromDims(2, (int*)dims, NPY_DOUBLE);
+	double *glszm = (double *)PyArray_DATA(glszm_arr);
+
+    if (!fill_glszm(tempData, glszm, Ng, maxRegion))
+    {
+        Py_DECREF(temp_arr);
+    	Py_DECREF(glszm_arr);
+    	PyErr_SetString(PyExc_RuntimeError, "Error filling GLSZM.");
+		return NULL;
+    }
+
+    // Clean up tempData
+    Py_DECREF(temp_arr);
 
 	return PyArray_Return(glszm_arr);
 }

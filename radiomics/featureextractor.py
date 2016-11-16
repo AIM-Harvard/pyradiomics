@@ -8,6 +8,7 @@ import SimpleITK as sitk
 import traceback
 import pkgutil
 import inspect
+import pykwalify.core
 import radiomics
 from radiomics import base, imageoperations
 
@@ -80,6 +81,29 @@ class RadiomicsFeaturesExtractor:
         """
         Enable or disable specified input image. If enabling input image, optional custom settings can be specified in
         customArgs.
+
+        Current possible filters are:
+
+        - original: No filter applied
+        - wavelet: Wavelet filtering, yields 8 decompositions per level (all possible combinations of applying either
+          a High or a Low pass filter in each of the three dimensions.
+        - log: Laplacian of Gaussian filter, edge enhancement filter. Emphasizes areas of gray level change, where sigma
+          defines how coarse the emphasised texture should be. A low sigma emphasis on fine textures (change over a
+          short distance), where a high sigma value emphasises coarse textures (gray level change over a large distance)
+        - square: Takes the square of the image intensities and linearly scales them back to the original range.
+          Negative values in the original image will be made negative again after application of filter.
+        - squareroot: Takes the square root of the absolute image intensities and scales them back to original range.
+          Negative values in the original image will be made negative again after application of filter.
+        - logarithm: Takes the logarithm of the absolute intensity + 1. Values are scaled to original range and
+          negative original values are made negative again after application of filter.
+        - exponential: Takes the the exponential, where filtered intensity is e^(|original intensity|). Values are
+          scaled to original range and negative original values are made negative again after application of filter.
+
+        For the mathmetical formulas of square, squareroot, logarithm and exponential, see their respective functions in
+        :ref:`imageoperations<radiomics-imageoperations-label>`
+        (:py:func:`~radiomics.imageoperations.applySquare`, :py:func:`~radiomics.imageoperations.applySquareRoot`,
+        :py:func:`~radiomics.imageoperations.applyLogarithm` and :py:func:`~radiomics.imageoperations.applyExponential`,
+        respectively).
         """
         if enabled:
             if customArgs is None:
@@ -264,6 +288,11 @@ class RadiomicsFeaturesExtractor:
         return featureVector
 
     def generate_original(self, image, mask, **kwargs):
+        """
+        No filter is applied.
+
+        :return: Yields original image, mask, 'original' and ``kwargs``
+        """
         yield image, mask, 'original', kwargs
 
     def generate_log(self, image, mask, **kwargs):
@@ -278,10 +307,10 @@ class RadiomicsFeaturesExtractor:
         N.B. Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
         will return an empty dictionary.
 
-        Feature names are changed to reflect LoG settings:
+        Returned filter name reflects LoG settings:
         log-sigma-<sigmaValue>-3D-<featureName>.
 
-        :return: dictionary containing calculated features ("featureName":value).
+        :return: Yields log filtered image, mask, filter name and ``kwargs``
         """
         # Check if size of image is > 4 in all 3D directions (otherwise, LoG filter will fail)
         size = numpy.array(image.GetSize())
@@ -314,12 +343,12 @@ class RadiomicsFeaturesExtractor:
         - level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
         - wavelet ["coif1"]: string, type of wavelet decomposition
 
-        Feature names are changed to reflect wavelet type:
+        Returned filter name reflects wavelet type:
         wavelet[level]-<decompositionName>-<featureName>
 
         N.B. only levels greater than the first level are entered into the name.
 
-        :return: dictionary containing calculated features ("featureName":value).
+        :return: Yields wavelet filtered image, mask, filter name and ``kwargs``
         """
         waveletArgs = {}
         waveletArgs['wavelet'] = kwargs.get('wavelet', 'coif1')
@@ -349,9 +378,9 @@ class RadiomicsFeaturesExtractor:
         """
         Computes the square of the image intensities.
 
-        Max intensity is set in case of overflow.
-
         Resulting values are rescaled on the range of the initial original image.
+
+        :return: Yields square filtered image, mask, 'square' and ``kwargs``
         """
         squareImage = imageoperations.applySquare(image)
         yield squareImage, mask, 'square', kwargs
@@ -360,16 +389,22 @@ class RadiomicsFeaturesExtractor:
         """
         Computes the square root of the absolute value of image intensities.
 
-        Resulting values are rescaled on the range of the initial original image.
+        Resulting values are rescaled on the range of the initial original image and negative intensities are made
+        negative in resultant filtered image.
+
+        :return: Yields square root filtered image, mask, 'squareroot' and ``kwargs``
         """
         squarerootImage = imageoperations.applySquareRoot(image)
         yield squarerootImage, mask, 'squareroot', kwargs
 
     def generate_logarithm(self, image, mask, **kwargs):
         """
-        Computes the logarithm of the absolute value of the original image.
+        Computes the logarithm of the absolute value of the original image + 1.
 
-        Resulting values are rescaled on the range of the initial original image.
+        Resulting values are rescaled on the range of the initial original image and negative intensities are made
+        negative in resultant filtered image.
+
+        :return: Yields logarithm filtered image, mask, 'logarithm' and ``kwargs``
         """
         logarithmImage = imageoperations.applyLogarithm(image)
         yield logarithmImage, mask, 'logarithm', kwargs
@@ -379,6 +414,8 @@ class RadiomicsFeaturesExtractor:
         Computes the exponential of the original image.
 
         Resulting values are rescaled on the range of the initial original image.
+
+        :return: Yields exponential filtered image, mask, 'exponential' and ``kwargs``
         """
         exponentialImage = imageoperations.applyExponential(image)
         yield exponentialImage, mask, 'exponential', kwargs

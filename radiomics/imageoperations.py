@@ -229,23 +229,23 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
     wavelet = pywt.Wavelet(wavelet)
 
   for i in range(0, start_level):
-    H, L = decompose_i(data, wavelet)
-    LH, LL = decompose_j(L, wavelet)
-    LLH, LLL = decompose_k(LL, wavelet)
+    H, L = _decompose_i(data, wavelet)
+    LH, LL = _decompose_j(L, wavelet)
+    LLH, LLL = _decompose_k(LL, wavelet)
 
     data = LLL.copy()
 
   ret = []
   for i in range(start_level, start_level + level):
-    H, L = decompose_i(data, wavelet)
+    H, L = _decompose_i(data, wavelet)
 
-    HH, HL = decompose_j(H, wavelet)
-    LH, LL = decompose_j(L, wavelet)
+    HH, HL = _decompose_j(H, wavelet)
+    LH, LL = _decompose_j(L, wavelet)
 
-    HHH, HHL = decompose_k(HH, wavelet)
-    HLH, HLL = decompose_k(HL, wavelet)
-    LHH, LHL = decompose_k(LH, wavelet)
-    LLH, LLL = decompose_k(LL, wavelet)
+    HHH, HHL = _decompose_k(HH, wavelet)
+    HLH, HLL = _decompose_k(HL, wavelet)
+    LHH, LHL = _decompose_k(LH, wavelet)
+    LLH, LLL = _decompose_k(LL, wavelet)
 
     data = LLL.copy()
 
@@ -271,7 +271,7 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
 
   return approximation, ret
 
-def decompose_i(data, wavelet):
+def _decompose_i(data, wavelet):
   #process in i:
   H, L = [], []
   i_arrays = chain.from_iterable(numpy.transpose(data,(0,1,2)))
@@ -283,7 +283,7 @@ def decompose_i(data, wavelet):
   L = numpy.hstack(L).reshape(data.shape)
   return H, L
 
-def decompose_j(data, wavelet):
+def _decompose_j(data, wavelet):
   #process in j:
   H, L = [], []
   j_arrays = chain.from_iterable(numpy.transpose(data,(0,1,2)))
@@ -295,7 +295,7 @@ def decompose_j(data, wavelet):
   L = numpy.asarray( [slice.T for slice in numpy.split(numpy.vstack(L), data.shape[0])] )
   return H, L
 
-def decompose_k(data, wavelet):
+def _decompose_k(data, wavelet):
   #process in k:
   H, L = [], []
   k_arrays = chain.from_iterable(numpy.transpose(data,(1,2,0)))
@@ -308,18 +308,40 @@ def decompose_k(data, wavelet):
   return H, L
 
 def applySquare(inputImage):
+  r"""
+  Computes the square of the image intensities.
+
+  Resulting values are rescaled on the range of the initial original image and negative intensities are made
+  negative in resultant filtered image.
+
+  :math:`x_f = (cx_i)^2,\text{ where } c=\displaystyle\frac{1}{\sqrt{\max(x_i)}}`
+
+  Where :math:`x_i` and :math:`x_f` are the original and filtered intensity, respectively.
+  """
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = numpy.sqrt(numpy.max(im)) / numpy.max(im)
+  coeff = 1 / numpy.sqrt(numpy.max(im))
   im = (coeff * im) ** 2
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
   return im
 
 def applySquareRoot(inputImage):
+  r"""
+  Computes the square root of the absolute value of image intensities.
+
+  Resulting values are rescaled on the range of the initial original image and negative intensities are made
+  negative in resultant filtered image.
+
+  :math:`x_f = \left\{ {\begin{array}{lcl}
+  \sqrt{cx_i} & \mbox{for} & x_i \ge 0 \\
+  -\sqrt{-cx_i} & \mbox{for} & x_i < 0\end{array}} \right.,\text{ where } c=\max(x_i)`
+
+  Where :math:`x_i` and :math:`x_f` are the original and filtered intensity, respectively.
+  """
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = numpy.max(im) ** 2 / numpy.max(im)
+  coeff = numpy.max(im)
   im[im > 0] = numpy.sqrt(im[im > 0] * coeff)
   im[im < 0] = - numpy.sqrt(-im[im < 0] * coeff)
   im = sitk.GetImageFromArray(im)
@@ -327,6 +349,18 @@ def applySquareRoot(inputImage):
   return im
 
 def applyLogarithm(inputImage):
+  r"""
+  Computes the logarithm of the absolute value of the original image + 1.
+
+  Resulting values are rescaled on the range of the initial original image and negative intensities are made
+  negative in resultant filtered image.
+
+  :math:`x_f = \left\{ {\begin{array}{lcl}
+  c\log{(x_i + 1)} & \mbox{for} & x_i \ge 0 \\
+  -c\log{(-x_i + 1)} & \mbox{for} & x_i < 0\end{array}} \right.,\text{ where } c=\displaystyle\frac{\max(x_i)}{\max(x_f)}`
+
+  Where :math:`x_i` and :math:`x_f` are the original and filtered intensity, respectively.
+  """
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
   im_max = numpy.max(im)
@@ -338,6 +372,15 @@ def applyLogarithm(inputImage):
   return im
 
 def applyExponential(inputImage):
+  r"""
+  Computes the exponential of the original image.
+
+  Resulting values are rescaled on the range of the initial original image.
+
+  :math:`x_f = e^{cx_i},\text{ where } c=\displaystyle\frac{\log(\max(x_i))}{\max(x_i)}`
+
+  Where :math:`x_i` and :math:`x_f` are the original and filtered intensity, respectively.
+  """
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
   coeff = numpy.log(numpy.max(im))/numpy.max(im)

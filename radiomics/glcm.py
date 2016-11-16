@@ -125,7 +125,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
 
     # Exclude voxels outside segmentation, due to binning, no negative values will be encountered inside the mask
-    self.matrix[self.maskArray != self.label] = -1
+    self.matrix[self.maskArray == 0] = -1
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)

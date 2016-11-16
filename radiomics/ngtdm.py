@@ -2,6 +2,7 @@ from itertools import chain
 import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
+from tqdm import trange
 
 
 class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
@@ -105,42 +106,57 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     angles = numpy.concatenate((angles, angles * -1))
     Nd = len(angles)
 
-    angMats = numpy.empty((self.matrix.shape + (Nd,)), dtype='int')
+    dataTemp = numpy.zeros(self.matrix.shape, dtype='float')
+    countMat = numpy.zeros(self.matrix.shape, dtype='int')
 
+    if self.verbose: bar = trange(Nd - 1, desc='Calculate shifted matrices (NGTDM)')
     for a_idx, a in enumerate(angles):
+      if self.verbose: bar.update()
       # create shifted array (by angle), so that for an index idx, angMat[idx] is the neigbour of self.matrix[idx]
       # for the current angle.
-      angMat = angMats[:, :, :, a_idx]
-      angMat[:, :, :] = numpy.roll(numpy.roll(numpy.roll(self.matrix, -a[0], 0), -a[1], 1), -a[2], 2)
+      angMat = numpy.roll(numpy.roll(numpy.roll(self.matrix, -a[0], 0), -a[1], 1), -a[2], 2)
       if a[0] > 0:
-          angMat[-a[0]:, :, :] = padVal
+        angMat[-a[0]:, :, :] = padVal
       elif a[0] < 0:
-          angMat[:-a[0], :, :] = padVal
+        angMat[:-a[0], :, :] = padVal
 
       if a[1] > 0:
-          angMat[:, -a[1]:, :] = padVal
+        angMat[:, -a[1]:, :] = padVal
       elif a[1] < 0:
-          angMat[:, :-a[1], :] = padVal
+        angMat[:, :-a[1], :] = padVal
 
       if a[2] > 0:
-          angMat[:, :, -a[2]:] = padVal
+        angMat[:, :, -a[2]:] = padVal
       elif a[2] < 0:
-          angMat[:, :, :-a[2]] = padVal
+        angMat[:, :, :-a[2]] = padVal
+      nanmask = numpy.isnan(angMat)
+      dataTemp[~nanmask] += angMat[~nanmask]
+      countMat[~nanmask] += 1
 
-    # Create a difference matrix by taking the absolut of self.matrix - the neighbourhood mean, excluding NaNs
-    # in the calculation of the mean
-    diffMat = numpy.abs(self.matrix - numpy.nanmean(angMats, axis=3))
+    if self.verbose: bar.close()
+
+    # Average neighbourhood is the dataTemp (which is the sum of gray levels of neighbours that are non-NaN) divided by
+    # the countMat (which is the number of neighbours that are non-NaN)
+    nZeroMask = countMat > 0  # Prevent division by 0
+    dataTemp[nZeroMask] = dataTemp[nZeroMask] / countMat[nZeroMask]
+
+    dataTemp = numpy.abs(dataTemp - self.matrix)  # Calculate the absolute difference
+
+    P_ngtdm = numpy.zeros((Ng, 3), dtype='float')
 
     # For each gray level present in self.matrix:
     # element 0 = probability of gray level (p_i),
     # element 1 = sum of the absolute differences (s_i),
     # element 2 = gray level (i)
-    P_ngtdm = numpy.zeros((Ng, 3), dtype='float')
-    for i in numpy.unique(self.matrix):
-        if not numpy.isnan(i):
-          i_ind = numpy.where(self.matrix == i)
-          P_ngtdm[int(i-1), 0] = len(i_ind[0])
-          P_ngtdm[int(i-1), 1] = numpy.sum(diffMat[i_ind])
+    grayLevels = numpy.unique(self.matrix[self.matrixCoordinates])
+    if self.verbose: bar = trange(len(grayLevels), desc='Calculate NGTDM')
+    for i in grayLevels:
+      if self.verbose: bar.update()
+      if not numpy.isnan(i):
+        i_ind = numpy.where(self.matrix == i)
+        P_ngtdm[int(i - 1), 0] = len(i_ind[0])
+        P_ngtdm[int(i - 1), 1] = numpy.sum(dataTemp[i_ind])
+    if self.verbose: bar.close()
 
     # Fill in gray levels (needed as empty gray level slices will be deleted)
     P_ngtdm[:, 2] = numpy.arange(1, Ng+1)

@@ -117,16 +117,16 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
     self.coefficients = {}
-    self.P_glcm = {}
+    self.P_glcm = None
 
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
 
     if radiomics.debugging:
-      self._calculateGLCM()
+      self.P_glcm = self._calculateGLCM()
     else:
-      self._calculateCGLCM()
+      self.P_glcm = self._calculateCGLCM()
     self._calculateCoefficients()
 
   def _calculateGLCM(self):
@@ -144,7 +144,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
 
-    self.P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
+    P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
 
     if self.verbose: bar = trange(Ng, desc='calculate GLCM')
 
@@ -169,12 +169,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           # that are also a neighbour of a voxel with gray level i for angle a.
           # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
           count = len(neighbour_indices.intersection(j_indices))
-          self.P_glcm[i - 1, j - 1, a_idx] = count
+          P_glcm[i - 1, j - 1, a_idx] = count
     if self.verbose: bar.close()
 
     # Optionally make GLCMs symmetrical for each angle
     if self.symmetricalGLCM:
-      self.P_glcm += numpy.transpose(self.P_glcm, (1, 0, 2))
+      P_glcm += numpy.transpose(P_glcm, (1, 0, 2))
 
     # Optionally apply a weighting factor
     if not self.weightingNorm is None:
@@ -193,28 +193,28 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           self.logger.warning('weigthing norm "%s" is unknown, W is set to 1', self.weightingNorm)
           weights[a_idx] = 1
 
-      self.P_glcm = numpy.sum(self.P_glcm * weights[None, None, :], 2, keepdims=True)
+      P_glcm = numpy.sum(P_glcm * weights[None, None, :], 2, keepdims=True)
 
-    sumGlcm = numpy.sum(self.P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
+    sumGlcm = numpy.sum(P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
 
     # Delete empty angles if no weighting is applied
-    if self.P_glcm.shape[2] > 1:
-      self.P_glcm = numpy.delete(self.P_glcm, numpy.where(sumGlcm == 0), 2)
+    if P_glcm.shape[2] > 1:
+      P_glcm = numpy.delete(P_glcm, numpy.where(sumGlcm == 0), 2)
       sumGlcm = numpy.delete(sumGlcm, numpy.where(sumGlcm == 0), 0)
 
     # Normalize each glcm
-    self.P_glcm = self.P_glcm/sumGlcm
+    return P_glcm/sumGlcm
 
   def _calculateCGLCM(self):
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
     Ng = self.coefficients['Ng']
 
-    self.P_glcm = _cmatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
+    P_glcm = _cmatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
 
     # Optionally make GLCMs symmetrical for each angle
     if self.symmetricalGLCM:
-      self.P_glcm += numpy.transpose(self.P_glcm, (1, 0, 2))
+      P_glcm += numpy.transpose(P_glcm, (1, 0, 2))
 
     # Optionally apply a weighting factor
     if not self.weightingNorm is None:
@@ -231,17 +231,17 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           self.logger.warning('weigthing norm "%s" is unknown, W is set to 1', self.weightingNorm)
           weights[a_idx] = 1
 
-      self.P_glcm = numpy.sum(self.P_glcm * weights[None, None, :], 2, keepdims=True)
+      P_glcm = numpy.sum(P_glcm * weights[None, None, :], 2, keepdims=True)
 
-    sumGlcm = numpy.sum(self.P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
+    sumGlcm = numpy.sum(P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
 
     # Delete empty angles if no weighting is applied
-    if self.P_glcm.shape[2] > 1:
-      self.P_glcm = numpy.delete(self.P_glcm, numpy.where(sumGlcm == 0), 2)
+    if P_glcm.shape[2] > 1:
+      P_glcm = numpy.delete(P_glcm, numpy.where(sumGlcm == 0), 2)
       sumGlcm = numpy.delete(sumGlcm, numpy.where(sumGlcm == 0), 0)
 
     # Normalize each glcm
-    self.P_glcm = self.P_glcm / sumGlcm
+    return P_glcm / sumGlcm
 
   # check if ivector and jvector can be replaced
   def _calculateCoefficients(self):

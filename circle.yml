@@ -8,5 +8,5 @@ dependencies:
     - pip install PyWavelets==0.4.0
 test:
   override:
-    - nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests/test_features.py
+    - nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests/test_features.py tests/test_cmatrices.py
     - cp nosetests.xml $CIRCLE_TEST_REPORTS

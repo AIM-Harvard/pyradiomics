@@ -1,0 +1,25 @@
+{
+"inputImage":
+    {
+    "original":{},
+    "log":{},
+    "wavelet":{}
+    },
+
+"featureClass":
+    {
+    "shape":[],
+    "firstorder":[],
+    "glcm":[],
+    "glrlm":[],
+    "glszm":[]
+    },
+
+"setting":
+    {
+    "binWidth":25,
+    "interpolator":3,
+    "resampledPixelSpacing":null,
+    "verbose":false
+    }
+}

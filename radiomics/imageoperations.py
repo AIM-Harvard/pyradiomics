@@ -1,6 +1,9 @@
-import SimpleITK as sitk
-import numpy, pywt, logging
 from itertools import chain
+import logging
+import json
+import SimpleITK as sitk
+import numpy
+import pywt
 
 logger = logging.getLogger(__name__)
 
@@ -342,3 +345,79 @@ def applyExponential(inputImage):
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
   return im
+
+def parseParameters(filePath):
+  """
+  Read specified parameters file, extract parameters and return 3 dictionaries (one for each parameter type)
+
+  Parameters file must follow the JSON format:
+
+  - Multiple values are enclosed by square brackets and comma separated: [..., ...]
+  - Dictionary values are enclosed by curly braces, where key:value pairs are comma separated and keys and values
+    are separated by a semicolon: {key:value, key:value, ...}
+  - String values should be enclosed by quotes: "..."
+  - Numbers should not be quoted: 3.14
+
+  The structure that must be used is as follows:
+
+      {
+      <parameterType>:
+        {
+        <parameterName>:<value>,
+        ...
+        },
+      ...
+      }
+
+  The parameter types can be one of the following:
+
+  - setting: Setting to use for preprocessing and class specific settings. <value> should be in the same type as
+    specified in the documentation. These are the general and class specific settings.
+  - featureClass: Feature class to enable, <value> is list of strings representing enabled features. If <value> is
+    null or <value> is an empty list, all features for this class are enabled. Other types or null values not allowed.
+  - inputImage: input image to calculate features on. <value> is custom kwarg settings (dictionary). if <value> is
+    an empty dictionary, no custom settings are added for this input image. Other types or null values not allowed.
+
+  Unrecognized keys are ignored. A warning is logged is unrecognized keys are found.
+  """
+  kwargs = {}
+  enabledFeatures = {}
+  inputImages = {}
+
+  with open(filePath, 'r') as paramFile:
+    parameters = json.load(paramFile)
+    paramFile.close()
+
+  if not isinstance(parameters, dict):
+    logger.warning("Root of parameters file is not a dictionary, no settings loaded")
+    return {}, {}, {}
+
+  keyErrors = []
+  for paramtype, params in parameters.iteritems():
+    if not isinstance(params, dict):
+      logger.warning("Parameterset is not a dictionary: %s", paramtype)
+      continue
+
+    if paramtype == 'setting':
+      kwargs = params
+    elif paramtype == 'featureClass':
+      enabledFeatures = params
+    elif paramtype == 'inputImage':
+      inputImages = params
+    else:
+      keyErrors.append(paramtype)
+
+  if len(keyErrors) > 0:
+    logger.warning("Unrecognized keys encountered in parameters file: %s", keyErrors)
+
+  for k, v in enabledFeatures.iteritems():
+    if not isinstance(v, list):
+      logger.warning("Value of featureClass %s is not a list, setting to empty list", k)
+      kwargs[k] = []
+
+  for k, v in inputImages.iteritems():
+    if not isinstance(v, dict):
+      logger.warning("Value of inputImage %s is not a dictionary, setting to empty dictionary", k)
+      kwargs[k] = {}
+
+  return kwargs, enabledFeatures, inputImages

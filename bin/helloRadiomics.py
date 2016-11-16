@@ -28,8 +28,8 @@ kwargs['verbose'] = True
 # Initialize wrapperClass to generate signature
 extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
 
-# Only enable the original image as input (disables LoG, Wavelet)
-extractor.enableInputImages(original= {})
+# By default, only original is enabled. Optionally enable some filters:
+# extractor.enableInputImages(original={}, log={}, wavelet={})
 
 # Disable all classes except firstorder
 extractor.disableAllFeatures()
@@ -43,7 +43,7 @@ extractor.enableFeaturesByName(firstorder= ['Mean', 'Skewness'])
 # Enable writing out the log using radiomics logger
 radiomics.debug()  # Switch on radiomics logging from level=DEBUG (default level=WARNING)
 
-# Prevent radiomics logger from printing out log entries with level<WARNING to the console
+# Prevent radiomics logger from printing out log entries with level < WARNING to the console
 logger = logging.getLogger('radiomics')
 logger.handlers[0].setLevel(logging.WARNING)
 logger.propagate = False  # Do not pass log messages on to root logger

@@ -51,9 +51,16 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   The following class specific settings are possible:
 
-  - weightingNorm [None]: string, indicates which norm should be used when applying distance weighting. possible values
-  are 'manhattan' for first order norm, 'euclidean' for second order norm and 'infinity' for infinity norm. If set to
-  None, no weighting is applied. In case of other values, an warning is logged and GLCMs are all weighted by factor 1.
+  - weightingNorm [None]: string, indicates which norm should be used when applying distance weighting.
+    Enumerated setting, possible values:
+
+    - 'manhattan': first order norm
+    - 'euclidean': second order norm
+    - 'infinity': infinity norm.
+    - 'no_weighting': GLCMs are weighted by factor 1 and summed
+    - None: Applies no weighting, mean of values calculated on separate matrices is returned.
+
+    In case of other values, an warning is logged and GLCMs are all weighted by factor 1 and summed.
 
   References
 
@@ -153,6 +160,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
           weights[a_idx] = numpy.sqrt(numpy.sum((numpy.abs(a) * pixelSpacing) ** 2))
         elif self.weightingNorm == 'manhattan':
           weights[a_idx] = numpy.sum(numpy.abs(a) * pixelSpacing)
+        elif self.weightingNorm == 'no_weighting':
+          weights[a_idx] = 1
         else:
           self.logger.warning('weigthing norm "%s" is unknown, weighting factor is set to 1', self.weightingNorm)
           weights[a_idx] = 1

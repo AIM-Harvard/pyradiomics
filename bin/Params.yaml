@@ -1,0 +1,40 @@
+# This is an example of a parameters file
+# It is written according to the YAML-convention (www.yaml.org) and is checked by the code for consistency.
+# Three types of settings are possible and reflected in the structure of the document:
+#
+# Setting Type:
+#   Setting Name: <value>
+#
+# The three setting types are:
+# - setting: Setting to use for preprocessing and class specific settings. if no <value> is specified, the value for
+#   this setting is set to None.
+# - featureClass: Feature class to enable, <value> is list of strings representing enabled features. If no <value> is
+#   specified or <value> is an empty list ('[]'), all features for this class are enabled.
+# - inputImage: input image to calculate features on. <value> is custom kwarg settings (dictionary). if <value> is an
+#   empty dictionary ('{}'), no custom settings are added for this input image.
+#
+# Some settings have a limited list of possible values. Where this is the case, possible values are listed in the
+# package documentation
+
+# Settings to use, possible settings are mentioned in the documentation at the start of the modules.
+setting:
+  binWidth: 25
+  label: 1
+  interpolator: 'sitkBSpline' # This is an enumerated value, here None is not allowed
+  resampledPixelSpacing: # This disables resampling, as it is interpreted as None, to enable it, specify spacing in x, y, z as [x, y , z]
+  verbose: True
+  weightingNorm: # If no value is specified, it is interpreted as None
+
+# Input images to use: original for unfiltered image and/or any other filters, see documentation of featureextractor.py
+# for possible values
+inputImage:
+  original: {} # for dictionaries / mappings, None values are not allowed, '{}' is interpreted as an empty dictionary
+
+# Featureclasses, from which features must be calculated. If a featureclass is not mentioned, no features are calculated
+# for that class. Otherwise, the specified features are calculated, or, if none are specified, all are calculated.
+featureClass:
+  shape: # for lists none values are allowed, in this case, all features are enabled
+  firstorder: [] # specifying an empty list has the same effect as specifying nothing.
+  glcm:
+  glrlm:
+  glszm:

@@ -5,7 +5,6 @@ import collections
 from itertools import chain
 import numpy
 import SimpleITK as sitk
-import traceback
 import pkgutil
 import inspect
 import pykwalify.core
@@ -23,12 +22,29 @@ class RadiomicsFeaturesExtractor:
     Then a call to computeSignature generates the radiomics signature specified by these settings for the passed
     image and labelmap combination. This function can be called repeatedly in a batch process to calculate the radiomics
     signature for all image and labelmap combinations.
-    The following general settings can be specified in kwargs:
+
+    It initialisation, a parameters file can be provided containing all necessary settings. This is done by passing the
+    location of the file as the single argument in the initialization call, without specifying it as a keyword argument.
+    If such a file location is provided, any additional kwargs are ignored.
+    Alternatively, at initialisation, the following general settings can be specified in kwargs:
 
     - verbose [True]: Boolean, set to False to disable status update printing.
     - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
     - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
-    - interpolator [sitk.sitkBSpline]: Simple ITK constant, sets interpolator to use for resampling.
+    - interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
+      Enumerated value, possible values:
+
+      - sitkNearestNeighbor
+      - sitkLinear
+      - sitkBSpline
+      - sitkGaussian
+      - sitkLabelGaussian
+      - sitkHammingWindowedSinc
+      - sitkCosineWindowedSinc
+      - sitkWelchWindowedSinc
+      - sitkLanczosWindowedSinc
+      - sitkBlackmanWindowedSinc
+
     - padDistance [5]: Integer, set the number of voxels pad cropped tumor volume with during resampling. Padding occurs
       in new feature space and is done on all faces, i.e. size increases in x, y and z direction by 2*padDistance.
       Padding is needed for some filters (e.g. LoG). After application of filters image is cropped again without
@@ -45,10 +61,87 @@ class RadiomicsFeaturesExtractor:
     N.B. for log, the sigma is set to range 0.5-5.0, step size 0.5
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
 
         self.featureClasses = self.getFeatureClasses()
+
+        self.kwargs = {}
+        self.inputImages = {}
+        self.enabledFeatures = {}
+
+        if len(args) == 1 and isinstance(args[0], basestring):
+            self.loadParams(args[0])
+        else:
+            # Set default settings and update with and changed settings contained in kwargs
+            self.kwargs = {'resampledPixelSpacing': None,  # No resampling by default
+                           'interpolator': sitk.sitkBSpline,
+                           'padDistance': 5,
+                           'label': 1,
+                           'verbose': False}
+            self.kwargs.update(kwargs)
+
+            self.inputImages = {'original': {}}
+
+            self.enabledFeatures = {}
+            for featureClassName in self.getFeatureClassNames():
+                self.enabledFeatures[featureClassName] = []
+
+    def loadParams(self, paramsFile):
+        """
+        Parse specified parameters file and use it to update settings in kwargs, enabled feature(Classes) and input
+        images:
+        - kwarg settings not specified in parameters are set to their default value.
+        - enabledFeatures are replaced by those in parameters. If no featureClass parameters were specified, all
+          featureClasses and features are enabled.
+        - inputImages are replaced by those in parameters. If no inputImage parameters were specified, only original
+          image is used for feature extraction, with no additional custom settings
+
+        The paramsFile is written according to the YAML-convention (www.yaml.org) and is checked by the code for
+        consistency. Only on yaml document per file is allowed. Settings must be grouped by setting type as mentioned
+        above are reflected in the structure of the document as follows::
+
+            <Setting Type>:
+              <Setting Name>: <value>
+              ...
+            <Setting Type>:
+              ...
+
+        Blank lines may be inserted to increase readability, the are ignored by the parser. Additional comments are also
+        possible, these are preceded by an '#' and can be inserted on a blank line, or on a line containing settings::
+
+            # This is a line conatining only comments
+            setting: # This is a comment placed after the declaration of the 'setting' group.
+
+        Any keyword, such as a setting type or setting name may only be mentioned once. Multiple instances do not raise
+        an error, but only the last encountered one is used.
+
+        The three setting types are named as follows:
+
+        - setting: Setting to use for preprocessing and class specific settings (``kwargs`` arguments). if no <value>
+          is specified, the value for this setting is set to None.
+        - featureClass: Feature class to enable, <value> is list of strings representing enabled features. If no
+          <value> is specified or <value> is an empty list ('[]'), all features for this class are enabled.
+        - inputImage: input image to calculate features on. <value> is custom kwarg settings (dictionary). if <value>
+          is an empty dictionary ('{}'), no custom settings are added for this input image.
+
+        If supplied params file does not match the requirements, a pykwalify error is raised.
+        """
+        schemafile = radiomics.__path__[0] + r'\..\data\paramSchema.yaml'
+        c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemafile])
+        params = c.validate()
+
+        inputImages = params.get('inputImage', {})
+        enabledFeaturs = params.get('featureClass', {})
+        kwargs = params.get('setting', {})
+
+        if len(inputImages) == 0:
+            inputImages = {'original': {}}
+
+        if len(enabledFeaturs) == 0:
+            self.enabledFeatures = {}
+            for featureClassName in self.getFeatureClassNames():
+                self.enabledFeatures[featureClassName] = []
 
         # Set default settings and update with and changed settings contained in kwargs
         self.kwargs = {'resampledPixelSpacing': None,  # No resampling by default
@@ -57,12 +150,6 @@ class RadiomicsFeaturesExtractor:
                        'label': 1,
                        'verbose': False}
         self.kwargs.update(kwargs)
-
-        self.inputImages = {'original': {}}
-
-        self.enabledFeatures = {}
-        for featureClassName in self.getFeatureClassNames():
-            self.enabledFeatures[featureClassName] = []
 
     def enableAllInputImages(self):
         """
@@ -78,7 +165,7 @@ class RadiomicsFeaturesExtractor:
         self.inputImages = {}
 
     def enableInputImageByName(self, inputImage, enabled=True, customArgs=None):
-        """
+        r"""
         Enable or disable specified input image. If enabling input image, optional custom settings can be specified in
         customArgs.
 
@@ -96,7 +183,7 @@ class RadiomicsFeaturesExtractor:
           Negative values in the original image will be made negative again after application of filter.
         - logarithm: Takes the logarithm of the absolute intensity + 1. Values are scaled to original range and
           negative original values are made negative again after application of filter.
-        - exponential: Takes the the exponential, where filtered intensity is e^(|original intensity|). Values are
+        - exponential: Takes the the exponential, where filtered intensity is e^(absolute intensity). Values are
           scaled to original range and negative original values are made negative again after application of filter.
 
         For the mathmetical formulas of square, squareroot, logarithm and exponential, see their respective functions in
@@ -156,7 +243,7 @@ class RadiomicsFeaturesExtractor:
         """
         Specify which features to enable. Key is feature class name, value is a list of enabled feature names.
 
-        To enable all features for a class, provide the class name with an empty list as value.
+        To enable all features for a class, provide the class name with an empty list or None as value.
         Settings for feature classes specified in enabledFeatures.keys are updated, settings for feature classes
         not yet present in enabledFeatures.keys are added.
         To disable the entire class, use disableAllFeatures or enableFeatureClassByName instead.
@@ -191,7 +278,7 @@ class RadiomicsFeaturesExtractor:
             croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, self.kwargs['label'])
             enabledFeatures = self.enabledFeatures['shape']
             shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
-            if len(enabledFeatures) == 0:
+            if enabledFeatures is None or len(enabledFeatures) == 0:
                 shapeClass.enableAllFeatures()
             else:
                 for feature in enabledFeatures:
@@ -273,7 +360,7 @@ class RadiomicsFeaturesExtractor:
             if featureClassName in self.getFeatureClassNames():
                 featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
 
-                if len(enabledFeatures) == 0:
+                if enabledFeatures is None or len(enabledFeatures) == 0:
                     featureClass.enableAllFeatures()
                 else:
                     for feature in enabledFeatures:
@@ -341,7 +428,16 @@ class RadiomicsFeaturesExtractor:
         - start_level [0]: integer, 0 based level of wavelet which should be used as first set of decompositions
           from which a signature is calculated
         - level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
-        - wavelet ["coif1"]: string, type of wavelet decomposition
+        - wavelet ["coif1"]: string, type of wavelet decomposition. Enumerated value, possible values, where an
+          aditional number is needed, range of values is indicated in []:
+
+          - haar
+          - dmey
+          - sym[2-20]
+          - db[1-20]
+          - coif[1-5]
+          - bior[1.1, 1.3, 1.5, 2.2, 2.4, 2.6, 2.8, 3.1, 3.3, 3.5, 3.7, 3.9, 4.4, 5.5, 6.8]
+          - rbio[1.1, 1.3, 1.5, 2.2, 2.4, 2.6, 2.8, 3.1, 3.3, 3.5, 3.7, 3.9, 4.4, 5.5, 6.8]
 
         Returned filter name reflects wavelet type:
         wavelet[level]-<decompositionName>-<featureName>
@@ -434,7 +530,7 @@ class RadiomicsFeaturesExtractor:
         class object of the featureClass as value. Assumes only one featureClass per module
 
         This is achieved by inspect.getmembers. Modules are added if it contains a memeber that is a class,
-        with name starting with 'Radiomics' and is inherited from radiomics.base.RadiomicsFeaturesBase.
+        with name starting with 'Radiomics' and is inherited from :py:class:`radiomics.base.RadiomicsFeaturesBase`.
         """
         featureClasses = {}
         for _,mod,_ in pkgutil.iter_modules(radiomics.__path__):

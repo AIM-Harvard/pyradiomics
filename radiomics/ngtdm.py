@@ -140,7 +140,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     nZeroMask = countMat > 0  # Prevent division by 0
     dataTemp[nZeroMask] = dataTemp[nZeroMask] / countMat[nZeroMask]
 
-    dataTemp = numpy.abs(dataTemp - self.matrix)  # Calculate the absolute difference
+    dataTemp[nZeroMask] = numpy.abs(dataTemp[nZeroMask] - self.matrix[nZeroMask])  # Calculate the absolute difference
 
     P_ngtdm = numpy.zeros((Ng, 3), dtype='float')
 

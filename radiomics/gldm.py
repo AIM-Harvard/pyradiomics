@@ -87,7 +87,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
       if self.verbose: bar.update()
       # create shifted array (by angle), so that for an index idx, angMat[idx] is the neigbour of self.matrix[idx]
       # for the current angle.
-      angMat = numpy.abs(numpy.roll(numpy.roll(numpy.roll(self.matrix, -a[0], 0), -a[1], 1), -a[2], 2) - self.matrix)
+      angMat = numpy.roll(numpy.roll(numpy.roll(self.matrix, -a[0], 0), -a[1], 1), -a[2], 2) - self.matrix
       if a[0] > 0:
         angMat[-a[0]:, :, :] = padVal
       elif a[0] < 0:
@@ -104,7 +104,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         angMat[:, :, :-a[2]] = padVal
 
       nanMask = numpy.isnan(angMat)
-      depMat[~nanMask] += (angMat[~nanMask] <= self.gldm_a)
+      depMat[~nanMask] += (numpy.abs(angMat[~nanMask]) <= self.gldm_a)
 
     if self.verbose: bar.close()
 

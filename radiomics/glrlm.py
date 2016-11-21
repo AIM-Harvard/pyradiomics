@@ -1,6 +1,8 @@
 from itertools import chain
 import numpy
+import radiomics
 from radiomics import base, imageoperations
+import _cmatrices
 
 
 class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
@@ -83,7 +85,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
 
-    self._calculateGLRLM()
+    if radiomics.debugging:
+      self.P_glrlm = self._calculateGLRLM()
+    else:
+      self.P_glrlm = self._calculateCGLRLM()
     self._calculateCoefficients()
 
   def _calculateGLRLM(self):
@@ -147,7 +152,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     # Crop run-length axis of GLRLMs up to maximum observed run-length
     P_glrlm_bounds = numpy.argwhere(P_glrlm)
     (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1
-    self.P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
+    P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
 
     # Optionally apply a weighting factor
     if not self.weightingNorm is None:
@@ -166,16 +171,61 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
           self.logger.warning('weigthing norm "%s" is unknown, weighting factor is set to 1', self.weightingNorm)
           weights[a_idx] = 1
 
-      self.P_glrlm = numpy.sum(self.P_glrlm * weights[None, None, :], 2, keepdims=True)
+      P_glrlm = numpy.sum(P_glrlm * weights[None, None, :], 2, keepdims=True)
 
-    sumP_glrlm = numpy.sum(self.P_glrlm, (0, 1))
+    sumP_glrlm = numpy.sum(P_glrlm, (0, 1))
 
     # Delete empty angles if no weighting is applied
-    if self.P_glrlm.shape[2] > 1:
-      self.P_glrlm = numpy.delete(self.P_glrlm, numpy.where(sumP_glrlm == 0), 2)
+    if P_glrlm.shape[2] > 1:
+      P_glrlm = numpy.delete(P_glrlm, numpy.where(sumP_glrlm == 0), 2)
       sumP_glrlm = numpy.delete(sumP_glrlm, numpy.where(sumP_glrlm == 0), 0)
 
     self.coefficients['sumP_glrlm'] = sumP_glrlm
+
+    return P_glrlm
+
+  def _calculateCGLRLM(self):
+    Ng = self.coefficients['Ng']
+    Nr = self.coefficients['Nr']
+
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
+
+    P_glrlm = _cmatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)
+
+    # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
+    # Crop run-length axis of GLRLMs up to maximum observed run-length
+    P_glrlm_bounds = numpy.argwhere(P_glrlm)
+    (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1
+    P_glrlm = P_glrlm[xstart:xstop,:ystop,:]
+
+    # Optionally apply a weighting factor
+    if not self.weightingNorm is None:
+      pixelSpacing = self.inputImage.GetSpacing()[::-1]
+      weights = numpy.empty(len(angles))
+      for a_idx, a in enumerate(angles):
+        if self.weightingNorm == 'infinity':
+          weights[a_idx] = max(numpy.abs(a) * pixelSpacing)
+        elif self.weightingNorm == 'euclidean':
+          weights[a_idx] = numpy.sqrt(numpy.sum((numpy.abs(a) * pixelSpacing) ** 2))
+        elif self.weightingNorm == 'manhattan':
+          weights[a_idx] = numpy.sum(numpy.abs(a) * pixelSpacing)
+        else:
+          self.logger.warning('weigthing norm "%s" is unknown, weighting factor is set to 1', self.weightingNorm)
+          weights[a_idx] = 1
+
+      P_glrlm = numpy.sum(P_glrlm * weights[None, None, :], 2, keepdims=True)
+
+    sumP_glrlm = numpy.sum(P_glrlm, (0, 1))
+
+    # Delete empty angles if no weighting is applied
+    if P_glrlm.shape[2] > 1:
+      P_glrlm = numpy.delete(P_glrlm, numpy.where(sumP_glrlm == 0), 2)
+      sumP_glrlm = numpy.delete(sumP_glrlm, numpy.where(sumP_glrlm == 0), 0)
+
+    self.coefficients['sumP_glrlm'] = sumP_glrlm
+
+    return P_glrlm
 
   def _calculateCoefficients(self):
 

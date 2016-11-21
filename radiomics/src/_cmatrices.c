@@ -7,11 +7,13 @@ static char glcm_docstring[] = "";
 static char gldm_docstring[] = "";
 static char ngtdm_docstring[] = "";
 static char glszm_docstring[] = "";
+static char glrlm_docstring[] = "";
 
 static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args);
+static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args);
 
 static PyMethodDef module_methods[] = {
 	//{"calculate_", cmatrices_, METH_VARARGS, _docstring},
@@ -19,6 +21,7 @@ static PyMethodDef module_methods[] = {
 	{ "calculate_gldm", cmatrices_calculate_gldm, METH_VARARGS, gldm_docstring },
 	{ "calculate_ngtdm", cmatrices_calculate_ngtdm, METH_VARARGS, ngtdm_docstring },
 	{ "calculate_glszm", cmatrices_calculate_glszm, METH_VARARGS, glszm_docstring },
+	{ "calculate_glrlm", cmatrices_calculate_glrlm, METH_VARARGS, glszm_docstring },
 	{ NULL, NULL, 0, NULL }
 };
 
@@ -423,4 +426,104 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
     Py_DECREF(temp_arr);
 
 	return PyArray_Return(glszm_arr);
+}
+
+static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
+{
+	int Ng, Nr;
+	PyObject *image_obj, *mask_obj, *angles_obj;
+	PyArrayObject *image_arr, *mask_arr, *angles_arr;
+	int Na;
+	int size[3];
+	int strides[3];
+	int dims[3];
+	PyArrayObject *glrlm_arr;
+	int *image;
+	char *mask;
+	int *angles;
+	double *glrlm;
+	int glrlm_size, k;
+
+	// Parse the input tuple
+	if (!PyArg_ParseTuple(args, "OOOii", &image_obj, &mask_obj, &angles_obj, &Ng, &Nr))
+		return NULL;
+
+	// Interpret the input as numpy arrays
+	image_arr = (PyArrayObject *)PyArray_FROM_OTF(image_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BOOL, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+	angles_arr = (PyArrayObject *)PyArray_FROM_OTF(angles_obj, NPY_INT, NPY_FORCECAST | NPY_UPDATEIFCOPY | NPY_IN_ARRAY);
+
+	if (image_arr == NULL || mask_arr == NULL || angles_arr == NULL)
+	{
+		Py_XDECREF(image_arr);
+		Py_XDECREF(mask_arr);
+		Py_XDECREF(angles_arr);
+		return NULL;
+	}
+
+	// Check if Image and Mask have 3 dimensions
+	if (PyArray_NDIM(image_arr) != 3 || PyArray_NDIM(mask_arr) != 3)
+	{
+		Py_DECREF(image_arr);
+		Py_DECREF(mask_arr);
+		Py_DECREF(angles_arr);
+		PyErr_SetString(PyExc_RuntimeError, "Expected a 3D array for image and mask.");
+		return NULL;
+	}
+
+	// Get sizes of the arrays
+	size[2] = (int)PyArray_DIM(image_arr, 2);
+	size[1] = (int)PyArray_DIM(image_arr, 1);
+	size[0] = (int)PyArray_DIM(image_arr, 0);
+
+	strides[2] = (int)(image_arr->strides[2] / image_arr->descr->elsize);
+	strides[1] = (int)(image_arr->strides[1] / image_arr->descr->elsize);
+	strides[0] = (int)(image_arr->strides[0] / image_arr->descr->elsize);
+
+
+	Na = (int)PyArray_DIM(angles_arr, 0);
+
+	// Check if image and mask are the same size
+	if (size[2] != (int)PyArray_DIM(mask_arr, 2) || size[1] != (int)PyArray_DIM(mask_arr, 1) || size[0] != (int)PyArray_DIM(mask_arr, 0))
+	{
+		Py_DECREF(image_arr);
+		Py_DECREF(mask_arr);
+		Py_DECREF(angles_arr);
+		PyErr_SetString(PyExc_RuntimeError, "Dimensions of image and mask do not match.");
+		return NULL;
+	}
+
+	// Initialize output array (elements not set)
+	dims[0] = Ng;
+	dims[1] = Nr;
+	dims[2] = Na;
+	glrlm_arr = (PyArrayObject *)PyArray_FromDims(3, (int*)dims, NPY_DOUBLE);
+
+	// Get arrays in Ctype
+	image = (int *)PyArray_DATA(image_arr);
+	mask = (char *)PyArray_DATA(mask_arr);
+	angles = (int *)PyArray_DATA(angles_arr);
+	glrlm = (double *)PyArray_DATA(glrlm_arr);
+
+	// Set all elements to 0
+	glrlm_size = Ng * Nr * Na;
+	for (k = 0; k < glrlm_size; k++) glrlm[k] = 0;
+
+	//Calculate GLRLM
+	if (!calculate_glrlm(image, mask, size, strides, angles, Na, glrlm, Ng, Nr))
+	{
+		Py_DECREF(image_arr);
+		Py_DECREF(mask_arr);
+		Py_DECREF(angles_arr);
+		Py_DECREF(glrlm_arr);
+		PyErr_SetString(PyExc_RuntimeError, "Calculation of GLRLM Failed.");
+		return NULL;
+	}
+
+	// Clean up
+	Py_DECREF(image_arr);
+	Py_DECREF(mask_arr);
+	Py_DECREF(angles_arr);
+
+	return PyArray_Return(glrlm_arr);
 }

@@ -3,8 +3,6 @@
 # nosetests --nocapture -v tests/test_features.py
 
 import radiomics
-radiomics.debug(True)  # Ensure debugging is switched off (first calculate C matrices)
-
 from radiomics import glcm, glrlm, shape, glszm,ngtdm, gldm
 from testUtils import RadiomicsTestUtils
 import logging
@@ -18,7 +16,7 @@ defaultTestCases = testUtils.getTestCases()
 defaultFeatures = ["glcm", "gldm", "ngtdm", "glrlm", "shape", "glszm"]
 
 testCases = defaultTestCases
-features = ["glcm", "gldm", "ngtdm", "glszm"]  # defaultFeatures
+features = ["glcm", "gldm", "ngtdm", "glrlm", "glszm"]  # defaultFeatures
 
 # set testing arguments
 kwargs = {}
@@ -62,25 +60,23 @@ class TestFeatures:
     elif featureClassName == 'glcm':
       logging.debug('Init GLCM')
       featureClass = glcm.RadiomicsGLCM(testImage, testMask, **kwargs)
-      pyMat = featureClass.P_glcm
-      cMat = featureClass._calculateCGLCM()
+      cMat = featureClass.P_glcm
+      pyMat = featureClass._calculateGLCM()
     elif featureClassName == 'gldm':
       logging.debug('Init GLDM')
       featureClass = gldm.RadiomicsGLDM(testImage, testMask, **kwargs)
-      pyMat = featureClass.P_gldm
-      cMat = featureClass._calculateCGLDM()
+      cMat = featureClass.P_gldm
+      pyMat = featureClass._calculateGLDM()
     elif featureClassName == 'ngtdm':
       logging.debug('Init NGTDM')
       featureClass = ngtdm.RadiomicsNGTDM(testImage, testMask, **kwargs)
-      pyMat = featureClass.P_ngtdm
-      cMat = featureClass._calculateCNGTDM()
+      cMat = featureClass.P_ngtdm
+      pyMat = featureClass._calculateNGTDM()
     elif featureClassName == 'glrlm':
-      logging.debug('No C implementation in glrlm, skipping test')
-      # No C implementation yet, will follow
-      # logging.debug('Init GLRLM')
-      # featureClass = glrlm.RadiomicsGLRLM(testImage, testMask, **kwargs)
-      # cMat = featureClass.P_glrlm
-      # pyMat = featureClass._calculateCGLRLM()
+      logging.debug('Init GLRLM')
+      featureClass = glrlm.RadiomicsGLRLM(testImage, testMask, **kwargs)
+      cMat = featureClass.P_glrlm
+      pyMat = featureClass._calculateGLRLM()
     elif featureClassName == 'shape':
       logging.debug('No C implementation in glrlm, skipping test')
       # No C implementation yet, will follow
@@ -89,8 +85,8 @@ class TestFeatures:
     elif featureClassName == 'glszm':
       logging.debug('Init GLSZM')
       featureClass = glszm.RadiomicsGLSZM(testImage, testMask, **kwargs)
-      pyMat = featureClass.P_glszm
-      cMat = featureClass._calculateCGLSZM()
+      cMat = featureClass.P_glszm
+      pyMat = featureClass._calculateGLSZM()
     else:
       assert (featureClass != None)
 

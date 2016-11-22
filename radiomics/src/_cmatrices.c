@@ -2,12 +2,18 @@
 #include <numpy/arrayobject.h>
 #include "cmatrices.h"
 
-static char module_docstring[] = "";
-static char glcm_docstring[] = "";
-static char gldm_docstring[] = "";
-static char ngtdm_docstring[] = "";
-static char glszm_docstring[] = "";
-static char glrlm_docstring[] = "";
+static char module_docstring[] = ("This module links to C-compiled code for efficient calculation of various matrices "
+                                 "in the pyRadiomics package. It provides fast calculation for GLCM, GLDM, NGTDM, "
+                                 "GLRLM and GLSZM. All functions are given names as follows: ""calculate_<Matrix>"", "
+                                 "where <Matrix> is the name of the matix, in lowercase. Arguments for these functions "
+                                 "are positional and start with 3 numpy arrays (image, mask and angles) and 1 integer "
+                                 "(Ng, number of gray levels). Optionally extra arguments may be required, see function "
+                                 "docstrings for detailed information.");
+static char glcm_docstring[] = "Arguments: Image, Mask, Angles, Ng.";
+static char gldm_docstring[] = "Arguments: Image, Mask, Angles, Ng, Alpha.";
+static char ngtdm_docstring[] = "Arguments: Image, Mask, Angles, Ng.";
+static char glszm_docstring[] = "Arguments: Image, Mask, Angles, Ng, Ns, matrix is cropped to maximum size encountered.";
+static char glrlm_docstring[] = "Arguments: Image, Mask, Angles, Ng, Nr.";
 
 static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args);
@@ -21,7 +27,7 @@ static PyMethodDef module_methods[] = {
 	{ "calculate_gldm", cmatrices_calculate_gldm, METH_VARARGS, gldm_docstring },
 	{ "calculate_ngtdm", cmatrices_calculate_ngtdm, METH_VARARGS, ngtdm_docstring },
 	{ "calculate_glszm", cmatrices_calculate_glszm, METH_VARARGS, glszm_docstring },
-	{ "calculate_glrlm", cmatrices_calculate_glrlm, METH_VARARGS, glszm_docstring },
+	{ "calculate_glrlm", cmatrices_calculate_glrlm, METH_VARARGS, glrlm_docstring },
 	{ NULL, NULL, 0, NULL }
 };
 

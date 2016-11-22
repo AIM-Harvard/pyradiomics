@@ -1,6 +1,101 @@
 #include "cmatrices.h"
 #include <math.h>
 
+// Declare the look-up tables, these are filled at the bottom of this code file.
+static const int gridAngles[8][3];
+static const int edgeTable[128];
+static const int triTable[128][16];
+
+double calculate_surfacearea(char *mask, int *size, double *spacing)
+{
+	int iz, iy, ix, i, j, t, d;  // iterator indices
+	unsigned char cube_idx;  // cube identifier, 8 bits signifying which corners of the cube belong to the segmentation
+	int ang;  // Angle index (8 'angles', one pointing to each corner of the marching cube
+	double vertList[12][3];  // array to hold location of isosurface vectors (points) on the marching cube edges.
+	double sum;
+	double surfaceArea = 0;  // Total surface area
+	double a[3], b[3], c[3];  // 2 points of the triangle, relative to the third, and the cross product vector
+
+    // Iterate over all voxels, do not include last voxels in the three dimensions, as the cube includes voxels at pos +1
+	for (iz = 0; iz < (size[0] - 1); iz++)
+	{
+		for (iy = 0; iy < (size[1] - 1); iy++)
+		{
+			for (ix = 0; ix < (size[2] - 1); ix++)
+			{
+			    // Get current cube_idx by analyzing each point of the current cube
+				cube_idx = 0;
+				i = ix + iy * size[2] + iz * size[2] * size[1];  // voxel at cube corner (0, 0, 0)
+				for (ang = 0; ang < 8; ang++)
+				{
+					j = i + gridAngles[ang][0] * size[2] * size[1] + gridAngles[ang][1] * size[2] + gridAngles[ang][2];
+					if (mask[j]) cube_idx |= (1 << ang);
+				}
+				// Isosurface is symmetrical around the midpoint, flip the number if > 128
+				// This enables look-up tables to be 1/2 the size.
+				if (cube_idx & 0x80) cube_idx ^= 0xff;
+
+				// Exlcude cubes entirely outside or inside the segmentation. Also exclude potential invalid values (> 128).
+				if (cube_idx > 0 && cube_idx < 128)
+				{
+                    if (edgeTable[cube_idx] & 1) interpolate(vertList[0], 1, 0, spacing);
+                    if (edgeTable[cube_idx] & 2) interpolate(vertList[1], 2, 1, spacing);
+                    if (edgeTable[cube_idx] & 4) interpolate(vertList[2], 2, 3, spacing);
+                    if (edgeTable[cube_idx] & 8) interpolate(vertList[3], 3, 0, spacing);
+                    if (edgeTable[cube_idx] & 16) interpolate(vertList[4], 5, 4, spacing);
+                    if (edgeTable[cube_idx] & 32) interpolate(vertList[5], 6, 5, spacing);
+                    if (edgeTable[cube_idx] & 64) interpolate(vertList[6], 6, 7, spacing);
+                    if (edgeTable[cube_idx] & 128) interpolate(vertList[7], 7, 4, spacing);
+                    if (edgeTable[cube_idx] & 256) interpolate(vertList[8], 4, 0, spacing);
+                    if (edgeTable[cube_idx] & 512) interpolate(vertList[9], 5, 1, spacing);
+                    if (edgeTable[cube_idx] & 1024) interpolate(vertList[10], 6, 2, spacing);
+                    if (edgeTable[cube_idx] & 2048) interpolate(vertList[11], 7, 3, spacing);
+
+                    t = 0;
+                    while (triTable[cube_idx][t*3] >= 0) // Exit loop when no more triangles are present (element at index = -1)
+                    {
+                        for (d = 0; d < 3; d++)
+                        {
+                            a[d] = vertList[triTable[cube_idx][t*3 + 1]][d] - vertList[triTable[cube_idx][t*3]][d];
+                            b[d] = vertList[triTable[cube_idx][t*3 + 2]][d] - vertList[triTable[cube_idx][t*3]][d];
+                        }
+                        c[0] = (a[1] * b[2]) - (b[1] * a[2]);
+                        c[1] = (a[2] * b[0]) - (b[2] * a[0]);
+                        c[2] = (a[0] * b[1]) - (b[0] * a[1]);
+
+                        // Get the square
+                        c[0] = c[0] * c[0];
+                        c[1] = c[1] * c[1];
+                        c[2] = c[2] * c[2];
+
+                        // Compute the surface, which is equal to 1/2 magnitude of the cross product, where
+                        // The magnitude is obtained by calculating the euclidean distance between (0, 0, 0)
+                        // and the location of c
+                        sum = c[0] + c[1] + c[2];
+                        sum = sqrt(sum);
+                        sum = 0.5 * sum;
+                        surfaceArea += sum;
+                        t++;
+                    }
+				}
+			}
+		}
+	}
+	return surfaceArea;
+}
+
+int interpolate(double *vertEntry, int a1, int a2, double *spacing)
+{
+	int d;
+
+	for (d = 0; d < 3; d++)
+	{
+		if (gridAngles[a1][d] == 1 && gridAngles[a2][d] == 1) vertEntry[d] = spacing[d];
+		else if (gridAngles[a1][d] != gridAngles[a2][d] ) vertEntry[d] = 0.5 * spacing[d];
+		else vertEntry[d] = 0;
+	}
+}
+
 static const int gridAngles[8][3] = { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, {0, 1, 0}, { 1, 0, 0 }, {1, 0, 1 }, { 1, 1, 1 }, { 1, 1, 0 }};
 static const int edgeTable[128] = {
 	0x000, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c, 0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
@@ -142,87 +237,3 @@ static const int triTable[128][16] = {
 	{ 7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0, -1, -1, -1, -1 },
 	{ 7, 11, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
 };
-
-double calculate_surfacearea(char *mask, int *size, double *spacing)
-{
-	int iz, iy, ix, i, j, t, d;
-	unsigned char cube_idx;
-	int ang;
-	int Ni = size[0] * size[1] * size[2];
-	double sum;
-	double SA = 0;
-	double vertList[12][3];
-	double a[3], b[3], c[3];
-
-	for (iz = 0; iz < (size[0] - 1); iz++)
-	{
-		for (iy = 0; iy < (size[1] - 1); iy++)
-		{
-			for (ix = 0; ix < (size[2] - 1); ix++)
-			{
-				cube_idx = 0;
-				i = ix + iy * size[2] + iz * size[2] * size[1];
-				for (ang = 0; ang < 8; ang++)
-				{
-					j = i + gridAngles[ang][0] * size[2] * size[1] + gridAngles[ang][1] * size[2] + gridAngles[ang][2];
-					if (mask[j]) cube_idx |= (1 << ang);
-				}
-				if (cube_idx & 0x80) cube_idx ^= 0xff;
-				if (cube_idx > 0 && cube_idx < 128)
-				{
-                    if (edgeTable[cube_idx] & 1) interpolate(vertList[0], 1, 0, spacing);
-                    if (edgeTable[cube_idx] & 2) interpolate(vertList[1], 2, 1, spacing);
-                    if (edgeTable[cube_idx] & 4) interpolate(vertList[2], 2, 3, spacing);
-                    if (edgeTable[cube_idx] & 8) interpolate(vertList[3], 3, 0, spacing);
-                    if (edgeTable[cube_idx] & 16) interpolate(vertList[4], 5, 4, spacing);
-                    if (edgeTable[cube_idx] & 32) interpolate(vertList[5], 6, 5, spacing);
-                    if (edgeTable[cube_idx] & 64) interpolate(vertList[6], 6, 7, spacing);
-                    if (edgeTable[cube_idx] & 128) interpolate(vertList[7], 7, 4, spacing);
-                    if (edgeTable[cube_idx] & 256) interpolate(vertList[8], 4, 0, spacing);
-                    if (edgeTable[cube_idx] & 512) interpolate(vertList[9], 5, 1, spacing);
-                    if (edgeTable[cube_idx] & 1024) interpolate(vertList[10], 6, 2, spacing);
-                    if (edgeTable[cube_idx] & 2048) interpolate(vertList[11], 7, 3, spacing);
-
-                    for (t = 0; t < 5; t++)
-                    {
-                        if (triTable[cube_idx][t*3] >= 0)
-                        {
-                            for (d = 0; d < 3; d++)
-                            {
-                                a[d] = vertList[triTable[cube_idx][t*3 + 1]][d] - vertList[triTable[cube_idx][t*3]][d];
-                                b[d] = vertList[triTable[cube_idx][t*3 + 2]][d] - vertList[triTable[cube_idx][t*3]][d];
-                            }
-                            c[0] = (a[1] * b[2]) - (b[1] * a[2]);
-                            c[1] = (a[2] * b[0]) - (b[2] * a[0]);
-                            c[2] = (a[0] * b[1]) - (b[0] * a[1]);
-
-                            // Get the square
-                            c[0] = c[0] * c[0];
-                            c[1] = c[1] * c[1];
-                            c[2] = c[2] * c[2];
-
-                            sum = c[0] + c[1] + c[2];
-                            sum = sqrt(sum);
-                            sum = 0.5 * sum;
-                            SA += sum;
-                        }
-                    }
-				}
-			}
-		}
-	}
-	return SA;
-}
-
-int interpolate(double *vertEntry, int a1, int a2, double *spacing)
-{
-	int d;
-
-	for (d = 0; d < 3; d++)
-	{
-		if (gridAngles[a1][d] == 1 && gridAngles[a2][d] == 1) vertEntry[d] = spacing[d];
-		else if (gridAngles[a1][d] == 0 && gridAngles[a2][d] == 1) vertEntry[d] = 0.5 * spacing[d];
-		else if (gridAngles[a1][d] == 1 && gridAngles[a2][d] == 0) vertEntry[d] = 0.5 * spacing[d];
-		else vertEntry[d] = 0;
-	}
-}

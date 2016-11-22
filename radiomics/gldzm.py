@@ -1,17 +1,19 @@
 import numpy
 from tqdm import trange
+import SimpleITK as sitk
 from radiomics import base, imageoperations
 
 class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
   r"""
   The Gray Level Distance Zone Matrix (GLDZM) quantifies the relationship between the location and gray level of the
   connected zones in an image. A zone consists of connected neighbours which have the same gray level intensity.
-  Furthermore, a connected neighbour is classified using 6-connectedness for 3D and 4-connectedness for 2D images,
-  meaning only voxels that share a face are considered neighbours.
+  Furthermore, a connected neighbour is classified using 26-connectedness for 3D and 8-connectedness for 2D images
+  (fully-connected).
 
-  The 6 and 4-connectedness is also used to create a distance map, where voxel on the edge of the
-  Region of Interest (ROI) are given a distance of 1, and then work stepwise inward, assigning to each voxel the number
-  of edges that need to be crossed to get to the edge of the ROI.
+  Using SimpleITK functionality, a signed Maurer distance map is generated, which yields the euclidean distance of a
+  voxel to the edge of the Region of Interest (ROI). This distance is then rounded to an integer, and 1 is added, so
+  that voxels on the edge of the ROI are given a distance of 1. This ensures a discreet number of distances in the
+  matrix, while zones on the edge are not ignored (where a multiplication by the distance is needed).
 
   The location of a zone is the defined minimum distance value of the voxels contained within the zone.
 
@@ -26,7 +28,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     N & N & N & 4 & 4 & 4 & N\\
     N & N & 3 & 1 & 3 & 4 & N\\
     2 & 1 & 1 & 1 & 3 & 2 & N\\
-    4 & 4 & 2 & 2 & 3 & 3 & 1\\
+    4 & 4 & 2 & 2 & 3 & 2 & 1\\
     3 & 5 & 3 & 3 & 2 & 1 & 1\\
     3 & 5 & 3 & 3 & 2 & 4 & N\\
     3 & 1 & N & N & N & 4 & N\end{bmatrix}
@@ -36,22 +38,22 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
   .. math::
     \textbf{D} = \begin{bmatrix}
     N & N & N & 1 & 1 & 1 & N\\
-    N & N & 1 & 2 & 2 & 1 & N\\
-    1 & 1 & 2 & 3 & 2 & 1 & N\\
-    1 & 2 & 3 & 3 & 3 & 2 & 1\\
-    1 & 2 & 2 & 2 & 2 & 2 & 1\\
-    1 & 2 & 1 & 1 & 1 & 1 & N\\
+    N & N & 1 & 1 & 2 & 1 & N\\
+    1 & 1 & 2 & 2 & 2 & 1 & N\\
+    1 & 2 & 2 & 2 & 2 & 1 & 1\\
+    1 & 2 & 2 & 2 & 2 & 1 & 1\\
+    1 & 1 & 1 & 1 & 1 & 1 & N\\
     1 & 1 & N & N & N & 1 & N\end{bmatrix}
 
   And the GLDZM then becomes:
 
   .. math::
     \textbf{P}=\begin{bmatrix}
-    3 & 0 & 0\\
-    3 & 0 & 1\\
-    3 & 1 & 0\\
-    2 & 0 & 0\\
-    1 & 1 & 0\end{bmatrix}
+    3 & 0\\
+    3 & 1\\
+    3 & 1\\
+    2 & 0\\
+    1 & 1\end{bmatrix}
 
   Let
 
@@ -80,7 +82,6 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
-    self.coefficients['Nd'] = int(numpy.ceil(numpy.max(self.matrix.shape)/2))  # maximum distance is from edge to center
     self.coefficients['Np'] = self.targetVoxelArray.size
 
     self._calculateGLDZM()
@@ -89,54 +90,26 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
   def _calculateGLDZM(self):
     """
     Number of times a region with a gray level :math:`i` and occurs with a minimum distance :math:`j` in an image.
-    P_gldzm[level, distance] = # occurrences
-
-    For 3D-images this concerns a 6-connected region, for 2D a 4-connected region
+    P_gldzm[level, distance] = # occurrences.
     """
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
 
-    # Only use direct neighbours (in 2D: 4-connectedness, in 3D: 6-connectedness)
-    angles = angles[numpy.where(numpy.sum(numpy.abs(angles), 1) == 1)]
-
-    # Create distance map, set all voxels belonging to segmentation to -1 ("yet to be processed")
-    distMap = numpy.zeros(self.maskArray.shape)
-    distMap[self.maskArray == self.label] = -1
-
-    # Set voxels belonging to the segmentation on the edge of the image to distance 1
-    ind = zip(*numpy.where(distMap == -1))
-    maxBounds = (size - 1)
-    edgeVoxels = [i for i in ind if numpy.min(i) == 0 or numpy.min(maxBounds - numpy.array(i)) == 0]
-    distMap[zip(*edgeVoxels)] = 1
-
-    # recalculate indices yet to process
-    ind = zip(*numpy.where(distMap == -1))
-
-    # initialize border-distance at 0
-    d = 0
-    while ind:
-      border = zip(*numpy.where(distMap == d))
-      for ind_node in ind:
-        # get all coordinates in the connected region, 2 voxels per angle
-        region_full = [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles]
-        region_full += [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles * -1]
-
-        # Check if current region has voxels belonging to border, if so, current ind_nod belongs to next border
-        if list(set(border).intersection(set(region_full))):
-          distMap[ind_node] = d + 1
-      # recalculate indices yet to process
-      ind = zip(*numpy.where(distMap == -1))
-      d += 1
+    smdmif = sitk.SignedMaurerDistanceMapImageFilter()
+    smdmif.SquaredDistanceOff()
+    smdmif.InsideIsPositiveOn()
+    distImage= smdmif.Execute(self.inputMask)
+    distMap = numpy.round(sitk.GetArrayFromImage(distImage), 0)  # Round distances to make them usable as indices
 
     # Empty GLDZ matrix
-    P_gldzm = numpy.zeros((self.coefficients['Ng'], self.coefficients['Nd']))
+    P_gldzm = numpy.zeros((self.coefficients['Ng'], int(numpy.max(distMap) + 1)))
 
     # Iterate over all gray levels in the image
-    numGrayLevels = self.coefficients['Ng']
+    grayLevels = numpy.unique(self.matrix[self.matrixCoordinates])
 
-    if self.verbose: bar = trange(numGrayLevels, desc= 'calculate GLDZM')
+    if self.verbose: bar = trange(len(grayLevels), desc= 'calculate GLDZM')
 
-    for i in xrange(1, numGrayLevels + 1):
+    for i in grayLevels:
       # give some progress
       if self.verbose: bar.update()
 
@@ -173,8 +146,8 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
             # minDistance is not set or new minimum is found
             minDistance = distMap[ind_node]
 
-        # Update the gray level distance zone matrix
-        P_gldzm[i - 1, int(minDistance - 1)] += 1
+        # Update the gray level distance zone matrix, minDistance starts at 0 (voxels on the edge of the ROI.
+        P_gldzm[int(i - 1), int(minDistance)] += 1
 
     if self.verbose: bar.close()
 
@@ -195,7 +168,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     pg = numpy.sum(self.P_gldzm, 1)
 
     ivector = numpy.arange(1, self.P_gldzm.shape[0] + 1, dtype=numpy.float64)
-    jvector = numpy.arange(1, self.P_gldzm.shape[1] + 1, dtype=numpy.float64)
+    jvector = numpy.arange(1, self.P_gldzm.shape[1] + 1, dtype=numpy.float64)  # ensure distances start at 1
 
     self.coefficients['sumP_gldzm'] = sumP_gldzm
     self.coefficients['pd'] = pd

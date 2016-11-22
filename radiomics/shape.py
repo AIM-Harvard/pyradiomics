@@ -1,4 +1,6 @@
+import traceback
 import numpy
+import radiomics
 from radiomics import base
 import SimpleITK as sitk
 
@@ -12,7 +14,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsShape, self).__init__(inputImage, inputMask, **kwargs)
 
-    self.pixelSpacing = inputImage.GetSpacing()[::-1]
+    self.pixelSpacing = numpy.array(inputImage.GetSpacing()[::-1])
     z, x, y = self.pixelSpacing
     self.cubicMMPerVoxel = z * x * y
 
@@ -31,12 +33,15 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.inputMask = cpif.Execute(self.inputMask)
 
     # Reassign self.maskArray using the now-padded self.inputMask and make it binary
-    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
+    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)
     self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
     # Volume and Surface Area are pre-calculated
     self.Volume = self.lssif.GetPhysicalSize(1)
-    self.SurfaceArea = self._calculateSurfaceArea()
+    if radiomics.cMatsEnabled:
+      self.SurfaceArea = self._calculateCSurfaceArea()
+    else:
+      self.SurfaceArea = self._calculateSurfaceArea()
 
   def _calculateSurfaceArea(self):
     # define relative locations of the 8 voxels of a sampling cube
@@ -72,7 +77,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
             cube_idx = cube_idx ^ 0xff
 
           # lookup which edges contain vertices and calculate vertices coordinates
-          if edgeTable[cube_idx] == 0:
+          if cube_idx == 0:
             continue
           vertList = numpy.zeros((12, 3), dtype='float64')
           if edgeTable[cube_idx] & 1:
@@ -108,6 +113,15 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
             S_A += .5 * numpy.sqrt(numpy.sum(c ** 2))
 
     return S_A
+
+  def _calculateCSurfaceArea(self):
+    try:
+      import _cshape
+      return _cshape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
+    except Exception:
+      self.logger.warning("Error during C calculation of surface area, using python implementation:\n%s",
+                          traceback.format_exc())
+      return self._calculateSurfaceArea()
 
   def _getMaximum2Ddiameter(self, dim):
     otherDims = tuple(set([0, 1, 2]) - set([dim]))
@@ -162,6 +176,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     :math:`b_i` and :math:`c_i`
 
     """
+    #return self._calculateSurfaceArea()
     return (self.SurfaceArea)
 
   def getSurfaceVolumeRatioFeatureValue(self):

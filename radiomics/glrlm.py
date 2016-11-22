@@ -2,7 +2,6 @@ from itertools import chain
 import numpy
 import radiomics
 from radiomics import base, imageoperations
-import _cmatrices
 
 
 class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
@@ -85,10 +84,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
 
-    if radiomics.debugging:
-      self.P_glrlm = self._calculateGLRLM()
-    else:
+    if radiomics.cMatsEnabled:
       self.P_glrlm = self._calculateCGLRLM()
+    else:
+      self.P_glrlm = self._calculateGLRLM()
     self._calculateCoefficients()
 
   def _calculateGLRLM(self):
@@ -191,7 +190,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
 
-    P_glrlm = _cmatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)
+    P_glrlm = radiomics.cMatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)
 
     # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
     # Crop run-length axis of GLRLMs up to maximum observed run-length

@@ -1,9 +1,7 @@
 import numpy
 import radiomics
 from radiomics import base, imageoperations
-import _cmatrices
-if radiomics.debugging:  # Only import tqdm if using python matrix calculation
-  from tqdm import trange
+from tqdm import trange
 
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
@@ -59,10 +57,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['Np'] = self.targetVoxelArray.size
 
-    if radiomics.debugging:
-      self.P_glszm = self._calculateGLSZM()
-    else:
+    if radiomics.cMatsEnabled:
       self.P_glszm = self._calculateCGLSZM()
+    else:
+      self.P_glszm = self._calculateGLSZM()
     self._calculateCoefficients()
 
   def _calculateGLSZM(self):
@@ -135,7 +133,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
     Ns = self.coefficients['Np']
 
-    return _cmatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
+    return radiomics.cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
 
   def _calculateCoefficients(self):
     sumP_glszm = numpy.sum(self.P_glszm, (0, 1))

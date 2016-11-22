@@ -1,10 +1,41 @@
 import sys
+import traceback
 
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
 in_py3 = sys.version_info[0] > 2
 
 import logging
+
+
+try:
+  import _cmatrices as cMatrices
+  cMatsEnabled = True
+  _cMatLoaded = True
+except Exception as e:
+  logger.warning("Error loading C Matrices, switching to python calculation\n%s", traceback.format_exc())
+  cMatsEnabled = False
+  _cMatLoaded = False
+
+
+def pythonMatrixCalculation(pyMatEnabled = False):
+  """
+  By default, calculation of matrices is done in C, using extension ``_cmatrices.py``
+
+  If an error occurs during loading of this extension, a warning is logged and the extension is disabled,
+  matrices are then calculated in python.
+  Calculation in python can be forced by calling this function, specifying ``pyMatEnabled = True``
+
+  Re-enabling use of C implementation is also done by this function, but if extension is not loaded correctly,
+  a warning is logged and matrix calculation uses python.
+  """
+  global cMatsEnabled
+  if pyMatEnabled:
+    cMatsEnabled = False
+  elif _cMatLoaded:
+    cMatsEnabled = True
+  else:
+    logger.warning("C Matrices not loaded correctly, cannot calculate matrices in C")
 
 
 def debug(debug_on=True):

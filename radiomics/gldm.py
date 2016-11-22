@@ -249,7 +249,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     except ZeroDivisionError:
       return numpy.core.nan
 
-  def getGrayLevelVariance(self):
+  def getGrayLevelVarianceFeatureValue(self):
     r"""
     Calculate and return the Gray Level Variance (GLV) value.
 
@@ -266,7 +266,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     glv = numpy.sum(self.coefficients['pg'] * (ivector - u_i)**2) / sumP_gldm
     return glv
 
-  def getDependenceVariance(self):
+  def getDependenceVarianceFeatureValue(self):
     r"""
     Calculate and return the Dependence Variance (DV) value.
 
@@ -282,7 +282,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     dv = numpy.sum(self.coefficients['pd'] * (jvector - u_j)**2) / sumP_gldm
     return dv
 
-  def getDependenceEntropy(self):
+  def getDependenceEntropyFeatureValue(self):
     r"""
     Calculate and return the Dependence Entropy (DE) value.
 

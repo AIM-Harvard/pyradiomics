@@ -7,17 +7,6 @@ in_py3 = sys.version_info[0] > 2
 
 import logging
 
-
-try:
-  import _cmatrices as cMatrices
-  cMatsEnabled = True
-  _cMatLoaded = True
-except Exception as e:
-  logger.warning("Error loading C Matrices, switching to python calculation\n%s", traceback.format_exc())
-  cMatsEnabled = False
-  _cMatLoaded = False
-
-
 def pythonMatrixCalculation(pyMatEnabled = False):
   """
   By default, calculation of matrices is done in C, using extension ``_cmatrices.py``
@@ -71,6 +60,15 @@ formatter = logging.Formatter("%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 debug(False)  # force level=WARNING, in case logging default is set differently (issue 102)
+
+try:
+  import _cmatrices as cMatrices
+  cMatsEnabled = True
+  _cMatLoaded = True
+except Exception as e:
+  logger.warning("Error loading C Matrices, switching to python calculation\n%s", traceback.format_exc())
+  cMatsEnabled = False
+  _cMatLoaded = False
 
 # For convenience, import the most used packages into the "pyradiomics" namespace
 import collections, numpy

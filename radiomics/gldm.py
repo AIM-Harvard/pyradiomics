@@ -2,6 +2,7 @@ from itertools import chain
 import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
+from tqdm import trange
 
 class RadiomicsGLDM(base.RadiomicsFeaturesBase):
   r"""
@@ -78,15 +79,15 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
     angles = numpy.concatenate((angles, angles * -1))
-    Nd = len(angles)
 
-    diffMat = numpy.empty((self.matrix.shape + (Nd,)))
+    depMat = numpy.zeros(self.matrix.shape, dtype='int')
 
+    if self.verbose: bar = trange(len(angles), desc='Calculate shifted matrices (GLDM)')
     for a_idx, a in enumerate(angles):
+      if self.verbose: bar.update()
       # create shifted array (by angle), so that for an index idx, angMat[idx] is the neigbour of self.matrix[idx]
       # for the current angle.
-      angMat = diffMat[:, :, :, a_idx]
-      angMat[:, :, :] = numpy.roll(numpy.roll(numpy.roll(self.matrix, -a[0], 0), -a[1], 1), -a[2], 2)
+      angMat = numpy.roll(numpy.roll(numpy.roll(self.matrix, -a[0], 0), -a[1], 1), -a[2], 2) - self.matrix
       if a[0] > 0:
         angMat[-a[0]:, :, :] = padVal
       elif a[0] < 0:
@@ -102,30 +103,25 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
       elif a[2] < 0:
         angMat[:, :, :-a[2]] = padVal
 
-    # Create boolean array with shape equal to self.matrix, where elements are true if |depMat-self.matrix| <=
-    # numpy.where needed to prevent warnings caused by comparison with NaN
-    # sum over angles axis to get total number of dependent voxels for all matrix voxels
-    diffMat = numpy.abs(diffMat - self.matrix[:, :, :, None])
-    nanMask = numpy.isnan(diffMat)
+      nanMask = numpy.isnan(angMat)
+      depMat[~nanMask] += (numpy.abs(angMat[~nanMask]) <= self.gldm_a)
 
-    depMat = numpy.zeros((self.matrix.shape + (Nd,)), dtype='int')
-    depMat[~nanMask] = (diffMat[~nanMask] <= self.gldm_a)
-    depMat = numpy.sum(depMat, 3)
-    
-    P_gldm = numpy.zeros((Ng, Nd))
-    for i in xrange(1, Ng + 1):
+    if self.verbose: bar.close()
+
+    Nd = numpy.max(depMat)
+    P_gldm = numpy.zeros((Ng, Nd + 1))
+    grayLevels = numpy.unique(self.matrix[self.matrixCoordinates])
+
+    if self.verbose: bar = trange(len(grayLevels), desc= 'calculate GLDM')
+    for i in grayLevels:
+        if self.verbose: bar.update()
         i_mat = (self.matrix == i)
-        for d in numpy.unique(depMat):
+        for d in numpy.unique(depMat[i_mat]):
             # By multiplying i_mat and depMat == d, a boolean area is obtained,
             # where the number of elements that are true (1) is equal to the number of voxels
             # with gray level i and dependence d.
             P_gldm[i-1, d] = numpy.sum(i_mat * (depMat == d))
-
-    # Crop gray-level axis of GLDM matrix to between minimum and maximum observed gray-levels
-    # Crop dependence axis of GLDM matrix up to maximum observed dependence
-    P_gldm_bounds = numpy.argwhere(P_gldm)
-    (xstart, ystart), (xstop, ystop) = P_gldm_bounds.min(0), P_gldm_bounds.max(0) + 1
-    self.P_gldm = P_gldm[xstart:xstop,:ystop]
+    if self.verbose: bar.close()
 
     sumP_gldm = numpy.sum(self.P_gldm, (0, 1))
     self.coefficients['sumP_gldm'] = sumP_gldm
@@ -253,7 +249,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     except ZeroDivisionError:
       return numpy.core.nan
 
-  def getGrayLevelVariance(self):
+  def getGrayLevelVarianceFeatureValue(self):
     r"""
     Calculate and return the Gray Level Variance (GLV) value.
 
@@ -270,7 +266,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     glv = numpy.sum(self.coefficients['pg'] * (ivector - u_i)**2) / sumP_gldm
     return glv
 
-  def getDependenceVariance(self):
+  def getDependenceVarianceFeatureValue(self):
     r"""
     Calculate and return the Dependence Variance (DV) value.
 
@@ -286,7 +282,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     dv = numpy.sum(self.coefficients['pd'] * (jvector - u_j)**2) / sumP_gldm
     return dv
 
-  def getDependenceEntropy(self):
+  def getDependenceEntropyFeatureValue(self):
     r"""
     Calculate and return the Dependence Entropy (DE) value.
 

@@ -195,13 +195,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Standard Deviation of the image array.
 
-    :math:`standard\ deviation = \sqrt{\frac{1}{N-1}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}`
+    :math:`standard\ deviation = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}`
 
     Standard Deviation measures the amount of variation
     or dispersion from the Mean Value.
     """
 
-    return (numpy.std(self.targetVoxelArray, ddof= 1))
+    return (numpy.std(self.targetVoxelArray))
 
   def getSkewnessFeatureValue(self, axis=0):
     r"""
@@ -262,14 +262,14 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Variance in the image array.
 
-    :math:`variance = \sigma^2 = \frac{1}{N-1}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}`
+    :math:`variance = \sigma^2 = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}`
 
     Variance is the the mean of the squared distances of each intensity
     value from the Mean value. This is a measure of the spread
     of the distribution about the mean.
     """
 
-    return (numpy.std(self.targetVoxelArray, ddof= 1)**2)
+    return (numpy.std(self.targetVoxelArray)**2)
 
   def getUniformityFeatureValue(self):
     r"""

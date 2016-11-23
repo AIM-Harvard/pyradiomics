@@ -109,7 +109,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     if self.verbose: bar.close()
 
     Nd = numpy.max(depMat)
-    P_gldm = numpy.zeros((Ng, Nd + 1))
+    self.P_gldm = numpy.zeros((Ng, Nd + 1))
     grayLevels = numpy.unique(self.matrix[self.matrixCoordinates])
 
     if self.verbose: bar = trange(len(grayLevels), desc= 'calculate GLDM')
@@ -120,7 +120,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
             # By multiplying i_mat and depMat == d, a boolean area is obtained,
             # where the number of elements that are true (1) is equal to the number of voxels
             # with gray level i and dependence d.
-            P_gldm[i-1, d] = numpy.sum(i_mat * (depMat == d))
+            self.P_gldm[i-1, d] = numpy.sum(i_mat * (depMat == d))
     if self.verbose: bar.close()
 
     sumP_gldm = numpy.sum(self.P_gldm, (0, 1))

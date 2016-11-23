@@ -1,0 +1,15 @@
+0:DependenceEntropy
+1:DependenceNonUniformity
+2:DependenceNonUniformityNormalized
+3:DependenceVariance
+4:GrayLevelNonUniformity
+5:GrayLevelNonUniformityNormalized
+6:GrayLevelVariance
+7:HighGrayLevelEmphasis
+8:LargeDependenceEmphasis
+9:LargeDependenceHighGrayLevelEmphasis
+10:LargeDependenceLowGrayLevelEmphasis
+11:LowGrayLevelEmphasis
+12:SmallDependenceEmphasis
+13:SmallDependenceHighGrayLevelEmphasis
+14:SmallDependenceLowGrayLevelEmphasis

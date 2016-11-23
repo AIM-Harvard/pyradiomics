@@ -127,8 +127,10 @@ class RadiomicsFeaturesExtractor:
 
         If supplied params file does not match the requirements, a pykwalify error is raised.
         """
-        schemafile = os.path.abspath(os.path.join(radiomics.__path__[0], '..', 'data', 'paramSchema.yaml'))
-        c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemafile])
+        dataDir = os.path.abspath(os.path.join(radiomics.__path__[0], '..', 'data'))
+        schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
+        schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
+        c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
         params = c.validate()
 
         inputImages = params.get('inputImage', {})
@@ -428,8 +430,9 @@ class RadiomicsFeaturesExtractor:
         - start_level [0]: integer, 0 based level of wavelet which should be used as first set of decompositions
           from which a signature is calculated
         - level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
-        - wavelet ["coif1"]: string, type of wavelet decomposition. Enumerated value, possible values, where an
-          aditional number is needed, range of values is indicated in []:
+        - wavelet ["coif1"]: string, type of wavelet decomposition. Enumerated value, validated against possible values
+          present in the ``pyWavelet.wavelist()``. Current possible values (pywavelet version 0.4.0) (where an
+          aditional number is needed, range of values is indicated in []):
 
           - haar
           - dmey

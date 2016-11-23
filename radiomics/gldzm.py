@@ -68,6 +68,9 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
 
   :math:`N_p` be the number of voxels in the image
 
+  N.B. For the distance map to calculate correctly in 2D images, image and mask must be cropped on the bounding box of
+  the image and the mask! This can be done by a call to :py:func:`~imageoperations.cropToTumorMask`.
+
   References
 
     - Thibault, G., Angulo, J., and Meyer, F. (2014); Advanced statistical matrices for texture characterization:
@@ -78,6 +81,26 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
 
     self.coefficients = {}
     self.P_gldzm = {}
+
+    # Pad inputMask to prevent errors in the distancemap (voxels on the border are not considered to be on the edge of
+    # the ROI. Do not pad in 2D directions, as this would result in a distance map where all distances are 0 (i.e.
+    # bordering on the next slice.
+    cpif = sitk.ConstantPadImageFilter()
+
+    # Only apply padding where the size is more than 1. Flip the direction of the matrix, as padding will be
+    # applied on the image (x, y, z) and the matrix is (z, y, x)
+    padding = numpy.where(self.matrix.shape[::-1] == 1, 0, 1)
+
+    cpif.SetPadLowerBound(padding)
+    cpif.SetPadUpperBound(padding)
+
+    self.inputImage = cpif.Execute(self.inputImage)
+    self.inputMask = cpif.Execute(self.inputMask)
+
+    # Reassign matrix
+    self.matrix = sitk.GetArrayFromImage(self.inputImage).astype('float')
+    # Reassign self.maskArray using the now-padded self.inputMask and make it binary
+    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
 
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)

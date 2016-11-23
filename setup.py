@@ -47,13 +47,7 @@ setup(
 
     keywords='radiomics cancerimaging medicalresearch',
 
-    setup_requires=['cython', 'numpy>=1.11.0'],
-    install_requires=['cython',
-                      'numpy>=1.11.0',
-                      'SimpleITK>=0.9.1',
-                      'nose-parameterized>=0.5.0',
-                      'tqdm>=4.7.1',
-                      'PyWavelets>=0.4.0',
-                      'pykwalify>=1.5.2',
-                      'sphinx>=1.4'],
+    install_requires=requirements,
+    setup_requires=setup_requires,
+    tests_require=dev_requirements,
 )

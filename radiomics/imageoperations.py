@@ -160,6 +160,13 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 
   logger.debug('Applying resampling (spacing %s and size %s)', resampledPixelSpacing, newSize)
 
+  try:
+    if isinstance(interpolator, basestring):
+      interpolator = eval("sitk.%s" %(interpolator))
+  except:
+    logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)
+    interpolator = sitk.sitkBSpline
+
   rif = sitk.ResampleImageFilter()
 
   rif.SetOutputSpacing(resampledPixelSpacing)

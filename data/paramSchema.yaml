@@ -1,0 +1,82 @@
+# Parameters schema
+name: Parameter schema
+desc: This schema defines what arguments may be present in the parameters file that can be passed to the pyradiomics package.
+type: map
+mapping:
+  setting: &settings
+    type: map
+    mapping:
+      verbose:
+        type: bool
+      label:
+        type: int
+      binWidth:
+        type: float
+        range:
+          min-ex: 0
+      resampledPixelSpacing:
+        seq:
+          - type: int
+            range:
+              min-ex: 0
+      interpolator:
+        type: any
+        func: checkInterpolator
+      padDistance:
+        type: int
+        range:
+          min: 0
+      sigma:
+        seq:
+          - type: float
+            range:
+              min-ex: 0
+      start_level:
+        type: int
+        range:
+          min: 0
+      level:
+        type: int
+        range:
+          min-ex: 0
+      wavelet:
+        type: str
+        func: checkWavelet
+      voxelArrayShift:
+        type: int
+      symmetricalGLCM:
+        type: bool
+      weightingNorm:
+        type: any
+        func: checkWeighting
+      gldm_a:
+        type: int
+        range:
+          min: 0
+  featureClass:
+    type: map
+    mapping:
+      # Possible feature classes, each can have a list of enabled features, empyt list or none value signifies
+      # that all features must be enabled
+      shape: &featurelist
+        seq:
+          - type: str
+            unique: True
+      firstorder: *featurelist
+      glcm: *featurelist
+      gldm: *featurelist
+      ngtdm: *featurelist
+      glrlm: *featurelist
+      glszm: *featurelist
+
+  inputImage:
+    type: map
+    mapping:
+      # possible image filters, it's value be adictionary that follows the rules in setting
+      original: *settings
+      log: *settings
+      wavelet: *settings
+      square: *settings
+      squareroot: *settings
+      logarithm: *settings
+      exponential: *settings

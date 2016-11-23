@@ -42,9 +42,10 @@ def main():
 
   # Initialize extractor
   try:
-    extractor = featureextractor.RadiomicsFeaturesExtractor()
     if args.param is not None:
-      extractor.loadParams(args.param[0])
+      extractor = featureextractor.RadiomicsFeaturesExtractor(args.param[0])
+    else:
+      extractor = featureextractor.RadiomicsFeaturesExtractor()
     logging.info('Extracting features with kwarg settings: %s\n\tImage:%s\n\tMask:%s',
                 str(extractor.kwargs), os.path.abspath(args.image), os.path.abspath(args.mask))
     featureVector = collections.OrderedDict()

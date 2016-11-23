@@ -57,10 +57,11 @@ def main():
     exit(-1)
 
   # Initialize extractor
-  extractor = featureextractor.RadiomicsFeaturesExtractor()
   try:
     if args.param is not None:
-      extractor.loadParams(args.param[0])
+      extractor = featureextractor.RadiomicsFeaturesExtractor(args.param[0])
+    else:
+      extractor = featureextractor.RadiomicsFeaturesExtractor()
   except Exception:
     logging.error('EXTRACTOR INITIALIZATION FAILED:\n%s', traceback.format_exc())
     args.outFile.close()

@@ -134,16 +134,20 @@ class RadiomicsFeaturesExtractor:
         params = c.validate()
 
         inputImages = params.get('inputImage', {})
-        enabledFeaturs = params.get('featureClass', {})
+        enabledFeatures = params.get('featureClass', {})
         kwargs = params.get('setting', {})
 
         if len(inputImages) == 0:
-            inputImages = {'original': {}}
+            self.inputImages = {'original': {}}
+        else:
+            self.inputImages = inputImages
 
-        if len(enabledFeaturs) == 0:
+        if len(enabledFeatures) == 0:
             self.enabledFeatures = {}
             for featureClassName in self.getFeatureClassNames():
                 self.enabledFeatures[featureClassName] = []
+        else:
+            self.enabledFeatures = enabledFeatures
 
         # Set default settings and update with and changed settings contained in kwargs
         self.kwargs = {'resampledPixelSpacing': None,  # No resampling by default

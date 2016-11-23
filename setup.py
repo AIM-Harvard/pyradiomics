@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 
-import numpy
 import versioneer
 
-from distutils import sysconfig
-from setuptools import setup, Extension
+from skbuild import setup
 
+with open('requirements.txt', 'r') as fp:
+    requirements = list(filter(bool, (line.strip() for line in fp)))
 
-incDirs = [sysconfig.get_python_inc(), numpy.get_include()]
+with open('requirements-dev.txt', 'r') as fp:
+    dev_requirements = list(filter(bool, (line.strip() for line in fp)))
+
+setup_requires = []
+
 setup(
     name='pyradiomics',
 
@@ -24,12 +28,6 @@ setup(
     data_files=[('data', ['data/paramSchema.yaml', 'data/schemaFuncs.py', 'data/brain1_image.nrrd', 'data/brain1_label.nrrd'])],
 
     description='Radiomics features library for python',
-    ext_modules=[Extension("_cmatrices",
-                           ["radiomics/src/_cmatrices.c", "radiomics/src/cmatrices.c"],
-                           include_dirs=incDirs),
-                 Extension("_cshape", ["radiomics/src/_cshape.c", "radiomics/src/cshape.c"],
-                           include_dirs=incDirs)],
-
 
     license='Slicer',
 

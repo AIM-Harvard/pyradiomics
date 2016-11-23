@@ -1,7 +1,11 @@
 dependencies:
-  pre:
+  override:
     - pip install -r requirements.txt
+    - pip install -U cmake scikit-build
 test:
   override:
-    - nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests/test_features.py tests/test_cmatrices.py
-    - cp nosetests.xml $CIRCLE_TEST_REPORTS
+    - pip install .
+    - |
+      cd ../
+      nosetests --with-xunit --logging-level=DEBUG --verbosity=3 pyradiomics/tests/test_features.py pyradiomics/tests/test_cmatrices.py
+      cp nosetests.xml $CIRCLE_TEST_REPORTS

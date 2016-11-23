@@ -98,7 +98,7 @@ class RadiomicsFeaturesExtractor:
           image is used for feature extraction, with no additional custom settings
 
         The paramsFile is written according to the YAML-convention (www.yaml.org) and is checked by the code for
-        consistency. Only on yaml document per file is allowed. Settings must be grouped by setting type as mentioned
+        consistency. Only one yaml document per file is allowed. Settings must be grouped by setting type as mentioned
         above are reflected in the structure of the document as follows::
 
             <Setting Type>:
@@ -110,7 +110,7 @@ class RadiomicsFeaturesExtractor:
         Blank lines may be inserted to increase readability, the are ignored by the parser. Additional comments are also
         possible, these are preceded by an '#' and can be inserted on a blank line, or on a line containing settings::
 
-            # This is a line conatining only comments
+            # This is a line containing only comments
             setting: # This is a comment placed after the declaration of the 'setting' group.
 
         Any keyword, such as a setting type or setting name may only be mentioned once. Multiple instances do not raise
@@ -127,7 +127,7 @@ class RadiomicsFeaturesExtractor:
 
         If supplied params file does not match the requirements, a pykwalify error is raised.
         """
-        schemafile = radiomics.__path__[0] + r'\..\data\paramSchema.yaml'
+        schemafile = os.path.abspath(os.path.join(radiomics.__path__[0], '..', 'data', 'paramSchema.yaml'))
         c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemafile])
         params = c.validate()
 

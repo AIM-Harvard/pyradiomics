@@ -33,6 +33,20 @@ setup(
 
     license='Slicer',
 
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: Slicer',
+        'Operating System :: OS Independent',
+        'Programming Language :: C',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
+        ],
+
+    keywords='radiomics cancerimaging medicalresearch',
+
     setup_requires=['cython', 'numpy>=1.11.0'],
     install_requires=['cython',
                       'numpy>=1.11.0',

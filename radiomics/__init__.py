@@ -7,7 +7,7 @@ in_py3 = sys.version_info[0] > 2
 
 import logging
 
-def pythonMatrixCalculation(pyMatEnabled = False):
+def pythonMatrixCalculation(usePython = False):
   """
   By default, calculation of matrices is done in C, using extension ``_cmatrices.py``
 
@@ -19,12 +19,13 @@ def pythonMatrixCalculation(pyMatEnabled = False):
   a warning is logged and matrix calculation uses python.
   """
   global cMatsEnabled
-  if pyMatEnabled:
+  if usePython:
     cMatsEnabled = False
   elif _cMatLoaded:
     cMatsEnabled = True
   else:
     logger.warning("C Matrices not loaded correctly, cannot calculate matrices in C")
+    cMatsEnabled = False
 
 
 def debug(debug_on=True):
@@ -63,10 +64,13 @@ debug(False)  # force level=WARNING, in case logging default is set differently 
 
 try:
   import _cmatrices as cMatrices
+  import _cshape as cShape
   cMatsEnabled = True
   _cMatLoaded = True
-except Exception as e:
+except Exception:
   logger.warning("Error loading C Matrices, switching to python calculation\n%s", traceback.format_exc())
+  cMatrices = None
+  cShape = None
   cMatsEnabled = False
   _cMatLoaded = False
 

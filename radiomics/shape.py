@@ -116,13 +116,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return S_A
 
   def _calculateCSurfaceArea(self):
-    try:
-      import _cshape
-      return _cshape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
-    except Exception:
-      self.logger.warning("Error during C calculation of surface area, using python implementation:\n%s",
-                          traceback.format_exc())
-      return self._calculateSurfaceArea()
+    return radiomics.cShape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
 
   def _getMaximum2Ddiameter(self, dim):
     otherDims = tuple(set([0, 1, 2]) - set([dim]))

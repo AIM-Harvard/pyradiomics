@@ -52,6 +52,7 @@ def main():
     kwargs['interpolator'] = sitk.sitkBSpline
     kwargs['verbose'] = True
 
+    logging.info('pyradiomics version: %s', radiomics.__version__)
     logging.info('Extracting features with kwarg settings: %s', str(kwargs))
 
     extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)

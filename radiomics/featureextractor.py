@@ -9,7 +9,7 @@ import pkgutil
 import inspect
 import pykwalify.core
 import radiomics
-from radiomics import base, imageoperations
+from radiomics import base, imageoperations, generalinfo
 
 
 class RadiomicsFeaturesExtractor:
@@ -67,6 +67,7 @@ class RadiomicsFeaturesExtractor:
         self.featureClasses = self.getFeatureClasses()
 
         self.kwargs = {}
+        self.provenance_on = True
         self.inputImages = {}
         self.enabledFeatures = {}
 
@@ -86,6 +87,14 @@ class RadiomicsFeaturesExtractor:
             self.enabledFeatures = {}
             for featureClassName in self.getFeatureClassNames():
                 self.enabledFeatures[featureClassName] = []
+
+    def addProvenance(self, provenance_on=True):
+        """
+        Enable or disable reporting of settings used for calculated filters.
+        By default, settings used are added to the dictionary of calculated features as {"settings_<filter>":<settings>}
+        To disable this, call ``addProvenance(False)``
+        """
+        self.provenance_on = provenance_on
 
     def loadParams(self, paramsFile):
         """
@@ -269,7 +278,7 @@ class RadiomicsFeaturesExtractor:
         :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
         :param label: Integer, value of the label for which to extract features. If not specified, last specified label
             is used. Default label is 1.
-        :returns: dictionary containing calculated signature ("featureName":value).
+        :returns: dictionary containing calculated signature ("<filter>_<featureClass>_<featureName>":value).
         """
         if label is not None:
             self.kwargs.update({'label': label})
@@ -278,6 +287,12 @@ class RadiomicsFeaturesExtractor:
 
         featureVector = collections.OrderedDict()
         image, mask = self.loadImage(imageFilepath, maskFilepath)
+
+        if self.provenance_on:
+            # Add Provenance information
+            generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.kwargs, self.inputImages)
+            for k, v in generalinfoClass.execute().iteritems():
+                featureVector['general_info_%s' % (k)] = v
 
         # If shape should be calculation, handle it separately here
         if 'shape' in self.enabledFeatures.keys():
@@ -299,9 +314,9 @@ class RadiomicsFeaturesExtractor:
         # Make generators for all enabled input image types
         imageGenerators = []
         for imageType, customKwargs in self.inputImages.iteritems():
-            self.logger.debug('Applying filter: %s' %(imageType))
             args = self.kwargs.copy()
             args.update(customKwargs)
+            self.logger.info("Applying filter: '%s' with settings: %s" %(imageType, str(args)))
             imageGenerators = chain(imageGenerators, eval('self.generate_%s(image, mask, **args)' %(imageType)))
 
         # Calculate features for all (filtered) images in the generator
@@ -358,6 +373,8 @@ class RadiomicsFeaturesExtractor:
         """
         image,mask = imageoperations.cropToTumorMask(image, mask, self.kwargs['label'])
         featureVector = collections.OrderedDict()
+
+        #Calculate feature classes
         for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
             # Handle calculation of shape features separately
             if featureClassName == 'shape':

@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+_skbuild/
 env/
 build/
 develop-eggs/

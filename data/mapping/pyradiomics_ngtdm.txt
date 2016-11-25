@@ -1,0 +1,5 @@
+0:Busyness
+1:Coarseness
+2:Complexity
+3:Contrast
+4:Strength

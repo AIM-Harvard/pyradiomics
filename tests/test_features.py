@@ -2,17 +2,16 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_features.py
 
-from radiomics import imageoperations, firstorder, glcm, glrlm, shape, glszm
+from radiomics import firstorder, glcm, glrlm, shape, glszm, gldm, ngtdm
 from testUtils import RadiomicsTestUtils
-import sys, os
+import os
 import logging
 from nose_parameterized import parameterized
 import SimpleITK as sitk
-from itertools import product
 
 testUtils = RadiomicsTestUtils()
 defaultTestCases = testUtils.getTestCases()
-defaultFeatures = ["firstorder", "glcm", "glrlm", "shape", "glszm"]
+defaultFeatures = ["firstorder", "glcm", "glrlm", "shape", "glszm", "gldm", "ngtdm"]
 
 testCases = defaultTestCases
 features = defaultFeatures
@@ -46,6 +45,10 @@ class TestFeatures:
           featureNames = shape.RadiomicsShape.getFeatureNames()
         elif feature == 'glszm':
           featureNames = glszm.RadiomicsGLSZM.getFeatureNames()
+        elif feature == 'gldm':
+          featureNames = gldm.RadiomicsGLDM.getFeatureNames()
+        elif feature == 'ngtdm':
+          featureNames = ngtdm.RadiomicsNGTDM.getFeatureNames()
         assert(featureNames != None)
         logging.debug('generate_scenarios: featureNames = %s', featureNames)
         for featureName in featureNames:
@@ -81,6 +84,13 @@ class TestFeatures:
       elif featureClassName == 'glszm':
         logging.debug('Init GLSZM')
         featureClass = glszm.RadiomicsGLSZM(testImage, testMask, **kwargs)
+      elif featureClassName == 'gldm':
+        logging.debug('Init GLDM')
+        featureClass = gldm.RadiomicsGLDM(testImage, testMask, **kwargs)
+      elif featureClassName == 'ngtdm':
+        logging.debug('Init NGTDM')
+        featureClass = ngtdm.RadiomicsNGTDM(testImage, testMask, **kwargs)
+
     assert (featureClass != None)
 
     featureClass.disableAllFeatures()

@@ -12,7 +12,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
-    super(RadiomicsShape,self).__init__(inputImage,inputMask, **kwargs)
+    super(RadiomicsShape, self).__init__(inputImage, inputMask, **kwargs)
 
     self.pixelSpacing = inputImage.GetSpacing()[::-1]
     z, x, y = self.pixelSpacing
@@ -47,8 +47,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     # instantiate lookup tables
     edgeTable, triTable = self._getMarchingTables()
 
-    minBounds = numpy.array([numpy.min(self.matrixCoordinates[0]), numpy.min(self.matrixCoordinates[1]), numpy.min(self.matrixCoordinates[2])])
-    maxBounds = numpy.array([numpy.max(self.matrixCoordinates[0]), numpy.max(self.matrixCoordinates[1]), numpy.max(self.matrixCoordinates[2])])
+    minBounds = numpy.array([numpy.min(self.matrixCoordinates[0]), numpy.min(self.matrixCoordinates[1]),
+                             numpy.min(self.matrixCoordinates[2])])
+    maxBounds = numpy.array([numpy.max(self.matrixCoordinates[0]), numpy.max(self.matrixCoordinates[1]),
+                             numpy.max(self.matrixCoordinates[2])])
     minBounds = numpy.where(minBounds < 1, 1, minBounds)
     maxBounds = numpy.where(maxBounds > self.maskArray.shape, self.maskArray.shape, maxBounds)
 
@@ -64,17 +66,17 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
           cube_idx = 0
           for p_idx, p in enumerate(gridCell):
             if self.maskArray[tuple(p)] == 0:
-                cube_idx |= 1 << p_idx
+              cube_idx |= 1 << p_idx
 
           # full lookup tables are symmetrical, if cube_idx >= 128, take the XOR,
           # this allows for lookup tables to be half the size.
           if cube_idx & 128:
-              cube_idx = cube_idx ^ 0xff
+            cube_idx = cube_idx ^ 0xff
 
           # lookup which edges contain vertices and calculate vertices coordinates
           if edgeTable[cube_idx] == 0:
             continue
-          vertList = numpy.zeros((12, 3), dtype= 'float64')
+          vertList = numpy.zeros((12, 3), dtype='float64')
           if edgeTable[cube_idx] & 1:
             vertList[0] = self._interpolate(gridCell, 0, 1)
           if edgeTable[cube_idx] & 2:
@@ -104,8 +106,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
           for triangle in triTable[cube_idx]:
             a = vertList[triangle[1]] - vertList[triangle[0]]
             b = vertList[triangle[2]] - vertList[triangle[0]]
-            c = numpy.cross(a,b)
-            S_A += .5 * numpy.sqrt(numpy.sum(c**2))
+            c = numpy.cross(a, b)
+            S_A += .5 * numpy.sqrt(numpy.sum(c ** 2))
 
     return S_A
 
@@ -126,9 +128,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       # Generate 2 sets of indices: one set of indices in zSlice where at least the x or y component of the index is equal to the
       # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
       edgeVoxelsMinCoords = numpy.vstack(
-        [plane[plane[:, otherDims[0]] == minBounds[otherDims[0]]], plane[plane[:, otherDims[1]] == minBounds[otherDims[1]]]]) * self.pixelSpacing
+        [plane[plane[:, otherDims[0]] == minBounds[otherDims[0]]],
+         plane[plane[:, otherDims[1]] == minBounds[otherDims[1]]]]) * self.pixelSpacing
       edgeVoxelsMaxCoords = numpy.vstack(
-        [plane[plane[:, otherDims[0]] == maxBounds[otherDims[0]]], plane[plane[:, otherDims[1]] == maxBounds[otherDims[1]]]]) * self.pixelSpacing
+        [plane[plane[:, otherDims[0]] == maxBounds[otherDims[0]]],
+         plane[plane[:, otherDims[1]] == maxBounds[otherDims[1]]]]) * self.pixelSpacing
 
       # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
       # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
@@ -168,7 +172,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     :math:`surface\ to\ volume\ ratio = \frac{A}{V}`
     """
-    return (self.SurfaceArea/self.Volume)
+    return (self.SurfaceArea / self.Volume)
 
   def getCompactness1FeatureValue(self):
     r"""
@@ -182,7 +186,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     ratio of volume to the :math:`\sqrt{\text{surface area}^3}`. This is a measure of the
     compactness of the shape of the image ROI
     """
-    return ( (self.Volume) / ((self.SurfaceArea)**(2.0/3.0) * numpy.sqrt(numpy.pi)) )
+    return ((self.Volume) / ((self.SurfaceArea) ** (2.0 / 3.0) * numpy.sqrt(numpy.pi)))
 
   def getCompactness2FeatureValue(self):
     r"""
@@ -195,7 +199,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     independent of scale and orientation. This is a measure of the compactness
     of the shape of the image ROI.
     """
-    return ((36.0 * numpy.pi) * ((self.Volume)**2.0)/((self.SurfaceArea)**3.0))
+    return ((36.0 * numpy.pi) * ((self.Volume) ** 2.0) / ((self.SurfaceArea) ** 3.0))
 
   def getMaximum3DDiameterFeatureValue(self):
     r"""
@@ -238,7 +242,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     volume as the tumor region.
     """
     R = self.lssif.GetEquivalentSphericalRadius(self.label)
-    return ( (self.SurfaceArea)/(4.0*numpy.pi*(R**2.0)) )
+    return ((self.SurfaceArea) / (4.0 * numpy.pi * (R ** 2.0)))
 
   def getSphericityFeatureValue(self):
     r"""
@@ -249,47 +253,47 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Sphericity is a measure of the roundness of the shape of the tumor region
     relative to a sphere. This is another measure of the compactness of a tumor.
     """
-    return ( ((numpy.pi)**(1.0/3.0) * (6.0 * self.Volume)**(2.0/3.0)) / (self.SurfaceArea) )
+    return (((numpy.pi) ** (1.0 / 3.0) * (6.0 * self.Volume) ** (2.0 / 3.0)) / (self.SurfaceArea))
 
   def getElongationFeatureValue(self):
-      """
+    """
 
-      """
-      return self.lssif.GetElongation(self.label)
+    """
+    return self.lssif.GetElongation(self.label)
 
   def getFlatnessFeatureValue(self):
-      """
+    """
 
-      """
-      return self.lssif.GetFlatness(self.label)
+    """
+    return self.lssif.GetFlatness(self.label)
 
   def getRoundnessFeatureValue(self):
-      """
+    """
 
-      """
-      return self.lssif.GetRoundness(self.label)
+    """
+    return self.lssif.GetRoundness(self.label)
 
   def _interpolate(self, grid, p1, p2):
-    diff = (.5 - self.maskArray[tuple(grid[p1])])/(self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])
-    return (grid[p1] + ((grid[p2] - grid[p1])  * diff)) * self.pixelSpacing
+    diff = (.5 - self.maskArray[tuple(grid[p1])]) / (self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])
+    return (grid[p1] + ((grid[p2] - grid[p1]) * diff)) * self.pixelSpacing
 
   def _getMarchingTables(self):
-    edgeTable = [0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
-            0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
-            0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
-            0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
-            0x230, 0x339, 0x33 , 0x13a, 0x636, 0x73f, 0x435, 0x53c,
-            0xa3c, 0xb35, 0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30,
-            0x3a0, 0x2a9, 0x1a3, 0xaa , 0x7a6, 0x6af, 0x5a5, 0x4ac,
-            0xbac, 0xaa5, 0x9af, 0x8a6, 0xfaa, 0xea3, 0xda9, 0xca0,
-            0x460, 0x569, 0x663, 0x76a, 0x66 , 0x16f, 0x265, 0x36c,
-            0xc6c, 0xd65, 0xe6f, 0xf66, 0x86a, 0x963, 0xa69, 0xb60,
-            0x5f0, 0x4f9, 0x7f3, 0x6fa, 0x1f6, 0xff , 0x3f5, 0x2fc,
-            0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0,
-            0x650, 0x759, 0x453, 0x55a, 0x256, 0x35f, 0x55 , 0x15c,
-            0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859, 0x950,
-            0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0xcc ,
-            0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca, 0xac3, 0x9c9, 0x8c0]
+    edgeTable = [0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
+                 0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
+                 0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
+                 0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
+                 0x230, 0x339, 0x33, 0x13a, 0x636, 0x73f, 0x435, 0x53c,
+                 0xa3c, 0xb35, 0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30,
+                 0x3a0, 0x2a9, 0x1a3, 0xaa, 0x7a6, 0x6af, 0x5a5, 0x4ac,
+                 0xbac, 0xaa5, 0x9af, 0x8a6, 0xfaa, 0xea3, 0xda9, 0xca0,
+                 0x460, 0x569, 0x663, 0x76a, 0x66, 0x16f, 0x265, 0x36c,
+                 0xc6c, 0xd65, 0xe6f, 0xf66, 0x86a, 0x963, 0xa69, 0xb60,
+                 0x5f0, 0x4f9, 0x7f3, 0x6fa, 0x1f6, 0xff, 0x3f5, 0x2fc,
+                 0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0,
+                 0x650, 0x759, 0x453, 0x55a, 0x256, 0x35f, 0x55, 0x15c,
+                 0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859, 0x950,
+                 0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0xcc,
+                 0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca, 0xac3, 0x9c9, 0x8c0]
 
     triTable = [[],
                 [[0, 8, 3]],

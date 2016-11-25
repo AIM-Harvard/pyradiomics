@@ -159,7 +159,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     if self.verbose: bar.close()
 
     # Fill in gray levels (needed as empty gray level slices will be deleted)
-    P_ngtdm[:, 2] = numpy.arange(1, Ng+1)
+    P_ngtdm[:, 2] = numpy.arange(1, Ng + 1)
 
     # Delete empty grey levels
     P_ngtdm = numpy.delete(P_ngtdm, numpy.where(P_ngtdm[:, 0] == 0), 0)
@@ -209,8 +209,8 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     p_i = self.coefficients['p_i']
     s_i = self.coefficients['s_i']
     i = self.coefficients['ivector']
-    contrast = (numpy.sum(p_i[:, None] * p_i[None, :] * (i[:, None] - i[None, :])**2)/(Ngp*(Ngp-1))) * \
-               ((numpy.sum(s_i))/(Np**2))
+    contrast = (numpy.sum(p_i[:, None] * p_i[None, :] * (i[:, None] - i[None, :]) ** 2) / (Ngp * (Ngp - 1))) * \
+               ((numpy.sum(s_i)) / (Np ** 2))
 
     return contrast
 
@@ -229,7 +229,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     p_i = self.coefficients['p_i']
     s_i = self.coefficients['s_i']
     i = self.coefficients['ivector']
-    absdiff = numpy.sum(numpy.abs((i*p_i)[:, None] - (i*p_i)[None, :]))
+    absdiff = numpy.sum(numpy.abs((i * p_i)[:, None] - (i * p_i)[None, :]))
     if absdiff == 0:
       return 0
     else:
@@ -249,7 +249,8 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     p_i = self.coefficients['p_i']
     s_i = self.coefficients['s_i']
     i = self.coefficients['ivector']
-    complexity = numpy.sum(numpy.abs(i[:, None] - i[None, :]) * (((p_i*s_i)[:, None] + (p_i*s_i)[None, :])/(p_i[:, None] + p_i[None, :]))) / Np**2
+    complexity = numpy.sum(numpy.abs(i[:, None] - i[None, :]) * (
+      ((p_i * s_i)[:, None] + (p_i * s_i)[None, :]) / (p_i[:, None] + p_i[None, :]))) / Np ** 2
     return complexity
 
   def getStrengthFeatureValue(self):
@@ -271,5 +272,5 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     if sum_s_i == 0:
       return 0
     else:
-      strength = numpy.sum((p_i[:, None] + p_i[None, :]) * (i[:, None] - i[None, :])**2)/sum_s_i
+      strength = numpy.sum((p_i[:, None] + p_i[None, :]) * (i[:, None] - i[None, :]) ** 2) / sum_s_i
       return strength

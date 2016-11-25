@@ -7,6 +7,7 @@ import pywt
 
 logger = logging.getLogger(__name__)
 
+
 def getHistogram(binwidth, parameterValues):
   # Start binning form the first value lesser than or equal to the minimum value and evenly dividable by binwidth
   lowBound = min(parameterValues) - (min(parameterValues) % binwidth)
@@ -22,13 +23,15 @@ def getHistogram(binwidth, parameterValues):
 
   return numpy.histogram(parameterValues, bins=binedges)
 
-def binImage(binwidth, parameterValues, parameterMatrix = None, parameterMatrixCoordinates = None):
+
+def binImage(binwidth, parameterValues, parameterMatrix=None, parameterMatrixCoordinates=None):
   histogram = getHistogram(binwidth, parameterValues)
   parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterValues, histogram[1])
 
   return parameterMatrix, histogram
 
-def generateAngles(size, maxDistance= 1):
+
+def generateAngles(size, maxDistance=1):
   """
   Generate all possible angles from distance 1 until maxDistance in 3D.
   E.g. for d = 1, 13 angles are generated (representing the 26-connected region).
@@ -44,11 +47,11 @@ def generateAngles(size, maxDistance= 1):
 
   angles = []
 
-  for z in xrange(1, maxDistance+1):
+  for z in xrange(1, maxDistance + 1):
     angles.append((0, 0, z))
-    for y in xrange(-maxDistance, maxDistance+1):
+    for y in xrange(-maxDistance, maxDistance + 1):
       angles.append((0, z, y))
-      for x in xrange(-maxDistance, maxDistance+1):
+      for x in xrange(-maxDistance, maxDistance + 1):
         angles.append((z, y, x))
 
   angles = numpy.array(angles)
@@ -56,6 +59,7 @@ def generateAngles(size, maxDistance= 1):
   angles = numpy.delete(angles, numpy.where(numpy.min(size - numpy.abs(angles), 1) <= 0), 0)
 
   return angles
+
 
 def cropToTumorMask(imageNode, maskNode, label=1):
   """
@@ -72,7 +76,7 @@ def cropToTumorMask(imageNode, maskNode, label=1):
   maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
   size = numpy.array(maskNode.GetSize())
 
-  #Determine bounds
+  # Determine bounds
   lsif = sitk.LabelStatisticsImageFilter()
   lsif.Execute(imageNode, maskNode)
   bb = numpy.array(lsif.GetBoundingBox(label))
@@ -80,7 +84,7 @@ def cropToTumorMask(imageNode, maskNode, label=1):
   ijkMinBounds = bb[0::2]
   ijkMaxBounds = size - bb[1::2] - 1
 
-  #Crop Image
+  # Crop Image
   logger.debug('Cropping to size %s', (bb[1::2] - bb[0::2]) + 1)
   cif = sitk.CropImageFilter()
   cif.SetLowerBoundaryCropSize(ijkMinBounds)
@@ -91,6 +95,7 @@ def cropToTumorMask(imageNode, maskNode, label=1):
   croppedMaskNode = sitk.Cast(croppedMaskNode, oldMaskID)
 
   return croppedImageNode, croppedMaskNode
+
 
 def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, label=1, padDistance=5):
   """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
@@ -117,7 +122,8 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Determine bounds of cropped volume in terms of original Index coordinate space
   lssif = sitk.LabelShapeStatisticsImageFilter()
   lssif.Execute(maskNode)
-  bb = numpy.array(lssif.GetBoundingBox(label))  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
+  bb = numpy.array(
+    lssif.GetBoundingBox(label))  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
 
   # Do not resample in those directions where labelmap spans only one slice.
   oldSize = bb[3:]
@@ -128,8 +134,8 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Determine bounds of cropped volume in terms of new Index coordinate space,
   # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
   # Pad with an extra .5 to prevent data loss in case of upsampling. For Ubound this is (-1 + 0.5 = -0.5)
-  bbNewLBound = numpy.floor( (bb[:3] - 0.5) * spacingRatio - padDistance)
-  bbNewUBound = numpy.ceil( (bb[:3] + bb[3:] - 0.5) * spacingRatio + padDistance)
+  bbNewLBound = numpy.floor((bb[:3] - 0.5) * spacingRatio - padDistance)
+  bbNewUBound = numpy.ceil((bb[:3] + bb[3:] - 0.5) * spacingRatio + padDistance)
 
   # Ensure resampling is not performed outside bounds of original image
   maxUbound = numpy.ceil(numpy.array(imageNode.GetSize()) * spacingRatio) - 1
@@ -149,7 +155,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # in terms of the original spacing, and add the minimum bounds of the cropped area to
   # get the new Index coordinate space of the cropped volume in terms of the original Index coordinate space.
   # Then use the ITK functionality to bring the contiuous index into the physical space (mm)
-  newOriginIndex = numpy.array(.5*(resampledPixelSpacing-oldSpacing)/oldSpacing)
+  newOriginIndex = numpy.array(.5 * (resampledPixelSpacing - oldSpacing) / oldSpacing)
   newCroppedOriginIndex = newOriginIndex + bbOriginalLBound
   newOrigin = imageNode.TransformContinuousIndexToPhysicalPoint(newCroppedOriginIndex)
 
@@ -162,7 +168,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 
   try:
     if isinstance(interpolator, basestring):
-      interpolator = eval("sitk.%s" %(interpolator))
+      interpolator = eval("sitk.%s" % (interpolator))
   except:
     logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)
     interpolator = sitk.sitkBSpline
@@ -182,7 +188,8 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   rif.SetInterpolator(sitk.sitkNearestNeighbor)
   resampledMaskNode = rif.Execute(maskNode)
 
-  return resampledImageNode,resampledMaskNode
+  return resampledImageNode, resampledMaskNode
+
 
 #
 # Use the SimpleITK LaplacianRecursiveGaussianImageFilter
@@ -207,6 +214,7 @@ def applyLoG(inputImage, sigmaValue=0.5):
     logger.warning('applyLoG: sigma must be greater than 0.0: %g', sigmaValue)
     return None
 
+
 def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
   # this mode is useful to generate the mask of thresholded voxels
   if insideValue:
@@ -221,6 +229,7 @@ def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None,
   tif.SetOutsideValue(outsideValue)
   return tif.Execute(inputImage)
 
+
 def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
   matrix = sitk.GetArrayFromImage(inputImage)
   matrix = numpy.asarray(matrix)
@@ -229,7 +238,7 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
     raise ValueError("Expected 3D data array")
 
   original_shape = matrix.shape
-  adjusted_shape = tuple([dim+1 if dim % 2 != 0 else dim for dim in original_shape])
+  adjusted_shape = tuple([dim + 1 if dim % 2 != 0 else dim for dim in original_shape])
   data = numpy.resize(data, adjusted_shape)
 
   if not isinstance(wavelet, pywt.Wavelet):
@@ -265,23 +274,24 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
            'LLH': LLH}
     for decName, decImage in dec.iteritems():
       decTemp = decImage.copy()
-      decTemp= numpy.resize(decTemp, original_shape)
+      decTemp = numpy.resize(decTemp, original_shape)
       sitkImage = sitk.GetImageFromArray(decTemp)
       sitkImage.CopyInformation(inputImage)
       dec[decName] = sitkImage
 
     ret.append(dec)
 
-  data= numpy.resize(data, original_shape)
+  data = numpy.resize(data, original_shape)
   approximation = sitk.GetImageFromArray(data)
   approximation.CopyInformation(inputImage)
 
   return approximation, ret
 
+
 def _decompose_i(data, wavelet):
-  #process in i:
+  # process in i:
   H, L = [], []
-  i_arrays = chain.from_iterable(numpy.transpose(data,(0,1,2)))
+  i_arrays = chain.from_iterable(numpy.transpose(data, (0, 1, 2)))
   for i_array in i_arrays:
     cA, cD = pywt.swt(i_array, wavelet, level=1, start_level=0)[0]
     H.append(cD)
@@ -290,22 +300,24 @@ def _decompose_i(data, wavelet):
   L = numpy.hstack(L).reshape(data.shape)
   return H, L
 
+
 def _decompose_j(data, wavelet):
-  #process in j:
+  # process in j:
   H, L = [], []
-  j_arrays = chain.from_iterable(numpy.transpose(data,(0,1,2)))
+  j_arrays = chain.from_iterable(numpy.transpose(data, (0, 1, 2)))
   for j_array in j_arrays:
     cA, cD = pywt.swt(j_array, wavelet, level=1, start_level=0)[0]
     H.append(cD)
     L.append(cA)
-  H = numpy.asarray( [slice.T for slice in numpy.split(numpy.vstack(H), data.shape[0])] )
-  L = numpy.asarray( [slice.T for slice in numpy.split(numpy.vstack(L), data.shape[0])] )
+  H = numpy.asarray([slice.T for slice in numpy.split(numpy.vstack(H), data.shape[0])])
+  L = numpy.asarray([slice.T for slice in numpy.split(numpy.vstack(L), data.shape[0])])
   return H, L
 
+
 def _decompose_k(data, wavelet):
-  #process in k:
+  # process in k:
   H, L = [], []
-  k_arrays = chain.from_iterable(numpy.transpose(data,(1,2,0)))
+  k_arrays = chain.from_iterable(numpy.transpose(data, (1, 2, 0)))
   for k_array in k_arrays:
     cA, cD = pywt.swt(k_array, wavelet, level=1, start_level=0)[0]
     H.append(cD)
@@ -313,6 +325,7 @@ def _decompose_k(data, wavelet):
   H = numpy.dstack(H).reshape(data.shape)
   L = numpy.dstack(L).reshape(data.shape)
   return H, L
+
 
 def applySquare(inputImage):
   r"""
@@ -332,6 +345,7 @@ def applySquare(inputImage):
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
   return im
+
 
 def applySquareRoot(inputImage):
   r"""
@@ -354,6 +368,7 @@ def applySquareRoot(inputImage):
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
   return im
+
 
 def applyLogarithm(inputImage):
   r"""
@@ -378,6 +393,7 @@ def applyLogarithm(inputImage):
   im.CopyInformation(inputImage)
   return im
 
+
 def applyExponential(inputImage):
   r"""
   Computes the exponential of the original image.
@@ -390,8 +406,8 @@ def applyExponential(inputImage):
   """
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = numpy.log(numpy.max(im))/numpy.max(im)
-  im = numpy.exp(coeff*im)
+  coeff = numpy.log(numpy.max(im)) / numpy.max(im)
+  im = numpy.exp(coeff * im)
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
   return im

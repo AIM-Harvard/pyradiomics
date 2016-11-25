@@ -4,6 +4,7 @@ import SimpleITK as sitk
 from radiomics import base, imageoperations
 from tqdm import trange
 
+
 class RadiomicsGLDM(base.RadiomicsFeaturesBase):
   r"""
   A Gray Level Dependence Matrix (GLDM) quantifies gray level dependencies in an image.
@@ -53,7 +54,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
-    super(RadiomicsGLDM,self).__init__(inputImage, inputMask, **kwargs)
+    super(RadiomicsGLDM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.gldm_a = kwargs.get('gldm_a', 0)
 
@@ -61,7 +62,8 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.P_gldm = {}
 
     # binning
-    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix,
+                                                           self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
 
     self._calculateGLDM()
@@ -112,15 +114,15 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.P_gldm = numpy.zeros((Ng, Nd + 1))
     grayLevels = numpy.unique(self.matrix[self.matrixCoordinates])
 
-    if self.verbose: bar = trange(len(grayLevels), desc= 'calculate GLDM')
+    if self.verbose: bar = trange(len(grayLevels), desc='calculate GLDM')
     for i in grayLevels:
-        if self.verbose: bar.update()
-        i_mat = (self.matrix == i)
-        for d in numpy.unique(depMat[i_mat]):
-            # By multiplying i_mat and depMat == d, a boolean area is obtained,
-            # where the number of elements that are true (1) is equal to the number of voxels
-            # with gray level i and dependence d.
-            self.P_gldm[i-1, d] = numpy.sum(i_mat * (depMat == d))
+      if self.verbose: bar.update()
+      i_mat = (self.matrix == i)
+      for d in numpy.unique(depMat[i_mat]):
+        # By multiplying i_mat and depMat == d, a boolean area is obtained,
+        # where the number of elements that are true (1) is equal to the number of voxels
+        # with gray level i and dependence d.
+        self.P_gldm[i - 1, d] = numpy.sum(i_mat * (depMat == d))
     if self.verbose: bar.close()
 
     sumP_gldm = numpy.sum(self.P_gldm, (0, 1))
@@ -153,7 +155,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      sde = numpy.sum(pd/(jvector**2)) / sumP_gldm
+      sde = numpy.sum(pd / (jvector ** 2)) / sumP_gldm
       return sde
     except ZeroDivisionError:
       return numpy.core.nan
@@ -167,12 +169,12 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     A measure of the distribution of large dependencies, with a greater value indicative
     of larger dependence and more homogeneous textures.
     """
-    pd =  self.coefficients['pd']
+    pd = self.coefficients['pd']
     jvector = self.coefficients['jvector']
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      lre = numpy.sum(pd*(jvector**2)) / sumP_gldm
+      lre = numpy.sum(pd * (jvector ** 2)) / sumP_gldm
       return lre
     except ZeroDivisionError:
       return numpy.core.nan
@@ -190,7 +192,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      gln = numpy.sum(pg**2) / sumP_gldm
+      gln = numpy.sum(pg ** 2) / sumP_gldm
       return gln
     except ZeroDivisionError:
       return numpy.core.nan
@@ -208,7 +210,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      glnn = numpy.sum(pg**2) / (sumP_gldm**2)
+      glnn = numpy.sum(pg ** 2) / (sumP_gldm ** 2)
       return glnn
     except ZeroDivisionError:
       return numpy.core.nan
@@ -226,7 +228,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      dn = numpy.sum(pd**2) / sumP_gldm
+      dn = numpy.sum(pd ** 2) / sumP_gldm
       return dn
     except ZeroDivisionError:
       return numpy.core.nan
@@ -244,7 +246,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      dnn = numpy.sum(pd**2) / (sumP_gldm**2)
+      dnn = numpy.sum(pd ** 2) / (sumP_gldm ** 2)
       return dnn
     except ZeroDivisionError:
       return numpy.core.nan
@@ -263,7 +265,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     u_i = numpy.sum(self.coefficients['pg'] * ivector) / sumP_gldm
-    glv = numpy.sum(self.coefficients['pg'] * (ivector - u_i)**2) / sumP_gldm
+    glv = numpy.sum(self.coefficients['pg'] * (ivector - u_i) ** 2) / sumP_gldm
     return glv
 
   def getDependenceVarianceFeatureValue(self):
@@ -279,7 +281,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     sumP_gldm = self.coefficients['sumP_gldm']
     u_j = numpy.sum(self.coefficients['pd'] * jvector) / sumP_gldm
-    dv = numpy.sum(self.coefficients['pd'] * (jvector - u_j)**2) / sumP_gldm
+    dv = numpy.sum(self.coefficients['pd'] * (jvector - u_j) ** 2) / sumP_gldm
     return dv
 
   def getDependenceEntropyFeatureValue(self):
@@ -306,7 +308,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      lgle = numpy.sum(pg/(ivector**2)) / sumP_gldm
+      lgle = numpy.sum(pg / (ivector ** 2)) / sumP_gldm
       return lgle
     except ZeroDivisionError:
       return numpy.core.nan
@@ -325,7 +327,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      hgle = numpy.sum(pg*(ivector**2)) / sumP_gldm
+      hgle = numpy.sum(pg * (ivector ** 2)) / sumP_gldm
       return hgle
     except ZeroDivisionError:
       return numpy.core.nan
@@ -343,7 +345,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      sdlgle = numpy.sum(self.P_gldm/((ivector[:,None]**2)*(jvector[None,:]**2))) / sumP_gldm
+      sdlgle = numpy.sum(self.P_gldm / ((ivector[:, None] ** 2) * (jvector[None, :] ** 2))) / sumP_gldm
       return sdlgle
     except ZeroDivisionError:
       return numpy.core.nan
@@ -361,7 +363,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      sdhgle = numpy.sum(self.P_gldm*(ivector[:,None]**2)/(jvector[None,:]**2)) / sumP_gldm
+      sdhgle = numpy.sum(self.P_gldm * (ivector[:, None] ** 2) / (jvector[None, :] ** 2)) / sumP_gldm
       return sdhgle
     except ZeroDivisionError:
       return numpy.core.nan
@@ -379,7 +381,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      ldlgle = numpy.sum(self.P_gldm*(jvector[None,:]**2)/(ivector[:,None]**2)) / sumP_gldm
+      ldlgle = numpy.sum(self.P_gldm * (jvector[None, :] ** 2) / (ivector[:, None] ** 2)) / sumP_gldm
       return ldlgle
     except ZeroDivisionError:
       return numpy.core.nan
@@ -397,7 +399,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_gldm']
 
     try:
-      ldhgle = numpy.sum(self.P_gldm*((jvector[None,:]**2)*(ivector[:,None]**2))) / sumP_gldm
+      ldhgle = numpy.sum(self.P_gldm * ((jvector[None, :] ** 2) * (ivector[:, None] ** 2))) / sumP_gldm
       return ldhgle
     except ZeroDivisionError:
       return numpy.core.nan

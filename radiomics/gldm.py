@@ -62,8 +62,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.P_gldm = {}
 
     # binning
-    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix,
-                                                           self.matrixCoordinates)
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
 
     self._calculateGLDM()

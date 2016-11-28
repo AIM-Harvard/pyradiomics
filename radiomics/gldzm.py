@@ -91,7 +91,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
 
     # Only apply padding where the size is more than 1. Flip the direction of the matrix, as padding will be
     # applied on the image (x, y, z) and the matrix is (z, y, x)
-    padding = numpy.where(self.matrix.shape[::-1] == 1, 0, 1)
+    padding = numpy.where(numpy.array(self.matrix.shape)[::-1] == 1, 0, 1)
 
     cpif.SetPadLowerBound(padding)
     cpif.SetPadUpperBound(padding)
@@ -103,10 +103,10 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     self.matrix = sitk.GetArrayFromImage(self.inputImage).astype('float')
     # Reassign self.maskArray using the now-padded self.inputMask and make it binary
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
+    self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
     # binning
-    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix,
-                                                           self.matrixCoordinates)
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['Np'] = self.targetVoxelArray.size
 
@@ -173,7 +173,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
             minDistance = distMap[ind_node]
 
         # Update the gray level distance zone matrix, minDistance starts at 0 (voxels on the edge of the ROI.
-        P_gldzm[int(i - 1), int(minDistance)] += 1
+        P_gldzm[int(i - 1), int(minDistance - 1)] += 1
 
     if self.verbose: bar.close()
 

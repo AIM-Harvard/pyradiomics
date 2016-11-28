@@ -3,6 +3,7 @@ import numpy
 import SimpleITK as sitk
 from radiomics import base, imageoperations
 
+
 class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
   r"""
   A Gray Level Run Length Matrix (GLRLM) quantifies gray level runs in an image.
@@ -70,7 +71,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
-    super(RadiomicsGLRLM,self).__init__(inputImage, inputMask, **kwargs)
+    super(RadiomicsGLRLM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
@@ -78,7 +79,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.P_glrlm = {}
 
     # binning
-    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix,
+                                                           self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
@@ -90,7 +92,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
 
-    padVal = -2000   #use eps or NaN to pad matrix
+    padVal = -2000  # use eps or NaN to pad matrix
     self.matrix[(self.maskArray == 0)] = padVal
 
     matrixDiagonals = []
@@ -99,55 +101,55 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     angles = imageoperations.generateAngles(size)
 
     for angle in angles:
-        staticDims, = numpy.where(angle == 0)  # indices for static dimensions for current angle (z, y, x)
-        movingDims, = numpy.where(angle != 0)  # indices for moving dimensions for current angle (z, y, x)
+      staticDims, = numpy.where(angle == 0)  # indices for static dimensions for current angle (z, y, x)
+      movingDims, = numpy.where(angle != 0)  # indices for moving dimensions for current angle (z, y, x)
 
-        if len(movingDims) == 1:  # movement in one dimension, e.g. angle (0, 0, 1)
-            T = tuple(numpy.append(staticDims, movingDims))
-            diags = chain.from_iterable(numpy.transpose(self.matrix, T))
+      if len(movingDims) == 1:  # movement in one dimension, e.g. angle (0, 0, 1)
+        T = tuple(numpy.append(staticDims, movingDims))
+        diags = chain.from_iterable(numpy.transpose(self.matrix, T))
 
-        elif len(movingDims) == 2:  # movement in two dimension, e.g. angle (0, 1, 1)
-            d1 = movingDims[0]
-            d2 = movingDims[1]
-            direction = numpy.where(angle < 0, -1, 1)
-            diags = chain.from_iterable([self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, d1, d2)
-                                         for a in xrange(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
+      elif len(movingDims) == 2:  # movement in two dimension, e.g. angle (0, 1, 1)
+        d1 = movingDims[0]
+        d2 = movingDims[1]
+        direction = numpy.where(angle < 0, -1, 1)
+        diags = chain.from_iterable([self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, d1, d2)
+                                     for a in xrange(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
 
-        else:  # movement in 3 dimensions, e.g. angle (1, 1, 1)
-            diags = []
-            direction = numpy.where(angle < 0, -1, 1)
-            for h in [self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, 0, 1)
-                      for a in xrange(-self.matrix.shape[0] + 1, self.matrix.shape[1])]:
-                diags.extend([h.diagonal(b, 0, 1) for b in xrange(-h.shape[0] + 1, h.shape[1])])
+      else:  # movement in 3 dimensions, e.g. angle (1, 1, 1)
+        diags = []
+        direction = numpy.where(angle < 0, -1, 1)
+        for h in [self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, 0, 1)
+                  for a in xrange(-self.matrix.shape[0] + 1, self.matrix.shape[1])]:
+          diags.extend([h.diagonal(b, 0, 1) for b in xrange(-h.shape[0] + 1, h.shape[1])])
 
-        matrixDiagonals.append( filter(lambda diag: numpy.nonzero(diag != padVal)[0].size > 0, diags) )
+      matrixDiagonals.append(filter(lambda diag: numpy.nonzero(diag != padVal)[0].size > 0, diags))
 
-    P_glrlm = numpy.zeros( (Ng, Nr, int(len(matrixDiagonals))) )
+    P_glrlm = numpy.zeros((Ng, Nr, int(len(matrixDiagonals))))
 
     # Run-Length Encoding (rle) for the list of diagonals
     # (1 list per direction/angle)
     for angle_idx, angle in enumerate(matrixDiagonals):
-      P = P_glrlm[:,:,angle_idx]
+      P = P_glrlm[:, :, angle_idx]
       # Check whether delineation is 2D for current angle (all diagonals contain 0 or 1 non-pad value)
       isMultiElement = False
       for d in angle:
         if numpy.where(d != padVal)[0].shape[0] > 1:
-            isMultiElement = True
-            break
+          isMultiElement = True
+          break
       if isMultiElement:
         for diagonal in angle:
           pos, = numpy.where(numpy.diff(diagonal) != 0)
-          pos = numpy.concatenate(([0], pos+1, [len(diagonal)]))
+          pos = numpy.concatenate(([0], pos + 1, [len(diagonal)]))
           rle = zip([int(n) for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
           for level, run_length in rle:
             if level != padVal:
-              P[level-1, run_length-1] += 1
+              P[level - 1, run_length - 1] += 1
 
     # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
     # Crop run-length axis of GLRLMs up to maximum observed run-length
     P_glrlm_bounds = numpy.argwhere(P_glrlm)
     (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1
-    self.P_glrlm = P_glrlm[xstart:xstop,:ystop,:]
+    self.P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
 
     # Optionally apply a weighting factor
     if not self.weightingNorm is None:
@@ -204,7 +206,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      sre = numpy.sum( (pr/(jvector[:,None]**2)), 0 ) / sumP_glrlm
+      sre = numpy.sum((pr / (jvector[:, None] ** 2)), 0) / sumP_glrlm
       return (sre.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -218,12 +220,12 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     A measure of the distribution of long run lengths, with a greater value indicative
     of longer run lengths and more coarse structural textures.
     """
-    pr =  self.coefficients['pr']
+    pr = self.coefficients['pr']
     jvector = self.coefficients['jvector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      lre = numpy.sum( (pr*(jvector[:,None]**2)), 0 ) / sumP_glrlm
+      lre = numpy.sum((pr * (jvector[:, None] ** 2)), 0) / sumP_glrlm
       return (lre.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -241,7 +243,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      gln = numpy.sum( (pg**2) , 0 ) / sumP_glrlm
+      gln = numpy.sum((pg ** 2), 0) / sumP_glrlm
       return (gln.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -259,7 +261,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_gldm = self.coefficients['sumP_glrlm']
 
     try:
-      glnn = numpy.sum(pg**2, 0) / (sumP_gldm**2)
+      glnn = numpy.sum(pg ** 2, 0) / (sumP_gldm ** 2)
       return glnn.mean()
     except ZeroDivisionError:
       return numpy.core.nan
@@ -277,7 +279,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      rln = numpy.sum( (pr**2) , 0 ) / sumP_glrlm
+      rln = numpy.sum((pr ** 2), 0) / sumP_glrlm
       return (rln.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -295,7 +297,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      rlnn = numpy.sum( (pr**2) , 0 ) / sumP_glrlm**2
+      rlnn = numpy.sum((pr ** 2), 0) / sumP_glrlm ** 2
       return (rlnn.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -311,7 +313,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Np = self.coefficients['Np']
 
     try:
-      rp = numpy.sum( (self.P_glrlm/(Np)) , (0, 1) )
+      rp = numpy.sum((self.P_glrlm / (Np)), (0, 1))
       return (rp.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -329,7 +331,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     ivector = self.coefficients['ivector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
     u_i = numpy.sum(self.coefficients['pg'] * ivector[:, None], 0) / sumP_glrlm
-    glv = numpy.sum(self.coefficients['pg'] * (ivector[:, None] - u_i[None, :])**2, 0) / sumP_glrlm
+    glv = numpy.sum(self.coefficients['pg'] * (ivector[:, None] - u_i[None, :]) ** 2, 0) / sumP_glrlm
     return glv.mean()
 
   def getRunVarianceFeatureValue(self):
@@ -345,7 +347,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
     u_j = numpy.sum(self.coefficients['pr'] * jvector[:, None], 0) / sumP_glrlm
-    rv = numpy.sum(self.coefficients['pr'] * (jvector[:, None] - u_j[None, :])**2, 0) / sumP_glrlm
+    rv = numpy.sum(self.coefficients['pr'] * (jvector[:, None] - u_j[None, :]) ** 2, 0) / sumP_glrlm
     return rv.mean()
 
   def getRunEntropyFeatureValue(self):
@@ -373,7 +375,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      lglre = numpy.sum( (pg/(ivector[:,None]**2)) , 0 ) / sumP_glrlm
+      lglre = numpy.sum((pg / (ivector[:, None] ** 2)), 0) / sumP_glrlm
       return (lglre.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -392,7 +394,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      hglre = numpy.sum( (pg*(ivector[:,None]**2)) , 0 ) / sumP_glrlm
+      hglre = numpy.sum((pg * (ivector[:, None] ** 2)), 0) / sumP_glrlm
       return (hglre.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -410,7 +412,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      srlgle = numpy.sum( (self.P_glrlm/((ivector[:,None,None]**2)*(jvector[None,:,None]**2))) , (0, 1) ) / sumP_glrlm
+      srlgle = numpy.sum((self.P_glrlm / ((ivector[:, None, None] ** 2) * (jvector[None, :, None] ** 2))),
+                         (0, 1)) / sumP_glrlm
       return (srlgle.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -428,7 +431,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      srhgle = numpy.sum( (self.P_glrlm*(ivector[:,None,None]**2)/(jvector[None,:,None]**2)) , (0, 1) ) / sumP_glrlm
+      srhgle = numpy.sum((self.P_glrlm * (ivector[:, None, None] ** 2) / (jvector[None, :, None] ** 2)),
+                         (0, 1)) / sumP_glrlm
       return (srhgle.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -446,7 +450,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      lrlgle = numpy.sum( (self.P_glrlm*(jvector[None,:,None]**2)/(ivector[:,None,None]**2)) , (0, 1) ) / sumP_glrlm
+      lrlgle = numpy.sum((self.P_glrlm * (jvector[None, :, None] ** 2) / (ivector[:, None, None] ** 2)),
+                         (0, 1)) / sumP_glrlm
       return (lrlgle.mean())
     except ZeroDivisionError:
       return numpy.core.nan
@@ -464,7 +469,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
     try:
-      lrhgle = numpy.sum( (self.P_glrlm*((jvector[None,:,None]**2)*(ivector[:,None,None]**2))) , (0, 1) ) / sumP_glrlm
+      lrhgle = numpy.sum((self.P_glrlm * ((jvector[None, :, None] ** 2) * (ivector[:, None, None] ** 2))),
+                         (0, 1)) / sumP_glrlm
       return (lrhgle.mean())
     except ZeroDivisionError:
       return numpy.core.nan

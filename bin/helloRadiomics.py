@@ -5,16 +5,16 @@ from radiomics import featureextractor
 import radiomics
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
-#imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
-#maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
+# imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
+# maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
 imageName = str(dataDir + os.path.sep + 'brain1_image.nrrd')
 maskName = str(dataDir + os.path.sep + 'brain1_label.nrrd')
 
 if not os.path.exists(imageName):
-  print 'Error: problem finding input image',imageName
+  print 'Error: problem finding input image', imageName
   exit()
 if not os.path.exists(maskName):
-  print 'Error: problem finding input labelmap',maskName
+  print 'Error: problem finding input labelmap', maskName
   exit()
 
 # Define settings for signature calculation
@@ -38,7 +38,7 @@ extractor.disableAllFeatures()
 # extractor.enableFeatureClassByName('firstorder')
 
 # Only enable mean and skewness in firstorder
-extractor.enableFeaturesByName(firstorder= ['Mean', 'Skewness'])
+extractor.enableFeaturesByName(firstorder=['Mean', 'Skewness'])
 
 # Enable writing out the log using radiomics logger
 radiomics.debug()  # Switch on radiomics logging from level=DEBUG (default level=WARNING)
@@ -55,11 +55,11 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 for f in extractor.getFeaturesNames('firstorder'):
-  print "Feature: %s" %(f)
-  print eval('extractor.featureClasses["firstorder"].get'+f+'FeatureValue.__doc__')
+  print "Feature: %s" % (f)
+  print eval('extractor.featureClasses["firstorder"].get' + f + 'FeatureValue.__doc__')
 
 print "Calculating features"
 featureVector = extractor.execute(imageName, maskName)
 
 for featureName in featureVector.keys():
-  print "Computed %s: %s" %(featureName, featureVector[featureName])
+  print "Computed %s: %s" % (featureName, featureVector[featureName])

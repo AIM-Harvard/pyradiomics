@@ -3,6 +3,7 @@ import collections
 from radiomics import base, imageoperations
 import SimpleITK as sitk
 
+
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   r"""
   First-order statistics describe the distribution of voxel intensities within the image region defined by the mask through commonly used and basic metrics.
@@ -22,7 +23,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
-    super(RadiomicsFirstOrder,self).__init__(inputImage,inputMask,**kwargs)
+    super(RadiomicsFirstOrder, self).__init__(inputImage, inputMask, **kwargs)
 
     self.pixelSpacing = inputImage.GetSpacing()
     self.voxelArrayShift = kwargs.get('voxelArrayShift', 2000)
@@ -35,8 +36,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     if moment == 1:
       return numpy.float64(0.0)
     else:
-      mn = numpy.mean(a,axis, keepdims= True)
-      s = numpy.power((a-mn), moment)
+      mn = numpy.mean(a, axis, keepdims=True)
+      s = numpy.power((a - mn), moment)
       return numpy.mean(s, axis)
 
   def getEnergyFeatureValue(self):
@@ -51,7 +52,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
 
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
-    return (numpy.sum(shiftedParameterArray**2))
+    return (numpy.sum(shiftedParameterArray ** 2))
 
   def getTotalEnergyFeatureValue(self):
     r"""
@@ -63,7 +64,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
     x, y, z = self.pixelSpacing
     cubicMMPerVoxel = x * y * z
-    return(cubicMMPerVoxel*self.getEnergyFeatureValue())
+    return (cubicMMPerVoxel * self.getEnergyFeatureValue())
 
   def getEntropyFeatureValue(self):
     r"""
@@ -124,7 +125,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     return (numpy.mean(self.targetVoxelArray))
 
-  def getMedianFeatureValue (self):
+  def getMedianFeatureValue(self):
     r"""
     Calculate the Median Value for the image array.
     """
@@ -141,7 +142,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     return numpy.percentile(self.targetVoxelArray, 75) - numpy.percentile(self.targetVoxelArray, 25)
 
-  def getRangeFeatureValue (self):
+  def getRangeFeatureValue(self):
     r"""
     Calculate the Range of Values in the image array.
 
@@ -160,7 +161,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     from the Mean Value of the image array.
     """
 
-    return ( numpy.mean(numpy.absolute( (numpy.mean(self.targetVoxelArray) - self.targetVoxelArray) )) )
+    return (numpy.mean(numpy.absolute((numpy.mean(self.targetVoxelArray) - self.targetVoxelArray))))
 
   def getRobustMeanAbsoluteDeviationFeatureValue(self):
     r"""
@@ -189,7 +190,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
 
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
-    return ( numpy.sqrt((numpy.sum(shiftedParameterArray**2))/float(shiftedParameterArray.size)) )
+    return (numpy.sqrt((numpy.sum(shiftedParameterArray ** 2)) / float(shiftedParameterArray.size)))
 
   def getStandardDeviationFeatureValue(self):
     r"""
@@ -227,7 +228,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     if (m2 == 0): return numpy.core.nan
 
-    return m3 / m2**1.5
+    return m3 / m2 ** 1.5
 
   def getKurtosisFeatureValue(self, axis=0):
     r"""
@@ -251,12 +252,12 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     https://en.wikipedia.org/wiki/Kurtosis
     """
 
-    m2 = self._moment(self.targetVoxelArray,2,axis)
-    m4 = self._moment(self.targetVoxelArray,4,axis)
+    m2 = self._moment(self.targetVoxelArray, 2, axis)
+    m4 = self._moment(self.targetVoxelArray, 4, axis)
 
-    if (m2==0): return numpy.core.nan
+    if (m2 == 0): return numpy.core.nan
 
-    return m4 / m2**2.0
+    return m4 / m2 ** 2.0
 
   def getVarianceFeatureValue(self):
     r"""
@@ -269,7 +270,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     of the distribution about the mean.
     """
 
-    return (numpy.std(self.targetVoxelArray)**2)
+    return (numpy.std(self.targetVoxelArray) ** 2)
 
   def getUniformityFeatureValue(self):
     r"""
@@ -285,7 +286,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
     try:
-      bins = bins/(float(bins.sum()))
-      return (numpy.sum(bins**2))
+      bins = bins / (float(bins.sum()))
+      return (numpy.sum(bins ** 2))
     except ZeroDivisionError:
       return numpy.core.nan

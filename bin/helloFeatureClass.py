@@ -3,21 +3,21 @@ import SimpleITK as sitk
 import numpy
 from radiomics import firstorder, glcm, imageoperations, shape, rlgl, glszm
 
-#testBinWidth = 25 this is the default bin size
-#testResampledPixelSpacing = (3,3,3) no resampling for now.
+# testBinWidth = 25 this is the default bin size
+# testResampledPixelSpacing = (3,3,3) no resampling for now.
 
 dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
-#imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
-#maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
+# imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
+# maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
 imageName = str(dataDir + os.path.sep + 'breast1_image.nrrd')
 maskName = str(dataDir + os.path.sep + 'breast1_label.nrrd')
 
 if not os.path.exists(imageName):
-    print 'Error: problem finding input image',imageName
-    exit()
+  print 'Error: problem finding input image', imageName
+  exit()
 if not os.path.exists(maskName):
-    print 'Error: problem finding input image',maskName
-    exit()
+  print 'Error: problem finding input image', maskName
+  exit()
 
 image = sitk.ReadImage(imageName)
 mask = sitk.ReadImage(maskName)
@@ -38,9 +38,9 @@ kwargs = {'binWidth': 25,
 # If resampling is not enabled, crop image instead
 #
 if kwargs['interpolator'] != None and kwargs['resampledPixelSpacing'] != None:
-    image, mask = imageoperations.resampleImage(image, mask, kwargs['resampledPixelSpacing'], kwargs['interpolator'])
+  image, mask = imageoperations.resampleImage(image, mask, kwargs['resampledPixelSpacing'], kwargs['interpolator'])
 else:
-    image, mask = imageoperations.cropToTumorMask(image, mask)
+  image, mask = imageoperations.cropToTumorMask(image, mask)
 
 #
 # Show the first order feature calculations
@@ -52,8 +52,8 @@ firstOrderFeatures.enableFeatureByName('Mean', True)
 
 print 'Will calculate the following first order features: '
 for f in firstOrderFeatures.enabledFeatures.keys():
-    print '  ', f
-    print eval('firstOrderFeatures.get' + f + 'FeatureValue.__doc__')
+  print '  ', f
+  print eval('firstOrderFeatures.get' + f + 'FeatureValue.__doc__')
 
 print 'Calculating first order features...',
 firstOrderFeatures.calculateFeatures()
@@ -61,7 +61,7 @@ print 'done'
 
 print 'Calculated first order features: '
 for (key, val) in firstOrderFeatures.featureValues.iteritems():
-    print '  ', key, ':', val
+  print '  ', key, ':', val
 
 #
 # Show Shape features
@@ -71,8 +71,8 @@ shapeFeatures.enableAllFeatures()
 
 print 'Will calculate the following Shape features: '
 for f in shapeFeatures.enabledFeatures.keys():
-    print '  ', f
-    print eval('shapeFeatures.get' + f + 'FeatureValue.__doc__')
+  print '  ', f
+  print eval('shapeFeatures.get' + f + 'FeatureValue.__doc__')
 
 print 'Calculating Shape features...',
 shapeFeatures.calculateFeatures()
@@ -80,7 +80,7 @@ print 'done'
 
 print 'Calculated Shape features: '
 for (key, val) in shapeFeatures.featureValues.iteritems():
-    print '  ', key, ':', val
+  print '  ', key, ':', val
 
 #
 # Show GLCM features
@@ -90,8 +90,8 @@ glcmFeatures.enableAllFeatures()
 
 print 'Will calculate the following GLCM features: '
 for f in glcmFeatures.enabledFeatures.keys():
-    print '  ', f
-    print eval('glcmFeatures.get' + f + 'FeatureValue.__doc__')
+  print '  ', f
+  print eval('glcmFeatures.get' + f + 'FeatureValue.__doc__')
 
 print 'Calculating GLCM features...',
 glcmFeatures.calculateFeatures()
@@ -99,7 +99,7 @@ print 'done'
 
 print 'Calculated GLCM features: '
 for (key, val) in glcmFeatures.featureValues.iteritems():
-    print '  ', key, ':', val
+  print '  ', key, ':', val
 
 #
 # Show RLGL features
@@ -109,8 +109,8 @@ rlglFeatures.enableAllFeatures()
 
 print 'Will calculate the following RLGL features: '
 for f in rlglFeatures.enabledFeatures.keys():
-    print '  ', f
-    print eval('rlglFeatures.get' + f + 'FeatureValue.__doc__')
+  print '  ', f
+  print eval('rlglFeatures.get' + f + 'FeatureValue.__doc__')
 
 print 'Calculating RLGL features...',
 rlglFeatures.calculateFeatures()
@@ -118,7 +118,7 @@ print 'done'
 
 print 'Calculated RLGL features: '
 for (key, val) in rlglFeatures.featureValues.iteritems():
-    print '  ', key, ':', val
+  print '  ', key, ':', val
 
 #
 # Show GLSZM features
@@ -128,8 +128,8 @@ glszmFeatures.enableAllFeatures()
 
 print 'Will calculate the following GLSZM features: '
 for f in glszmFeatures.enabledFeatures.keys():
-    print '  ', f
-    print eval('glszmFeatures.get' + f + 'FeatureValue.__doc__')
+  print '  ', f
+  print eval('glszmFeatures.get' + f + 'FeatureValue.__doc__')
 
 print 'Calculating GLSZM features...',
 glszmFeatures.calculateFeatures()
@@ -137,42 +137,42 @@ print 'done'
 
 print 'Calculated GLSZM features: '
 for (key, val) in glszmFeatures.featureValues.iteritems():
-    print '  ', key, ':', val
+  print '  ', key, ':', val
 
 #
 # Show FirstOrder features, calculated on a LoG filtered image
 #
 if applyLog:
-    sigmaValues = numpy.arange(5., 0., -.5)[::1]
-    for sigma in sigmaValues:
-        logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
-        logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **kwargs)
-        logFirstorderFeatures.enableAllFeatures()
-        logFirstorderFeatures.calculateFeatures()
-        print 'Calculated firstorder features with LoG sigma ', sigma
-        for (key, val) in logFirstorderFeatures.featureValues.iteritems():
-            laplacianFeatureName = 'LoG-sigma-%s_%s' %(str(sigma), key)
-            print '  ', laplacianFeatureName, ':', val
+  sigmaValues = numpy.arange(5., 0., -.5)[::1]
+  for sigma in sigmaValues:
+    logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
+    logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **kwargs)
+    logFirstorderFeatures.enableAllFeatures()
+    logFirstorderFeatures.calculateFeatures()
+    print 'Calculated firstorder features with LoG sigma ', sigma
+    for (key, val) in logFirstorderFeatures.featureValues.iteritems():
+      laplacianFeatureName = 'LoG-sigma-%s_%s' % (str(sigma), key)
+      print '  ', laplacianFeatureName, ':', val
 #
 # Show FirstOrder features, calculated on a wavelet filtered image
 #
 if applyWavelet:
-    ret, approx = imageoperations.swt3(image)
+  ret, approx = imageoperations.swt3(image)
 
-    for idx, wl in enumerate(ret, start=1):
-        for decompositionName, decompositionImage in wl.items():
-            waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(decompositionImage, mask, **kwargs)
-            waveletFirstOrderFeaturs.enableAllFeatures()
-            waveletFirstOrderFeaturs.calculateFeatures()
-            print 'Calculated firstorder features with wavelet ', decompositionName
-            for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
-                waveletFeatureName = 'wavelet-%s_%s' %(str(decompositionName), key)
-                print '  ', waveletFeatureName, ':', val
-
-    waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(approx, mask, **kwargs)
-    waveletFirstOrderFeaturs.enableAllFeatures()
-    waveletFirstOrderFeaturs.calculateFeatures()
-    print 'Calculated firstorder features with approximation of wavelt (= LLL decomposition)'
-    for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
-        waveletFeatureName = 'wavelet-LLL_%s' %(key)
+  for idx, wl in enumerate(ret, start=1):
+    for decompositionName, decompositionImage in wl.items():
+      waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(decompositionImage, mask, **kwargs)
+      waveletFirstOrderFeaturs.enableAllFeatures()
+      waveletFirstOrderFeaturs.calculateFeatures()
+      print 'Calculated firstorder features with wavelet ', decompositionName
+      for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
+        waveletFeatureName = 'wavelet-%s_%s' % (str(decompositionName), key)
         print '  ', waveletFeatureName, ':', val
+
+  waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(approx, mask, **kwargs)
+  waveletFirstOrderFeaturs.enableAllFeatures()
+  waveletFirstOrderFeaturs.calculateFeatures()
+  print 'Calculated firstorder features with approximation of wavelt (= LLL decomposition)'
+  for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
+    waveletFeatureName = 'wavelet-LLL_%s' % (key)
+    print '  ', waveletFeatureName, ':', val

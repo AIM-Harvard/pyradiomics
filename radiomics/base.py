@@ -5,6 +5,7 @@ import numpy
 import inspect
 from radiomics import imageoperations
 
+
 class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):
     """
@@ -42,7 +43,7 @@ class RadiomicsFeaturesBase(object):
 
   def enableFeatureByName(self, featureName, enable=True):
     if not featureName in self.featureNames:
-      raise LookupError('Feature not found: '+featureName)
+      raise LookupError('Feature not found: ' + featureName)
     self.enabledFeatures[featureName] = enable
 
   def enableAllFeatures(self):
@@ -53,22 +54,21 @@ class RadiomicsFeaturesBase(object):
     self.enabledFeatures = {}
     self.featureValues = {}
 
-  
   def getFeatureNames(self):
     allMembers = dir(self)
     allFeatureNames = [f[3:-12] for f in allMembers if f.endswith('FeatureValue') and f.startswith('get')]
     return allFeatureNames
-  
+
   @classmethod
   def getFeatureNames(c):
     attributes = inspect.getmembers(c)
     features = [a[0][3:-12] for a in attributes if a[0].startswith('get') and a[0].endswith('FeatureValue')]
     return features
-  
+
   def calculateFeatures(self):
     self.logger.debug('Calculating features')
     for feature in self.enabledFeatures.keys():
-      call = 'self.get'+feature+'FeatureValue()'
+      call = 'self.get' + feature + 'FeatureValue()'
       try:
         self.featureValues[feature] = eval(call)
       except Exception:

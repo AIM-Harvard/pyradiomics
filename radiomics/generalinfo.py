@@ -4,6 +4,7 @@ import numpy
 import SimpleITK as sitk
 import radiomics
 
+
 class GeneralInfo():
   def __init__(self, imagePath, maskPath, resampledMask, kwargs, inputImages):
     self.logger = logging.getLogger(self.__module__)
@@ -45,7 +46,7 @@ class GeneralInfo():
     generalInfo = collections.OrderedDict()
     for mem in dir(self):
       if mem.startswith('get') and mem.endswith('Value'):
-        generalInfo[mem[3:-5]] = str(eval('self.%s()' %(mem))).replace(',', ';')
+        generalInfo[mem[3:-5]] = str(eval('self.%s()' % (mem))).replace(',', ';')
     return generalInfo
 
   def getBoundingBoxValue(self):

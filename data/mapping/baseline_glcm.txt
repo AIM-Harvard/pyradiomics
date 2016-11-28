@@ -21,3 +21,8 @@
 21:clusShade
 22:clusProm
 23:sumVar2
+24:invDiff
+25:invDiffmom
+26:diffAvg
+27:diffVar
+28:Avg

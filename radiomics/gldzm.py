@@ -3,6 +3,7 @@ from tqdm import trange
 import SimpleITK as sitk
 from radiomics import base, imageoperations
 
+
 class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
   r"""
   The Gray Level Distance Zone Matrix (GLDZM) quantifies the relationship between the location and gray level of the
@@ -76,6 +77,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     - Thibault, G., Angulo, J., and Meyer, F. (2014); Advanced statistical matrices for texture characterization:
       application to cell classification; IEEE transactions on bio-medical engineering, 61(3):630-7.
   """
+
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLDZM, self).__init__(inputImage, inputMask, **kwargs)
 
@@ -103,7 +105,8 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
 
     # binning
-    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix, self.matrixCoordinates)
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix,
+                                                           self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['Np'] = self.targetVoxelArray.size
 
@@ -121,7 +124,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     smdmif = sitk.SignedMaurerDistanceMapImageFilter()
     smdmif.SquaredDistanceOff()
     smdmif.InsideIsPositiveOn()
-    distImage= smdmif.Execute(self.inputMask)
+    distImage = smdmif.Execute(self.inputMask)
     distMap = numpy.round(sitk.GetArrayFromImage(distImage), 0)  # Round distances to make them usable as indices
 
     # Empty GLDZ matrix
@@ -130,13 +133,13 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     # Iterate over all gray levels in the image
     grayLevels = numpy.unique(self.matrix[self.matrixCoordinates])
 
-    if self.verbose: bar = trange(len(grayLevels), desc= 'calculate GLDZM')
+    if self.verbose: bar = trange(len(grayLevels), desc='calculate GLDZM')
 
     for i in grayLevels:
       # give some progress
       if self.verbose: bar.update()
 
-      ind = zip(*numpy.where(self.matrix==i))
+      ind = zip(*numpy.where(self.matrix == i))
       ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
 
       while ind:  # check if ind is not empty: unprocessed regions for current gray level
@@ -153,8 +156,8 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
           ind_node = ind_region.pop()
 
           # get all coordinates in the 6-connected region, 2 voxels per angle
-          region_full = [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles]
-          region_full += [tuple(sum(a) for a in zip(ind_node,angle_i)) for angle_i in angles*-1]
+          region_full = [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles]
+          region_full += [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles * -1]
 
           # get all unprocessed coordinates in the 26-connected region with same gray level
           region_level = list(set(ind).intersection(set(region_full)))
@@ -178,7 +181,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     # Crop distance-zone axis of GLDZM matrix up to maximum observed distance
     P_gldzm_bounds = numpy.argwhere(P_gldzm)
     (xstart, ystart), (xstop, ystop) = P_gldzm_bounds.min(0), P_gldzm_bounds.max(0) + 1
-    self.P_gldzm = P_gldzm[xstart:xstop,:ystop]
+    self.P_gldzm = P_gldzm[xstart:xstop, :ystop]
 
   def _calculateCoefficients(self):
     sumP_gldzm = numpy.sum(self.P_gldzm, (0, 1))
@@ -209,7 +212,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     of more smaller distances.
     """
     try:
-      sde = numpy.sum(self.coefficients['pd']/(self.coefficients['jvector']**2)) / self.coefficients['sumP_gldzm']
+      sde = numpy.sum(self.coefficients['pd'] / (self.coefficients['jvector'] ** 2)) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       sde = numpy.core.numeric.NaN
     return (sde)
@@ -224,7 +227,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     of larger distances.
     """
     try:
-      lde = numpy.sum(self.coefficients['pd']*(self.coefficients['jvector']**2)) / self.coefficients['sumP_gldzm']
+      lde = numpy.sum(self.coefficients['pd'] * (self.coefficients['jvector'] ** 2)) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       lde = numpy.core.numeric.NaN
     return (lde)
@@ -239,7 +242,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     correlates with more homogeneity in intensity values.
     """
     try:
-      iv = numpy.sum(self.coefficients['pg']**2) / self.coefficients['sumP_gldzm']
+      iv = numpy.sum(self.coefficients['pg'] ** 2) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       iv = numpy.core.numeric.NaN
     return (iv)
@@ -254,7 +257,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     correlates with a greater similarity in intensity values.
     """
     try:
-      iv = numpy.sum(self.coefficients['pg']**2) / self.coefficients['sumP_gldzm']**2
+      iv = numpy.sum(self.coefficients['pg'] ** 2) / self.coefficients['sumP_gldzm'] ** 2
     except ZeroDivisionError:
       iv = numpy.core.numeric.NaN
     return (iv)
@@ -268,7 +271,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     Measures the variability of distances in the image.
     """
     try:
-      szv = numpy.sum(self.coefficients['pd']**2) / self.coefficients['sumP_gldzm']
+      szv = numpy.sum(self.coefficients['pd'] ** 2) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       szv = numpy.core.numeric.NaN
     return (szv)
@@ -283,7 +286,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     more homogeneity among distances in the image. This is the normalized version of the DZVN formula.
     """
     try:
-      szv = numpy.sum(self.coefficients['pd'] ** 2) / self.coefficients['sumP_gldzm']**2
+      szv = numpy.sum(self.coefficients['pd'] ** 2) / self.coefficients['sumP_gldzm'] ** 2
     except ZeroDivisionError:
       szv = numpy.core.numeric.NaN
     return (szv)
@@ -314,7 +317,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     """
     ivector = self.coefficients['ivector']
     u_i = numpy.sum(self.coefficients['pg'] * ivector[:]) / self.coefficients['sumP_gldzm']
-    glv = numpy.sum(self.coefficients['pg'] * (ivector - u_i)**2) / self.coefficients['sumP_gldzm']
+    glv = numpy.sum(self.coefficients['pg'] * (ivector - u_i) ** 2) / self.coefficients['sumP_gldzm']
     return glv
 
   def getDistanceVariance(self):
@@ -329,7 +332,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     """
     jvector = self.coefficients['jvector']
     u_j = numpy.sum(self.coefficients['pd'] * jvector) / self.coefficients['sumP_gldzm']
-    dv = numpy.sum(self.coefficients['pd'] * (jvector - u_j)**2) / self.coefficients['sumP_gldzm']
+    dv = numpy.sum(self.coefficients['pd'] * (jvector - u_j) ** 2) / self.coefficients['sumP_gldzm']
     return dv
 
   def getDistanceEntropy(self):
@@ -352,7 +355,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     proportion of lower gray-level values and distance zones in the image.
     """
     try:
-      lie = numpy.sum( (self.coefficients['pg']/(self.coefficients['ivector']**2)) ) / self.coefficients['sumP_gldzm']
+      lie = numpy.sum((self.coefficients['pg'] / (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       lie = numpy.core.numeric.NaN
     return (lie)
@@ -367,7 +370,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     a greater proportion of higher gray-level values and distance zones in the image.
     """
     try:
-      hie = numpy.sum( (self.coefficients['pg']*(self.coefficients['ivector']**2)) ) / self.coefficients['sumP_gldzm']
+      hie = numpy.sum((self.coefficients['pg'] * (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       hie = numpy.core.numeric.NaN
     return (hie)
@@ -381,7 +384,9 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of smaller distance zones with lower gray-level values.
     """
     try:
-      lisde = numpy.sum( (self.P_gldzm/((self.coefficients['ivector'][:,None]**2)*(self.coefficients['jvector'][None,:]**2))) , (0, 1) ) / self.coefficients['sumP_gldzm']
+      lisde = numpy.sum(
+        (self.P_gldzm / ((self.coefficients['ivector'][:, None] ** 2) * (self.coefficients['jvector'][None, :] ** 2))),
+        (0, 1)) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       lisde = numpy.core.numeric.NaN
     return (lisde)
@@ -395,7 +400,9 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of smaller distance zones with higher gray-level values.
     """
     try:
-      hisde = numpy.sum( (self.P_gldzm*(self.coefficients['ivector'][:,None]**2)/(self.coefficients['jvector'][None,:]**2)) , (0, 1) ) / self.coefficients['sumP_gldzm']
+      hisde = numpy.sum(
+        (self.P_gldzm * (self.coefficients['ivector'][:, None] ** 2) / (self.coefficients['jvector'][None, :] ** 2)),
+        (0, 1)) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       hisde = numpy.core.numeric.NaN
     return (hisde)
@@ -409,7 +416,9 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of larger distance zones with lower gray-level values.
     """
     try:
-      lilde = numpy.sum( (self.P_gldzm*(self.coefficients['jvector'][None,:]**2)/(self.coefficients['ivector'][:,None]**2)) , (0, 1) ) / self.coefficients['sumP_gldzm']
+      lilde = numpy.sum(
+        (self.P_gldzm * (self.coefficients['jvector'][None, :] ** 2) / (self.coefficients['ivector'][:, None] ** 2)),
+        (0, 1)) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       lilde = numpy.core.numeric.NaN
     return (lilde)
@@ -423,7 +432,9 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     Measures the proportion in the image of the joint distribution of larger distance zones with higher gray-level values.
     """
     try:
-      hilde = numpy.sum( (self.P_gldzm*((self.coefficients['jvector'][None,:]**2)*(self.coefficients['ivector'][:,None]**2))) , (0, 1) ) / self.coefficients['sumP_gldzm']
+      hilde = numpy.sum(
+        (self.P_gldzm * ((self.coefficients['jvector'][None, :] ** 2) * (self.coefficients['ivector'][:, None] ** 2))),
+        (0, 1)) / self.coefficients['sumP_gldzm']
     except ZeroDivisionError:
       hilde = numpy.core.numeric.NaN
     return (hilde)

@@ -3,7 +3,7 @@
 # nosetests --nocapture -v tests/test_features.py
 
 import radiomics
-from radiomics import glcm, glrlm, shape, glszm,ngtdm, gldm
+from radiomics import glcm, glrlm, shape, glszm,ngtdm, gldm, gldzm
 from testUtils import RadiomicsTestUtils
 import logging
 from nose_parameterized import parameterized
@@ -13,10 +13,10 @@ import numpy
 
 testUtils = RadiomicsTestUtils()
 defaultTestCases = testUtils.getTestCases()
-defaultFeatures = ["glcm", "gldm", "ngtdm", "glrlm", "shape", "glszm"]
+defaultFeatures = ["glcm", "gldm", "ngtdm", "glrlm", "shape", "glszm", "gldzm"]
 
 testCases = defaultTestCases
-features = ["glcm", "gldm", "ngtdm", "glrlm", "glszm"]  # defaultFeatures
+features = ["glcm", "gldm", "ngtdm", "glrlm", "glszm", "gldzm"]  # defaultFeatures
 
 # set testing arguments
 kwargs = {}
@@ -87,8 +87,12 @@ class TestFeatures:
       featureClass = glszm.RadiomicsGLSZM(testImage, testMask, **kwargs)
       cMat = featureClass.P_glszm
       pyMat = featureClass._calculateGLSZM()
-    else:
-      assert (featureClass != None)
+    elif featureClassName == 'gldzm':
+      logging.debug('Init GLDZM')
+      featureClass = gldzm.RadiomicsGLDZM(testImage, testMask, **kwargs)
+      cMat = featureClass.P_gldzm
+      pyMat = featureClass._calculateGLDZM()
 
+    assert (featureClass != None)
     # Check if the calculated arrays match
     assert numpy.max(numpy.abs(pyMat - cMat)) < 1e-3

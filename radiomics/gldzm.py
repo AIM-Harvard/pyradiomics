@@ -125,10 +125,11 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     smdmif.SquaredDistanceOff()
     smdmif.InsideIsPositiveOn()
     distImage = smdmif.Execute(self.inputMask)
-    distMap = numpy.round(sitk.GetArrayFromImage(distImage), 0)  # Round distances to make them usable as indices
+    distMap = sitk.GetArrayFromImage(distImage)
+    distMap, distHist = imageoperations.binImage(1, distMap, self.matrixCoordinates)
 
     # Empty GLDZ matrix
-    P_gldzm = numpy.zeros((self.coefficients['Ng'], int(numpy.max(distMap) + 1)))
+    P_gldzm = numpy.zeros((self.coefficients['Ng'], int(numpy.max(distMap[self.matrixCoordinates]))))
 
     # Iterate over all gray levels in the image
     grayLevels = numpy.unique(self.matrix[self.matrixCoordinates])
@@ -172,7 +173,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
             # minDistance is not set or new minimum is found
             minDistance = distMap[ind_node]
 
-        # Update the gray level distance zone matrix, minDistance starts at 0 (voxels on the edge of the ROI.
+        # Update the gray level distance zone matrix, minDistance starts at 1 (voxels on the edge of the ROI)
         P_gldzm[int(i - 1), int(minDistance - 1)] += 1
 
     if self.verbose: bar.close()

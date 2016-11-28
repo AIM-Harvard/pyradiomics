@@ -91,7 +91,7 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
 
     # Only apply padding where the size is more than 1. Flip the direction of the matrix, as padding will be
     # applied on the image (x, y, z) and the matrix is (z, y, x)
-    padding = numpy.where(self.matrix.shape[::-1] == 1, 0, 1)
+    padding = numpy.where(numpy.array(self.matrix.shape)[::-1] == 1, 0, 1)
 
     cpif.SetPadLowerBound(padding)
     cpif.SetPadUpperBound(padding)
@@ -103,10 +103,10 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     self.matrix = sitk.GetArrayFromImage(self.inputImage).astype('float')
     # Reassign self.maskArray using the now-padded self.inputMask and make it binary
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
+    self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
     # binning
-    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.targetVoxelArray, self.matrix,
-                                                           self.matrixCoordinates)
+    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['Np'] = self.targetVoxelArray.size
 
@@ -125,10 +125,11 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
     smdmif.SquaredDistanceOff()
     smdmif.InsideIsPositiveOn()
     distImage = smdmif.Execute(self.inputMask)
-    distMap = numpy.round(sitk.GetArrayFromImage(distImage), 0)  # Round distances to make them usable as indices
+    distMap = sitk.GetArrayFromImage(distImage)
+    distMap, distHist = imageoperations.binImage(1, distMap, self.matrixCoordinates)
 
     # Empty GLDZ matrix
-    P_gldzm = numpy.zeros((self.coefficients['Ng'], int(numpy.max(distMap) + 1)))
+    P_gldzm = numpy.zeros((self.coefficients['Ng'], int(numpy.max(distMap[self.matrixCoordinates]))))
 
     # Iterate over all gray levels in the image
     grayLevels = numpy.unique(self.matrix[self.matrixCoordinates])
@@ -172,8 +173,8 @@ class RadiomicsGLDZM(base.RadiomicsFeaturesBase):
             # minDistance is not set or new minimum is found
             minDistance = distMap[ind_node]
 
-        # Update the gray level distance zone matrix, minDistance starts at 0 (voxels on the edge of the ROI.
-        P_gldzm[int(i - 1), int(minDistance)] += 1
+        # Update the gray level distance zone matrix, minDistance starts at 1 (voxels on the edge of the ROI)
+        P_gldzm[int(i - 1), int(minDistance - 1)] += 1
 
     if self.verbose: bar.close()
 

@@ -16,17 +16,20 @@ def getHistogram(binwidth, parameterValues):
 
   binedges = numpy.arange(lowBound, highBound, binwidth)
 
-  binedges[-1] += 1  # ensures that max(self.targertVoxelArray) is binned to upper bin by numpy.digitize
-
   if len(binedges) == 1:  # Flat region, ensure that there is 1 bin
     binedges = 1
 
   return numpy.histogram(parameterValues, bins=binedges)
 
 
-def binImage(binwidth, parameterValues, parameterMatrix=None, parameterMatrixCoordinates=None):
-  histogram = getHistogram(binwidth, parameterValues)
-  parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterValues, histogram[1])
+def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates):
+  histogram = getHistogram(binwidth, parameterMatrix[parameterMatrixCoordinates])
+
+  histogram[1][-1] += 1  # ensures that max(self.targertVoxelArray) is binned to upper bin by numpy.digitize
+
+  parameterMatrix[parameterMatrixCoordinates] = \
+    numpy.digitize(parameterMatrix[parameterMatrixCoordinates], histogram[1])
+
 
   return parameterMatrix, histogram
 

@@ -294,9 +294,14 @@ class RadiomicsFeaturesExtractor:
       for k, v in generalinfoClass.execute().iteritems():
         featureVector['general_info_%s' % (k)] = v
 
+    # Bounding box only needs to be calculated once after resampling, hold the value, so it doesn't get calculated
+    # after every filter
+    boundingBox = None
+
     # If shape should be calculation, handle it separately here
     if 'shape' in self.enabledFeatures.keys():
-      croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, self.kwargs['label'])
+      croppedImage, croppedMask, boundingBox = \
+        imageoperations.cropToTumorMask(image, mask, self.kwargs['label'], boundingBox)
       enabledFeatures = self.enabledFeatures['shape']
       shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
       if enabledFeatures is None or len(enabledFeatures) == 0:
@@ -321,6 +326,8 @@ class RadiomicsFeaturesExtractor:
 
     # Calculate features for all (filtered) images in the generator
     for inputImage, inputMask, inputImageName, inputKwargs in imageGenerators:
+      inputImage, inputMask, boundingBox = \
+        imageoperations.cropToTumorMask(inputImage, inputMask, self.kwargs['label'], boundingBox)
       featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
 
     return featureVector
@@ -371,7 +378,6 @@ class RadiomicsFeaturesExtractor:
     Features / Classes to use for calculation of signature are defined in self.enabledFeatures.
     see also enableFeaturesByName.
     """
-    image, mask = imageoperations.cropToTumorMask(image, mask, self.kwargs['label'])
     featureVector = collections.OrderedDict()
 
     # Calculate feature classes

@@ -5,3 +5,4 @@ Stats:firstorder
 GLSZM:glszm
 gldm:gldm
 ngtdm:ngtdm
+gldzm:gldzm

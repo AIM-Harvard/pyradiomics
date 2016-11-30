@@ -6,7 +6,6 @@
 5:sumEntro
 6:sumAvg
 7:autocorr
-8:sumSquares2
 9:homogeneity1
 10:homogeneity2
 11:diffEntro
@@ -22,3 +21,8 @@
 21:clusShade
 22:clusProm
 23:sumVar2
+24:invDiff
+25:invDiffmom
+26:diffAvg
+27:diffVar
+28:Avg

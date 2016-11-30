@@ -18,7 +18,11 @@
 17:MaximumProbability
 18:SumAverage
 19:SumEntropy
-20:SumSquares2
 21:SumSquares
 22:SumVariance2
 23:SumVariance
+24:Id
+25:Idm
+26:DifferenceAverage
+27:DifferenceVariance
+28:AverageIntensity

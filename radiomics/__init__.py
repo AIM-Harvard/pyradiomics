@@ -63,8 +63,8 @@ logger.addHandler(handler)
 debug(False)  # force level=WARNING, in case logging default is set differently (issue 102)
 
 try:
-  import _cmatrices as cMatrices
-  import _cshape as cShape
+  from . import _cmatrices as cMatrices
+  from . import _cshape as cShape
   cMatsEnabled = True
   _cMatLoaded = True
 except Exception:

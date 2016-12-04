@@ -1,7 +1,8 @@
 import numpy
-import radiomics
-from radiomics import base, imageoperations
+
 from tqdm import trange
+
+from . import base, cMatrices, cMatsEnabled, imageoperations
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   r"""
@@ -120,7 +121,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
 
-    if radiomics.cMatsEnabled:
+    if cMatsEnabled:
       self.P_glcm = self._calculateCGLCM()
     else:
       self.P_glcm = self._calculateGLCM()
@@ -207,7 +208,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     angles = imageoperations.generateAngles(size)
     Ng = self.coefficients['Ng']
 
-    P_glcm = radiomics.cMatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
+    P_glcm = cMatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
 
     # Optionally make GLCMs symmetrical for each angle
     if self.symmetricalGLCM:

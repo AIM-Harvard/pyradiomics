@@ -1,8 +1,7 @@
-import traceback
 import numpy
-import radiomics
-from radiomics import base
 import SimpleITK as sitk
+
+from . import base, cShape, cMatsEnabled
 
 
 class RadiomicsShape(base.RadiomicsFeaturesBase):
@@ -38,7 +37,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     # Volume and Surface Area are pre-calculated
     self.Volume = self.lssif.GetPhysicalSize(1)
-    if radiomics.cMatsEnabled:
+    if cMatsEnabled:
       self.SurfaceArea = self._calculateCSurfaceArea()
     else:
       self.SurfaceArea = self._calculateSurfaceArea()
@@ -116,7 +115,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return S_A
 
   def _calculateCSurfaceArea(self):
-    return radiomics.cShape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
+    return cShape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
 
   def _getMaximum2Ddiameter(self, dim):
     otherDims = tuple(set([0, 1, 2]) - set([dim]))

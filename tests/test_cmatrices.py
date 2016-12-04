@@ -4,7 +4,7 @@
 
 import radiomics
 from radiomics import glcm, glrlm, shape, glszm,ngtdm, gldm, gldzm
-from testUtils import RadiomicsTestUtils
+from .testUtils import RadiomicsTestUtils
 import logging
 from nose_parameterized import parameterized
 import SimpleITK as sitk

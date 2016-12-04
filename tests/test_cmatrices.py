@@ -2,13 +2,15 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_features.py
 
-import radiomics
-from radiomics import glcm, glrlm, shape, glszm,ngtdm, gldm, gldzm
-from .testUtils import RadiomicsTestUtils
 import logging
-from nose_parameterized import parameterized
-import SimpleITK as sitk
+
 import numpy
+import SimpleITK as sitk
+
+from nose_parameterized import parameterized
+from radiomics import glcm, glrlm, glszm,ngtdm, gldm, gldzm
+
+from .testUtils import RadiomicsTestUtils
 
 
 testUtils = RadiomicsTestUtils()

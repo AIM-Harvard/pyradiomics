@@ -1,8 +1,9 @@
 import collections
 import logging
-import numpy
+
 import SimpleITK as sitk
-import radiomics
+
+from . import __version__
 
 
 class GeneralInfo():
@@ -115,7 +116,7 @@ class GeneralInfo():
     """
     Return the current version of this package.
     """
-    return radiomics.__version__
+    return __version__
 
   def getVolumeNumValue(self):
     """

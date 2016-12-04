@@ -5,7 +5,5 @@ dependencies:
 test:
   override:
     - pip install .
-    - |
-      cd ../
-      nosetests --with-xunit --logging-level=DEBUG --verbosity=3 pyradiomics/tests/test_features.py pyradiomics/tests/test_cmatrices.py
-      cp nosetests.xml $CIRCLE_TEST_REPORTS
+    - python setup.py test  --args="--with-xunit --logging-level=DEBUG"
+    - cp nosetests.xml $CIRCLE_TEST_REPORTS

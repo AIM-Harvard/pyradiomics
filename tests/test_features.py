@@ -3,23 +3,16 @@
 # nosetests --nocapture -v tests/test_features.py
 
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
-from testUtils import RadiomicsTestUtils
+from testUtils import RadiomicsTestUtils, custom_name_func
 import os
 import logging
 from nose_parameterized import parameterized
-import SimpleITK as sitk
 
 testUtils = RadiomicsTestUtils()
-testUtils.setResampling(resampledPixelSpacing=None,  # resampledPixelSpacing= [3, 3, 3]
-                        interpolator=sitk.sitkBSpline)
 testCases = testUtils.getTestCases()
 
-kwargs = {}
-kwargs['binWidth'] = 25
-kwargs['symmetricalGLCM'] = False  # Current baseline is based upon assymetrical GLCM
-kwargs['verbose'] = False
-
-extractor = RadiomicsFeaturesExtractor(**kwargs)
+extractor = RadiomicsFeaturesExtractor()
+featureClassNames = extractor.getFeatureClassNames()
 
 featureClass = None
 
@@ -27,10 +20,12 @@ featureClass = None
 class TestFeatures:
   def generate_scenarios():
     global testCases
+    global extractor
+    global featureClassNames
 
     for testCase in testCases:
-      for featureClassName, featureClass in extractor.featureClasses.iteritems():
-        featureNames = featureClass.getFeatureNames()
+      for featureClassName in featureClassNames:
+        featureNames = extractor.featureClasses[featureClassName].getFeatureNames()
         assert (featureNames != None)
         assert (len(featureNames) > 0)
         logging.debug('generate_scenarios: featureNames = %s', featureNames)
@@ -39,7 +34,7 @@ class TestFeatures:
 
   global testUtils
 
-  @parameterized.expand(generate_scenarios(), testcase_func_name=testUtils.custom_name_func)
+  @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
   def test_scenario(self, testCase, featureClassName, featureName):
     print("")
     global testUtils
@@ -48,15 +43,14 @@ class TestFeatures:
     logging.debug('test_scenario: testCase = %s, featureClassName = %s, featureName = %s', testCase, featureClassName,
                   featureName)
 
-    testCaseChanged = testUtils.setTestCase(testCase)
-    featureChanged = testUtils.setFeatureClassName(featureClassName)
+    testCaseOrClassChanged = testUtils.setFeatureClassAndTestCase(featureClassName, testCase)
 
     global featureClass
     testImage = testUtils.getImage()
     testMask = testUtils.getMask()
-    if featureClass is None or testCaseChanged or featureChanged:
+    if featureClass is None or testCaseOrClassChanged:
       logging.debug('Init %s' % (featureClassName))
-      featureClass = extractor.featureClasses[featureClassName](testImage, testMask, **kwargs)
+      featureClass = extractor.featureClasses[featureClassName](testImage, testMask, **testUtils.getKwargs())
 
     assert (featureClass != None)
 
@@ -69,24 +63,17 @@ class TestFeatures:
 
 
 def teardown_module():
-  global testUtils
-  global extractor
-  global featureClass
   print("")
   res = testUtils.getResults()
   print 'Results:'
   print res
-  resultsFile = os.path.join(testUtils.dataDir, 'PyradiomicsFeatures.csv')
+  resultsFile = os.path.join(testUtils.getDataDir(), 'PyradiomicsFeatures.csv')
   testUtils.writeCSV(res, resultsFile)
   diff = testUtils.getDiffs()
   print 'Differences from baseline:'
   print diff
-  diffFile = os.path.join(testUtils.dataDir, 'Baseline2PyradiomicsFeaturesDiff.csv')
+  diffFile = os.path.join(testUtils.getDataDir(), 'Baseline2PyradiomicsFeaturesDiff.csv')
   testUtils.writeCSV(diff, diffFile)
   logging.info(
     "Wrote calculated features to %s, and the differences between the matlab features and the pyradiomics ones to %s.",
     resultsFile, diffFile)
-  # Clean up
-  testUtils = None
-  extractor = None
-  featureClass = None

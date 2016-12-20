@@ -1,8 +1,0 @@
-GLCM:glcm
-Shape:shape
-RLGL:glrlm
-Stats:firstorder
-GLSZM:glszm
-gldm:gldm
-ngtdm:ngtdm
-gldzm:gldzm

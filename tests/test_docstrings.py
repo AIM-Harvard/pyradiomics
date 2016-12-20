@@ -3,11 +3,10 @@
 # nosetests --nocapture -v tests/test_docstrings.py
 
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
-from testUtils import RadiomicsTestUtils
+from testUtils import custom_name_func
 import logging
 from nose_parameterized import parameterized
 
-testUtils = RadiomicsTestUtils()
 extractor = RadiomicsFeaturesExtractor()
 
 def setup_module(module):
@@ -33,7 +32,7 @@ class TestDocStrings:
     def generate_scenarios():
       global extractor
       for featureClassName, featureClass in extractor.featureClasses.iteritems():
-        logging.info('generate_scenarios %s', featureClass)
+        logging.info('generate_scenarios %s', featureClassName)
         doc = featureClass.__doc__
         assert(doc != None)
 
@@ -41,8 +40,7 @@ class TestDocStrings:
         for f in featureNames:
           yield (featureClassName, f)
 
-    global testUtils
-    @parameterized.expand(generate_scenarios(), testcase_func_name=testUtils.custom_name_func)
+    @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
     def test_class(self, featureClassName, featureName):
       global extractor
       logging.info('%s', featureName)

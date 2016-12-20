@@ -27,6 +27,16 @@ radiomics.featureextractor module
     :show-inheritance:
     :member-order: bysource
 
+.. _radiomics-generalinfo-label:
+
+radiomics.generalinfo module
+----------------------------
+.. automodule:: radiomics.generalinfo
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
 .. _radiomics-firstorder-label:
 
 radiomics.firstorder module

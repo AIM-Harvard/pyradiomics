@@ -7,7 +7,7 @@ from testUtils import custom_name_func
 import logging
 from nose_parameterized import parameterized
 
-extractor = RadiomicsFeaturesExtractor()
+featureClasses = RadiomicsFeaturesExtractor.getFeatureClasses()
 
 def setup_module(module):
     # runs before anything in this file
@@ -30,8 +30,8 @@ class TestDocStrings:
         print ("") # this is to get a newline after the dots
 
     def generate_scenarios():
-      global extractor
-      for featureClassName, featureClass in extractor.featureClasses.iteritems():
+      global featureClasses
+      for featureClassName, featureClass in featureClasses.iteritems():
         logging.info('generate_scenarios %s', featureClassName)
         doc = featureClass.__doc__
         assert(doc != None)
@@ -42,9 +42,9 @@ class TestDocStrings:
 
     @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
     def test_class(self, featureClassName, featureName):
-      global extractor
+      global featureClasses
       logging.info('%s', featureName)
-      features = extractor.featureClasses[featureClassName]
+      features = featureClasses[featureClassName]
       doc = eval('features.get'+featureName+'FeatureValue.__doc__')
       logging.info('%s', doc)
       assert(doc != None)

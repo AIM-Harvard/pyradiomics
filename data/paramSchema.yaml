@@ -55,17 +55,11 @@ mapping:
           min: 0
   featureClass:
     type: map
+    func: checkFeatureClass
+    matching-rule: 'any'
     mapping:
-      # Possible feature classes, each can have a list of enabled features, empyt list or none value signifies
-      # that all features must be enabled
-      shape: &featurelist
-        seq:
-          - type: str
-            unique: True
-      firstorder: *featurelist
-      glcm: *featurelist
-      glrlm: *featurelist
-      glszm: *featurelist
+      regex;(.+):
+        type: any
 
   inputImage:
     type: map

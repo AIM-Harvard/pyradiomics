@@ -561,7 +561,8 @@ class RadiomicsFeaturesExtractor:
     """
     return [member[9:] for member in dir(self) if member.startswith('generate_')]
 
-  def getFeatureClasses(self):
+  @classmethod
+  def getFeatureClasses(cls):
     """
     Iterates over all modules of the radiomics package using pkgutil and subsequently imports those modules.
 

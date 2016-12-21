@@ -289,10 +289,7 @@ class RadiomicsFeaturesExtractor:
     image, mask = self.loadImage(imageFilepath, maskFilepath)
 
     if self.provenance_on:
-      # Add Provenance information
-      generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.kwargs, self.inputImages)
-      for k, v in generalinfoClass.execute().iteritems():
-        featureVector['general_info_%s' % (k)] = v
+      featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
     # Bounding box only needs to be calculated once after resampling, hold the value, so it doesn't get calculated
     # after every filter
@@ -369,6 +366,18 @@ class RadiomicsFeaturesExtractor:
                                                   self.kwargs['padDistance'])
 
     return image, mask
+
+  def getProvenance(self, imageFilepath, maskFilepath, mask):
+    """
+    Generates provenance information for reproducibility. Takes the original image & mask filepath, as well as the
+    resampled mask which is passed to the feature classes. Returns a dictionary with keynames coded as
+    "general_info_<item>". For more information on generated items, see :ref:`generalinfo<radiomics-generalinfo-label>`
+    """
+    provenanceVector = collections.OrderedDict()
+    generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.kwargs, self.inputImages)
+    for k, v in generalinfoClass.execute().iteritems():
+      provenanceVector['general_info_%s' % (k)] = v
+    return provenanceVector
 
   def computeFeatures(self, image, mask, inputImageName, **kwargs):
     """

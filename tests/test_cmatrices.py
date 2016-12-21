@@ -7,16 +7,16 @@ import logging
 from nose_parameterized import parameterized
 import numpy
 
-from radiomics import glcm, gldm, gldzm, glrlm, glszm, ngtdm, shape
+from radiomics import glcm, glrlm, glszm
 from testUtils import custom_name_func, RadiomicsTestUtils
 
 
 testUtils = RadiomicsTestUtils()
 defaultTestCases = testUtils.getTestCases()
-defaultFeatures = ["glcm", "gldm", "ngtdm", "glrlm", "shape", "glszm", "gldzm"]
+defaultFeatures = ["glcm", "glrlm", "glszm", "shape"]
 
 testCases = defaultTestCases
-features = ["glcm", "gldm", "ngtdm", "glrlm", "glszm", "gldzm"]  # defaultFeatures
+features = ["glcm", "glrlm", "glszm"]  # defaultFeatures
 
 
 class TestFeatures:
@@ -56,16 +56,6 @@ class TestFeatures:
       featureClass = glcm.RadiomicsGLCM(testImage, testMask, **testUtils.getKwargs())
       cMat = featureClass.P_glcm
       pyMat = featureClass._calculateGLCM()
-    elif featureClassName == 'gldm':
-      logging.debug('Init GLDM')
-      featureClass = gldm.RadiomicsGLDM(testImage, testMask, **testUtils.getKwargs())
-      cMat = featureClass.P_gldm
-      pyMat = featureClass._calculateGLDM()
-    elif featureClassName == 'ngtdm':
-      logging.debug('Init NGTDM')
-      featureClass = ngtdm.RadiomicsNGTDM(testImage, testMask, **testUtils.getKwargs())
-      cMat = featureClass.P_ngtdm
-      pyMat = featureClass._calculateNGTDM()
     elif featureClassName == 'glrlm':
       logging.debug('Init GLRLM')
       featureClass = glrlm.RadiomicsGLRLM(testImage, testMask, **testUtils.getKwargs())
@@ -81,11 +71,6 @@ class TestFeatures:
       featureClass = glszm.RadiomicsGLSZM(testImage, testMask, **testUtils.getKwargs())
       cMat = featureClass.P_glszm
       pyMat = featureClass._calculateGLSZM()
-    elif featureClassName == 'gldzm':
-      logging.debug('Init GLDZM')
-      featureClass = gldzm.RadiomicsGLDZM(testImage, testMask, **testUtils.getKwargs())
-      cMat = featureClass.P_gldzm
-      pyMat = featureClass._calculateGLDZM()
 
     assert (featureClass is not None)
     # Check if the calculated arrays match

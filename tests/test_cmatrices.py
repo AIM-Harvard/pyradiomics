@@ -8,17 +8,17 @@ import numpy
 import SimpleITK as sitk
 
 from nose_parameterized import parameterized
-from radiomics import glcm, glrlm, glszm,ngtdm, gldm, gldzm
+from radiomics import glcm, glrlm, glszm
 
 from .testUtils import RadiomicsTestUtils
 
 
 testUtils = RadiomicsTestUtils()
 defaultTestCases = testUtils.getTestCases()
-defaultFeatures = ["glcm", "gldm", "ngtdm", "glrlm", "shape", "glszm", "gldzm"]
+defaultFeatures = ["glcm", "glrlm", "shape", "glszm"]
 
 testCases = defaultTestCases
-features = ["glcm", "gldm", "ngtdm", "glrlm", "glszm", "gldzm"]  # defaultFeatures
+features = ["glcm", "glrlm", "glszm"]  # defaultFeatures
 
 # set testing arguments
 kwargs = {}
@@ -64,16 +64,6 @@ class TestFeatures:
       featureClass = glcm.RadiomicsGLCM(testImage, testMask, **kwargs)
       cMat = featureClass.P_glcm
       pyMat = featureClass._calculateGLCM()
-    elif featureClassName == 'gldm':
-      logging.debug('Init GLDM')
-      featureClass = gldm.RadiomicsGLDM(testImage, testMask, **kwargs)
-      cMat = featureClass.P_gldm
-      pyMat = featureClass._calculateGLDM()
-    elif featureClassName == 'ngtdm':
-      logging.debug('Init NGTDM')
-      featureClass = ngtdm.RadiomicsNGTDM(testImage, testMask, **kwargs)
-      cMat = featureClass.P_ngtdm
-      pyMat = featureClass._calculateNGTDM()
     elif featureClassName == 'glrlm':
       logging.debug('Init GLRLM')
       featureClass = glrlm.RadiomicsGLRLM(testImage, testMask, **kwargs)
@@ -89,11 +79,6 @@ class TestFeatures:
       featureClass = glszm.RadiomicsGLSZM(testImage, testMask, **kwargs)
       cMat = featureClass.P_glszm
       pyMat = featureClass._calculateGLSZM()
-    elif featureClassName == 'gldzm':
-      logging.debug('Init GLDZM')
-      featureClass = gldzm.RadiomicsGLDZM(testImage, testMask, **kwargs)
-      cMat = featureClass.P_gldzm
-      pyMat = featureClass._calculateGLDZM()
 
     assert (featureClass != None)
     # Check if the calculated arrays match

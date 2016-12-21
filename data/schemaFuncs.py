@@ -1,4 +1,7 @@
 import pywt
+from radiomics.featureextractor import RadiomicsFeaturesExtractor
+
+featureClasses = RadiomicsFeaturesExtractor.getFeatureClasses()
 
 
 def checkWavelet(value, rule_obj, path):
@@ -43,4 +46,22 @@ def checkWeighting(value, rule_obj, path):
       raise ValueError('WeightingNorm value "%s" not valid, possible values: %s' % (value, enum))
   else:
     raise TypeError('WeightingNorm not expected type (str or None)')
+  return True
+
+
+def checkFeatureClass(value, rule_obj, path):
+  global featureClasses
+  if value is None:
+    raise TypeError('featureClass dictionary cannot be None value')
+  for className, features in value.iteritems():
+    if className not in featureClasses.keys():
+      raise ValueError(
+        'Feature Class %s is not recognized. Available feature classes are %s' % (className, featureClasses.keys()))
+    if features is not None:
+      if not isinstance(features, list):
+        raise TypeError('Value of feature class %s not expected type (list)' % (className))
+      unrecognizedFeatures = set(features) - set(featureClasses[className].getFeatureNames())
+      if len(unrecognizedFeatures) > 0:
+        raise ValueError('Feature Class %s contains unrecognized features: %s' % (className, str(unrecognizedFeatures)))
+
   return True

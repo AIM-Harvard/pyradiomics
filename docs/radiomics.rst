@@ -59,28 +59,6 @@ radiomics.glcm module
     :show-inheritance:
     :member-order: bysource
 
-.. _radiomics-gldm-label:
-
-radiomics.gldm module
----------------------
-
-.. automodule:: radiomics.gldm
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-.. _radiomics-gldzm-label:
-
-radiomics.gldzm module
-----------------------
-
-.. automodule:: radiomics.gldzm
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
 .. _radiomics-glszm-label:
 
 radiomics.glszm module
@@ -98,17 +76,6 @@ radiomics.glrlm module
 ----------------------
 
 .. automodule:: radiomics.glrlm
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-.. _radiomics-ngtdm-label:
-
-radiomics.ngtdm module
-----------------------
-
-.. automodule:: radiomics.ngtdm
     :members:
     :undoc-members:
     :show-inheritance:
@@ -135,18 +102,6 @@ radiomics.imageoperations module
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
-
-.. _radiomics-test-label:
-
-test module
-------------
-
-.. automodule:: test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
 
 Module contents
 ---------------

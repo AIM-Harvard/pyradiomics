@@ -54,9 +54,13 @@ formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-for f in extractor.getFeaturesNames('firstorder'):
-  print "Feature: %s" % (f)
-  print eval('extractor.featureClasses["firstorder"].get' + f + 'FeatureValue.__doc__')
+print "Active features:"
+for cls, features in extractor.enabledFeatures.iteritems():
+  if len(features) == 0:
+    features = extractor.getFeatureNames(cls)
+  for f in features:
+    print f
+    print eval('extractor.featureClasses["%s"].get%sFeatureValue.__doc__' % (cls, f))
 
 print "Calculating features"
 featureVector = extractor.execute(imageName, maskName)

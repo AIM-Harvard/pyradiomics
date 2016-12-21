@@ -64,8 +64,6 @@ mapping:
             unique: True
       firstorder: *featurelist
       glcm: *featurelist
-      gldm: *featurelist
-      ngtdm: *featurelist
       glrlm: *featurelist
       glszm: *featurelist
 

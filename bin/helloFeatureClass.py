@@ -1,7 +1,7 @@
 import os
 import SimpleITK as sitk
 import numpy
-from radiomics import firstorder, glcm, imageoperations, shape, rlgl, glszm
+from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm
 
 # testBinWidth = 25 this is the default bin size
 # testResampledPixelSpacing = (3,3,3) no resampling for now.
@@ -102,22 +102,22 @@ for (key, val) in glcmFeatures.featureValues.iteritems():
   print '  ', key, ':', val
 
 #
-# Show RLGL features
+# Show GLRLM features
 #
-rlglFeatures = rlgl.RadiomicsRLGL(image, mask, **kwargs)
-rlglFeatures.enableAllFeatures()
+glrlmFeatures = glrlm.RadiomicsGLRLM(image, mask, **kwargs)
+glrlmFeatures.enableAllFeatures()
 
-print 'Will calculate the following RLGL features: '
-for f in rlglFeatures.enabledFeatures.keys():
+print 'Will calculate the following GLRLM features: '
+for f in glrlmFeatures.enabledFeatures.keys():
   print '  ', f
-  print eval('rlglFeatures.get' + f + 'FeatureValue.__doc__')
+  print eval('glrlmFeatures.get' + f + 'FeatureValue.__doc__')
 
-print 'Calculating RLGL features...',
-rlglFeatures.calculateFeatures()
+print 'Calculating GLRLM features...',
+glrlmFeatures.calculateFeatures()
 print 'done'
 
-print 'Calculated RLGL features: '
-for (key, val) in rlglFeatures.featureValues.iteritems():
+print 'Calculated GLRLM features: '
+for (key, val) in glrlmFeatures.featureValues.iteritems():
   print '  ', key, ':', val
 
 #

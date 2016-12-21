@@ -585,7 +585,7 @@ class RadiomicsFeaturesExtractor:
   def getFeatureClassNames(self):
     return self.featureClasses.keys()
 
-  def getFeaturesNames(self, featureClassName):
+  def getFeatureNames(self, featureClassName):
     """
     Returns a list of all possible features in provided featureClass
     """

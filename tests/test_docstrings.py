@@ -2,39 +2,40 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_docstrings.py
 
-from radiomics.featureextractor import RadiomicsFeaturesExtractor
-from testUtils import custom_name_func
 import logging
-from nose_parameterized import parameterized
 
-featureClasses = RadiomicsFeaturesExtractor.getFeatureClasses()
+from nose_parameterized import parameterized
+from radiomics import getFeatureClasses
+from .testUtils import custom_name_func
+
+featureClasses = getFeatureClasses()
 
 def setup_module(module):
     # runs before anything in this file
-    print ("") # this is to get a newline after the dots
+    print ("")  # this is to get a newline after the dots
     return
 
 class TestDocStrings:
     def setup(self):
         # setup before each test method
-        print ("") # this is to get a newline after the dots
+        print ("")  # this is to get a newline after the dots
 
     @classmethod
     def setup_class(self):
         # called before any methods in this class
-        print ("") # this is to get a newline after the dots
+        print ("")  # this is to get a newline after the dots
 
     @classmethod
     def teardown_class(self):
         # run after any methods in this class
-        print ("") # this is to get a newline after the dots
+        print ("")  # this is to get a newline after the dots
 
     def generate_scenarios():
       global featureClasses
       for featureClassName, featureClass in featureClasses.iteritems():
         logging.info('generate_scenarios %s', featureClassName)
         doc = featureClass.__doc__
-        assert(doc != None)
+        assert(doc is not None)
 
         featureNames = featureClass.getFeatureNames()
         for f in featureNames:

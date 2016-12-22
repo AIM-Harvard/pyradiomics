@@ -1,10 +1,12 @@
-import SimpleITK as sitk
-import sys, os
-import ast
 import csv
 import logging
 import math
+import ast
+import sys, os
+
 import numpy
+import SimpleITK as sitk
+
 from nose_parameterized import parameterized
 from radiomics import imageoperations
 

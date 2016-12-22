@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+_skbuild/
 env/
 build/
 develop-eggs/
@@ -59,3 +60,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# scikit-build
+_skbuild
+MANIFEST

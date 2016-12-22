@@ -2,11 +2,13 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_features.py
 
-from radiomics.featureextractor import RadiomicsFeaturesExtractor
-from testUtils import RadiomicsTestUtils, custom_name_func
-import os
 import logging
+import os
+
 from nose_parameterized import parameterized
+from radiomics.featureextractor import RadiomicsFeaturesExtractor
+
+from .testUtils import RadiomicsTestUtils, custom_name_func
 
 testUtils = RadiomicsTestUtils()
 testCases = testUtils.getTestCases()
@@ -26,7 +28,7 @@ class TestFeatures:
     for testCase in testCases:
       for featureClassName in featureClassNames:
         featureNames = extractor.featureClasses[featureClassName].getFeatureNames()
-        assert (featureNames != None)
+        assert (featureNames is not None)
         assert (len(featureNames) > 0)
         logging.debug('generate_scenarios: featureNames = %s', featureNames)
         for featureName in featureNames:
@@ -52,7 +54,7 @@ class TestFeatures:
       logging.debug('Init %s' % (featureClassName))
       featureClass = extractor.featureClasses[featureClassName](testImage, testMask, **testUtils.getKwargs())
 
-    assert (featureClass != None)
+    assert (featureClass is not None)
 
     featureClass.disableAllFeatures()
     featureClass.enableFeatureByName(featureName)

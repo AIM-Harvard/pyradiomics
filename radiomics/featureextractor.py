@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-import os
-import logging
 import collections
-from itertools import chain
+import logging
+import os
+
 import numpy
-import SimpleITK as sitk
-import pkgutil
-import inspect
 import pykwalify.core
-import radiomics
-from radiomics import base, imageoperations, generalinfo
+import SimpleITK as sitk
+
+from itertools import chain
+
+from . import imageoperations, generalinfo, getFeatureClasses
 
 
 class RadiomicsFeaturesExtractor:
@@ -64,7 +64,7 @@ class RadiomicsFeaturesExtractor:
   def __init__(self, *args, **kwargs):
     self.logger = logging.getLogger(__name__)
 
-    self.featureClasses = self.getFeatureClasses()
+    self.featureClasses = getFeatureClasses()
 
     self.kwargs = {}
     self.provenance_on = True
@@ -136,7 +136,7 @@ class RadiomicsFeaturesExtractor:
 
     If supplied params file does not match the requirements, a pykwalify error is raised.
     """
-    dataDir = os.path.abspath(os.path.join(radiomics.__path__[0], '..', 'data'))
+    dataDir = os.path.abspath(os.path.join(self.__path__[0], '..', 'data'))
     schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
     schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
     c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
@@ -560,28 +560,6 @@ class RadiomicsFeaturesExtractor:
     Returns a list of possible input image types.
     """
     return [member[9:] for member in dir(self) if member.startswith('generate_')]
-
-  @classmethod
-  def getFeatureClasses(cls):
-    """
-    Iterates over all modules of the radiomics package using pkgutil and subsequently imports those modules.
-
-    Return a dictionary of all modules containing featureClasses, with modulename as key, abstract
-    class object of the featureClass as value. Assumes only one featureClass per module
-
-    This is achieved by inspect.getmembers. Modules are added if it contains a memeber that is a class,
-    with name starting with 'Radiomics' and is inherited from :py:class:`radiomics.base.RadiomicsFeaturesBase`.
-    """
-    featureClasses = {}
-    for _, mod, _ in pkgutil.iter_modules(radiomics.__path__):
-      __import__('radiomics.' + mod)
-      attributes = inspect.getmembers(eval('radiomics.' + mod), inspect.isclass)
-      for a in attributes:
-        if a[0].startswith('Radiomics'):
-          if radiomics.base.RadiomicsFeaturesBase in inspect.getmro(a[1])[1:]:
-            featureClasses[mod] = a[1]
-
-    return featureClasses
 
   def getFeatureClassNames(self):
     return self.featureClasses.keys()

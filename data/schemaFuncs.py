@@ -1,7 +1,7 @@
 import pywt
-from radiomics.featureextractor import RadiomicsFeaturesExtractor
+from radiomics import getFeatureClasses
 
-featureClasses = RadiomicsFeaturesExtractor.getFeatureClasses()
+featureClasses = getFeatureClasses()
 
 
 def checkWavelet(value, rule_obj, path):

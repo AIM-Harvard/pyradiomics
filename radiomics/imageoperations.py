@@ -1,9 +1,11 @@
-from itertools import chain
 import logging
-import json
-import SimpleITK as sitk
+
+from itertools import chain
+
 import numpy
 import pywt
+import SimpleITK as sitk
+
 
 logger = logging.getLogger(__name__)
 

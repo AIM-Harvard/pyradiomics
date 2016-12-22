@@ -1,7 +1,6 @@
 import numpy
-import collections
-from radiomics import base, imageoperations
-import SimpleITK as sitk
+
+from . import base, imageoperations
 
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):

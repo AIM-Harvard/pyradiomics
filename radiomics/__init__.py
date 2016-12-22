@@ -1,5 +1,9 @@
 import sys
 import traceback
+import pkgutil
+import inspect
+import os
+import importlib
 
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
@@ -7,25 +11,7 @@ in_py3 = sys.version_info[0] > 2
 
 import logging
 
-def pythonMatrixCalculation(usePython = False):
-  """
-  By default, calculation of matrices is done in C, using extension ``_cmatrices.py``
-
-  If an error occurs during loading of this extension, a warning is logged and the extension is disabled,
-  matrices are then calculated in python.
-  Calculation in python can be forced by calling this function, specifying ``pyMatEnabled = True``
-
-  Re-enabling use of C implementation is also done by this function, but if extension is not loaded correctly,
-  a warning is logged and matrix calculation uses python.
-  """
-  global cMatsEnabled
-  if usePython:
-    cMatsEnabled = False
-  elif _cMatLoaded:
-    cMatsEnabled = True
-  else:
-    logger.warning("C Matrices not loaded correctly, cannot calculate matrices in C")
-    cMatsEnabled = False
+from . import base
 
 
 def debug(debug_on=True):
@@ -53,6 +39,59 @@ def debug(debug_on=True):
     debugging = False
 
 
+def getFeatureClasses():
+  """
+  Iterates over all modules of the radiomics package using pkgutil and subsequently imports those modules.
+
+  Return a dictionary of all modules containing featureClasses, with modulename as key, abstract
+  class object of the featureClass as value. Assumes only one featureClass per module
+
+  This is achieved by inspect.getmembers. Modules are added if it contains a member that is a class,
+  with name starting with 'Radiomics' and is inherited from :py:class:`radiomics.base.RadiomicsFeaturesBase`.
+
+  This iteration only runs once, subsequent calls return the dictionary created by the first call.
+  """
+  global _featureClasses
+  if _featureClasses is not None:
+    return _featureClasses
+
+  featureClasses = {}
+  for _, mod, _ in pkgutil.iter_modules([os.path.dirname(base.__file__)]):
+    if str(mod).startswith('_'):  # Do not load _version, _cmatrices and _cshape here
+      continue
+    __import__('radiomics.' + mod)
+    module = sys.modules['radiomics.' + mod]
+    attributes = inspect.getmembers(module, inspect.isclass)
+    for a in attributes:
+      if a[0].startswith('Radiomics'):
+        if base.RadiomicsFeaturesBase in inspect.getmro(a[1])[1:]:
+          featureClasses[mod] = a[1]
+  _featureClasses = featureClasses
+
+  return featureClasses
+
+
+def pythonMatrixCalculation(usePython = False):
+  """
+  By default, calculation of matrices is done in C, using extension ``_cmatrices.py``
+
+  If an error occurs during loading of this extension, a warning is logged and the extension is disabled,
+  matrices are then calculated in python.
+  Calculation in python can be forced by calling this function, specifying ``pyMatEnabled = True``
+
+  Re-enabling use of C implementation is also done by this function, but if extension is not loaded correctly,
+  a warning is logged and matrix calculation uses python.
+  """
+  global cMatsEnabled
+  if usePython:
+    cMatsEnabled = False
+  elif _cMatLoaded:
+    cMatsEnabled = True
+  else:
+    logger.warning("C Matrices not loaded correctly, cannot calculate matrices in C")
+    cMatsEnabled = False
+
+
 debugging = True
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -61,6 +100,8 @@ formatter = logging.Formatter("%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 debug(False)  # force level=WARNING, in case logging default is set differently (issue 102)
+
+_featureClasses = None
 
 try:
   from . import _cmatrices as cMatrices
@@ -81,3 +122,5 @@ from ._version import get_versions
 
 __version__ = get_versions()['version']
 del get_versions
+
+getFeatureClasses()

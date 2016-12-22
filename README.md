@@ -80,7 +80,7 @@ See also the [requirements file](requirements.txt).
  - Implementation of this package as an extension to [3D Slicer](https://github.com/Slicer/Slicer)
  - Enhancing performance by implementation of C for computationally expensive code
 
-### Licence
+### License
 This package is covered by the [3D Slicer License](LICENSE.txt).
 
 **This work was supported in part by the US National Cancer Institute grant 

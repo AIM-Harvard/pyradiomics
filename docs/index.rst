@@ -99,7 +99,7 @@ Pyradiomics Indices and Tables
 * :ref:`genindex`
 * :ref:`search`
 
-Licence
+License
 -------
 
 This package is covered by the 3D Slicer License.

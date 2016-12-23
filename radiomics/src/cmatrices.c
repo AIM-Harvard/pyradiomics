@@ -292,7 +292,7 @@ int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles
           // Prevent calculating the true diagonal twice, which is either at index 0, or max, depending on the
           // angle of the the second moving dimension: iterate 1 to max if angle is positive, 0 to max -1 if
           // negative. The ignored index is handled in the previous loop.
-          if (angles[a * 3 + mDims[1]] < 0) jd[mDims[1]] --;
+          if (angles[a * 3 + mDims[2]] < 0) jd[mDims[2]] --;
           if (angles[a * 3 + mDims[0]] < 0)
           {
             jd[mDims[0]] = size[mDims[0]] - 1; // Moving dim is negative, set start at maximum index

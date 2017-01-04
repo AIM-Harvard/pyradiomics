@@ -37,7 +37,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
     # Volume and Surface Area are pre-calculated
-    self.Volume = self.lssif.GetPhysicalSize(1)
+    self.Volume = self.lssif.GetPhysicalSize(self.label)
     self.SurfaceArea = self._calculateSurfaceArea()
 
   def _calculateSurfaceArea(self):

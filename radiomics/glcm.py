@@ -191,15 +191,15 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       self.P_glcm = numpy.sum(self.P_glcm * weights[None, None, :], 2, keepdims=True)
 
-    sumGlcm = numpy.sum(self.P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
+    sumP_glcm = numpy.sum(self.P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
 
     # Delete empty angles if no weighting is applied
     if self.P_glcm.shape[2] > 1:
-      self.P_glcm = numpy.delete(self.P_glcm, numpy.where(sumGlcm == 0), 2)
-      sumGlcm = numpy.delete(sumGlcm, numpy.where(sumGlcm == 0), 0)
+      self.P_glcm = numpy.delete(self.P_glcm, numpy.where(sumP_glcm == 0), 2)
+      sumP_glcm = numpy.delete(sumP_glcm, numpy.where(sumP_glcm == 0), 2)
 
     # Normalize each glcm
-    self.P_glcm = self.P_glcm / sumGlcm
+    self.P_glcm = self.P_glcm / sumP_glcm
 
   # check if ivector and jvector can be replaced
   def _calculateCoefficients(self):

@@ -107,3 +107,20 @@ This package is covered by the 3D Slicer License.
 **This work was supported in part by the US National Cancer Institute grant
 5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.**
 
+Developers
+----------
+
+ - `Joost van Griethuysen <https://github.com/JoostJM>`_ :sup:`1,3,4`
+ - `Andriy Fedorov <https://github.com/fedorov>`_ :sup:`2`
+ - `Nicole Aucoin <https://github.com/naucoin>`_ :sup:`2`
+ - `Jean-Christophe Fillion-Robin <https://github.com/jcfr>`_:sup:`5`
+ - `Ahmed Hosny <https://github.com/ahmedhosny>`_ :sup:`1`
+ - `Steve Pieper <https://github.com/pieper>`_ :sup:`6`
+ - `Hugo Aerts (PI) <https://github.com/hugoaerts>`_:sup:`1,2`
+ 
+:sup:`1`\ Department of Radiation Oncology, Dana-Farber Cancer Institute, Brigham and Women's Hospital, Harvard Medical School, Boston, MA,
+:sup:`2`\ Department of Radiology, Brigham and Women's Hospital, Harvard Medical School, Boston, MA
+:sup:`3`\ Department of Radiology, Netherlands Cancer Institute, Amsterdam, The Netherlands,
+:sup:`4`\ GROW-School for Oncology and Developmental Biology, Maastricht University Medical Center, Maastricht, The Netherlands,
+:sup:`5`\ Kitware,
+:sup:`6`\ Isomics

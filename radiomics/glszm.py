@@ -45,6 +45,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   :math:`N_s` be the number of discreet zone sizes in the image
 
   :math:`N_p` be the number of voxels in the image
+
+  References
+
+  - Guillaume Thibault; Bernard Fertil; Claire Navarro; Sandrine Pereira; Pierre Cau; Nicolas Levy; Jean Sequeira;
+    Jean-Luc Mari (2009). "Texture Indexes and Gray Level Size Zone Matrix. Application to Cell Nuclei Classification".
+    Pattern Recognition and Information Processing (PRIP): 140-145.
+
+  - https://en.wikipedia.org/wiki/Gray_level_size_zone_matrix
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

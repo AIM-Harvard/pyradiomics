@@ -33,9 +33,9 @@ Aside from the feature classes, there are also some built-in optional filters:
 
 Most of the provided features and filters are based on methods described in the following publications:
 
-HJWL Aerts, ER Velazquez, RTH Leijenaar, et al., "Decoding tumour phenotype by noninvasive imaging using a quantitative radiomics approach", vol. 5, Nat Communication, 2014. Available [here](http://www.nature.com/ncomms/2014/140603/ncomms5006/full/ncomms5006.html).
-
-Specifically, the formulation of the individual feature calculation is covered in this [supplement](http://www.nature.com/ncomms/2014/140603/ncomms5006/extref/ncomms5006-s1.pdf)
+- HJWL Aerts, ER Velazquez, RTH Leijenaar, et al., "Decoding tumour phenotype by noninvasive imaging using a quantitative radiomics approach", vol. 5, Nat Communication, 2014. Available [here](http://www.nature.com/ncomms/2014/140603/ncomms5006/full/ncomms5006.html).
+  Specifically, the formulation of the individual feature calculation is covered in this [supplement](http://www.nature.com/ncomms/2014/140603/ncomms5006/extref/ncomms5006-s1.pdf)
+- Zwanenburg A, Leger S, Vallières M, Löck S., "Image biomarker standardisation initiative - feature definitions", arXiv:161207003. 2016. Available [here](http://arxiv.org/abs/1612.07003).
 
 ### Supporting reproducible extraction
 Aside from calculating features, the pyradiomics package includes provenance information in the

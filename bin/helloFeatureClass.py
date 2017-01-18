@@ -36,7 +36,7 @@ kwargs = {'binWidth': 25,
 # If enabled, resample image (resampled image is automatically cropped.
 # If resampling is not enabled, crop image instead
 #
-if kwargs['interpolator'] != None and kwargs['resampledPixelSpacing'] != None:
+if kwargs['interpolator'] is not None and kwargs['resampledPixelSpacing'] is not None:
   image, mask = imageoperations.resampleImage(image, mask, kwargs['resampledPixelSpacing'], kwargs['interpolator'])
 else:
   image, mask, bb = imageoperations.cropToTumorMask(image, mask)

@@ -1,7 +1,6 @@
 import os
 import csv
 import collections
-import radiomics
 from radiomics import featureextractor, imageoperations
 
 

@@ -32,7 +32,12 @@ install:
     - $<RUN_ENV> pip install nose-parameterized==0.5.0
     - $<RUN_ENV> pip install tqdm==4.7.1
     - $<RUN_ENV> pip install PyWavelets==0.4.0
+    - $<RUN_ENV> pip install flake8
     - $<RUN_ENV> pip install pykwalify
+
+before_build:
+  commands:
+    - flake8
 
 build:
   commands:

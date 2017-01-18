@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-import sys
 import os
 import glob
 import collections
-import pdb
 
 
 class DatasetHierarchyReader(object):

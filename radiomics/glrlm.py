@@ -1,6 +1,5 @@
 from itertools import chain
 import numpy
-import SimpleITK as sitk
 from radiomics import base, imageoperations
 
 
@@ -154,11 +153,11 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
     # Crop run-length axis of GLRLMs up to maximum observed run-length
     P_glrlm_bounds = numpy.argwhere(P_glrlm)
-    (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1
+    (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1  # noqa: F841
     self.P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
 
     # Optionally apply a weighting factor
-    if not self.weightingNorm is None:
+    if self.weightingNorm is not None:
       pixelSpacing = self.inputImage.GetSpacing()[::-1]
       weights = numpy.empty(len(angles))
       for a_idx, a in enumerate(angles):

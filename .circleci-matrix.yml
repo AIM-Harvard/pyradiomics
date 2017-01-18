@@ -1,0 +1,17 @@
+env:
+  - MANYLINUX_IMAGE=manylinux-x64 MANYLINUX_PYTHON=cp27-cp27m
+  - MANYLINUX_IMAGE=manylinux-x86 MANYLINUX_PYTHON=cp27-cp27m
+  - MANYLINUX_IMAGE=manylinux-x64 MANYLINUX_PYTHON=cp27-cp27mu
+  - MANYLINUX_IMAGE=manylinux-x86 MANYLINUX_PYTHON=cp27-cp27mu
+  - MANYLINUX_IMAGE=manylinux-x64 MANYLINUX_PYTHON=cp33-cp33m
+  - MANYLINUX_IMAGE=manylinux-x86 MANYLINUX_PYTHON=cp33-cp33m
+  - MANYLINUX_IMAGE=manylinux-x64 MANYLINUX_PYTHON=cp34-cp34m
+  - MANYLINUX_IMAGE=manylinux-x86 MANYLINUX_PYTHON=cp34-cp34m
+  - MANYLINUX_IMAGE=manylinux-x64 MANYLINUX_PYTHON=cp35-cp35m
+  - MANYLINUX_IMAGE=manylinux-x86 MANYLINUX_PYTHON=cp35-cp35m
+command:
+  - docker run dockcross/$MANYLINUX_IMAGE > ~/bin/dockcross && chmod +x ~/bin/dockcross
+  - |
+    CI_ENV=`bash <(curl -s https://codecov.io/env)`
+    DOCKER_ARGS="-e CIRCLECI -e MANYLINUX_PYTHON=$MANYLINUX_PYTHON -e GIRDER_TOKEN $CI_ENV"
+    dockcross -a "$DOCKER_ARGS" bash -c "/opt/python/${MANYLINUX_PYTHON}/bin/pip install scikit-ci==0.13.0 && /opt/python/${MANYLINUX_PYTHON}/bin/ci --clear-cached-env"

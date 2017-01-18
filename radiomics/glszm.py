@@ -1,7 +1,5 @@
 import numpy
-import SimpleITK as sitk
 from radiomics import base, imageoperations
-import pdb
 from tqdm import trange
 
 
@@ -130,7 +128,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area
     P_glszm_bounds = numpy.argwhere(P_glszm)
-    (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1
+    (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1  # noqa: F841
     self.P_glszm = P_glszm[xstart:xstop, :ystop]
 
   def _calculateCoefficients(self):

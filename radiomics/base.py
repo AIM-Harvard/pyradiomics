@@ -3,7 +3,6 @@ import traceback
 import SimpleITK as sitk
 import numpy
 import inspect
-from radiomics import imageoperations
 
 
 class RadiomicsFeaturesBase(object):
@@ -42,7 +41,7 @@ class RadiomicsFeaturesBase(object):
     self.targetVoxelArray = self.matrix[self.matrixCoordinates]
 
   def enableFeatureByName(self, featureName, enable=True):
-    if not featureName in self.featureNames:
+    if featureName not in self.featureNames:
       raise LookupError('Feature not found: ' + featureName)
     self.enabledFeatures[featureName] = enable
 
@@ -59,7 +58,7 @@ class RadiomicsFeaturesBase(object):
     allFeatureNames = [f[3:-12] for f in allMembers if f.endswith('FeatureValue') and f.startswith('get')]
     return allFeatureNames
 
-  @classmethod
+  @classmethod  # noqa: F811
   def getFeatureNames(c):
     attributes = inspect.getmembers(c)
     features = [a[0][3:-12] for a in attributes if a[0].startswith('get') and a[0].endswith('FeatureValue')]

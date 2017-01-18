@@ -1,0 +1,73 @@
+branches:
+ only:
+  - master
+
+version: "0.0.1.{build}"
+
+environment:
+  matrix:
+
+    # Visual Studio (Python 2 & 3, 32 & 64 bit)
+    - PYTHON_DIR: "C:\\Python27"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "32"
+      BLOCK: "0"
+
+    - PYTHON_DIR: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "64"
+      BLOCK: "0"
+
+    - PYTHON_DIR: "C:\\Python33"
+      PYTHON_VERSION: "3.3.x"
+      PYTHON_ARCH: "32"
+      BLOCK: "0"
+
+    - PYTHON_DIR: "C:\\Python33-x64"
+      PYTHON_VERSION: "3.3.x"
+      PYTHON_ARCH: "64"
+      BLOCK: "0"
+
+    - PYTHON_DIR: "C:\\Python34"
+      PYTHON_VERSION: "3.4.x"
+      PYTHON_ARCH: "32"
+      BLOCK: "0"
+
+    - PYTHON_DIR: "C:\\Python34-x64"
+      PYTHON_VERSION: "3.4.x"
+      PYTHON_ARCH: "64"
+      BLOCK: "0"
+
+    - PYTHON_DIR: "C:\\Python35"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "32"
+      BLOCK: "0"
+
+    - PYTHON_DIR: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "64"
+      BLOCK: "0"
+
+init:
+  - python -m pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0
+  - python -m ci_addons --install ../addons
+
+  - ps: ../addons/appveyor/rolling-build.ps1
+
+install:
+  - python -m ci install
+
+build_script:
+  - python -m ci build
+
+test_script:
+  - python -m ci test
+
+after_test:
+  - python -m ci after_test
+
+on_finish:
+  - ps: ../addons/appveyor/enable-worker-remote-access.ps1 -check_for_block
+
+matrix:
+  fast_finish: false

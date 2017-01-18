@@ -1,0 +1,59 @@
+schema_version: "0.5.0"
+
+before_install:
+
+  appveyor:
+    environment:
+      PATH: $<PYTHON_DIR>;$<PYTHON_DIR>\\Scripts;$<PATH>
+      RUN_ENV: .\\..\\addons\\appveyor\\run-with-visual-studio.cmd
+    commands:
+      - python ../addons/appveyor/patch_vs2008.py
+
+  circle:
+    environment:
+      PATH: /opt/python/$<MANYLINUX_PYTHON>/bin:$<PATH>
+    commands:
+      - rm -rf dist/*
+
+  travis:
+    osx:
+      environment:
+        PATH: $<HOME>/.pyenv/versions/$<PYTHON_VERSION>/bin:$<PATH>
+      commands:
+        - python ../addons/travis/install_pyenv.py
+
+install:
+  commands:
+    - python --version
+    - python -m pip install --disable-pip-version-check --upgrade pip
+    # XXX Use requirements and requirements-dev.txt
+    - $<RUN_ENV> pip install numpy==1.11.0
+    - $<RUN_ENV> pip install --trusted-host www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK==0.9.1
+    - $<RUN_ENV> pip install nose-parameterized==0.5.0
+    - $<RUN_ENV> pip install tqdm==4.7.1
+    - $<RUN_ENV> pip install PyWavelets==0.4.0
+    - $<RUN_ENV> pip install pykwalify
+
+build:
+  commands:
+    - python setup.py sdist
+    - $<RUN_ENV> python setup.py bdist_wheel
+
+  circle:
+    commands:
+      - |
+        # Since there are no external shared libraries to bundle into the wheels
+        # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
+        for whl in dist/*$(uname -p).whl; do
+            auditwheel repair $whl -w ./dist/
+            rm $whl
+        done
+
+test:
+  commands:
+    - $<RUN_ENV> nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests/test_features.py
+
+  circleci:
+    commands:
+      - cp nosetests.xml $CIRCLE_TEST_REPORTS
+

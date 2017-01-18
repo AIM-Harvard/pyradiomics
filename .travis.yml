@@ -9,20 +9,20 @@ language: python
 matrix:
   include:
 
-    - os: osx
-      language: generic
-      env:
-        - PYTHON_VERSION=3.5.2
+#    - os: osx
+#      language: generic
+#      env:
+#        - PYTHON_VERSION=3.5.2
 
-    - os: osx
-      language: generic
-      env:
-        - PYTHON_VERSION=3.4.5
+#    - os: osx
+#      language: generic
+#      env:
+#        - PYTHON_VERSION=3.4.5
 
-    - os: osx
-      language: generic
-      env:
-        - PYTHON_VERSION=3.3.6
+#    - os: osx
+#      language: generic
+#      env:
+#        - PYTHON_VERSION=3.3.6
 
     - os: osx
       language: generic

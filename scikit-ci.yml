@@ -46,15 +46,15 @@ build:
     - python setup.py sdist
     - $<RUN_ENV> python setup.py bdist_wheel
 
-  circle:
-    commands:
-      - |
-        # Since there are no external shared libraries to bundle into the wheels
-        # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
-        for whl in dist/*$(uname -p).whl; do
-            auditwheel repair $whl -w ./dist/
-            rm $whl
-        done
+#  circle:
+#    commands:
+#      - |
+#        # Since there are no external shared libraries to bundle into the wheels
+#        # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
+#        for whl in dist/*$(uname -p).whl; do
+#            auditwheel repair $whl -w ./dist/
+#            rm $whl
+#        done
 
 test:
   commands:

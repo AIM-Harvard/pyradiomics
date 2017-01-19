@@ -30,7 +30,7 @@ install:
     - $<RUN_ENV> pip install wheel>=0.29.0
     - $<RUN_ENV> pip install setuptools>=28.0.0
     - $<RUN_ENV> pip install numpy==1.11.0
-    - $<RUN_ENV> pip install --trusted-host www.simpleitk.org -f https://sourceforge.net/projects/simpleitk/files/SimpleITK/0.10.0/Python/ SimpleITK==0.10.0
+    - $<RUN_ENV> pip install --trusted-host www.simpleitk.org -f https://sourceforge.net/projects/simpleitk/files/SimpleITK/0.10.0/Python/ -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK>=0.9.1
     - $<RUN_ENV> pip install nose==1.3.7
     - $<RUN_ENV> pip install nose-parameterized==0.5.0
     - $<RUN_ENV> pip install tqdm==4.7.1

@@ -4,7 +4,7 @@ import SimpleITK as sitk
 from radiomics import featureextractor
 import radiomics
 
-dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
+dataDir = os.path.abspath("") + os.path.sep + ".." + os.path.sep + "data"  # assumes this file in in pyradiomics/bin
 # imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
 # maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
 imageName = str(dataDir + os.path.sep + 'brain1_image.nrrd')

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import sys
 import os.path
@@ -73,6 +75,7 @@ def main():
   # Extract features
   logging.info('Extracting features with kwarg settings: %s', str(extractor.kwargs))
 
+  headers = False
   for idx, entry in enumerate(flists, start=1):
 
     logging.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
@@ -94,7 +97,9 @@ def main():
 
         if args.format == 'csv':
           writer = csv.writer(args.outFile, lineterminator='\n')
-          if idx == 1: writer.writerow(featureVector.keys())
+          if not headers:
+            writer.writerow(featureVector.keys())
+            headers = True
           writer.writerow(featureVector.values())
         elif args.format == 'json':
           json.dump(featureVector, args.out)

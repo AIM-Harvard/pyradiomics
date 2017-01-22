@@ -4,9 +4,9 @@ import numpy
 from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm
 
 # testBinWidth = 25 this is the default bin size
-# testResampledPixelSpacing = (3,3,3) no resampling for now.
+# testResampledPixelSpacing = [3,3,3] no resampling for now.
 
-dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
+dataDir = os.path.abspath("") + os.path.sep + ".." + os.path.sep + "data"  # assumes this file in in pyradiomics/bin
 # imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
 # maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
 imageName = str(dataDir + os.path.sep + 'breast1_image.nrrd')

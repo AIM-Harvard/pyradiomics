@@ -28,7 +28,7 @@ kwargs['verbose'] = True
 extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
 
 # By default, only original is enabled. Optionally enable some filters:
-# extractor.enableInputImages(original={}, log={}, wavelet={})
+# extractor.enableInputImages(Original={}, LoG={}, Wavelet={})
 
 # Disable all classes except firstorder
 extractor.disableAllFeatures()

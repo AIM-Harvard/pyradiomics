@@ -28,7 +28,7 @@ setting:
 # Input images to use: original for unfiltered image and/or any other filters, see documentation of featureextractor.py
 # for possible values
 inputImage:
-  original: {} # for dictionaries / mappings, None values are not allowed, '{}' is interpreted as an empty dictionary
+  Original: {} # for dictionaries / mappings, None values are not allowed, '{}' is interpreted as an empty dictionary
 
 # Featureclasses, from which features must be calculated. If a featureclass is not mentioned, no features are calculated
 # for that class. Otherwise, the specified features are calculated, or, if none are specified, all are calculated.

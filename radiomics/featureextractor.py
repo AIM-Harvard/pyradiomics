@@ -19,16 +19,16 @@ class RadiomicsFeaturesExtractor:
   This includes which classes and features to use, as well as what should be done in terms of preprocessing the image
   and what images (original and/or filtered) should be used as input.
 
-  Then a call to computeSignature generates the radiomics signature specified by these settings for the passed
-  image and labelmap combination. This function can be called repeatedly in a batch process to calculate the radiomics
-  signature for all image and labelmap combinations.
+  Then a call to :py:func:`execute` generates the radiomics
+  signature specified by these settings for the passed image and labelmap combination. This function can be called
+  repeatedly in a batch process to calculate the radiomics signature for all image and labelmap combinations.
 
   It initialisation, a parameters file can be provided containing all necessary settings. This is done by passing the
   location of the file as the single argument in the initialization call, without specifying it as a keyword argument.
   If such a file location is provided, any additional kwargs are ignored.
   Alternatively, at initialisation, the following general settings can be specified in kwargs:
 
-  - verbose [True]: Boolean, set to False to disable status update printing.
+  - verbose [False]: Boolean, set to False to disable status update printing.
   - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
   - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
   - interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
@@ -47,9 +47,9 @@ class RadiomicsFeaturesExtractor:
 
   - padDistance [5]: Integer, set the number of voxels pad cropped tumor volume with during resampling. Padding occurs
     in new feature space and is done on all faces, i.e. size increases in x, y and z direction by 2*padDistance.
-    Padding is needed for some filters (e.g. LoG). After application of filters image is cropped again without
-    padding. Value of padded voxels are set to original gray level intensity, padding does not exceed original image
-    boundaries.
+    Padding is needed for some filters (e.g. LoG). Value of padded voxels are set to original gray level intensity,
+    padding does not exceed original image boundaries. **N.B. After application of filters image is cropped again
+    without padding.**
 
   N.B. Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
 
@@ -57,8 +57,8 @@ class RadiomicsFeaturesExtractor:
   For more information on possible settings, see the respective filters and feature classes.
 
   By default, all features in all feature classes are enabled.
-  By default, only original input image is enabled
-  N.B. for log, the sigma is set to range 0.5-5.0, step size 0.5
+  By default, only `Original` input image is enabled (No filter applied).
+  N.B. for log, the sigma is set to range 0.5-5.0, step size 0.5.
   """
 
   def __init__(self, *args, **kwargs):
@@ -100,7 +100,7 @@ class RadiomicsFeaturesExtractor:
     """
     Parse specified parameters file and use it to update settings in kwargs, enabled feature(Classes) and input
     images:
-    - kwarg settings not specified in parameters are set to their default value.
+    - settings not specified in parameters are set to their default value.
     - enabledFeatures are replaced by those in parameters. If no featureClass parameters were specified, all
       featureClasses and features are enabled.
     - inputImages are replaced by those in parameters. If no inputImage parameters were specified, only original
@@ -186,25 +186,29 @@ class RadiomicsFeaturesExtractor:
 
     Current possible filters are:
 
-    - original: No filter applied
-    - wavelet: Wavelet filtering, yields 8 decompositions per level (all possible combinations of applying either
+    - Original: No filter applied
+    - Wavelet: Wavelet filtering, yields 8 decompositions per level (all possible combinations of applying either
       a High or a Low pass filter in each of the three dimensions.
-    - log: Laplacian of Gaussian filter, edge enhancement filter. Emphasizes areas of gray level change, where sigma
+      See also :py:func:`~radiomics.imageoperations.applyFilterWavelet`
+    - LoG: Laplacian of Gaussian filter, edge enhancement filter. Emphasizes areas of gray level change, where sigma
       defines how coarse the emphasised texture should be. A low sigma emphasis on fine textures (change over a
-      short distance), where a high sigma value emphasises coarse textures (gray level change over a large distance)
-    - square: Takes the square of the image intensities and linearly scales them back to the original range.
+      short distance), where a high sigma value emphasises coarse textures (gray level change over a large distance).
+      See also :py:func:`~radiomics.imageoperations.applyFilterLoG`
+    - Square: Takes the square of the image intensities and linearly scales them back to the original range.
       Negative values in the original image will be made negative again after application of filter.
-    - squareroot: Takes the square root of the absolute image intensities and scales them back to original range.
+    - SquareRoot: Takes the square root of the absolute image intensities and scales them back to original range.
       Negative values in the original image will be made negative again after application of filter.
-    - logarithm: Takes the logarithm of the absolute intensity + 1. Values are scaled to original range and
+    - Logarithm: Takes the logarithm of the absolute intensity + 1. Values are scaled to original range and
       negative original values are made negative again after application of filter.
-    - exponential: Takes the the exponential, where filtered intensity is e^(absolute intensity). Values are
+    - Exponential: Takes the the exponential, where filtered intensity is e^(absolute intensity). Values are
       scaled to original range and negative original values are made negative again after application of filter.
 
     For the mathmetical formulas of square, squareroot, logarithm and exponential, see their respective functions in
     :ref:`imageoperations<radiomics-imageoperations-label>`
-    (:py:func:`~radiomics.imageoperations.applySquare`, :py:func:`~radiomics.imageoperations.applySquareRoot`,
-    :py:func:`~radiomics.imageoperations.applyLogarithm` and :py:func:`~radiomics.imageoperations.applyExponential`,
+    (:py:func:`~radiomics.imageoperations.applyFilterSquare`,
+    :py:func:`~radiomics.imageoperations.applyFilterSquareRoot`,
+    :py:func:`~radiomics.imageoperations.applyFilterLogarithm` and
+    :py:func:`~radiomics.imageoperations.applyFilterExponential`,
     respectively).
     """
     if enabled:
@@ -226,7 +230,8 @@ class RadiomicsFeaturesExtractor:
 
     Updates current settings: If necessary, enables input image. Always overrides custom settings specified
     for input images passed in inputImages.
-    To disable input images, use enableInputImageByName or disableAllInputImages instead.
+    To disable input images, use :py:func:`enableInputImageByName` or :py:func:`disableAllInputImages`
+    instead.
 
     :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings (dictionary)
     """
@@ -261,18 +266,18 @@ class RadiomicsFeaturesExtractor:
     To enable all features for a class, provide the class name with an empty list or None as value.
     Settings for feature classes specified in enabledFeatures.keys are updated, settings for feature classes
     not yet present in enabledFeatures.keys are added.
-    To disable the entire class, use disableAllFeatures or enableFeatureClassByName instead.
+    To disable the entire class, use :py:func:`disableAllFeatures` or :py:func:`enableFeatureClassByName` instead.
     """
     self.enabledFeatures.update(enabledFeatures)
 
   def execute(self, imageFilepath, maskFilepath, label=None):
     """
     Compute radiomics signature for provide image and mask combination.
-    First, image and mask are loaded and resampled if necessary. Next shape features are calculated on a
-    cropped (no padding) version of the original image. Then other featureclasses are calculated on using all
-    specified filters in inputImages. Images are cropped to tumor mask (no padding) after application of filter and
-    before being passed to the feature class.
-    Finally, a dictionary containing all calculated features is returned.
+    First, image and mask are loaded and resampled if necessary. Second, if enabled, provenance information is
+    calculated and stored as part of the result. Next, shape features are calculated on a cropped (no padding) version
+    of the original image. Then other featureclasses are calculated using all specified filters in inputImages. Images
+    are cropped to tumor mask (no padding) after application of filter and before being passed to the feature class.
+    Finally, the dictionary containing all calculated features is returned.
 
     :param imageFilepath: SimpleITK Image, or string pointing to image file location
     :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
@@ -291,7 +296,7 @@ class RadiomicsFeaturesExtractor:
     if self.provenance_on:
       featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
-    # Bounding box only needs to be calculated once after resampling, hold the value, so it doesn't get calculated
+    # Bounding box only needs to be calculated once after resampling, store the value, so it doesn't get calculated
     # after every filter
     boundingBox = None
 
@@ -319,12 +324,12 @@ class RadiomicsFeaturesExtractor:
       args = self.kwargs.copy()
       args.update(customKwargs)
       self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
-      imageGenerators = chain(imageGenerators, eval('self.generate_%s(image, mask, **args)' % (imageType)))
+      imageGenerators = chain(imageGenerators, eval('imageoperations.applyFilter%s(image, **args)' % (imageType)))
 
     # Calculate features for all (filtered) images in the generator
-    for inputImage, inputMask, inputImageName, inputKwargs in imageGenerators:
+    for inputImage, inputImageName, inputKwargs in imageGenerators:
       inputImage, inputMask, boundingBox = \
-        imageoperations.cropToTumorMask(inputImage, inputMask, self.kwargs['label'], boundingBox)
+        imageoperations.cropToTumorMask(inputImage, mask, self.kwargs['label'], boundingBox)
       featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
 
     return featureVector
@@ -381,11 +386,11 @@ class RadiomicsFeaturesExtractor:
 
   def computeFeatures(self, image, mask, inputImageName, **kwargs):
     """
-    Compute signature using image, mask, \*\*kwargs settings
-    This function computes the signature for just the passed image (original or filtered),
-    does not preprocess or apply a filter to the passed image.
-    Features / Classes to use for calculation of signature are defined in self.enabledFeatures.
-    see also enableFeaturesByName.
+    Compute signature using image, mask, \*\*kwargs settings.
+
+    This function computes the signature for just the passed image (original or filtered), it does not preprocess or
+    apply a filter to the passed image. Features / Classes to use for calculation of signature are defined in
+    self.enabledFeatures. See also :py:func:`enableFeaturesByName`.
     """
     featureVector = collections.OrderedDict()
 
@@ -412,165 +417,26 @@ class RadiomicsFeaturesExtractor:
 
     return featureVector
 
-  def generate_original(self, image, mask, **kwargs):
+  @classmethod
+  def getInputImageTypes(cls):
     """
-    No filter is applied.
-
-    :return: Yields original image, mask, 'original' and ``kwargs``
+    Returns a list of possible input image types. This function finds the image types dynamically by matching the
+    signature ("applyFilter<filterName>") against functions defined in :ref:`imageoperations
+    <radiomics-imageoperations-label>`. Returns a list containing available filter names (<filterName> part of the
+    corresponding function name).
     """
-    yield image, mask, 'original', kwargs
-
-  def generate_log(self, image, mask, **kwargs):
-    """
-    Apply Laplacian of Gaussian filter to input image and compute signature for each filtered image.
-
-    Following settings are possible:
-
-    - sigma: List of floats or integers, must be greater than 0. Sigma values to
-      use for the filter (determines coarseness).
-
-    N.B. Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
-    will return an empty dictionary.
-
-    Returned filter name reflects LoG settings:
-    log-sigma-<sigmaValue>-3D-<featureName>.
-
-    :return: Yields log filtered image, mask, filter name and ``kwargs``
-    """
-    # Check if size of image is > 4 in all 3D directions (otherwise, LoG filter will fail)
-    size = numpy.array(image.GetSize())
-    if numpy.min(size) < 4:
-      self.logger.warning('Image too small to apply LoG filter, size: %s', size)
-      if self.kwargs['verbose']: print 'Image too small to apply LoG filter'
-      return
-
-    sigmaValues = kwargs.get('sigma', numpy.arange(5., 0., -.5))
-
-    for sigma in sigmaValues:
-      self.logger.debug('Computing LoG with sigma %g', sigma)
-      if self.kwargs['verbose']: print "\tComputing LoG with sigma %g" % (sigma)
-      logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
-      if logImage is not None:
-        inputImageName = "log-sigma-%s-mm-3D" % (str(sigma).replace('.', '-'))
-        yield logImage, mask, inputImageName, kwargs
-      else:
-        # No log record needed here, this is handled by logging in imageoperations
-        if self.kwargs['verbose']: print 'Application of LoG filter failed (sigma: %g)' % (sigma)
-
-  def generate_wavelet(self, image, mask, **kwargs):
-    """
-    Apply wavelet filter to image and compute signature for each filtered image.
-
-    Following settings are possible:
-
-    - start_level [0]: integer, 0 based level of wavelet which should be used as first set of decompositions
-      from which a signature is calculated
-    - level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
-    - wavelet ["coif1"]: string, type of wavelet decomposition. Enumerated value, validated against possible values
-      present in the ``pyWavelet.wavelist()``. Current possible values (pywavelet version 0.4.0) (where an
-      aditional number is needed, range of values is indicated in []):
-
-      - haar
-      - dmey
-      - sym[2-20]
-      - db[1-20]
-      - coif[1-5]
-      - bior[1.1, 1.3, 1.5, 2.2, 2.4, 2.6, 2.8, 3.1, 3.3, 3.5, 3.7, 3.9, 4.4, 5.5, 6.8]
-      - rbio[1.1, 1.3, 1.5, 2.2, 2.4, 2.6, 2.8, 3.1, 3.3, 3.5, 3.7, 3.9, 4.4, 5.5, 6.8]
-
-    Returned filter name reflects wavelet type:
-    wavelet[level]-<decompositionName>-<featureName>
-
-    N.B. only levels greater than the first level are entered into the name.
-
-    :return: Yields wavelet filtered image, mask, filter name and ``kwargs``
-    """
-    waveletArgs = {}
-    waveletArgs['wavelet'] = kwargs.get('wavelet', 'coif1')
-    waveletArgs['level'] = kwargs.get('level', 1)
-    waveletArgs['start_level'] = kwargs.get('start_level', 0)
-
-    approx, ret = imageoperations.swt3(image, **waveletArgs)
-
-    for idx, wl in enumerate(ret, start=1):
-      for decompositionName, decompositionImage in wl.items():
-        self.logger.debug('Computing Wavelet %s', decompositionName)
-        if self.kwargs['verbose']: print "\tComputing Wavelet %s" % (decompositionName)
-
-        if idx == 1:
-          inputImageName = 'wavelet-%s' % (decompositionName)
-        else:
-          inputImageName = 'wavelet%s-%s' % (idx, decompositionName)
-        yield decompositionImage, mask, inputImageName, kwargs
-
-    if len(ret) == 1:
-      inputImageName = 'wavelet-LLL'
-    else:
-      inputImageName = 'wavelet%s-LLL' % (len(ret))
-    yield approx, mask, inputImageName, kwargs
-
-  def generate_square(self, image, mask, **kwargs):
-    """
-    Computes the square of the image intensities.
-
-    Resulting values are rescaled on the range of the initial original image.
-
-    :return: Yields square filtered image, mask, 'square' and ``kwargs``
-    """
-    squareImage = imageoperations.applySquare(image)
-    yield squareImage, mask, 'square', kwargs
-
-  def generate_squareroot(self, image, mask, **kwargs):
-    """
-    Computes the square root of the absolute value of image intensities.
-
-    Resulting values are rescaled on the range of the initial original image and negative intensities are made
-    negative in resultant filtered image.
-
-    :return: Yields square root filtered image, mask, 'squareroot' and ``kwargs``
-    """
-    squarerootImage = imageoperations.applySquareRoot(image)
-    yield squarerootImage, mask, 'squareroot', kwargs
-
-  def generate_logarithm(self, image, mask, **kwargs):
-    """
-    Computes the logarithm of the absolute value of the original image + 1.
-
-    Resulting values are rescaled on the range of the initial original image and negative intensities are made
-    negative in resultant filtered image.
-
-    :return: Yields logarithm filtered image, mask, 'logarithm' and ``kwargs``
-    """
-    logarithmImage = imageoperations.applyLogarithm(image)
-    yield logarithmImage, mask, 'logarithm', kwargs
-
-  def generate_exponential(self, image, mask, **kwargs):
-    """
-    Computes the exponential of the original image.
-
-    Resulting values are rescaled on the range of the initial original image.
-
-    :return: Yields exponential filtered image, mask, 'exponential' and ``kwargs``
-    """
-    exponentialImage = imageoperations.applyExponential(image)
-    yield exponentialImage, mask, 'exponential', kwargs
-
-  def getInputImageTypes(self):
-    """
-    Returns a list of possible input image types.
-    """
-    return [member[9:] for member in dir(self) if member.startswith('generate_')]
+    return [member[11:] for member in dir(imageoperations) if member.startswith('applyFilter')]
 
   @classmethod
   def getFeatureClasses(cls):
     """
     Iterates over all modules of the radiomics package using pkgutil and subsequently imports those modules.
 
-    Return a dictionary of all modules containing featureClasses, with modulename as key, abstract
+    Return a dictionary of all modules containing featureClasses, with module name as key, abstract
     class object of the featureClass as value. Assumes only one featureClass per module
 
-    This is achieved by inspect.getmembers. Modules are added if it contains a memeber that is a class,
-    with name starting with 'Radiomics' and is inherited from :py:class:`radiomics.base.RadiomicsFeaturesBase`.
+    This is achieved by inspect.getmembers. Classes are added if the module contains a member that is a class,
+    with name starting with 'Radiomics' and is inherited from :py:class:`~radiomics.base.RadiomicsFeaturesBase`.
     """
     featureClasses = {}
     for _, mod, _ in pkgutil.iter_modules(radiomics.__path__):

@@ -39,7 +39,7 @@ kwargs = {'binWidth': 25,
 if kwargs['interpolator'] != None and kwargs['resampledPixelSpacing'] != None:
   image, mask = imageoperations.resampleImage(image, mask, kwargs['resampledPixelSpacing'], kwargs['interpolator'])
 else:
-  image, mask = imageoperations.cropToTumorMask(image, mask)
+  image, mask, bb = imageoperations.cropToTumorMask(image, mask)
 
 #
 # Show the first order feature calculations
@@ -143,35 +143,22 @@ for (key, val) in glszmFeatures.featureValues.iteritems():
 #
 if applyLog:
   sigmaValues = numpy.arange(5., 0., -.5)[::1]
-  for sigma in sigmaValues:
-    logImage = imageoperations.applyLoG(image, sigmaValue=sigma)
-    logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **kwargs)
+  for logImage, inputImageName, inputKwargs in imageoperations.applyFilterLoG(image, sigma=sigmaValues, verbose=True):
+    logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **inputKwargs)
     logFirstorderFeatures.enableAllFeatures()
     logFirstorderFeatures.calculateFeatures()
-    print 'Calculated firstorder features with LoG sigma ', sigma
     for (key, val) in logFirstorderFeatures.featureValues.iteritems():
-      laplacianFeatureName = 'LoG-sigma-%s_%s' % (str(sigma), key)
+      laplacianFeatureName = '%s_%s' % (inputImageName, key)
       print '  ', laplacianFeatureName, ':', val
 #
 # Show FirstOrder features, calculated on a wavelet filtered image
 #
 if applyWavelet:
-  ret, approx = imageoperations.swt3(image)
-
-  for idx, wl in enumerate(ret, start=1):
-    for decompositionName, decompositionImage in wl.items():
-      waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(decompositionImage, mask, **kwargs)
-      waveletFirstOrderFeaturs.enableAllFeatures()
-      waveletFirstOrderFeaturs.calculateFeatures()
-      print 'Calculated firstorder features with wavelet ', decompositionName
-      for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
-        waveletFeatureName = 'wavelet-%s_%s' % (str(decompositionName), key)
-        print '  ', waveletFeatureName, ':', val
-
-  waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(approx, mask, **kwargs)
-  waveletFirstOrderFeaturs.enableAllFeatures()
-  waveletFirstOrderFeaturs.calculateFeatures()
-  print 'Calculated firstorder features with approximation of wavelt (= LLL decomposition)'
-  for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
-    waveletFeatureName = 'wavelet-LLL_%s' % (key)
-    print '  ', waveletFeatureName, ':', val
+  for decompositionImage, decompositionName, inputKwargs in imageoperations.applyFilterWavelet(image):
+    waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(decompositionImage, mask, **inputKwargs)
+    waveletFirstOrderFeaturs.enableAllFeatures()
+    waveletFirstOrderFeaturs.calculateFeatures()
+    print 'Calculated firstorder features with wavelet ', decompositionName
+    for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
+      waveletFeatureName = 'wavelet-%s_%s' % (str(decompositionName), key)
+      print '  ', waveletFeatureName, ':', val

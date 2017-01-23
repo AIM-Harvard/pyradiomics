@@ -6,11 +6,10 @@ from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm
 # testBinWidth = 25 this is the default bin size
 # testResampledPixelSpacing = [3,3,3] no resampling for now.
 
-dataDir = os.path.abspath("") + os.path.sep + ".." + os.path.sep + "data"  # assumes this file in in pyradiomics/bin
-# imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
-# maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
-imageName = str(dataDir + os.path.sep + 'breast1_image.nrrd')
-maskName = str(dataDir + os.path.sep + 'breast1_label.nrrd')
+testCase = 'brain1'
+dataDir = os.path.join(os.path.abspath(""), "..", "data")
+imageName = os.path.join(dataDir, testCase + '_image.nrrd')
+maskName = os.path.join(dataDir, testCase + '_label.nrrd')
 
 if not os.path.exists(imageName):
   print 'Error: problem finding input image', imageName

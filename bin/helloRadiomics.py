@@ -4,11 +4,10 @@ import SimpleITK as sitk
 from radiomics import featureextractor
 import radiomics
 
-dataDir = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + ".." + os.path.sep + "data"
-# imageName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume.nrrd')
-# maskName = str(dataDir + os.path.sep + 'prostate_phantom_subvolume-label.nrrd')
-imageName = str(dataDir + os.path.sep + 'brain1_image.nrrd')
-maskName = str(dataDir + os.path.sep + 'brain1_label.nrrd')
+testCase = 'brain1'
+dataDir = os.path.join(os.path.abspath(""), "..", "data")
+imageName = os.path.join(dataDir, testCase + '_image.nrrd')
+maskName = os.path.join(dataDir, testCase + '_label.nrrd')
 
 if not os.path.exists(imageName):
   print 'Error: problem finding input image', imageName

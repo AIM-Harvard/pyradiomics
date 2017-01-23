@@ -6,15 +6,95 @@ Usage
 Example
 -------
 
-* Run the helloRadiomics example, using sample data provided in ``pyradiomics/data``:
+* PyRadiomics example code and data is available in the `Github repository <https://github.com/Radiomics/pyradiomics>`_
 
-  * ``python bin/helloRadiomics.py``
+* The sample sample data is provided in ``pyradiomics/data``.
+
+* Use jupyter to run the helloRadiomics example, located in ``pyradiomics/bin/Notebooks``.
+
+* If jupyter is not installed, run the python script alternative (``pyradiomics/bin/helloRadiomics.py``):
+
+  * ``python helloRadiomics.py``
+
+----------------
+Command Line Use
+----------------
+
+* PyRadiomics has 2 commandline scripts, ``pyradiomics`` is for single image feature extraction and ``pyradiomicsbatch``
+  is for feature extraction from a batch of images and segmentations.
+
+* Both scripts can be run directly from a command line window, anywhere in your system.
+
+* To extract features from a single image and segmentation run::
+
+    pyradiomics <path/to/image> <path/to/segmentation>
+
+* To extract features from a batch run::
+
+    pyradiomicsbatch <path/to/input> <path/to/output>
+
+* The input file for batch processing is a CSV file where each row represents one combination of an image and a
+  segmentation and contains 5 elements: 1) patient ID, 2) sequence name (image identifier), 3) reader (segmentation
+  identifier), 4) path/to/image, 5) path/to/mask.
+
+* For more information on passing parameter files, setting up logging and controlling output format, run::
+
+    pyradiomics -h
+    pyradiomicsbatch -h
+
 
 ---------------
 Interactive Use
 ---------------
 
-* Add pyradiomics to the environment variable PYTHONPATH:
+* (LINUX) Add pyradiomics to the environment variable PYTHONPATH:
+
+  *  ``setenv PYTHONPATH /path/to/pyradiomics/radiomics``
+
+* Start the python interactive session:
+
+  * ``python``
+
+* Import the necessary classes::
+
+     from radiomics import featureextractor
+     import sys, os
+
+* Set up a pyradiomics directory variable::
+
+    dataDir = '/path/to/pyradiomics'
+
+* You will find sample data files brain1_image.nrrd and brain1_label.nrrd in that directory.
+
+* Store the path of your image and mask in two variables::
+
+    imageName = os.path.join(dataDir, "data", 'brain1_image.nrrd')
+    maskName = os.path.join(dataDir, "data",  'brain1_label.nrrd')
+
+* Also store the path to the file containing the extraction settings::
+
+    params = os.path.join(dataDir, "bin", "Params.yaml")
+
+* Instantiate the feature extractor class with the parameter file::
+
+    extractor = featureextractor.RadiomicsFeaturesExtractor(params)
+
+* Calculate the features::
+
+    result = extractor.execute(imageName, maskName)
+    for key, val in result.iteritems():
+      print "\t%s: %s" %(key, val)
+
+* See the :ref:`feature extractor class<radiomics-featureextractor-label>` for more information on using this core class.
+
+------------------------------
+Using feature classes directly
+------------------------------
+
+* This represents an example where feature classes are used directly, circumventing checks and preprocessing done by
+  the radiomics feature extractor class, and is not intended as standard use example.
+
+* (LINUX) Add pyradiomics to the environment variable PYTHONPATH:
 
   *  ``setenv PYTHONPATH /path/to/pyradiomics/radiomics``
 
@@ -46,6 +126,6 @@ Interactive Use
      firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
      firstOrderFeatures.calculateFeatures()
      for (key,val) in firstOrderFeatures.featureValues.iteritems():
-       print '  ',key,':',val
+       print "\t%s: %s" % (key, val)
 
 * See the :ref:`radomics package<radiomics-firstorder-label>` for more features that you can calculate.

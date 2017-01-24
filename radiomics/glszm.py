@@ -293,6 +293,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Calculate and return the Zone Entropy (ZE) value.
 
     :math:`ZE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}`
+
+    Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
     """
     eps = numpy.spacing(1)
     sumP_glszm = self.coefficients['sumP_glszm']

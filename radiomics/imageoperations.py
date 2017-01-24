@@ -453,9 +453,9 @@ def applyFilterSquare(inputImage, **kwargs):
   Resulting values are rescaled on the range of the initial original image and negative intensities are made
   negative in resultant filtered image.
 
-  :math:`x_f = (cx_i)^2,\text{ where } c=\displaystyle\frac{1}{\sqrt{\max(x_i)}}`
+  :math:`f(x) = (cx)^2,\text{ where } c=\displaystyle\frac{1}{\sqrt{\max(x)}}`
 
-  Where :math:`x_i` and :math:`x_f` are the original and filtered intensity, respectively.
+  Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
   :return: Yields square filtered image, 'square' and ``kwargs``
   """
@@ -475,11 +475,11 @@ def applyFilterSquareRoot(inputImage, **kwargs):
   Resulting values are rescaled on the range of the initial original image and negative intensities are made
   negative in resultant filtered image.
 
-  :math:`x_f = \left\{ {\begin{array}{lcl}
-  \sqrt{cx_i} & \mbox{for} & x_i \ge 0 \\
-  -\sqrt{-cx_i} & \mbox{for} & x_i < 0\end{array}} \right.,\text{ where } c=\max(x_i)`
+  :math:`f(x) = \left\{ {\begin{array}{lcl}
+  \sqrt{cx} & \mbox{for} & x \ge 0 \\
+  -\sqrt{-cx} & \mbox{for} & x < 0\end{array}} \right.,\text{ where } c=\max(x)`
 
-  Where :math:`x_i` and :math:`x_f` are the original and filtered intensity, respectively.
+  Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
   :return: Yields square root filtered image, 'squareroot' and ``kwargs``
   """
@@ -500,11 +500,11 @@ def applyFilterLogarithm(inputImage, **kwargs):
   Resulting values are rescaled on the range of the initial original image and negative intensities are made
   negative in resultant filtered image.
 
-  :math:`x_f = \left\{ {\begin{array}{lcl}
-  c\log{(x_i + 1)} & \mbox{for} & x_i \ge 0 \\
-  -c\log{(-x_i + 1)} & \mbox{for} & x_i < 0\end{array}} \right.,\text{ where } c=\displaystyle\frac{\max(x_i)}{\max(x_f)}`
+  :math:`f(x) = \left\{ {\begin{array}{lcl}
+  c\log{(x + 1)} & \mbox{for} & x \ge 0 \\
+  -c\log{(-x + 1)} & \mbox{for} & x < 0\end{array}} \right.,\text{ where } c=\displaystyle\frac{\max(x)}{\max(f(x))}`
 
-  Where :math:`x_i` and :math:`x_f` are the original and filtered intensity, respectively.
+  Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
   :return: Yields logarithm filtered image, 'logarithm' and ``kwargs``
   """
@@ -525,9 +525,9 @@ def applyFilterExponential(inputImage, **kwargs):
 
   Resulting values are rescaled on the range of the initial original image.
 
-  :math:`x_f = e^{cx_i},\text{ where } c=\displaystyle\frac{\log(\max(x_i))}{\max(x_i)}`
+  :math:`f(x) = e^{cx},\text{ where } c=\displaystyle\frac{\log(\max(x))}{\max(x)}`
 
-  Where :math:`x_i` and :math:`x_f` are the original and filtered intensity, respectively.
+  Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
   :return: Yields exponential filtered image, 'exponential' and ``kwargs``
   """

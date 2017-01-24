@@ -72,6 +72,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`entropy = -\displaystyle\sum^{N_l}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}`
 
+    Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
     Entropy specifies the uncertainty/randomness in the
     image values. It measures the average amount of
     information required to encode the image values.
@@ -283,10 +284,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     where a greater uniformity implies a greater heterogeneity or a
     greater range of discrete intensity values.
     """
+    eps = numpy.spacing(1)
 
     bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
     try:
-      bins = bins / (float(bins.sum()))
+      bins = bins / (float(bins.sum() + eps))
       return (numpy.sum(bins ** 2))
     except ZeroDivisionError:
       return numpy.core.nan

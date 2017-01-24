@@ -357,10 +357,12 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     return rv.mean()
 
   def getRunEntropyFeatureValue(self):
-    r"""1
+    r"""
     Calculate and return the Run Entropy (RE) value.
 
     :math:`RE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)\log_{2}(p(i,j|\theta)+\epsilon)}`
+
+    Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
     """
     eps = numpy.spacing(1)
     p_glrlm = self.P_glrlm / self.coefficients['sumP_glrlm']

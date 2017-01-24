@@ -42,6 +42,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   Let:
 
+  :math:`\epsilon` be an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`)
+
   :math:`\textbf{P}(i,j)` be the co-occurence matrix for an arbitrary :math:`\delta` and :math:`\alpha`
 
   :math:`p(i,j)` be the normalized co-occurence matrix and equal to :math:`\frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
@@ -56,7 +58,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   :math:`\mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)i}`
 
   :math:`\mu_y` be the mean gray level intensity of :math:`p_y` and defined as
-  :math:`\mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)j}`
+  :math:`\mu_y = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)j}`
 
   :math:`\sigma_x` be the standard deviation of :math:`p_x`
 
@@ -97,7 +99,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     - 'no_weighting': GLCMs are weighted by factor 1 and summed
     - None: Applies no weighting, mean of values calculated on separate matrices is returned.
 
-    In case of other values, an warning is logged and GLCMs are all weighted by factor 1 and summed.
+    In case of other values, an warning is logged and option 'no_weighting' is used.
 
   References
 
@@ -270,7 +272,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getAutocorrelationFeatureValue(self):
     r"""
-    Using the i and j arrays, calculate and return the mean Autocorrelation.
+    Calculate and return the mean Autocorrelation.
 
     :math:`autocorrelation = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)ij}`
 
@@ -297,7 +299,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getClusterProminenceFeatureValue(self):
     r"""
-    Using coefficients i, j, ux, uy, calculate and return the mean Cluster Prominence.
+    Using coefficients :math:`\mu_x` and :math:`\mu_y`, calculate and return the mean Cluster Prominence.
 
     :math:`cluster\ prominence = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big( i+j-\mu_x(i)-\mu_y(j)\big)^4p(i,j)}`
 
@@ -314,7 +316,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getClusterShadeFeatureValue(self):
     r"""
-    Using coefficients i, j, ux, uy, calculate and return the mean Cluster Shade.
+    Using coefficients :math:`\mu_x` and :math:`\mu_y`, calculate and return the mean Cluster Shade.
 
     :math:`cluster\ shade = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(i+j-\mu_x(i)-\mu_y(j)\big)^3p(i,j)}`
 
@@ -330,7 +332,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getClusterTendencyFeatureValue(self):
     r"""
-    Using coefficients i, j, ux, uy, calculate and return the mean Cluster Tendency.
+    Using coefficients :math:`\mu_x` and :math:`\mu_y`, calculate and return the mean Cluster Tendency.
 
     :math:`cluster\ prominence = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(i+j-\mu_x(i)-\mu_y(j)\big)^2p(i,j)}`
 
@@ -345,7 +347,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getContrastFeatureValue(self):
     r"""
-    Using coefficients i, j, calculate and return the mean Contrast.
+    Using the squared difference between gray values of neighbouring paris, calculate and return the mean Contrast.
 
     :math:`contrast = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{(i-j)^2p(i,j)}`
 
@@ -360,7 +362,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getCorrelationFeatureValue(self):
     r"""
-    Using coefficients i, j, ux, uy, sigx, sigy, calculate and return the mean Correlation.
+    Using coefficients :math:`\mu_x`, :math:`\mu_y`, :math:`\sigma_x` and :math:`\sigma_y`, calculate and return the
+    mean Correlation.
 
     :math:`correlation = \frac{\sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)ij-\mu_x(i)\mu_y(j)}}{\sigma_x(i)\sigma_y(j)}`
 
@@ -383,7 +386,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getDifferenceAverageFeatureValue(self):
     r"""
-    Using coefficients pxMiny, kValuesDiff, calculate and return the mean Difference Average.
+    Using coefficient :math:`p_{x-y}`, calculate and return the mean Difference Average.
 
     :math:`Difference\ average = \displaystyle\sum^{N_g-1}_{k=0}{k\textbf{P}_{x-y}(k)}`
 
@@ -398,9 +401,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getDifferenceEntropyFeatureValue(self):
     r"""
-    Using coefficients pxSuby, eps, calculate and return the mean Difference Entropy.
+    Using coefficient :math:`p_{x-y}`, calculate and return the mean Difference Entropy.
 
-    :math:`difference\ entropy = \displaystyle\sum^{N_g-1}_{k=0}{p_{x-y}(k)\log_2\big(p_{x-y}(k)\big)}`
+    :math:`difference\ entropy = \displaystyle\sum^{N_g-1}_{k=0}{p_{x-y}(k)\log_2\big(p_{x-y}(k)+\epsilon\big)}`
 
     Difference Entropy is a measure of the randomness/variability
     in neighborhood intensity value differences.
@@ -412,7 +415,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getDifferenceVarianceFeatureValue(self):
     r"""
-    Using coefficients pxSuby, kValuesDiff, DifferenceAverage calculate and return the mean Difference Variance.
+    Using coefficients :math:`p_{x-y}` and DifferenceAverage (DA) calculate and return the mean Difference Variance.
 
     :math:`Difference\ variance = \displaystyle\sum^{N_g-1}_{k=0}{(1-DA)^2\textbf{P}_{x-y}(k)}`
 
@@ -427,12 +430,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getDissimilarityFeatureValue(self):
     r"""
-    Using coefficients i, j, calculate and return the mean Dissimilarity.
+    Calculate and return the mean Dissimilarity.
 
     :math:`dissimilarity = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{|i-j|p(i,j)}`
 
-    Dissimilarity is a measure of local intensity variation. A larger
-    value correlates with a greater disparity in intensity values
+    Dissimilarity is a measure of local intensity variation defined as the mean absolute difference between the
+    neighbouring pairs. A larger value correlates with a greater disparity in intensity values
     among neighboring voxels.
     """
     i = self.coefficients['i']
@@ -442,7 +445,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getEnergyFeatureValue(self):
     r"""
-    Using P_glcm, calculate and return the mean Energy.
+    Calculate and return the mean Energy.
 
     :math:`energy = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(p(i,j)\big)^2}`
 
@@ -456,7 +459,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getEntropyFeatureValue(self):
     r"""
-    Using coefficients eps, calculate and return the mean Entropy.
+    Calculate and return the mean Entropy.
 
     :math:`entropy = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)\log_2\big(p(i,j)+\epsilon\big)}`
 
@@ -467,7 +470,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getHomogeneity1FeatureValue(self):
     r"""
-    Using coefficients i, j, calculate and return the mean Homogeneity 1.
+    Calculate and return the mean Homogeneity 1.
 
     :math:`homogeneity\ 1 = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\frac{p(i,j)}{1+|i-j|}}`
 
@@ -482,7 +485,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getHomogeneity2FeatureValue(self):
     r"""
-    Using coefficients i, j, calculate and return the mean Homogeneity 2.
+    Calculate and return the mean Homogeneity 2.
 
     :math:`homogeneity\ 2 = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\frac{p(i,j)}{1+|i-j|^2}}`
 
@@ -496,7 +499,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getImc1FeatureValue(self):
     r"""
-    Using coefficients HX, HY, HXY, HXY1, calculate and return the mean Informal Measure of Correlation 1.
+    Using coefficients :math:`HX`, :math:`HY`, :math:`HXY` and :math:`HXY1`, calculate and return the mean Informal
+    Measure of Correlation 1.
 
     :math:`IMC\ 1 = \frac{HXY-HXY1}{\max\{HX,HY\}}`
     """
@@ -509,7 +513,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getImc2FeatureValue(self):
     r"""
-    Using coefficients HXY, HXY2, calculate and return the mean Informal Measure of Correlation 2.
+    Using coefficients :math:`HXY` and :math:`HXY2`, calculate and return the mean Informal Measure of Correlation 2.
 
     :math:`IMC\ 2 = \sqrt{1-e^{-2(HXY2-HXY)}}`
     """
@@ -522,7 +526,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getIdmFeatureValue(self):
     r"""
-    Using coefficients i, j, calculate and return the mean Inverse Difference Moment.
+    Calculate and return the mean Inverse Difference Moment.
 
     :math:`IDM = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{\textbf{P}(i,j)}{1+|i-j|^2} }`
 
@@ -537,7 +541,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getIdmnFeatureValue(self):
     r"""
-    Using coefficients i, j, Ng, calculate and return the mean Inverse Difference Moment Normalized.
+    Calculate and return the mean Inverse Difference Moment Normalized.
 
     :math:`IDMN = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{p(i,j)}{1+\left(\frac{|i-j|^2}{N_g^2}\right)} }`
 
@@ -556,7 +560,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getIdFeatureValue(self):
     r"""
-    Using coefficients i, j, Ng, calculate and return the mean Inverse Difference.
+    Calculate and return the mean Inverse Difference.
 
     :math:`ID = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{\textbf{P}(i,j)}{1+|i-j|} }`
 
@@ -570,7 +574,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getIdnFeatureValue(self):
     r"""
-    Using coefficients i, j, Ng, calculate and return the mean Inverse Difference Normalized.
+    Calculate and return the mean Inverse Difference Normalized.
 
     :math:`IDN = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{p(i,j)}{1+\left(\frac{|i-j|}{N_g}\right)} }`
 
@@ -586,7 +590,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     return (idn.mean())
 
   def getInverseVarianceFeatureValue(self):
-    r"""Using the i, j coeffients, calculate and return the mean Inverse Variance.
+    r"""
+    Calculate and return the mean Inverse Variance.
 
     :math:`inverse\ variance = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\frac{p(i,j)}{|i-j|^2}}, i \neq j`
     """
@@ -598,7 +603,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getMaximumProbabilityFeatureValue(self):
     r"""
-    Using P_glcm, calculate and return the mean Maximum Probability.
+    Calculate and return the mean Maximum Probability.
 
     :math:`maximum\ probability = \max\big(p(i,j)\big)`
 
@@ -610,7 +615,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumAverageFeatureValue(self):
     r"""
-    Using coefficients pxAddy, kValuesSum, calculate and return the mean Sum Average.
+    Coefficient :math:`p_{x+y}`, calculate and return the mean Sum Average.
 
     :math:`sum\ average = \displaystyle\sum^{2N_g}_{k=2}{p_{x+y}(k)k}`
 
@@ -625,7 +630,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumEntropyFeatureValue(self):
     r"""
-    Using coefficients pxAddy, eps, calculate and return the mean Sum Entropy.
+    Using coefficient :math:`p_{x+y}`, calculate and return the mean Sum Entropy.
 
     :math:`sum\ entropy = \displaystyle\sum^{2N_g}_{k=2}{p_{x+y}(k)\log_2\big(p_{x+y}(k)+\epsilon\big)}`
 
@@ -638,7 +643,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumVarianceFeatureValue(self):
     r"""
-    Using coefficients pxAddy, kValuesSum, SumEntropy calculate and return the mean Sum Variance.
+    Using coefficients :math:`p_{x+y}` and SumEntropy (SE) calculate and return the mean Sum Variance.
 
     :math:`sum\ variance = \displaystyle\sum^{2N_g}_{k=2}{(k-SE)^2p_{x+y}(k)}`
 
@@ -654,11 +659,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumVariance2FeatureValue(self):
     r"""
-    Using coefficients pxAddy, kValuesSum, SumAvarage calculate and return the mean Sum Variance.
-
+    Using coefficients :math:`p_{x+y}` and SumAvarage (SA) calculate and return the mean Sum Variance 2.
     :math:`sum\ variance\ 2 = \displaystyle\sum^{2N_g}_{k=2}{(k-SA)^2p_{x+y}(k)}`
 
-    Sum Variance is a measure of heterogeneity that places higher weights on
+    Sum Variance 2 is a measure of heterogeneity that places higher weights on
     neighboring intensity level pairs that deviate more from the mean.
 
     This formula differs from SumVariance in that instead of subtracting the SumEntropy from the intensity,
@@ -672,7 +676,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumSquaresFeatureValue(self):
     r"""
-    Using coefficients i and ux, calculate and return the mean Sum of Squares (also known as Variance).
+    Using coefficients :math:`i` and math:`\mu_x`, calculate and return the mean Sum of Squares (also known as
+    Variance) of the :math:`i` distribution.
 
     :math:`sum\ squares = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{(i-\mu_x)^2p(i,j)}`
 
@@ -680,7 +685,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     about the mean intensity level in the GLCM.
 
     N.B. This formula represents the variance of the distribution of :math:`i` and is independent from the distribution
-    of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where VAR(i) to be equal to VAR(j).
+    of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where VAR(i) is equal to VAR(j).
     """
     i = self.coefficients['i']
     ux = self.coefficients['ux']

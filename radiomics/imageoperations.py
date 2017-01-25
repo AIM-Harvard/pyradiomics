@@ -251,13 +251,13 @@ def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None,
 def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
   matrix = sitk.GetArrayFromImage(inputImage)
   matrix = numpy.asarray(matrix)
-  data = matrix.copy()
-  if data.ndim != 3:
+  if matrix.ndim != 3:
     raise ValueError("Expected 3D data array")
 
   original_shape = matrix.shape
   adjusted_shape = tuple([dim + 1 if dim % 2 != 0 else dim for dim in original_shape])
-  data = numpy.resize(data, adjusted_shape)
+  data = matrix.copy()
+  data.resize(adjusted_shape, refcheck=False)
 
   if not isinstance(wavelet, pywt.Wavelet):
     wavelet = pywt.Wavelet(wavelet)
@@ -309,7 +309,7 @@ def swt3(inputImage, wavelet="coif1", level=1, start_level=0):
 def _decompose_i(data, wavelet):
   # process in i:
   H, L = [], []
-  i_arrays = chain.from_iterable(numpy.transpose(data, (0, 1, 2)))
+  i_arrays = chain.from_iterable(data)
   for i_array in i_arrays:
     cA, cD = pywt.swt(i_array, wavelet, level=1, start_level=0)[0]
     H.append(cD)
@@ -321,27 +321,28 @@ def _decompose_i(data, wavelet):
 
 def _decompose_j(data, wavelet):
   # process in j:
+  s = data.shape
   H, L = [], []
-  j_arrays = chain.from_iterable(numpy.transpose(data, (0, 1, 2)))
+  j_arrays = chain.from_iterable(numpy.transpose(data, (0, 2, 1)))
   for j_array in j_arrays:
     cA, cD = pywt.swt(j_array, wavelet, level=1, start_level=0)[0]
     H.append(cD)
     L.append(cA)
-  H = numpy.asarray([slice.T for slice in numpy.split(numpy.vstack(H), data.shape[0])])
-  L = numpy.asarray([slice.T for slice in numpy.split(numpy.vstack(L), data.shape[0])])
+  H = numpy.hstack(H).reshape((s[0], s[2], s[1])).transpose((0, 2, 1))
+  L = numpy.hstack(L).reshape((s[0], s[2], s[1])).transpose((0, 2, 1))
   return H, L
 
 
 def _decompose_k(data, wavelet):
   # process in k:
   H, L = [], []
-  k_arrays = chain.from_iterable(numpy.transpose(data, (1, 2, 0)))
+  k_arrays = chain.from_iterable(numpy.transpose(data, (2, 1, 0)))
   for k_array in k_arrays:
     cA, cD = pywt.swt(k_array, wavelet, level=1, start_level=0)[0]
     H.append(cD)
     L.append(cA)
-  H = numpy.dstack(H).reshape(data.shape)
-  L = numpy.dstack(L).reshape(data.shape)
+  H = numpy.asarray([slice for slice in numpy.split(numpy.vstack(H), data.shape[2])]).T
+  L = numpy.asarray([slice for slice in numpy.split(numpy.vstack(L), data.shape[2])]).T
   return H, L
 
 

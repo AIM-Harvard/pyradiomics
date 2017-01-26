@@ -82,7 +82,7 @@ class RadiomicsFeaturesExtractor:
                      'verbose': False}
       self.kwargs.update(kwargs)
 
-      self.inputImages = {'original': {}}
+      self.inputImages = {'Original': {}}
 
       self.enabledFeatures = {}
       for featureClassName in self.getFeatureClassNames():
@@ -147,7 +147,7 @@ class RadiomicsFeaturesExtractor:
     kwargs = params.get('setting', {})
 
     if len(inputImages) == 0:
-      self.inputImages = {'original': {}}
+      self.inputImages = {'Original': {}}
     else:
       self.inputImages = inputImages
 

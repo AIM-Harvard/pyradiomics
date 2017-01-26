@@ -22,7 +22,7 @@ parser.add_argument('--format', '-f', choices=['txt', 'csv', 'json'], default='t
                          'Default is "txt": one feature per line in format "name:value". For "csv": one row of feature '
                          'names, followed by one row of feature values. For "json": Features are written in a JSON '
                          'format dictionary "{name:value}"')
-parser.add_argument('--param', '-p', metavar='FILE', nargs=1, type=argparse.FileType('r'), default=None,
+parser.add_argument('--param', '-p', metavar='FILE', nargs=1, type=str, default=None,
                     help='Parameter file containing the settings to be used in extraction')
 parser.add_argument('--label', '-l', metavar='N', nargs=1, default=None, type=int,
                     help='Value of label in mask to use for feature extraction')

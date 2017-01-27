@@ -20,7 +20,7 @@ parser.add_argument('--format', '-f', choices=['csv', 'json'], default='csv', he
                     'Default is "csv": one row of feature names, followed by one row of feature values for each '
                     'image-mask combination. For "json": Features are written in a JSON format dictionary '
                     '"{name:value}", one line per image-mask combination')
-parser.add_argument('--param', '-p', metavar='FILE', nargs=1, type=argparse.FileType('r'), default=None,
+parser.add_argument('--param', '-p', metavar='FILE', nargs=1, type=str, default=None,
                     help='Parameter file containing the settings to be used in extraction')
 parser.add_argument('--label', '-l', metavar='N', nargs=1, default=None, type=int,
                     help='Value of label in mask to use for feature extraction')

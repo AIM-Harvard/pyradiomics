@@ -53,6 +53,14 @@ To install this package run the following commands from the root directory:
     python -m pip install -r requirements.txt
     python setup.py install
 
+### Usage
+
+PyRadiomics can be easily used in a Python script through the `featureextractor`
+module. Furthermore, PyRadiomics provides two commandline scripts, `pyradiomics`
+and `pyradiomicsbatch`, for single image extraction and batchprocessing, respectively.
+Finally, a convenient front-end interface is provided as the 'Radiomics'
+extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRadiomics).
+
 ### Citation 
 If you publish any work which uses this package, please cite the following publication:
 

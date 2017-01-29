@@ -87,6 +87,13 @@ Interactive Use
 
 * See the :ref:`feature extractor class<radiomics-featureextractor-label>` for more information on using this core class.
 
+------------------------
+PyRadiomics in 3D Slicer
+------------------------
+
+A convenient front-end interface is provided as the 'Radiomics' extension for 3D Slicer. It is available
+`here <https://github.com/Radiomics/SlicerRadiomics>`_.
+
 ------------------------------
 Using feature classes directly
 ------------------------------

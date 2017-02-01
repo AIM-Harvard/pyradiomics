@@ -239,7 +239,7 @@ def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None,
   return tif.Execute(inputImage)
 
 
-def applyFilterOriginal(inputImage, **kwargs):
+def getOriginalImage(inputImage, **kwargs):
   """
   This function does not apply any filter, but returns the original image. This function is needed to
   dyanmically expose the original image as a valid input image.
@@ -249,7 +249,7 @@ def applyFilterOriginal(inputImage, **kwargs):
   yield inputImage, "original", kwargs
 
 
-def applyFilterLoG(inputImage, **kwargs):
+def getLoGImage(inputImage, **kwargs):
   """
   Apply Laplacian of Gaussian filter to input image and compute signature for each filtered image.
 
@@ -299,7 +299,7 @@ def applyFilterLoG(inputImage, **kwargs):
       logger.warning('applyLoG: sigma must be greater than 0.0: %g', sigma)
 
 
-def applyFilterWavelet(inputImage, **kwargs):
+def getWaveletImage(inputImage, **kwargs):
   """
       Apply wavelet filter to image and compute signature for each filtered image.
 
@@ -446,7 +446,7 @@ def _decompose_k(data, wavelet):
   return H, L
 
 
-def applyFilterSquare(inputImage, **kwargs):
+def getSquareImage(inputImage, **kwargs):
   r"""
   Computes the square of the image intensities.
 
@@ -468,7 +468,7 @@ def applyFilterSquare(inputImage, **kwargs):
   yield im, "square", kwargs
 
 
-def applyFilterSquareRoot(inputImage, **kwargs):
+def getSquareRootImage(inputImage, **kwargs):
   r"""
   Computes the square root of the absolute value of image intensities.
 
@@ -493,7 +493,7 @@ def applyFilterSquareRoot(inputImage, **kwargs):
   yield im, "squareroot", kwargs
 
 
-def applyFilterLogarithm(inputImage, **kwargs):
+def getLogarithmImage(inputImage, **kwargs):
   r"""
   Computes the logarithm of the absolute value of the original image + 1.
 
@@ -519,7 +519,7 @@ def applyFilterLogarithm(inputImage, **kwargs):
   yield im, "logarithm", kwargs
 
 
-def applyFilterExponential(inputImage, **kwargs):
+def getExponentialImage(inputImage, **kwargs):
   r"""
   Computes the exponential of the original image.
 

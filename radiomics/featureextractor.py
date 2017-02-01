@@ -90,8 +90,11 @@ class RadiomicsFeaturesExtractor:
 
   def addProvenance(self, provenance_on=True):
     """
-    Enable or disable reporting of settings used for calculated filters.
-    By default, settings used are added to the dictionary of calculated features as {"settings_<filter>":<settings>}
+    Enable or disable reporting of additional information on the extraction. This information includes toolbox version,
+    enabled input images and applied settings. Furthermore, additional information on the image and region of interest
+    (ROI) is also provided, including original image spacing, total number of voxels in the ROI and total number of
+    fully connected volumes in the ROI.
+
     To disable this, call ``addProvenance(False)``
     """
     self.provenance_on = provenance_on
@@ -184,16 +187,16 @@ class RadiomicsFeaturesExtractor:
     Enable or disable specified input image. If enabling input image, optional custom settings can be specified in
     customArgs.
 
-    Current possible filters are:
+    Current possible input images are:
 
     - Original: No filter applied
     - Wavelet: Wavelet filtering, yields 8 decompositions per level (all possible combinations of applying either
       a High or a Low pass filter in each of the three dimensions.
-      See also :py:func:`~radiomics.imageoperations.applyFilterWavelet`
+      See also :py:func:`~radiomics.imageoperations.getWaveletImage`
     - LoG: Laplacian of Gaussian filter, edge enhancement filter. Emphasizes areas of gray level change, where sigma
       defines how coarse the emphasised texture should be. A low sigma emphasis on fine textures (change over a
       short distance), where a high sigma value emphasises coarse textures (gray level change over a large distance).
-      See also :py:func:`~radiomics.imageoperations.applyFilterLoG`
+      See also :py:func:`~radiomics.imageoperations.getLoGImage`
     - Square: Takes the square of the image intensities and linearly scales them back to the original range.
       Negative values in the original image will be made negative again after application of filter.
     - SquareRoot: Takes the square root of the absolute image intensities and scales them back to original range.
@@ -205,10 +208,10 @@ class RadiomicsFeaturesExtractor:
 
     For the mathmetical formulas of square, squareroot, logarithm and exponential, see their respective functions in
     :ref:`imageoperations<radiomics-imageoperations-label>`
-    (:py:func:`~radiomics.imageoperations.applyFilterSquare`,
-    :py:func:`~radiomics.imageoperations.applyFilterSquareRoot`,
-    :py:func:`~radiomics.imageoperations.applyFilterLogarithm` and
-    :py:func:`~radiomics.imageoperations.applyFilterExponential`,
+    (:py:func:`~radiomics.imageoperations.getSquareImage`,
+    :py:func:`~radiomics.imageoperations.getSquareRootImage`,
+    :py:func:`~radiomics.imageoperations.getLogarithmImage` and
+    :py:func:`~radiomics.imageoperations.getExponentialImage`,
     respectively).
     """
     if enabled:
@@ -275,9 +278,9 @@ class RadiomicsFeaturesExtractor:
     Compute radiomics signature for provide image and mask combination.
     First, image and mask are loaded and resampled if necessary. Second, if enabled, provenance information is
     calculated and stored as part of the result. Next, shape features are calculated on a cropped (no padding) version
-    of the original image. Then other featureclasses are calculated using all specified filters in inputImages. Images
-    are cropped to tumor mask (no padding) after application of filter and before being passed to the feature class.
-    Finally, the dictionary containing all calculated features is returned.
+    of the original image. Then other featureclasses are calculated using all specified input images in ``inputImages``.
+    Images are cropped to tumor mask (no padding) after application of any filter and before being passed to the feature
+    class. Finally, the dictionary containing all calculated features is returned.
 
     :param imageFilepath: SimpleITK Image, or string pointing to image file location
     :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
@@ -324,7 +327,7 @@ class RadiomicsFeaturesExtractor:
       args = self.kwargs.copy()
       args.update(customKwargs)
       self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
-      imageGenerators = chain(imageGenerators, eval('imageoperations.applyFilter%s(image, **args)' % (imageType)))
+      imageGenerators = chain(imageGenerators, eval('imageoperations.get%sImage(image, **args)' % (imageType)))
 
     # Calculate features for all (filtered) images in the generator
     for inputImage, inputImageName, inputKwargs in imageGenerators:
@@ -421,11 +424,11 @@ class RadiomicsFeaturesExtractor:
   def getInputImageTypes(cls):
     """
     Returns a list of possible input image types. This function finds the image types dynamically by matching the
-    signature ("applyFilter<filterName>") against functions defined in :ref:`imageoperations
-    <radiomics-imageoperations-label>`. Returns a list containing available filter names (<filterName> part of the
+    signature ("get<inputImage>Image") against functions defined in :ref:`imageoperations
+    <radiomics-imageoperations-label>`. Returns a list containing available input image names (<inputImage> part of the
     corresponding function name).
     """
-    return [member[11:] for member in dir(imageoperations) if member.startswith('applyFilter')]
+    return [member[3:-5] for member in dir(imageoperations) if member.startswith('get') and member.endswith("Image")]
 
   @classmethod
   def getFeatureClasses(cls):

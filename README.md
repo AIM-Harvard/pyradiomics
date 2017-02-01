@@ -31,12 +31,6 @@ Aside from the feature classes, there are also some built-in optional filters:
 - Logarithm
 - Exponential
 
-Most of the provided features and filters are based on methods described in the following publications:
-
-HJWL Aerts, ER Velazquez, RTH Leijenaar, et al., "Decoding tumour phenotype by noninvasive imaging using a quantitative radiomics approach", vol. 5, Nat Communication, 2014. Available [here](http://www.nature.com/ncomms/2014/140603/ncomms5006/full/ncomms5006.html).
-
-Specifically, the formulation of the individual feature calculation is covered in this [supplement](http://www.nature.com/ncomms/2014/140603/ncomms5006/extref/ncomms5006-s1.pdf)
-
 ### Supporting reproducible extraction
 Aside from calculating features, the pyradiomics package includes provenance information in the
 output. This information contains information on used image and mask, as well as applied settings
@@ -58,6 +52,14 @@ To install this package run the following commands from the root directory:
 
     python -m pip install -r requirements.txt
     python setup.py install
+
+### Usage
+
+PyRadiomics can be easily used in a Python script through the `featureextractor`
+module. Furthermore, PyRadiomics provides two commandline scripts, `pyradiomics`
+and `pyradiomicsbatch`, for single image extraction and batchprocessing, respectively.
+Finally, a convenient front-end interface is provided as the 'Radiomics'
+extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRadiomics).
 
 ### Citation 
 If you publish any work which uses this package, please cite the following publication:
@@ -102,3 +104,14 @@ This package is covered by the [3D Slicer License](LICENSE.txt).
 <sup>4</sup>GROW-School for Oncology and Developmental Biology, Maastricht University Medical Center, Maastricht, The Netherlands,
 <sup>5</sup>Kitware,
 <sup>6</sup>Isomics
+
+### General references
+
+- HJWL Aerts, ER Velazquez, RTH Leijenaar, et al., "Decoding tumour phenotype by noninvasive imaging using a 
+  quantitative radiomics approach", vol. 5, Nat Communication, 2014. 
+  Available [here](http://www.nature.com/ncomms/2014/140603/ncomms5006/full/ncomms5006.html).
+  Specifically, the formulation of the individual feature calculation is covered in this 
+  [supplement](http://www.nature.com/ncomms/2014/140603/ncomms5006/extref/ncomms5006-s1.pdf).
+- Zwanenburg A, Leger S, Vallières M, Löck S., "Image biomarker standardisation initiative - feature definitions", 
+  arXiv:161207003. 2016. Available [here](http://arxiv.org/abs/1612.07003).
+

@@ -64,11 +64,11 @@ mapping:
   inputImage:
     type: map
     mapping:
-      # possible image filters, it's value be adictionary that follows the rules in setting
-      original: *settings
-      log: *settings
-      wavelet: *settings
-      square: *settings
-      squareroot: *settings
-      logarithm: *settings
-      exponential: *settings
+      # possible image filters, it's value is a dictionary that follows the rules in setting
+      Original: *settings
+      LoG: *settings
+      Wavelet: *settings
+      Square: *settings
+      SquareRoot: *settings
+      Logarithm: *settings
+      Exponential: *settings

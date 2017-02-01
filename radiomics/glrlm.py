@@ -65,7 +65,14 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   References
 
-  - Galloway MM. 1975. Texture analysis using gray level run lengths. Computer Graphics and Image Processing 4:172-179.
+  - Galloway MM. 1975. Texture analysis using gray level run lengths. Computer Graphics and Image Processing,
+    4(2):172-179.
+
+  - Chu A., Sehgal C.M., Greenleaf J. F. 1990. Use of gray value distribution of run length for texture analysis.
+    Pattern Recognition Letters, 11(6):415-419
+
+  - Xu D., Kurani A., Furst J., Raicu D. 2004. Run-Length Encoding For Volumetric Texture. International Conference on
+    Visualization, Imaging and Image Processing (VIIP), p. 452-458
 
   - Tang X. 1998. Texture information in run-length matrices. IEEE Transactions on Image Processing 7(11):1602-1609.
   """
@@ -350,10 +357,12 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     return rv.mean()
 
   def getRunEntropyFeatureValue(self):
-    r"""1
+    r"""
     Calculate and return the Run Entropy (RE) value.
 
     :math:`RE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)\log_{2}(p(i,j|\theta)+\epsilon)}`
+
+    Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
     """
     eps = numpy.spacing(1)
     p_glrlm = self.P_glrlm / self.coefficients['sumP_glrlm']

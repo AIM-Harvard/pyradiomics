@@ -46,6 +46,8 @@ Alternatively, you can generate the documentation by checking out the master bra
 
 The documentation can then be viewed in a browser by opening `PACKAGE_ROOT\build\sphinx\html\index.html`. 
 
+Furthermore, an instruction video is available [here](http://radiomics.io/pyradiomics.html).
+
 ### Installation
 
 To install this package run the following commands from the root directory:

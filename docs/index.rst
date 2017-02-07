@@ -118,6 +118,15 @@ Developers
 :sup:`5`\ Kitware,
 :sup:`6`\ Isomics
 
+Contact
+-------
+We are happy to help you with any questions. Please contact us by sending an email to
+`info@radiomics.io <mailto:info@radiomics.io>`_.
+
+We'd welcome your contributions to PyRadiomics. Please read the
+`contributing guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_ on how to contribute
+to PyRadiomics.
+
 General references
 ------------------
 * HJWL Aerts, ER Velazquez, RTH Leijenaar, et al., "Decoding tumour phenotype by noninvasive imaging using a

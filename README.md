@@ -82,7 +82,7 @@ Joost J.M. van Griethuysen et al, “Computational Radiomics System to Decode th
 See also the [requirements file](requirements.txt).
 
 ### WIP
- - Implementation of this package as an extension to [3D Slicer](https://github.com/Slicer/Slicer)
+ - Implementation of this package as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org)
  - Enhancing performance by implementation of C for computationally expensive code
 
 ### License
@@ -106,6 +106,14 @@ This package is covered by the [3D Slicer License](LICENSE.txt).
 <sup>4</sup>GROW-School for Oncology and Developmental Biology, Maastricht University Medical Center, Maastricht, The Netherlands,
 <sup>5</sup>Kitware,
 <sup>6</sup>Isomics
+
+### Contact
+
+We are happy to help you with any questions. Please contact us by sending an email to 
+[info@radiomics.io](mailto:info@radiomics.io).
+
+We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.md) on how to contribute
+to PyRadiomics.
 
 ### General references
 

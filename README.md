@@ -109,19 +109,8 @@ This package is covered by the [3D Slicer License](LICENSE.txt).
 
 ### Contact
 
-We are happy to help you with any questions. Please contact us by sending an email to 
-[info@radiomics.io](mailto:info@radiomics.io).
+We are happy to help you with any questions. Please contact us on the [pyradiomics email list](https://groups.google.com/forum/#!forum/pyradiomics).
 
 We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.md) on how to contribute
 to PyRadiomics.
-
-### General references
-
-- HJWL Aerts, ER Velazquez, RTH Leijenaar, et al., "Decoding tumour phenotype by noninvasive imaging using a 
-  quantitative radiomics approach", vol. 5, Nat Communication, 2014. 
-  Available [here](http://www.nature.com/ncomms/2014/140603/ncomms5006/full/ncomms5006.html).
-  Specifically, the formulation of the individual feature calculation is covered in this 
-  [supplement](http://www.nature.com/ncomms/2014/140603/ncomms5006/extref/ncomms5006-s1.pdf).
-- Zwanenburg A, Leger S, Vallières M, Löck S., "Image biomarker standardisation initiative - feature definitions", 
-  arXiv:161207003. 2016. Available [here](http://arxiv.org/abs/1612.07003).
 

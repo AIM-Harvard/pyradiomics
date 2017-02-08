@@ -118,12 +118,10 @@ Developers
 :sup:`5`\ Kitware,
 :sup:`6`\ Isomics
 
-General references
-------------------
-* HJWL Aerts, ER Velazquez, RTH Leijenaar, et al., "Decoding tumour phenotype by noninvasive imaging using a
-  quantitative radiomics approach", vol. 5, Nat Communication, 2014.
-  Available `here <http://www.nature.com/ncomms/2014/140603/ncomms5006/full/ncomms5006.html>`_.
-  Specifically, the formulation of the individual feature calculation is covered in this
-  `supplement <http://www.nature.com/ncomms/2014/140603/ncomms5006/extref/ncomms5006-s1.pdf>`_.
-* Zwanenburg A, Leger S, Vallières M, Löck S., "Image biomarker standardisation initiative - feature definitions",
-  arXiv:161207003. 2016. Available `here <http://arxiv.org/abs/1612.07003>`_.
+Contact
+-------
+We are happy to help you with any questions. Please contact us on the `pyradiomics email list <https://groups.google.com/forum/#!forum/pyradiomics>`_.
+
+We'd welcome your contributions to PyRadiomics. Please read the
+`contributing guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_ on how to contribute
+to PyRadiomics.

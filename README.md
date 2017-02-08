@@ -46,6 +46,8 @@ Alternatively, you can generate the documentation by checking out the master bra
 
 The documentation can then be viewed in a browser by opening `PACKAGE_ROOT\build\sphinx\html\index.html`. 
 
+Furthermore, an instruction video is available [here](http://radiomics.io/pyradiomics.html).
+
 ### Installation
 
 To install this package run the following commands from the root directory:
@@ -80,7 +82,7 @@ Joost J.M. van Griethuysen et al, “Computational Radiomics System to Decode th
 See also the [requirements file](requirements.txt).
 
 ### WIP
- - Implementation of this package as an extension to [3D Slicer](https://github.com/Slicer/Slicer)
+ - Implementation of this package as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org)
  - Enhancing performance by implementation of C for computationally expensive code
 
 ### License
@@ -105,13 +107,10 @@ This package is covered by the [3D Slicer License](LICENSE.txt).
 <sup>5</sup>Kitware,
 <sup>6</sup>Isomics
 
-### General references
+### Contact
 
-- HJWL Aerts, ER Velazquez, RTH Leijenaar, et al., "Decoding tumour phenotype by noninvasive imaging using a 
-  quantitative radiomics approach", vol. 5, Nat Communication, 2014. 
-  Available [here](http://www.nature.com/ncomms/2014/140603/ncomms5006/full/ncomms5006.html).
-  Specifically, the formulation of the individual feature calculation is covered in this 
-  [supplement](http://www.nature.com/ncomms/2014/140603/ncomms5006/extref/ncomms5006-s1.pdf).
-- Zwanenburg A, Leger S, Vallières M, Löck S., "Image biomarker standardisation initiative - feature definitions", 
-  arXiv:161207003. 2016. Available [here](http://arxiv.org/abs/1612.07003).
+We are happy to help you with any questions. Please contact us on the [pyradiomics email list](https://groups.google.com/forum/#!forum/pyradiomics).
+
+We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.md) on how to contribute
+to PyRadiomics.
 

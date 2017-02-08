@@ -2,15 +2,55 @@
 Usage
 =====
 
+-----------------
+Instruction Video
+-----------------
+
+.. raw:: html
+
+        <div data-video = "ZF1rTtRW3eQ"
+        data-startseconds = "221"
+        data-endseconds = "538"
+        data-height = "315"
+        data-width = "560"
+        id = "youtube-player">
+        </div>
+
+        <script src="https://www.youtube.com/iframe_api"></script>
+        <script type="text/javascript">
+          function onYouTubeIframeAPIReady() {
+            var ctrlq = document.getElementById("youtube-player");
+            var player = new YT.Player('youtube-player', {
+              height: ctrlq.dataset.height,
+              width: ctrlq.dataset.width,
+              events: {
+                'onReady': function(e) {
+                  e.target.cueVideoById({
+                    videoId: ctrlq.dataset.video,
+                    startSeconds: ctrlq.dataset.startseconds,
+                    endSeconds: ctrlq.dataset.endseconds
+                  });
+                }
+              }
+            });
+          }
+        </script>
+
 -------
 Example
 -------
 
 * PyRadiomics example code and data is available in the `Github repository <https://github.com/Radiomics/pyradiomics>`_
 
-* The sample sample data is provided in ``pyradiomics/data``.
+* The sample sample data is provided in ``pyradiomics/data``
 
-* Use jupyter to run the helloRadiomics example, located in ``pyradiomics/bin/Notebooks``.
+* Use `jupyter <http://jupyter.org/>`_ to run the helloRadiomics example, located in ``pyradiomics/bin/Notebooks``
+
+* Jupyter can also be used to run the example notebook as shown in the instruction video
+
+  * The example notebook can be found in ``pyradiomics/bin/Notebooks``
+
+  * The parameter file used in the instruction video is available in ``pyradiomics/bin``
 
 * If jupyter is not installed, run the python script alternative (``pyradiomics/bin/helloRadiomics.py``):
 

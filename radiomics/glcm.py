@@ -1,6 +1,6 @@
 import numpy
 import collections
-from radiomics import base, imageoperations
+from radiomics import base, imageoperations, safe_xrange
 import SimpleITK as sitk
 from tqdm import trange
 
@@ -147,7 +147,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     if self.verbose: bar = trange(Ng, desc='calculate GLCM')
 
     # iterate over gray levels for center voxel
-    for i in xrange(1, Ng + 1):
+    for i in safe_xrange(1, Ng + 1):
       # give some progress
       if self.verbose: bar.update()
 
@@ -155,7 +155,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       i_indices = numpy.where(self.matrix == i)
 
       # iterate over gray levels for neighbouring voxel
-      for j in xrange(1, Ng + 1):
+      for j in safe_xrange(1, Ng + 1):
         # get the indices to all voxels which have the current gray level j
         j_indices = set(zip(*numpy.where(self.matrix == j)))
 

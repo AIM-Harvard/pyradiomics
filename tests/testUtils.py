@@ -7,7 +7,7 @@ import logging
 import math
 import numpy
 from nose_parameterized import parameterized
-from radiomics import imageoperations, in_py3
+from radiomics import imageoperations, in_py3, safe_cmp
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func
 logger = logging.getLogger('testUtils')
@@ -105,7 +105,7 @@ class RadiomicsTestUtils:
       self._featureClassName = className
 
       # Check if test settings have changed
-      if cmp(self._kwargs, self.getBaselineDict(className, testCase)) != 0:
+      if safe_cmp(self._kwargs, self.getBaselineDict(className, testCase)) != 0:
         self._kwargs = self.getBaselineDict(className, testCase)
         self._testCase = None  # forces image to be reloaded (as settings have changed)
 
@@ -247,6 +247,9 @@ class RadiomicsTestUtils:
     # get the headers from the first row
     header = sorted(data[list(data.keys())[0]].keys())
     header = ['testCase'] + header
+    if in_py3:
+      # since csvWriter only supports bytes not str
+      header = [c_col.encode('ascii') for c_col in header]
     csvFileWriter.writerow(header)
     for testCase in sorted(data.keys()):
       thisCase = data[testCase]
@@ -254,6 +257,9 @@ class RadiomicsTestUtils:
       row = []
       for h in header:
         row = row + [thisCase[h]]
+      if in_py3:
+        # since csvWriter only supports bytes not str
+        row = [c_col.encode('ascii') for c_col in row]
       csvFileWriter.writerow(row)
     csvFile.close()
     self._logger.info('Wrote to file %s', fileName)

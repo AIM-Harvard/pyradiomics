@@ -319,7 +319,7 @@ class RadiomicsFeaturesExtractor:
 
       if self.kwargs['verbose']: print("\t\tComputing shape")
       shapeClass.calculateFeatures()
-      for (featureName, featureValue) in shapeClass.featureValues.iteritems():
+      for (featureName, featureValue) in shapeClass.featureValues.items():
         newFeatureName = "original_shape_%s" % (featureName)
         featureVector[newFeatureName] = featureValue
 
@@ -385,7 +385,7 @@ class RadiomicsFeaturesExtractor:
     """
     provenanceVector = collections.OrderedDict()
     generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.kwargs, self.inputImages)
-    for k, v in generalinfoClass.execute().iteritems():
+    for k, v in generalinfoClass.execute().items():
       provenanceVector['general_info_%s' % (k)] = v
     return provenanceVector
 
@@ -416,7 +416,7 @@ class RadiomicsFeaturesExtractor:
 
         if self.kwargs['verbose']: print("\t\tComputing %s" % (featureClassName))
         featureClass.calculateFeatures()
-        for (featureName, featureValue) in featureClass.featureValues.iteritems():
+        for (featureName, featureValue) in featureClass.featureValues.items():
           newFeatureName = "%s_%s_%s" % (inputImageName, featureClassName, featureName)
           featureVector[newFeatureName] = featureValue
 

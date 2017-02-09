@@ -7,10 +7,12 @@ in_py3 = sys.version_info[0] > 2
 
 if in_py3:
   c_str_type = str
-  safe_xrange = lambda x: iter(range(x))
+  safe_xrange = lambda *x,**kwargs: iter(range(*x, **kwargs))
+  safe_cmp = lambda a,b: (a>b)-(a<b)
 else:
   c_str_type = basestring
   safe_xrange = xrange
+  safe_cmp = cmp
 
 
 import logging

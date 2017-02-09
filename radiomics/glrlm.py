@@ -1,7 +1,7 @@
 from itertools import chain
 import numpy
 import SimpleITK as sitk
-from radiomics import base, imageoperations
+from radiomics import base, imageoperations, safe_xrange
 
 
 class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
@@ -119,14 +119,14 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         d2 = movingDims[1]
         direction = numpy.where(angle < 0, -1, 1)
         diags = chain.from_iterable([self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, d1, d2)
-                                     for a in xrange(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
+                                     for a in safe_xrange(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
 
       else:  # movement in 3 dimensions, e.g. angle (1, 1, 1)
         diags = []
         direction = numpy.where(angle < 0, -1, 1)
         for h in [self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, 0, 1)
-                  for a in xrange(-self.matrix.shape[0] + 1, self.matrix.shape[1])]:
-          diags.extend([h.diagonal(b, 0, 1) for b in xrange(-h.shape[0] + 1, h.shape[1])])
+                  for a in safe_xrange(-self.matrix.shape[0] + 1, self.matrix.shape[1])]:
+          diags.extend([h.diagonal(b, 0, 1) for b in safe_xrange(-h.shape[0] + 1, h.shape[1])])
 
       matrixDiagonals.append(filter(lambda diag: numpy.nonzero(diag != padVal)[0].size > 0, diags))
 

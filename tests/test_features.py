@@ -1,6 +1,7 @@
 # to run this test, from directory above:
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_features.py
+from __future__ import print_function, unicode_literals, division
 
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
 from testUtils import RadiomicsTestUtils, custom_name_func
@@ -52,7 +53,7 @@ class TestFeatures:
       logging.debug('Init %s' % (featureClassName))
       featureClass = extractor.featureClasses[featureClassName](testImage, testMask, **testUtils.getKwargs())
 
-    assert (featureClass != None)
+    assert featureClass != None
 
     featureClass.disableAllFeatures()
     featureClass.enableFeatureByName(featureName)
@@ -65,13 +66,13 @@ class TestFeatures:
 def teardown_module():
   print("")
   res = testUtils.getResults()
-  print 'Results:'
-  print res
+  print('Results:')
+  print(res)
   resultsFile = os.path.join(testUtils.getDataDir(), 'PyradiomicsFeatures.csv')
   testUtils.writeCSV(res, resultsFile)
   diff = testUtils.getDiffs()
-  print 'Differences from baseline:'
-  print diff
+  print('Differences from baseline:')
+  print(diff)
   diffFile = os.path.join(testUtils.getDataDir(), 'Baseline2PyradiomicsFeaturesDiff.csv')
   testUtils.writeCSV(diff, diffFile)
   logging.info(

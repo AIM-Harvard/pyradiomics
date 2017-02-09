@@ -3,13 +3,14 @@ import logging
 import numpy
 import SimpleITK as sitk
 import radiomics
+from radiomics import c_str_type
 
 
 class GeneralInfo():
   def __init__(self, imagePath, maskPath, resampledMask, kwargs, inputImages):
     self.logger = logging.getLogger(self.__module__)
 
-    if isinstance(imagePath, basestring):
+    if isinstance(imagePath, c_str_type):
       self.image = sitk.ReadImage(imagePath)
     elif isinstance(imagePath, sitk.Image):
       self.image = imagePath
@@ -17,7 +18,7 @@ class GeneralInfo():
       self.logger.warning('Error reading image Filepath or SimpleITK object')
       self.image = None
 
-    if isinstance(maskPath, basestring):
+    if isinstance(maskPath, c_str_type):
       self.mask = sitk.ReadImage(maskPath)
     elif isinstance(maskPath, sitk.Image):
       self.mask = maskPath

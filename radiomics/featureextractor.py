@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function, unicode_literals, division, absolute_import
 import os
 import logging
 import collections
@@ -9,7 +10,8 @@ import pkgutil
 import inspect
 import pykwalify.core
 import radiomics
-from radiomics import base, imageoperations, generalinfo
+from radiomics import base, imageoperations, generalinfo, c_str_type
+
 
 
 class RadiomicsFeaturesExtractor:
@@ -71,7 +73,7 @@ class RadiomicsFeaturesExtractor:
     self.inputImages = {}
     self.enabledFeatures = {}
 
-    if len(args) == 1 and isinstance(args[0], basestring):
+    if len(args) == 1 and isinstance(args[0], c_str_type):
       self.loadParams(args[0])
     else:
       # Set default settings and update with and changed settings contained in kwargs
@@ -315,7 +317,7 @@ class RadiomicsFeaturesExtractor:
         for feature in enabledFeatures:
           shapeClass.enableFeatureByName(feature)
 
-      if self.kwargs['verbose']: print "\t\tComputing shape"
+      if self.kwargs['verbose']: print("\t\tComputing shape")
       shapeClass.calculateFeatures()
       for (featureName, featureValue) in shapeClass.featureValues.iteritems():
         newFeatureName = "original_shape_%s" % (featureName)
@@ -323,7 +325,7 @@ class RadiomicsFeaturesExtractor:
 
     # Make generators for all enabled input image types
     imageGenerators = []
-    for imageType, customKwargs in self.inputImages.iteritems():
+    for imageType, customKwargs in self.inputImages.items():
       args = self.kwargs.copy()
       args.update(customKwargs)
       self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
@@ -348,22 +350,22 @@ class RadiomicsFeaturesExtractor:
     If resampling is enabled, both image and mask are resampled and cropped to the tumormask (with additional
     padding as specified in padDistance) after assignment of image and mask.
     """
-    if isinstance(ImageFilePath, basestring) and os.path.exists(ImageFilePath):
+    if isinstance(ImageFilePath, c_str_type) and os.path.exists(ImageFilePath):
       image = sitk.ReadImage(ImageFilePath)
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       image = ImageFilePath
     else:
       self.logger.warning('Error reading image Filepath or SimpleITK object')
-      if self.kwargs['verbose']: print "Error reading image Filepath or SimpleITK object"
+      if self.kwargs['verbose']: print("Error reading image Filepath or SimpleITK object")
       image = None
 
-    if isinstance(MaskFilePath, basestring) and os.path.exists(MaskFilePath):
+    if isinstance(MaskFilePath, c_str_type) and os.path.exists(MaskFilePath):
       mask = sitk.ReadImage(MaskFilePath)
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       mask = MaskFilePath
     else:
       self.logger.warning('Error reading mask Filepath or SimpleITK object')
-      if self.kwargs['verbose']: print "Error reading mask Filepath or SimpleITK object"
+      if self.kwargs['verbose']: print("Error reading mask Filepath or SimpleITK object")
       mask = None
 
     if self.kwargs['interpolator'] is not None and self.kwargs['resampledPixelSpacing'] is not None:
@@ -398,7 +400,7 @@ class RadiomicsFeaturesExtractor:
     featureVector = collections.OrderedDict()
 
     # Calculate feature classes
-    for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
+    for featureClassName, enabledFeatures in self.enabledFeatures.items():
       # Handle calculation of shape features separately
       if featureClassName == 'shape':
         continue
@@ -412,7 +414,7 @@ class RadiomicsFeaturesExtractor:
           for feature in enabledFeatures:
             featureClass.enableFeatureByName(feature)
 
-        if self.kwargs['verbose']: print "\t\tComputing %s" % (featureClassName)
+        if self.kwargs['verbose']: print("\t\tComputing %s" % (featureClassName))
         featureClass.calculateFeatures()
         for (featureName, featureValue) in featureClass.featureValues.iteritems():
           newFeatureName = "%s_%s_%s" % (inputImageName, featureClassName, featureName)

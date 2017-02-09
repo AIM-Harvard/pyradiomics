@@ -1,5 +1,5 @@
 import numpy
-from radiomics import base
+from radiomics import base, safe_xrange
 import SimpleITK as sitk
 
 
@@ -25,8 +25,13 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     cpif = sitk.ConstantPadImageFilter()
 
     padding = numpy.tile(1, 3)
-    cpif.SetPadLowerBound(padding)
-    cpif.SetPadUpperBound(padding)
+    try:
+      cpif.SetPadLowerBound(padding)
+      cpif.SetPadUpperBound(padding)
+    except TypeError:
+      # newer versions of SITK/python want a tuple or list
+      cpif.SetPadLowerBound(padding.tolist())
+      cpif.SetPadUpperBound(padding.tolist())
 
     self.inputMask = cpif.Execute(self.inputMask)
 
@@ -54,9 +59,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     S_A = 0.0
     # iterate over all voxels which may border segmentation or are a part of it
-    for v_z in xrange(minBounds[0] - 1, maxBounds[0] + 1):
-      for v_y in xrange(minBounds[1] - 1, maxBounds[1] + 1):
-        for v_x in xrange(minBounds[2] - 1, maxBounds[2] + 1):
+    for v_z in safe_xrange(minBounds[0] - 1, maxBounds[0] + 1):
+      for v_y in safe_xrange(minBounds[1] - 1, maxBounds[1] + 1):
+        for v_x in safe_xrange(minBounds[2] - 1, maxBounds[2] + 1):
           # indices to corners of current sampling cube
           gridCell = gridAngles + [v_z, v_y, v_x]
 

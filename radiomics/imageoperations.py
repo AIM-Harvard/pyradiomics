@@ -3,6 +3,7 @@ import logging
 import SimpleITK as sitk
 import numpy
 import pywt
+from radiomics import safe_xrange
 
 logger = logging.getLogger(__name__)
 
@@ -61,11 +62,11 @@ def generateAngles(size, maxDistance=1):
 
   angles = []
 
-  for z in xrange(1, maxDistance + 1):
+  for z in safe_xrange(1, maxDistance + 1):
     angles.append((0, 0, z))
-    for y in xrange(-maxDistance, maxDistance + 1):
+    for y in safe_xrange(-maxDistance, maxDistance + 1):
       angles.append((0, z, y))
-      for x in xrange(-maxDistance, maxDistance + 1):
+      for x in safe_xrange(-maxDistance, maxDistance + 1):
         angles.append((z, y, x))
 
   angles = numpy.array(angles)
@@ -116,8 +117,13 @@ def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
   # Crop Image
   logger.debug('Cropping to size %s', (boundingBox[1::2] - boundingBox[0::2]) + 1)
   cif = sitk.CropImageFilter()
-  cif.SetLowerBoundaryCropSize(ijkMinBounds)
-  cif.SetUpperBoundaryCropSize(ijkMaxBounds)
+  try:
+    cif.SetLowerBoundaryCropSize(ijkMinBounds)
+    cif.SetUpperBoundaryCropSize(ijkMaxBounds)
+  except TypeError:
+    # newer versions of SITK/python want a tuple or list
+    cif.SetLowerBoundaryCropSize(ijkMinBounds.tolist())
+    cif.SetUpperBoundaryCropSize(ijkMaxBounds.tolist())
   croppedImageNode = cif.Execute(imageNode)
   croppedMaskNode = cif.Execute(maskNode)
 
@@ -388,7 +394,7 @@ def _swt3(inputImage, wavelet="coif1", level=1, start_level=0):
            'LHH': LHH,
            'LHL': LHL,
            'LLH': LLH}
-    for decName, decImage in dec.iteritems():
+    for decName, decImage in dec.items():
       decTemp = decImage.copy()
       decTemp = numpy.resize(decTemp, original_shape)
       sitkImage = sitk.GetImageFromArray(decTemp)

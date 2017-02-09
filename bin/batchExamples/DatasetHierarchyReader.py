@@ -100,7 +100,7 @@ class DatasetHierarchyReader(object):
     conditions.
     """
 
-    keywordSettings = {k: [str(keyword.strip()) for keyword in v.split(',')] for (k, v) in keywordSettings.iteritems()}
+    keywordSettings = {k: [str(keyword.strip()) for keyword in v.split(',')] for (k, v) in keywordSettings.items()}
 
     matchedImages = []
     for imageFilepath in imageFilepaths:

@@ -54,7 +54,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 print "Active features:"
-for cls, features in extractor.enabledFeatures.iteritems():
+for cls, features in extractor.enabledFeatures.items():
   if len(features) == 0:
     features = extractor.getFeatureNames(cls)
   for f in features:

@@ -1,3 +1,4 @@
+from __future__ import print_function, unicode_literals, division, absolute_import
 import os
 import csv
 
@@ -32,22 +33,22 @@ def main():
   outputFile = DATA_ROOT_PATH + r"/Included/FileList.csv"
   filetype = ".nrrd"
 
-  print "Scanning files..."
+  print("Scanning files...")
 
   datasetHierarchyDict = scanpatients(inputDirectory, filetype)
 
-  print "Found %s patients, writing csv" % (len(datasetHierarchyDict.keys()))
+  print("Found %s patients, writing csv" % (len(datasetHierarchyDict.keys())))
 
   try:
     with open(outputFile, 'wb') as outFile:
       cw = csv.writer(outFile, lineterminator='\n')
 
-      for patient, Studies in sorted(datasetHierarchyDict.iteritems(), key=lambda t: t[0]):
-        for Study, im_fileList in sorted(Studies['reconstructions'].iteritems(), key=lambda t: t[0]):
+      for patient, Studies in sorted(datasetHierarchyDict.items(), key=lambda t: t[0]):
+        for Study, im_fileList in sorted(Studies['reconstructions'].items(), key=lambda t: t[0]):
           for i_idx, im_file in enumerate(im_fileList):
 
             if Studies['segmentations'].has_key(Study):
-              for Reader, seg_fileList in sorted(Studies['segmentations'][Study].iteritems(), key=lambda t: t[0]):
+              for Reader, seg_fileList in sorted(Studies['segmentations'][Study].items(), key=lambda t: t[0]):
                 for s_idx, seg_file in enumerate(sorted(seg_fileList)):
 
                   i_name = Study
@@ -57,8 +58,8 @@ def main():
                   if s_idx > 0: s_name += " (%s)" % (str(s_idx + 1))
 
                   cw.writerow([patient, i_name, s_name, im_file, seg_file])
-  except Exception, e:
-    print e
+  except Exception as e:
+    print(e)
 
 
 def scanpatients(f, filetype):
@@ -74,9 +75,9 @@ def scanpatients(f, filetype):
           outputDict[PtNo] = {'reconstructions': {}}
           outputDict[PtNo]['segmentations'] = {}
 
-        for SqKey, SqVal in SqDic.iteritems():
+        for SqKey, SqVal in SqDic.items():
           if ("ROI_" + SqVal) in fname:
-            for ReaderKey, ReaderVal in LabelDic.iteritems():
+            for ReaderKey, ReaderVal in LabelDic.items():
               if (ReaderKey + '_') in fname:
                 if not outputDict[PtNo]['segmentations'].has_key(SqVal):
                   outputDict[PtNo]['segmentations'][SqVal] = {}

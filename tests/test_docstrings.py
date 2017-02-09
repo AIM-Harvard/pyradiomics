@@ -31,7 +31,7 @@ class TestDocStrings:
 
     def generate_scenarios():
       global featureClasses
-      for featureClassName, featureClass in featureClasses.iteritems():
+      for featureClassName, featureClass in featureClasses.items():
         logging.info('generate_scenarios %s', featureClassName)
         doc = featureClass.__doc__
         assert(doc is not None)

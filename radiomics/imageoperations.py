@@ -271,14 +271,14 @@ def getLoGImage(inputImage, **kwargs):
 
   if numpy.min(size) < 4:
     logger.warning('Image too small to apply LoG filter, size: %s', size)
-    if kwargs.get('verbose', False): print 'Image too small to apply LoG filter'
+    if kwargs.get('verbose', False): print('Image too small to apply LoG filter')
     return
 
   sigmaValues = kwargs.get('sigma', numpy.arange(5., 0., -.5))
 
   for sigma in sigmaValues:
     logger.debug('Computing LoG with sigma %g', sigma)
-    if kwargs.get('verbose', False): print "\tComputing LoG with sigma %g" % (sigma)
+    if kwargs.get('verbose', False): print("\tComputing LoG with sigma %g" % (sigma))
 
     if sigma > 0.0:
       if numpy.all(size >= numpy.ceil(sigma / spacing) + 1):
@@ -331,7 +331,7 @@ def getWaveletImage(inputImage, **kwargs):
   for idx, wl in enumerate(ret, start=1):
     for decompositionName, decompositionImage in wl.items():
       logger.debug('Computing Wavelet %s', decompositionName)
-      if kwargs.get('verbose', False): print "\tComputing Wavelet %s" % (decompositionName)
+      if kwargs.get('verbose', False): print("\tComputing Wavelet %s" % (decompositionName))
 
       if idx == 1:
         inputImageName = 'wavelet-%s' % (decompositionName)

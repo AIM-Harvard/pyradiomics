@@ -339,9 +339,20 @@ def get_config_from_root(root):
     # configparser.NoOptionError (if it lacks "VCS="). See the docstring at
     # the top of versioneer.py for instructions on writing your setup.cfg .
     setup_cfg = os.path.join(root, "setup.cfg")
-    parser = configparser.SafeConfigParser()
+    try:
+      # python 2
+      parser = configparser.SafeConfigParser()
+    except:
+      # python 3.2+
+      parser = configparser.ConfigParser()
+
     with open(setup_cfg, "r") as f:
-        parser.readfp(f)
+        try:
+          # python 2
+          parser.readfp(f)
+        except:
+          # python 3.2+
+          parser.read_file(f)
     VCS = parser.get("versioneer", "VCS")  # mandatory
 
     def get(parser, name):

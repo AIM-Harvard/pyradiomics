@@ -1,3 +1,4 @@
+from __future__ import print_function, unicode_literals, division, absolute_import
 import SimpleITK as sitk
 import os
 import ast
@@ -6,7 +7,7 @@ import logging
 import math
 import numpy
 from nose_parameterized import parameterized
-from radiomics import imageoperations
+from radiomics import imageoperations, in_py3
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func
 logger = logging.getLogger('testUtils')
@@ -155,7 +156,7 @@ class RadiomicsTestUtils:
     """
     Return all the test cases for which there are baseline information.
     """
-    return self._baseline[self._baseline.keys()[0]].keys()
+    return self._baseline[list(self._baseline.keys())[0]].keys()
 
   def getFeatureClasses(self):
     """
@@ -175,9 +176,9 @@ class RadiomicsTestUtils:
       cls = baselineFile[9:-4]
       self._logger.debug('Reading baseline for class %s', cls)
       self._baseline[cls] = {}
-      with open(os.path.join(self._baselineDir, baselineFile), 'rb') as baselineReader:
+      with open(os.path.join(self._baselineDir, baselineFile), 'r' if in_py3 else 'rb') as baselineReader:
         csvReader = csv.reader(baselineReader)
-        headers = csvReader.next()
+        headers = next(csvReader)
         for testRow in csvReader:
           self._baseline[cls][testRow[0]] = {}
           for val_idx, val in enumerate(testRow[1:], start=1):
@@ -244,7 +245,7 @@ class RadiomicsTestUtils:
     csvFile = open(fileName, 'wb')
     csvFileWriter = csv.writer(csvFile)
     # get the headers from the first row
-    header = sorted(data[data.keys()[0]].keys())
+    header = sorted(data[list(data.keys())[0]].keys())
     header = ['testCase'] + header
     csvFileWriter.writerow(header)
     for testCase in sorted(data.keys()):

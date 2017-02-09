@@ -3,13 +3,10 @@ import os
 import logging
 import collections
 from itertools import chain
-import numpy
 import SimpleITK as sitk
-import pkgutil
-import inspect
 import pykwalify.core
 import radiomics
-from radiomics import base, imageoperations, generalinfo
+from radiomics import getFeatureClasses, getInputImages, imageoperations, generalinfo
 
 
 class RadiomicsFeaturesExtractor:
@@ -29,6 +26,8 @@ class RadiomicsFeaturesExtractor:
   Alternatively, at initialisation, the following general settings can be specified in kwargs:
 
   - verbose [False]: Boolean, set to False to disable status update printing.
+  - additionalInfo [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
+    output. See also :py:func:`~addProvenance()`.
   - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
   - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
   - interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
@@ -64,7 +63,8 @@ class RadiomicsFeaturesExtractor:
   def __init__(self, *args, **kwargs):
     self.logger = logging.getLogger(__name__)
 
-    self.featureClasses = self.getFeatureClasses()
+    self.featureClasses = getFeatureClasses()
+    self.inputImages = getInputImages()
 
     self.kwargs = {}
     self.provenance_on = True
@@ -79,7 +79,8 @@ class RadiomicsFeaturesExtractor:
                      'interpolator': sitk.sitkBSpline,
                      'padDistance': 5,
                      'label': 1,
-                     'verbose': False}
+                     'verbose': False,
+                     'additionalInfo': True}
       self.kwargs.update(kwargs)
 
       self.inputImages = {'Original': {}}
@@ -97,7 +98,7 @@ class RadiomicsFeaturesExtractor:
 
     To disable this, call ``addProvenance(False)``
     """
-    self.provenance_on = provenance_on
+    self.kwargs['additionalInfo'] = provenance_on
 
   def loadParams(self, paramsFile):
     """
@@ -166,14 +167,15 @@ class RadiomicsFeaturesExtractor:
                    'interpolator': sitk.sitkBSpline,
                    'padDistance': 5,
                    'label': 1,
-                   'verbose': False}
+                   'verbose': False,
+                   'additionalInfo': True}
     self.kwargs.update(kwargs)
 
   def enableAllInputImages(self):
     """
     Enable all possible input images without any custom settings.
     """
-    for imageType in self.getInputImageTypes():
+    for imageType in self.inputImages:
       self.inputImages[imageType] = {}
 
   def disableAllInputImages(self):
@@ -296,7 +298,7 @@ class RadiomicsFeaturesExtractor:
     featureVector = collections.OrderedDict()
     image, mask = self.loadImage(imageFilepath, maskFilepath)
 
-    if self.provenance_on:
+    if self.kwargs.get('additionalInfo'):
       featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
     # Bounding box only needs to be calculated once after resampling, store the value, so it doesn't get calculated
@@ -419,38 +421,6 @@ class RadiomicsFeaturesExtractor:
           featureVector[newFeatureName] = featureValue
 
     return featureVector
-
-  @classmethod
-  def getInputImageTypes(cls):
-    """
-    Returns a list of possible input image types. This function finds the image types dynamically by matching the
-    signature ("get<inputImage>Image") against functions defined in :ref:`imageoperations
-    <radiomics-imageoperations-label>`. Returns a list containing available input image names (<inputImage> part of the
-    corresponding function name).
-    """
-    return [member[3:-5] for member in dir(imageoperations) if member.startswith('get') and member.endswith("Image")]
-
-  @classmethod
-  def getFeatureClasses(cls):
-    """
-    Iterates over all modules of the radiomics package using pkgutil and subsequently imports those modules.
-
-    Return a dictionary of all modules containing featureClasses, with module name as key, abstract
-    class object of the featureClass as value. Assumes only one featureClass per module
-
-    This is achieved by inspect.getmembers. Classes are added if the module contains a member that is a class,
-    with name starting with 'Radiomics' and is inherited from :py:class:`~radiomics.base.RadiomicsFeaturesBase`.
-    """
-    featureClasses = {}
-    for _, mod, _ in pkgutil.iter_modules(radiomics.__path__):
-      __import__('radiomics.' + mod)
-      attributes = inspect.getmembers(eval('radiomics.' + mod), inspect.isclass)
-      for a in attributes:
-        if a[0].startswith('Radiomics'):
-          if radiomics.base.RadiomicsFeaturesBase in inspect.getmro(a[1])[1:]:
-            featureClasses[mod] = a[1]
-
-    return featureClasses
 
   def getFeatureClassNames(self):
     return self.featureClasses.keys()

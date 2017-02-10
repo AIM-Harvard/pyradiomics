@@ -50,7 +50,7 @@ firstOrderFeatures = firstorder.RadiomicsFirstOrder(image, mask, **kwargs)
 firstOrderFeatures.enableFeatureByName('Mean', True)
 # firstOrderFeatures.enableAllFeatures()
 
-print 'Will calculate the following first order features: '
+print('Will calculate the following first order features: ')
 for f in firstOrderFeatures.enabledFeatures.keys():
   print('  ', f)
   print(eval('firstOrderFeatures.get' + f + 'FeatureValue.__doc__'))
@@ -61,7 +61,7 @@ print('done')
 
 print('Calculated first order features: ')
 for (key, val) in firstOrderFeatures.featureValues.items():
-  print '  ', key, ':', val
+  print('  ', key, ':', val)
 
 #
 # Show Shape features

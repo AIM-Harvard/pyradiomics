@@ -4,7 +4,7 @@
 from __future__ import print_function, unicode_literals, division
 
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
-from testUtils import RadiomicsTestUtils, custom_name_func
+from .testUtils import RadiomicsTestUtils, custom_name_func
 import os
 import logging
 from nose_parameterized import parameterized

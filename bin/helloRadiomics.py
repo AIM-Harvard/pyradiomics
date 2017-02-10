@@ -10,10 +10,10 @@ imageName = os.path.join(dataDir, testCase + '_image.nrrd')
 maskName = os.path.join(dataDir, testCase + '_label.nrrd')
 
 if not os.path.exists(imageName):
-  print 'Error: problem finding input image', imageName
+  print('Error: problem finding input image', imageName)
   exit()
 if not os.path.exists(maskName):
-  print 'Error: problem finding input labelmap', maskName
+  print('Error: problem finding input labelmap', maskName)
   exit()
 
 # Define settings for signature calculation
@@ -53,16 +53,16 @@ formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-print "Active features:"
+print("Active features:")
 for cls, features in extractor.enabledFeatures.items():
   if len(features) == 0:
     features = extractor.getFeatureNames(cls)
   for f in features:
-    print f
-    print eval('extractor.featureClasses["%s"].get%sFeatureValue.__doc__' % (cls, f))
+    print(f)
+    print(eval('extractor.featureClasses["%s"].get%sFeatureValue.__doc__' % (cls, f)))
 
-print "Calculating features"
+print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)
 
 for featureName in featureVector.keys():
-  print "Computed %s: %s" % (featureName, featureVector[featureName])
+  print("Computed %s: %s" % (featureName, featureVector[featureName]))

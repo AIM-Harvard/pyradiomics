@@ -1,7 +1,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 import os
 import csv
-from DatasetHierarchyReader import DatasetHierarchyReader
+from .DatasetHierarchyReader import DatasetHierarchyReader
 
 
 def main():

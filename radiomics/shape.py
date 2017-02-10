@@ -119,7 +119,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   def _getMaximum2Ddiameter(self, dim):
     otherDims = tuple(set([0, 1, 2]) - set([dim]))
 
-    a = numpy.array(zip(*self.matrixCoordinates))
+    a = numpy.array(list(zip(*self.matrixCoordinates)))
 
     maxDiameter = 0
     # Check maximum diameter in every slice, retain the overall maximum

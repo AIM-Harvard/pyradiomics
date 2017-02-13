@@ -98,7 +98,7 @@ _featureClasses = None
 _inputImages = None
 
 # For convenience, import the most used packages into the "pyradiomics" namespace
-import collections, numpy
+import collections, numpy  # noqa: F401
 
 from ._version import get_versions
 

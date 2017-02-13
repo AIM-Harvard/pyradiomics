@@ -1,6 +1,5 @@
 import collections
 import logging
-import numpy
 import SimpleITK as sitk
 import radiomics
 

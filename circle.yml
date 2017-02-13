@@ -1,11 +1,20 @@
+
+machine:
+  services:
+    - docker
+
 dependencies:
-  pre:
-    - pip install numpy==1.11.0
-    - pip install --trusted-host www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK==0.9.1
-    - pip install nose-parameterized==0.5.0
-    - pip install tqdm==4.7.1
-    - pip install PyWavelets==0.4.0
+  cache_directories:
+    - ~/docker
+  override:
+    - curl -fsSL https://git.io/v2Ifs -o ~/bin/circleci-matrix
+    - chmod +x ~/bin/circleci-matrix
+    - pip install scikit-ci-addons==0.11.0
+    - ci_addons docker load-pull-save dockcross/manylinux-x64
+    - ci_addons docker load-pull-save dockcross/manylinux-x86
+
 test:
   override:
-    - nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests/test_features.py
-    - cp nosetests.xml $CIRCLE_TEST_REPORTS
+     - circleci-matrix:
+        parallel: true
+

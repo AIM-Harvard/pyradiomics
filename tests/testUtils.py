@@ -1,5 +1,5 @@
 import SimpleITK as sitk
-import sys, os
+import os
 import ast
 import csv
 import logging
@@ -120,7 +120,7 @@ class RadiomicsTestUtils:
       interpolator = self._kwargs.get('interpolator', sitk.sitkBSpline)
       resampledPixelSpacing = self._kwargs.get('resampledPixelSpacing', None)
 
-      if interpolator != None and resampledPixelSpacing != None:
+      if interpolator is not None and resampledPixelSpacing is not None:
         self._image, self._mask = imageoperations.resampleImage(self._image,
                                                                 self._mask,
                                                                 resampledPixelSpacing,
@@ -191,7 +191,7 @@ class RadiomicsTestUtils:
     if value is None:
       self._diffs[self._testCase][featureName] = None
       self._results[self._testCase][featureName] = None
-    assert (value != None)
+    assert (value is not None)
 
     if math.isnan(value):
       self._diffs[self._testCase][featureName] = numpy.nan

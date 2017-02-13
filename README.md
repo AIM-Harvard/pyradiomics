@@ -1,5 +1,9 @@
 
+[![Appveyor](https://ci.appveyor.com/api/projects/status/tw69xbbeyluk7fl7/branch/master?svg=true)](https://ci.appveyor.com/project/Radiomics/pyradiomics/branch/master)
+
 [![Circle CI](https://circleci.com/gh/Radiomics/pyradiomics.svg?style=svg&circle-token=a4748cf0de5fad2c12bc93a485282378551c3584)](https://circleci.com/gh/Radiomics/pyradiomics)
+
+[![Travis CI](https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master)](https://travis-ci.org/Radiomics/pyradiomics)
 
 # pyradiomics v1.0
 

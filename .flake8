@@ -1,0 +1,36 @@
+[flake8]
+max-line-length: 180
+# Whether to display the pep8 instructions on failure (can be quite verbose)
+show-pep8: False
+# Whether to show source code for each failure
+show-source: True
+# Maximum cyclomatic complexity allowed
+max-complexity: 14
+format: pylint
+exclude: .git,.idea,.eggs,__pycache__,.tox,docs/conf.py,_skbuild,build,versioneer.py
+ignore:
+    # cycolmatic complexity check
+    C901,
+    # indentation is not a multiple of four
+    E111,
+    # indentation is not a multiple of four (comment)
+    E114,
+    # continuation line under-indented for hanging indent
+    E121,
+    # missing whitespace around arithmetic operator
+    E226,
+    # at least two spaces before inline comment
+    E261,
+    # expected 2 blank lines
+    E302,
+    # expected 2 blank lines after class or function definition
+    E305,
+    # multiple imports on one line
+    E401,
+    # module level import not at top of file
+    E402,
+    # multiple statements on one line (colon)
+    E701,
+    # .has_key() is deprecated, use 'in'
+    W601,
+

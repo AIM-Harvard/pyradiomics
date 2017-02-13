@@ -1,6 +1,5 @@
 from itertools import chain
 import logging
-import json
 import SimpleITK as sitk
 import numpy
 import pywt
@@ -41,9 +40,7 @@ def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates):
 
   histogram[1][-1] += 1  # ensures that max(self.targertVoxelArray) is binned to upper bin by numpy.digitize
 
-  parameterMatrix[parameterMatrixCoordinates] = \
-    numpy.digitize(parameterMatrix[parameterMatrixCoordinates], histogram[1])
-
+  parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterMatrix[parameterMatrixCoordinates], histogram[1])
 
   return parameterMatrix, histogram
 

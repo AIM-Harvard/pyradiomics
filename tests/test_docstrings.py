@@ -3,7 +3,7 @@
 # nosetests --nocapture -v tests/test_docstrings.py
 
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
-from .testUtils import custom_name_func
+from testUtils import custom_name_func
 import logging
 from nose_parameterized import parameterized
 

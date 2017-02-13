@@ -67,7 +67,7 @@ def getFeatureClasses():
   return _featureClasses
 
 
-def getInputImages():
+def getInputImageTypes():
   """
   Returns a list of possible input image types. This function finds the image types dynamically by matching the
   signature ("get<inputImage>Image") against functions defined in :ref:`imageoperations
@@ -106,4 +106,4 @@ __version__ = get_versions()['version']
 del get_versions
 
 getFeatureClasses()
-getInputImages()
+getInputImageTypes()

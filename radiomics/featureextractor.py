@@ -6,7 +6,7 @@ from itertools import chain
 import SimpleITK as sitk
 import pykwalify.core
 import radiomics
-from radiomics import getFeatureClasses, getInputImages, imageoperations, generalinfo
+from radiomics import getFeatureClasses, getInputImageTypes, imageoperations, generalinfo
 
 
 class RadiomicsFeaturesExtractor:
@@ -64,7 +64,7 @@ class RadiomicsFeaturesExtractor:
     self.logger = logging.getLogger(__name__)
 
     self.featureClasses = getFeatureClasses()
-    self.inputImages = getInputImages()
+    self.inputImages = getInputImageTypes()
 
     self.kwargs = {}
     self.provenance_on = True

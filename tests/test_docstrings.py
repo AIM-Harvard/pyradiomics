@@ -2,12 +2,12 @@
 # setenv PYTHONPATH /path/to/pyradiomics/radiomics
 # nosetests --nocapture -v tests/test_docstrings.py
 
-from radiomics.featureextractor import RadiomicsFeaturesExtractor
+from radiomics import getFeatureClasses
 from testUtils import custom_name_func
 import logging
 from nose_parameterized import parameterized
 
-featureClasses = RadiomicsFeaturesExtractor.getFeatureClasses()
+featureClasses = getFeatureClasses()
 
 
 def setup_module(module):

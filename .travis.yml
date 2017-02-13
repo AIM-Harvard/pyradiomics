@@ -1,0 +1,40 @@
+#language: python
+os:
+  - osx
+# osx does not support python, use it from within virtualenv
+before_install:
+# Check python version
+  - which python
+  - python --version
+# Work inside of a virtual environment so we can use an upgraded version of pip
+  - pip install virtualenv
+  - which virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+# Previously tried using brew and pyenv to manage versions of python
+#  - brew update
+#  - brew outdated pyenv || brew upgrade pyenv
+#  - eval "$( pyenv init - )"
+#  - pyenv install 2.7
+#  - pyenv global 2.7
+#  - pyenv versions
+  - pip install --upgrade pip
+  - which pip
+  - pip --version
+# install dependencies
+install:
+  - pip install numpy
+# Avoid untrusted host errors by downloading SimpleITK via wget and installing
+# manually with upgraded pip
+  - wget 'https://sourceforge.net/projects/simpleitk/files/SimpleITK/0.10.0/Python/SimpleITK-0.10.0-cp27-cp27m-macosx_10_6_intel.whl'
+  - which python
+  - python --version
+  - pip install 'SimpleITK-0.10.0-cp27-cp27m-macosx_10_6_intel.whl'
+  - pip install nose
+  - pip install nose-parameterized
+  - pip install tqdm
+  - git clone https://github.com/nigma/pywt.git && cd pywt && python setup.py install && cd ..
+
+# run tests
+script:
+  - nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests/test_features.py

@@ -76,5 +76,5 @@ def teardown_module():
   diffFile = os.path.join(testUtils.getDataDir(), 'Baseline2PyradiomicsFeaturesDiff.csv')
   testUtils.writeCSV(diff, diffFile)
   logging.info(
-    "Wrote calculated features to %s, and the differences between the matlab features and the pyradiomics ones to %s.",
+    "Wrote calculated features to %s, and the differences between the baseline features and the calculated ones to %s.",
     resultsFile, diffFile)

@@ -1,8 +1,10 @@
+import sys
 import numpy
 import SimpleITK as sitk
-from radiomics import base, imageoperations
+from radiomics import base, imageoperations, safe_xrange
 import pdb
 from tqdm import trange
+
 
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
@@ -87,7 +89,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     if self.verbose: bar = trange(numGrayLevels - 1, desc='calculate GLSZM')
 
-    for i in xrange(1, numGrayLevels):
+    for i in safe_xrange(1, numGrayLevels):
       # give some progress
       if self.verbose: bar.update()
 

@@ -1,3 +1,4 @@
+from __future__ import print_function, unicode_literals, division, absolute_import
 import SimpleITK as sitk
 import sys, os
 import ast
@@ -6,10 +7,11 @@ import logging
 import math
 import numpy
 from nose_parameterized import parameterized
-from radiomics import imageoperations
+from radiomics import imageoperations, in_py3
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func
 logger = logging.getLogger('testUtils')
+
 
 def custom_name_func(testcase_func, param_num, param):
   """
@@ -37,10 +39,10 @@ def custom_name_func(testcase_func, param_num, param):
 
   logger.debug('custom_name_func: function name = %s, param_num = {0:0>3}, param.args = %s'.format(param_num),
                testcase_func.__name__, param.args)
-  return "%s_%s" % (
+  return str("%s_%s" % (
     testcase_func.__name__,
     parameterized.to_safe_name("_".join(str(x) for x in param.args)),
-  )
+  ))
 
 
 class RadiomicsTestUtils:
@@ -49,6 +51,7 @@ class RadiomicsTestUtils:
   It provides utility methods to get the baseline feature value for a feature class and compare it to the result generated
   by the test.
   """
+
   def __init__(self):
     global logger
 
@@ -104,14 +107,14 @@ class RadiomicsTestUtils:
       self._featureClassName = className
 
       # Check if test settings have changed
-      if cmp(self._kwargs, self.getBaselineDict(className, testCase)) != 0:
+      if self._kwargs != self.getBaselineDict(className, testCase):
         self._kwargs = self.getBaselineDict(className, testCase)
         self._testCase = None  # forces image to be reloaded (as settings have changed)
 
     # Next, set testCase if necessary
     if self._testCase != testCase:
-      imageName = os.path.join(self._dataDir, testCase + '_image.nrrd')
-      maskName = os.path.join(self._dataDir, testCase + '_label.nrrd')
+      imageName = str(os.path.join(self._dataDir, testCase + '_image.nrrd'))
+      maskName = str(os.path.join(self._dataDir, testCase + '_label.nrrd'))
 
       self._logger.info("Reading the image and mask for test case %s", testCase)
       self._image = sitk.ReadImage(imageName)
@@ -155,7 +158,7 @@ class RadiomicsTestUtils:
     """
     Return all the test cases for which there are baseline information.
     """
-    return self._baseline[self._baseline.keys()[0]].keys()
+    return self._baseline[list(self._baseline.keys())[0]].keys()
 
   def getFeatureClasses(self):
     """
@@ -175,9 +178,9 @@ class RadiomicsTestUtils:
       cls = baselineFile[9:-4]
       self._logger.debug('Reading baseline for class %s', cls)
       self._baseline[cls] = {}
-      with open(os.path.join(self._baselineDir, baselineFile), 'rb') as baselineReader:
+      with open(os.path.join(self._baselineDir, baselineFile), 'r' if in_py3 else 'rb') as baselineReader:
         csvReader = csv.reader(baselineReader)
-        headers = csvReader.next()
+        headers = next(csvReader)
         for testRow in csvReader:
           self._baseline[cls][testRow[0]] = {}
           for val_idx, val in enumerate(testRow[1:], start=1):
@@ -187,21 +190,21 @@ class RadiomicsTestUtils:
     """
     Use utility methods to get and test the results against the expected baseline value for this key.
     """
-
+    longName = '%s_%s' % (self._featureClassName, featureName)
     if value is None:
-      self._diffs[self._testCase][featureName] = None
-      self._results[self._testCase][featureName] = None
-    assert (value != None)
+      self._diffs[self._testCase][longName] = None
+      self._results[self._testCase][longName] = None
+    assert (value is not None)
 
     if math.isnan(value):
-      self._diffs[self._testCase][featureName] = numpy.nan
-      self._results[self._testCase][featureName] = numpy.nan
+      self._diffs[self._testCase][longName] = numpy.nan
+      self._results[self._testCase][longName] = numpy.nan
     assert (not math.isnan(value))
 
     # save the result using the baseline class and feature names
     self._logger.debug('checkResults: featureName = %s', featureName)
 
-    self._results[self._testCase][featureName] = value
+    self._results[self._testCase][longName] = value
 
     assert featureName in self._baseline[self._featureClassName][self._testCase]
     baselineValue = float(self._baseline[self._featureClassName][self._testCase][featureName])
@@ -217,7 +220,7 @@ class RadiomicsTestUtils:
       percentDiff = abs(1.0 - (value / baselineValue))
 
     # save the difference
-    self._diffs[self._testCase][featureName] = percentDiff
+    self._diffs[self._testCase][longName] = percentDiff
 
     # check for a less than three percent difference
     if (percentDiff >= 0.03):
@@ -241,10 +244,10 @@ class RadiomicsTestUtils:
 
     {'id1' : {'f1':n1, 'f2':n2}, 'id2' : {'f1':n3, 'f2':n4}}
     """
-    csvFile = open(fileName, 'wb')
+    csvFile = open(fileName, 'w')
     csvFileWriter = csv.writer(csvFile)
     # get the headers from the first row
-    header = sorted(data[data.keys()[0]].keys())
+    header = list(data[list(data.keys())[0]].keys())
     header = ['testCase'] + header
     csvFileWriter.writerow(header)
     for testCase in sorted(data.keys()):
@@ -252,7 +255,7 @@ class RadiomicsTestUtils:
       thisCase['testCase'] = testCase
       row = []
       for h in header:
-        row = row + [thisCase[h]]
+        row = row + [thisCase.get(h, "N/A")]
       csvFileWriter.writerow(row)
     csvFile.close()
     self._logger.info('Wrote to file %s', fileName)

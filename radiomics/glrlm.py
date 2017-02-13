@@ -1,7 +1,7 @@
 from itertools import chain
 import numpy
 import SimpleITK as sitk
-from radiomics import base, imageoperations
+from radiomics import base, imageoperations, safe_xrange
 
 
 class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
@@ -119,17 +119,16 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         d2 = movingDims[1]
         direction = numpy.where(angle < 0, -1, 1)
         diags = chain.from_iterable([self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, d1, d2)
-                                     for a in xrange(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
+                                     for a in safe_xrange(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
 
       else:  # movement in 3 dimensions, e.g. angle (1, 1, 1)
         diags = []
         direction = numpy.where(angle < 0, -1, 1)
         for h in [self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, 0, 1)
-                  for a in xrange(-self.matrix.shape[0] + 1, self.matrix.shape[1])]:
-          diags.extend([h.diagonal(b, 0, 1) for b in xrange(-h.shape[0] + 1, h.shape[1])])
+                  for a in safe_xrange(-self.matrix.shape[0] + 1, self.matrix.shape[1])]:
+          diags.extend([h.diagonal(b, 0, 1) for b in safe_xrange(-h.shape[0] + 1, h.shape[1])])
 
-      matrixDiagonals.append(filter(lambda diag: numpy.nonzero(diag != padVal)[0].size > 0, diags))
-
+      matrixDiagonals.append(filter(lambda diag: numpy.any(diag != padVal), diags))
     P_glrlm = numpy.zeros((Ng, Nr, int(len(matrixDiagonals))))
 
     # Run-Length Encoding (rle) for the list of diagonals
@@ -138,18 +137,17 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
       P = P_glrlm[:, :, angle_idx]
       # Check whether delineation is 2D for current angle (all diagonals contain 0 or 1 non-pad value)
       isMultiElement = False
-      for d in angle:
-        if numpy.where(d != padVal)[0].shape[0] > 1:
+      for diagonal in angle:
+        if not isMultiElement and numpy.sum(diagonal != padVal) > 1:
           isMultiElement = True
-          break
-      if isMultiElement:
-        for diagonal in angle:
-          pos, = numpy.where(numpy.diff(diagonal) != 0)
-          pos = numpy.concatenate(([0], pos + 1, [len(diagonal)]))
-          rle = zip([int(n) for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
-          for level, run_length in rle:
-            if level != padVal:
-              P[level - 1, run_length - 1] += 1
+        pos, = numpy.where(numpy.diff(diagonal) != 0)
+        pos = numpy.concatenate(([0], pos + 1, [len(diagonal)]))
+        rle = zip([int(n) for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
+        for level, run_length in rle:
+          if level != padVal:
+            P[level - 1, run_length - 1] += 1
+      if not isMultiElement:
+        P[:] = 0
 
     # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
     # Crop run-length axis of GLRLMs up to maximum observed run-length

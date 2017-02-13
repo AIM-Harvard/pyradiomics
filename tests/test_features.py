@@ -27,7 +27,7 @@ class TestFeatures:
     for testCase in testCases:
       for featureClassName in featureClassNames:
         featureNames = extractor.featureClasses[featureClassName].getFeatureNames()
-        assert (featureNames != None)
+        assert (featureNames is not None)
         assert (len(featureNames) > 0)
         logging.debug('generate_scenarios: featureNames = %s', featureNames)
         for featureName in featureNames:
@@ -53,7 +53,7 @@ class TestFeatures:
       logging.debug('Init %s' % (featureClassName))
       featureClass = extractor.featureClasses[featureClassName](testImage, testMask, **testUtils.getKwargs())
 
-    assert featureClass != None
+    assert featureClass is not None
 
     featureClass.disableAllFeatures()
     featureClass.enableFeatureByName(featureName)
@@ -76,5 +76,5 @@ def teardown_module():
   diffFile = os.path.join(testUtils.getDataDir(), 'Baseline2PyradiomicsFeaturesDiff.csv')
   testUtils.writeCSV(diff, diffFile)
   logging.info(
-    "Wrote calculated features to %s, and the differences between the matlab features and the pyradiomics ones to %s.",
+    "Wrote calculated features to %s, and the differences between the baseline features and the calculated ones to %s.",
     resultsFile, diffFile)

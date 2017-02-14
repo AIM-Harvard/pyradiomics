@@ -1,4 +1,3 @@
-import sys
 import numpy
 from radiomics import base, imageoperations, safe_xrange
 from tqdm import trange

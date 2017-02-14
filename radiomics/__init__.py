@@ -7,7 +7,10 @@ in_py3 = sys.version_info[0] > 2
 
 if in_py3:
   c_str_type = str
-  safe_xrange = lambda *x, **kwargs: iter(range(*x, **kwargs))
+
+  def safe_xrange(*args, **kwargs):
+    return iter(range(*args, **kwargs))
+
 else:
   c_str_type = basestring
   safe_xrange = xrange

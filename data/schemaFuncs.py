@@ -57,7 +57,7 @@ def checkFeatureClass(value, rule_obj, path):
   for className, features in six.iteritems(value):
     if className not in featureClasses.keys():
       raise ValueError(
-        'Feature Class %s is not recognized. Available feature classes are %s' % (className, featureClasses.keys()))
+        'Feature Class %s is not recognized. Available feature classes are %s' % (className, list(featureClasses.keys())))
     if features is not None:
       if not isinstance(features, list):
         raise TypeError('Value of feature class %s not expected type (list)' % (className))

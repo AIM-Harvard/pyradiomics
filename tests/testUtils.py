@@ -159,7 +159,7 @@ class RadiomicsTestUtils:
     """
     Return all the test cases for which there are baseline information.
     """
-    return self._baseline[self._baseline.keys()[0]].keys()
+    return self._baseline[list(self._baseline.keys())[0]].keys()
 
   def getFeatureClasses(self):
     """

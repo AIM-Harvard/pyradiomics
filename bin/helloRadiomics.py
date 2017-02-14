@@ -1,8 +1,11 @@
-import os
 import logging
+import os
+
 import SimpleITK as sitk
-from radiomics import featureextractor
+
 import radiomics
+from radiomics import featureextractor
+
 
 testCase = 'brain1'
 dataDir = os.path.join(os.path.abspath(""), "..", "data")

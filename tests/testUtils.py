@@ -1,11 +1,14 @@
-import SimpleITK as sitk
-import os
+
 import ast
 import csv
 import logging
 import math
-import numpy
+import os
+
 from nose_parameterized import parameterized
+import numpy
+import SimpleITK as sitk
+
 from radiomics import imageoperations
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func

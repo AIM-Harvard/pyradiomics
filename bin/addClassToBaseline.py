@@ -1,6 +1,7 @@
-import os
-import csv
 import collections
+import csv
+import os
+
 from radiomics import featureextractor, imageoperations
 
 

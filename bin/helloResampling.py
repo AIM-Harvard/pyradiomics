@@ -1,6 +1,9 @@
-from radiomics import imageoperations
-import SimpleITK as sitk
+
 import sys
+
+import SimpleITK as sitk
+
+from radiomics import imageoperations
 
 image = sitk.ReadImage(sys.argv[1])
 mask = sitk.ReadImage(sys.argv[2])

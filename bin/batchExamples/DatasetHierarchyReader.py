@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
-import glob
 import collections
+import glob
+import os
 
 
 class DatasetHierarchyReader(object):

@@ -1,9 +1,9 @@
+import inspect
 import logging
 import traceback
-import SimpleITK as sitk
-import numpy
-import inspect
 
+import numpy
+import SimpleITK as sitk
 
 class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):

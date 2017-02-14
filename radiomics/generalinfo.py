@@ -1,6 +1,8 @@
 import collections
 import logging
+
 import SimpleITK as sitk
+
 import radiomics
 
 

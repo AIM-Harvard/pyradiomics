@@ -1,6 +1,7 @@
 import numpy
-from radiomics import base
 import SimpleITK as sitk
+
+from radiomics import base
 
 
 class RadiomicsShape(base.RadiomicsFeaturesBase):

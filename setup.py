@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-import versioneer
-
-from setuptools.command.test import test as TestCommand
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
 
+import versioneer
 
 with open('requirements.txt', 'r') as fp:
     requirements = list(filter(bool, (line.strip() for line in fp)))

@@ -1,8 +1,8 @@
 import pywt
+
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
 
 featureClasses = RadiomicsFeaturesExtractor.getFeatureClasses()
-
 
 def checkWavelet(value, rule_obj, path):
   if not isinstance(value, basestring):

@@ -1,6 +1,8 @@
 import numpy
-from radiomics import base, imageoperations
+
 from tqdm import trange
+
+from radiomics import base, imageoperations
 
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):

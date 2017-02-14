@@ -31,6 +31,8 @@ ignore:
     E402,
     # multiple statements on one line (colon)
     E701,
+    # undefined name (basestring, xrange in py3)
+    F821,
     # .has_key() is deprecated, use 'in'
     W601,
 

@@ -1,5 +1,5 @@
 import numpy
-from radiomics import base, imageoperations
+from radiomics import base, imageoperations, safe_xrange
 from tqdm import trange
 
 
@@ -85,7 +85,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     if self.verbose: bar = trange(numGrayLevels - 1, desc='calculate GLSZM')
 
-    for i in xrange(1, numGrayLevels):
+    for i in safe_xrange(1, numGrayLevels):
       # give some progress
       if self.verbose: bar.update()
 

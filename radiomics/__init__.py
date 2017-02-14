@@ -1,8 +1,20 @@
+from __future__ import print_function, unicode_literals, division, absolute_import
 import sys
 
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
 in_py3 = sys.version_info[0] > 2
+
+if in_py3:
+  c_str_type = str
+
+  def safe_xrange(*args, **kwargs):
+    return iter(range(*args, **kwargs))
+
+else:
+  c_str_type = basestring
+  safe_xrange = xrange
+
 
 import pkgutil
 import inspect

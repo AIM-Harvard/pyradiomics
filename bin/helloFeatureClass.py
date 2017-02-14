@@ -1,3 +1,4 @@
+from __future__ import print_function, unicode_literals, division, absolute_import
 import os
 import SimpleITK as sitk
 import numpy
@@ -12,10 +13,10 @@ imageName = os.path.join(dataDir, testCase + '_image.nrrd')
 maskName = os.path.join(dataDir, testCase + '_label.nrrd')
 
 if not os.path.exists(imageName):
-  print 'Error: problem finding input image', imageName
+  print('Error: problem finding input image', imageName)
   exit()
 if not os.path.exists(maskName):
-  print 'Error: problem finding input image', maskName
+  print('Error: problem finding input image', maskName)
   exit()
 
 image = sitk.ReadImage(imageName)
@@ -49,18 +50,18 @@ firstOrderFeatures = firstorder.RadiomicsFirstOrder(image, mask, **kwargs)
 firstOrderFeatures.enableFeatureByName('Mean', True)
 # firstOrderFeatures.enableAllFeatures()
 
-print 'Will calculate the following first order features: '
+print('Will calculate the following first order features: ')
 for f in firstOrderFeatures.enabledFeatures.keys():
-  print '  ', f
-  print eval('firstOrderFeatures.get' + f + 'FeatureValue.__doc__')
+  print('  ', f)
+  print(eval('firstOrderFeatures.get' + f + 'FeatureValue.__doc__'))
 
-print 'Calculating first order features...',
+print('Calculating first order features...')
 firstOrderFeatures.calculateFeatures()
-print 'done'
+print('done')
 
-print 'Calculated first order features: '
-for (key, val) in firstOrderFeatures.featureValues.iteritems():
-  print '  ', key, ':', val
+print('Calculated first order features: ')
+for (key, val) in firstOrderFeatures.featureValues.items():
+  print('  ', key, ':', val)
 
 #
 # Show Shape features
@@ -68,18 +69,18 @@ for (key, val) in firstOrderFeatures.featureValues.iteritems():
 shapeFeatures = shape.RadiomicsShape(image, mask, **kwargs)
 shapeFeatures.enableAllFeatures()
 
-print 'Will calculate the following Shape features: '
+print('Will calculate the following Shape features: ')
 for f in shapeFeatures.enabledFeatures.keys():
-  print '  ', f
-  print eval('shapeFeatures.get' + f + 'FeatureValue.__doc__')
+  print('  ', f)
+  print(eval('shapeFeatures.get' + f + 'FeatureValue.__doc__'))
 
-print 'Calculating Shape features...',
+print('Calculating Shape features...')
 shapeFeatures.calculateFeatures()
-print 'done'
+print('done')
 
-print 'Calculated Shape features: '
-for (key, val) in shapeFeatures.featureValues.iteritems():
-  print '  ', key, ':', val
+print('Calculated Shape features: ')
+for (key, val) in shapeFeatures.featureValues.items():
+  print('  ', key, ':', val)
 
 #
 # Show GLCM features
@@ -87,18 +88,18 @@ for (key, val) in shapeFeatures.featureValues.iteritems():
 glcmFeatures = glcm.RadiomicsGLCM(image, mask, **kwargs)
 glcmFeatures.enableAllFeatures()
 
-print 'Will calculate the following GLCM features: '
+print('Will calculate the following GLCM features: ')
 for f in glcmFeatures.enabledFeatures.keys():
-  print '  ', f
-  print eval('glcmFeatures.get' + f + 'FeatureValue.__doc__')
+  print('  ', f)
+  print(eval('glcmFeatures.get' + f + 'FeatureValue.__doc__'))
 
-print 'Calculating GLCM features...',
+print('Calculating GLCM features...')
 glcmFeatures.calculateFeatures()
-print 'done'
+print('done')
 
-print 'Calculated GLCM features: '
-for (key, val) in glcmFeatures.featureValues.iteritems():
-  print '  ', key, ':', val
+print('Calculated GLCM features: ')
+for (key, val) in glcmFeatures.featureValues.items():
+  print('  ', key, ':', val)
 
 #
 # Show GLRLM features
@@ -106,18 +107,18 @@ for (key, val) in glcmFeatures.featureValues.iteritems():
 glrlmFeatures = glrlm.RadiomicsGLRLM(image, mask, **kwargs)
 glrlmFeatures.enableAllFeatures()
 
-print 'Will calculate the following GLRLM features: '
+print('Will calculate the following GLRLM features: ')
 for f in glrlmFeatures.enabledFeatures.keys():
-  print '  ', f
-  print eval('glrlmFeatures.get' + f + 'FeatureValue.__doc__')
+  print('  ', f)
+  print(eval('glrlmFeatures.get' + f + 'FeatureValue.__doc__'))
 
-print 'Calculating GLRLM features...',
+print('Calculating GLRLM features...')
 glrlmFeatures.calculateFeatures()
-print 'done'
+print('done')
 
-print 'Calculated GLRLM features: '
-for (key, val) in glrlmFeatures.featureValues.iteritems():
-  print '  ', key, ':', val
+print('Calculated GLRLM features: ')
+for (key, val) in glrlmFeatures.featureValues.items():
+  print('  ', key, ':', val)
 
 #
 # Show GLSZM features
@@ -125,18 +126,18 @@ for (key, val) in glrlmFeatures.featureValues.iteritems():
 glszmFeatures = glszm.RadiomicsGLSZM(image, mask, **kwargs)
 glszmFeatures.enableAllFeatures()
 
-print 'Will calculate the following GLSZM features: '
+print('Will calculate the following GLSZM features: ')
 for f in glszmFeatures.enabledFeatures.keys():
-  print '  ', f
-  print eval('glszmFeatures.get' + f + 'FeatureValue.__doc__')
+  print('  ', f)
+  print(eval('glszmFeatures.get' + f + 'FeatureValue.__doc__'))
 
-print 'Calculating GLSZM features...',
+print('Calculating GLSZM features...')
 glszmFeatures.calculateFeatures()
-print 'done'
+print('done')
 
-print 'Calculated GLSZM features: '
-for (key, val) in glszmFeatures.featureValues.iteritems():
-  print '  ', key, ':', val
+print('Calculated GLSZM features: ')
+for (key, val) in glszmFeatures.featureValues.items():
+  print('  ', key, ':', val)
 
 #
 # Show FirstOrder features, calculated on a LoG filtered image
@@ -147,9 +148,9 @@ if applyLog:
     logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **inputKwargs)
     logFirstorderFeatures.enableAllFeatures()
     logFirstorderFeatures.calculateFeatures()
-    for (key, val) in logFirstorderFeatures.featureValues.iteritems():
+    for (key, val) in logFirstorderFeatures.featureValues.items():
       laplacianFeatureName = '%s_%s' % (inputImageName, key)
-      print '  ', laplacianFeatureName, ':', val
+      print('  ', laplacianFeatureName, ':', val)
 #
 # Show FirstOrder features, calculated on a wavelet filtered image
 #
@@ -158,7 +159,7 @@ if applyWavelet:
     waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(decompositionImage, mask, **inputKwargs)
     waveletFirstOrderFeaturs.enableAllFeatures()
     waveletFirstOrderFeaturs.calculateFeatures()
-    print 'Calculated firstorder features with wavelet ', decompositionName
-    for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
+    print('Calculated firstorder features with wavelet ', decompositionName)
+    for (key, val) in waveletFirstOrderFeaturs.featureValues.items():
       waveletFeatureName = 'wavelet-%s_%s' % (str(decompositionName), key)
-      print '  ', waveletFeatureName, ':', val
+      print('  ', waveletFeatureName, ':', val)

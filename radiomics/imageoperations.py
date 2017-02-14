@@ -3,6 +3,7 @@ import logging
 import SimpleITK as sitk
 import numpy
 import pywt
+from radiomics import safe_xrange, c_str_type
 
 logger = logging.getLogger(__name__)
 
@@ -61,11 +62,11 @@ def generateAngles(size, maxDistance=1):
 
   angles = []
 
-  for z in xrange(1, maxDistance + 1):
+  for z in safe_xrange(1, maxDistance + 1):
     angles.append((0, 0, z))
-    for y in xrange(-maxDistance, maxDistance + 1):
+    for y in safe_xrange(-maxDistance, maxDistance + 1):
       angles.append((0, z, y))
-      for x in xrange(-maxDistance, maxDistance + 1):
+      for x in safe_xrange(-maxDistance, maxDistance + 1):
         angles.append((z, y, x))
 
   angles = numpy.array(angles)
@@ -116,8 +117,13 @@ def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
   # Crop Image
   logger.debug('Cropping to size %s', (boundingBox[1::2] - boundingBox[0::2]) + 1)
   cif = sitk.CropImageFilter()
-  cif.SetLowerBoundaryCropSize(ijkMinBounds)
-  cif.SetUpperBoundaryCropSize(ijkMaxBounds)
+  try:
+    cif.SetLowerBoundaryCropSize(ijkMinBounds)
+    cif.SetUpperBoundaryCropSize(ijkMaxBounds)
+  except TypeError:
+    # newer versions of SITK/python want a tuple or list
+    cif.SetLowerBoundaryCropSize(ijkMinBounds.tolist())
+    cif.SetUpperBoundaryCropSize(ijkMaxBounds.tolist())
   croppedImageNode = cif.Execute(imageNode)
   croppedMaskNode = cif.Execute(maskNode)
 
@@ -197,7 +203,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   logger.debug('Applying resampling (spacing %s and size %s)', resampledPixelSpacing, newSize)
 
   try:
-    if isinstance(interpolator, basestring):
+    if isinstance(interpolator, c_str_type):
       interpolator = eval("sitk.%s" % (interpolator))
   except:
     logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)
@@ -271,14 +277,14 @@ def getLoGImage(inputImage, **kwargs):
 
   if numpy.min(size) < 4:
     logger.warning('Image too small to apply LoG filter, size: %s', size)
-    if kwargs.get('verbose', False): print 'Image too small to apply LoG filter'
+    if kwargs.get('verbose', False): print('Image too small to apply LoG filter')
     return
 
   sigmaValues = kwargs.get('sigma', numpy.arange(5., 0., -.5))
 
   for sigma in sigmaValues:
     logger.debug('Computing LoG with sigma %g', sigma)
-    if kwargs.get('verbose', False): print "\tComputing LoG with sigma %g" % (sigma)
+    if kwargs.get('verbose', False): print("\tComputing LoG with sigma %g" % (sigma))
 
     if sigma > 0.0:
       if numpy.all(size >= numpy.ceil(sigma / spacing) + 1):
@@ -331,7 +337,7 @@ def getWaveletImage(inputImage, **kwargs):
   for idx, wl in enumerate(ret, start=1):
     for decompositionName, decompositionImage in wl.items():
       logger.debug('Computing Wavelet %s', decompositionName)
-      if kwargs.get('verbose', False): print "\tComputing Wavelet %s" % (decompositionName)
+      if kwargs.get('verbose', False): print("\tComputing Wavelet %s" % (decompositionName))
 
       if idx == 1:
         inputImageName = 'wavelet-%s' % (decompositionName)
@@ -388,7 +394,7 @@ def _swt3(inputImage, wavelet="coif1", level=1, start_level=0):
            'LHH': LHH,
            'LHL': LHL,
            'LLH': LLH}
-    for decName, decImage in dec.iteritems():
+    for decName, decImage in dec.items():
       decTemp = decImage.copy()
       decTemp = numpy.resize(decTemp, original_shape)
       sitkImage = sitk.GetImageFromArray(decTemp)

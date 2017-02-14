@@ -8,6 +8,9 @@ from setuptools import setup
 with open('requirements.txt', 'r') as fp:
     requirements = list(filter(bool, (line.strip() for line in fp)))
 
+with open('requirements-dev.txt', 'r') as fp:
+    dev_requirements = list(filter(bool, (line.strip() for line in fp)))
+
 setup(
     name='pyradiomics',
 
@@ -47,5 +50,6 @@ setup(
 
     keywords='radiomics cancerimaging medicalresearch',
 
-    install_requires=requirements
+    install_requires=requirements,
+    tests_require=dev_requirements
 )

@@ -123,7 +123,7 @@ Interactive Use
 
     result = extractor.execute(imageName, maskName)
     for key, val in six.iteritems(result):
-      print "\t%s: %s" %(key, val)
+      print("\t%s: %s" %(key, val))
 
 * See the :ref:`feature extractor class<radiomics-featureextractor-label>` for more information on using this core class.
 
@@ -173,6 +173,6 @@ Using feature classes directly
      firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
      firstOrderFeatures.calculateFeatures()
      for (key,val) in six.iteritems(firstOrderFeatures.featureValues):
-       print "\t%s: %s" % (key, val)
+       print("\t%s: %s" % (key, val))
 
 * See the :ref:`radomics package<radiomics-firstorder-label>` for more features that you can calculate.

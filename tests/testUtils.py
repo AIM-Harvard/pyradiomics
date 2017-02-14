@@ -41,10 +41,10 @@ def custom_name_func(testcase_func, param_num, param):
 
   logger.debug('custom_name_func: function name = %s, param_num = {0:0>3}, param.args = %s'.format(param_num),
                testcase_func.__name__, param.args)
-  return "%s_%s" % (
+  return str("%s_%s" % (
     testcase_func.__name__,
     parameterized.to_safe_name("_".join(str(x) for x in param.args)),
-  )
+  ))
 
 
 class RadiomicsTestUtils:
@@ -114,8 +114,8 @@ class RadiomicsTestUtils:
 
     # Next, set testCase if necessary
     if self._testCase != testCase:
-      imageName = os.path.join(self._dataDir, testCase + '_image.nrrd')
-      maskName = os.path.join(self._dataDir, testCase + '_label.nrrd')
+      imageName = str(os.path.join(self._dataDir, testCase + '_image.nrrd'))
+      maskName = str(os.path.join(self._dataDir, testCase + '_label.nrrd'))
 
       self._logger.info("Reading the image and mask for test case %s", testCase)
       self._image = sitk.ReadImage(imageName)

@@ -61,8 +61,8 @@ def main():
                   if s_idx > 0: s_name += " (%s)" % (str(s_idx + 1))
 
                   cw.writerow([patient, i_name, s_name, im_file, seg_file])
-  except Exception, e:
-    print(e)
+  except Exception as exc:
+    print(exc)
 
 
 def scanpatients(f, filetype):

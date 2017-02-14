@@ -45,8 +45,8 @@ def main():
             # ReaderName is not extracted using DatasetHierarchyReader, set it to 'N/A'
             cw.writerow([patientID, studyDate, 'N/A', imageFilepath, maskFilepath])
 
-  except Exception, e:
-    print(e)
+  except Exception as exc:
+    print(exc)
 
 
 if __name__ == '__main__':

@@ -63,9 +63,10 @@ setup(
     license='Slicer',
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
         'License :: Slicer',
         'Operating System :: OS Independent',
         'Programming Language :: C',
@@ -74,7 +75,7 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
 
-    keywords='radiomics cancerimaging medicalresearch',
+    keywords='radiomics cancerimaging medicalresearch computationalimaging',
 
     install_requires=requirements,
     test_suite='nose.collector',

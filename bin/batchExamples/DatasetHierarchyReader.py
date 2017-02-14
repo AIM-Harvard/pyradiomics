@@ -5,6 +5,8 @@ import collections
 import glob
 import os
 
+import six
+
 
 class DatasetHierarchyReader(object):
   def __init__(self, inputDatasetDirectory, filetype='.nrrd'):
@@ -102,7 +104,8 @@ class DatasetHierarchyReader(object):
     conditions.
     """
 
-    keywordSettings = {k: [str(keyword.strip()) for keyword in v.split(',')] for (k, v) in keywordSettings.iteritems()}
+    keywordSettings = {k: [str(keyword.strip()) for keyword in v.split(',')]
+                       for (k, v) in six.iteritems(keywordSettings)}
 
     matchedImages = []
     for imageFilepath in imageFilepaths:

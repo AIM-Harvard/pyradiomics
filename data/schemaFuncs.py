@@ -54,7 +54,7 @@ def checkFeatureClass(value, rule_obj, path):
   global featureClasses
   if value is None:
     raise TypeError('featureClass dictionary cannot be None value')
-  for className, features in value.iteritems():
+  for className, features in six.iteritems(value):
     if className not in featureClasses.keys():
       raise ValueError(
         'Feature Class %s is not recognized. Available feature classes are %s' % (className, featureClasses.keys()))

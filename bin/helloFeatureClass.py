@@ -5,6 +5,7 @@ import os
 
 import numpy
 import SimpleITK as sitk
+import six
 
 from radiomics import firstorder, glcm, glrlm, glszm, imageoperations, shape
 
@@ -64,7 +65,7 @@ firstOrderFeatures.calculateFeatures()
 print('done')
 
 print('Calculated first order features: ')
-for (key, val) in firstOrderFeatures.featureValues.iteritems():
+for (key, val) in six.iteritems(firstOrderFeatures.featureValues):
   print('  ', key, ':', val)
 
 #
@@ -83,7 +84,7 @@ shapeFeatures.calculateFeatures()
 print('done')
 
 print('Calculated Shape features: ')
-for (key, val) in shapeFeatures.featureValues.iteritems():
+for (key, val) in six.iteritems(shapeFeatures.featureValues):
   print('  ', key, ':', val)
 
 #
@@ -102,7 +103,7 @@ glcmFeatures.calculateFeatures()
 print('done')
 
 print('Calculated GLCM features: ')
-for (key, val) in glcmFeatures.featureValues.iteritems():
+for (key, val) in six.iteritems(glcmFeatures.featureValues):
   print('  ', key, ':', val)
 
 #
@@ -121,7 +122,7 @@ glrlmFeatures.calculateFeatures()
 print('done')
 
 print('Calculated GLRLM features: ')
-for (key, val) in glrlmFeatures.featureValues.iteritems():
+for (key, val) in six.iteritems(glrlmFeatures.featureValues):
   print('  ', key, ':', val)
 
 #
@@ -140,7 +141,7 @@ glszmFeatures.calculateFeatures()
 print('done')
 
 print('Calculated GLSZM features: ')
-for (key, val) in glszmFeatures.featureValues.iteritems():
+for (key, val) in six.iteritems(glszmFeatures.featureValues):
   print('  ', key, ':', val)
 
 #
@@ -152,7 +153,7 @@ if applyLog:
     logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **inputKwargs)
     logFirstorderFeatures.enableAllFeatures()
     logFirstorderFeatures.calculateFeatures()
-    for (key, val) in logFirstorderFeatures.featureValues.iteritems():
+    for (key, val) in six.iteritems(logFirstorderFeatures.featureValues):
       laplacianFeatureName = '%s_%s' % (inputImageName, key)
       print('  ', laplacianFeatureName, ':', val)
 #
@@ -164,6 +165,6 @@ if applyWavelet:
     waveletFirstOrderFeaturs.enableAllFeatures()
     waveletFirstOrderFeaturs.calculateFeatures()
     print('Calculated firstorder features with wavelet ', decompositionName)
-    for (key, val) in waveletFirstOrderFeaturs.featureValues.iteritems():
+    for (key, val) in six.iteritems(waveletFirstOrderFeaturs.featureValues):
       waveletFeatureName = 'wavelet-%s_%s' % (str(decompositionName), key)
       print('  ', waveletFeatureName, ':', val)

@@ -9,6 +9,8 @@ import os.path
 import sys
 import traceback
 
+import six
+
 from radiomics import featureextractor
 
 parser = argparse.ArgumentParser()
@@ -72,7 +74,7 @@ def main():
       json.dump(featureVector, args.out)
       args.out.write('\n')
     else:
-      for k, v in featureVector.iteritems():
+      for k, v in six.iteritems(featureVector):
         args.out.write('%s: %s\n' % (k, v))
   except Exception:
     logging.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())

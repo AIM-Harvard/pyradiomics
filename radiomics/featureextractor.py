@@ -324,13 +324,13 @@ class RadiomicsFeaturesExtractor:
 
       if self.kwargs['verbose']: print("\t\tComputing shape")
       shapeClass.calculateFeatures()
-      for (featureName, featureValue) in shapeClass.featureValues.iteritems():
+      for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
         newFeatureName = "original_shape_%s" % (featureName)
         featureVector[newFeatureName] = featureValue
 
     # Make generators for all enabled input image types
     imageGenerators = []
-    for imageType, customKwargs in self.inputImages.iteritems():
+    for imageType, customKwargs in six.iteritems(self.inputImages):
       args = self.kwargs.copy()
       args.update(customKwargs)
       self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
@@ -390,7 +390,7 @@ class RadiomicsFeaturesExtractor:
     """
     provenanceVector = collections.OrderedDict()
     generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.kwargs, self.inputImages)
-    for k, v in generalinfoClass.execute().iteritems():
+    for k, v in six.iteritems(generalinfoClass.execute()):
       provenanceVector['general_info_%s' % (k)] = v
     return provenanceVector
 
@@ -405,7 +405,7 @@ class RadiomicsFeaturesExtractor:
     featureVector = collections.OrderedDict()
 
     # Calculate feature classes
-    for featureClassName, enabledFeatures in self.enabledFeatures.iteritems():
+    for featureClassName, enabledFeatures in six.iteritems(self.enabledFeatures):
       # Handle calculation of shape features separately
       if featureClassName == 'shape':
         continue
@@ -421,7 +421,7 @@ class RadiomicsFeaturesExtractor:
 
         if self.kwargs['verbose']: print("\t\tComputing %s" % (featureClassName))
         featureClass.calculateFeatures()
-        for (featureName, featureValue) in featureClass.featureValues.iteritems():
+        for (featureName, featureValue) in six.iteritems(featureClass.featureValues):
           newFeatureName = "%s_%s_%s" % (inputImageName, featureClassName, featureName)
           featureVector[newFeatureName] = featureValue
 

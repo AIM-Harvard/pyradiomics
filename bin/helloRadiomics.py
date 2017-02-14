@@ -5,6 +5,7 @@ import logging
 import os
 
 import SimpleITK as sitk
+import six
 
 import radiomics
 from radiomics import featureextractor
@@ -60,7 +61,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 print("Active features:")
-for cls, features in extractor.enabledFeatures.iteritems():
+for cls, features in six.iteritems(extractor.enabledFeatures):
   if len(features) == 0:
     features = extractor.getFeatureNames(cls)
   for f in features:

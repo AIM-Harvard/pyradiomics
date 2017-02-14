@@ -5,6 +5,7 @@
 import logging
 
 from nose_parameterized import parameterized
+import six
 
 from radiomics import getFeatureClasses
 from testUtils import custom_name_func
@@ -34,7 +35,7 @@ class TestDocStrings:
 
     def generate_scenarios():
       global featureClasses
-      for featureClassName, featureClass in featureClasses.iteritems():
+      for featureClassName, featureClass in six.iteritems(featureClasses):
         logging.info('generate_scenarios %s', featureClassName)
         doc = featureClass.__doc__
         assert(doc is not None)

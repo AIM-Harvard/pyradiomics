@@ -3,6 +3,8 @@ from __future__ import print_function
 import csv
 import os
 
+import six
+
 SqDic = {}
 SqDic['T2-TSE-TRA'] = 't2tra'
 SqDic['T2-TRA'] = 't2tra'
@@ -44,12 +46,12 @@ def main():
     with open(outputFile, 'wb') as outFile:
       cw = csv.writer(outFile, lineterminator='\n')
 
-      for patient, Studies in sorted(datasetHierarchyDict.iteritems(), key=lambda t: t[0]):
-        for Study, im_fileList in sorted(Studies['reconstructions'].iteritems(), key=lambda t: t[0]):
+      for patient, Studies in sorted(six.iteritems(datasetHierarchyDict), key=lambda t: t[0]):
+        for Study, im_fileList in sorted(six.iteritems(Studies['reconstructions']), key=lambda t: t[0]):
           for i_idx, im_file in enumerate(im_fileList):
 
             if Studies['segmentations'].has_key(Study):
-              for Reader, seg_fileList in sorted(Studies['segmentations'][Study].iteritems(), key=lambda t: t[0]):
+              for Reader, seg_fileList in sorted(six.iteritems(Studies['segmentations'][Study]), key=lambda t: t[0]):
                 for s_idx, seg_file in enumerate(sorted(seg_fileList)):
 
                   i_name = Study
@@ -76,9 +78,9 @@ def scanpatients(f, filetype):
           outputDict[PtNo] = {'reconstructions': {}}
           outputDict[PtNo]['segmentations'] = {}
 
-        for SqKey, SqVal in SqDic.iteritems():
+        for SqKey, SqVal in six.iteritems(SqDic):
           if ("ROI_" + SqVal) in fname:
-            for ReaderKey, ReaderVal in LabelDic.iteritems():
+            for ReaderKey, ReaderVal in six.iteritems(LabelDic):
               if (ReaderKey + '_') in fname:
                 if not outputDict[PtNo]['segmentations'].has_key(SqVal):
                   outputDict[PtNo]['segmentations'][SqVal] = {}

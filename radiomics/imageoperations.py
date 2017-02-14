@@ -393,7 +393,7 @@ def _swt3(inputImage, wavelet="coif1", level=1, start_level=0):
            'LHH': LHH,
            'LHL': LHL,
            'LLH': LLH}
-    for decName, decImage in dec.iteritems():
+    for decName, decImage in six.iteritems(dec):
       decTemp = decImage.copy()
       decTemp = numpy.resize(decTemp, original_shape)
       sitkImage = sitk.GetImageFromArray(decTemp)

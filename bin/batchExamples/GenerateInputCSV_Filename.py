@@ -1,5 +1,5 @@
-import os
 import csv
+import os
 
 SqDic = {}
 SqDic['T2-TSE-TRA'] = 't2tra'

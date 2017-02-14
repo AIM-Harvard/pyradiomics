@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import argparse
-import sys
-import os.path
-import logging
 import collections
-import traceback
 import csv
 import json
+import logging
+import os.path
+import sys
+import traceback
+
 from radiomics import featureextractor
 
 parser = argparse.ArgumentParser()

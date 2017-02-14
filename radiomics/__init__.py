@@ -1,15 +1,21 @@
+
+# For convenience, import collection and numpy
+# into the "pyradiomics" namespace
+
+import collections  # noqa: F401
+import inspect
+import logging
+import os
+import pkgutil
 import sys
+
+import numpy  # noqa: F401
+
+from . import base, imageoperations
 
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
 in_py3 = sys.version_info[0] > 2
-
-import pkgutil
-import inspect
-import os
-import logging
-
-from . import base, imageoperations
 
 
 def debug(debug_on=True):
@@ -96,9 +102,6 @@ debug(False)  # force level=WARNING, in case logging default is set differently 
 
 _featureClasses = None
 _inputImages = None
-
-# For convenience, import the most used packages into the "pyradiomics" namespace
-import collections, numpy  # noqa: F401
 
 from ._version import get_versions
 

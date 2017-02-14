@@ -1,7 +1,9 @@
 import os
-import SimpleITK as sitk
+
 import numpy
-from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm
+import SimpleITK as sitk
+
+from radiomics import firstorder, glcm, glrlm, glszm, imageoperations, shape
 
 # testBinWidth = 25 this is the default bin size
 # testResampledPixelSpacing = [3,3,3] no resampling for now.

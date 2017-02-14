@@ -1,8 +1,9 @@
 from itertools import chain
 import logging
-import SimpleITK as sitk
+
 import numpy
 import pywt
+import SimpleITK as sitk
 
 logger = logging.getLogger(__name__)
 

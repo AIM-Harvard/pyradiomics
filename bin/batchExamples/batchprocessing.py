@@ -1,9 +1,11 @@
-import os
-import logging
-import csv
 import collections
+import csv
+import logging
+import os
 import traceback
+
 import SimpleITK as sitk
+
 import radiomics
 from radiomics import featureextractor
 

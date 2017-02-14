@@ -33,4 +33,7 @@ ignore:
     E701,
     # .has_key() is deprecated, use 'in'
     W601,
-
+select: C,E,W,F,I
+# flake8-import-order
+application-import-names: radiomics,testUtils
+import-order-style: appnexus

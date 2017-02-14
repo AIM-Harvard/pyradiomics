@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-import os
-import logging
 import collections
 from itertools import chain
-import SimpleITK as sitk
+import logging
+import os
+
 import pykwalify.core
+import SimpleITK as sitk
+
 import radiomics
-from radiomics import getFeatureClasses, getInputImageTypes, imageoperations, generalinfo
+from radiomics import generalinfo, getFeatureClasses, getInputImageTypes, imageoperations
 
 
 class RadiomicsFeaturesExtractor:

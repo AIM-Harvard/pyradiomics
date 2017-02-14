@@ -1,5 +1,7 @@
 from itertools import chain
+
 import numpy
+
 from radiomics import base, imageoperations
 
 

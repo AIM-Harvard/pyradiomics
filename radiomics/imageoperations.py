@@ -3,7 +3,7 @@ import logging
 import SimpleITK as sitk
 import numpy
 import pywt
-from radiomics import safe_xrange
+from radiomics import safe_xrange, c_str_type
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   logger.debug('Applying resampling (spacing %s and size %s)', resampledPixelSpacing, newSize)
 
   try:
-    if isinstance(interpolator, basestring):
+    if isinstance(interpolator, c_str_type):
       interpolator = eval("sitk.%s" % (interpolator))
   except:
     logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)

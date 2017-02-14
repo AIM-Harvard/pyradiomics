@@ -76,6 +76,7 @@ class RadiomicsTestUtils:
     self._featureClassName = None
 
     self._testCase = None
+    self._testedSet = set()
 
     self._results = {}
     self._diffs = {}
@@ -98,12 +99,10 @@ class RadiomicsTestUtils:
     if self._featureClassName == className and self._testCase == testCase:
       return False
 
-    assert className in self.getFeatureClasses()
-    assert testCase in self.getTestCases()
-
     # First set featureClass if necessary, because if settings have changed, testCase needs te be reloaded
     if self._featureClassName != className:
       self._logger.debug('Setting feature class name to %s', className)
+      assert className in self.getFeatureClasses()
 
       self._featureClassName = className
 
@@ -114,10 +113,13 @@ class RadiomicsTestUtils:
 
     # Next, set testCase if necessary
     if self._testCase != testCase:
+      self._logger.info("Reading the image and mask for test case %s", testCase)
+      assert testCase in self.getTestCases()
+      self._testedSet.add(testCase)
+
       imageName = str(os.path.join(self._dataDir, testCase + '_image.nrrd'))
       maskName = str(os.path.join(self._dataDir, testCase + '_label.nrrd'))
 
-      self._logger.info("Reading the image and mask for test case %s", testCase)
       self._image = sitk.ReadImage(imageName)
       self._mask = sitk.ReadImage(maskName)
 
@@ -246,18 +248,23 @@ class RadiomicsTestUtils:
 
     {'id1' : {'f1':n1, 'f2':n2}, 'id2' : {'f1':n3, 'f2':n4}}
     """
-    csvFile = open(fileName, 'w')
-    csvFileWriter = csv.writer(csvFile)
-    # get the headers from the first row
-    header = sorted(data[list(data.keys())[0]].keys())
-    header = ['testCase'] + header
-    csvFileWriter.writerow(header)
-    for testCase in sorted(data.keys()):
-      thisCase = data[testCase]
-      thisCase['testCase'] = testCase
-      row = []
-      for h in header:
-        row = row + [thisCase.get(h, "N/A")]
-      csvFileWriter.writerow(row)
-    csvFile.close()
-    self._logger.info('Wrote to file %s', fileName)
+    # Get the headers from the first testCase in _testedSet
+    # If no tests were run, the length of _testedSet will be 0, and no files should be written
+    if len(self._testedSet) > 0:
+      csvFile = open(fileName, 'w')
+      csvFileWriter = csv.writer(csvFile, lineterminator='\n')
+      testedCases = sorted(self._testedSet)
+      header = sorted(data[testedCases[0]].keys())
+      header = ['testCase'] + header
+      csvFileWriter.writerow(header)
+      for testCase in testedCases:
+        thisCase = data[testCase]
+        thisCase['testCase'] = testCase
+        row = []
+        for h in header:
+          row = row + [thisCase.get(h, "N/A")]
+        csvFileWriter.writerow(row)
+      csvFile.close()
+      self._logger.info('Wrote to file %s', fileName)
+    else:
+      self._logger.info('No test cases run, aborting file write to %s', fileName)

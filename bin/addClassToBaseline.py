@@ -5,6 +5,8 @@ import collections
 import csv
 import os
 
+import six
+
 from radiomics import featureextractor, imageoperations
 
 
@@ -31,7 +33,7 @@ def main():
     if os.path.exists(os.path.join(baselineDir, 'baseline_%s.csv' % (cls))):
       with open(os.path.join(baselineDir, 'baseline_%s.csv' % (cls)), 'rb') as baselineFile:
         csvReader = csv.reader(baselineFile)
-        csvReader.next()  # Skip header row
+        six.next(csvReader)  # Skip header row
         for testRow in csvReader:
           testCases += [testRow[0]]
       if len(testCases) > 0: break

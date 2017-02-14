@@ -8,6 +8,7 @@ import os
 from nose_parameterized import parameterized
 import numpy
 import SimpleITK as sitk
+import six
 
 from radiomics import imageoperations
 
@@ -180,7 +181,7 @@ class RadiomicsTestUtils:
       self._baseline[cls] = {}
       with open(os.path.join(self._baselineDir, baselineFile), 'rb') as baselineReader:
         csvReader = csv.reader(baselineReader)
-        headers = csvReader.next()
+        headers = six.next(csvReader)
         for testRow in csvReader:
           self._baseline[cls][testRow[0]] = {}
           for val_idx, val in enumerate(testRow[1:], start=1):

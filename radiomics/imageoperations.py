@@ -4,6 +4,7 @@ import logging
 import numpy
 import pywt
 import SimpleITK as sitk
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +199,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   logger.debug('Applying resampling (spacing %s and size %s)', resampledPixelSpacing, newSize)
 
   try:
-    if isinstance(interpolator, basestring):
+    if isinstance(interpolator, six.string_types):
       interpolator = eval("sitk.%s" % (interpolator))
   except:
     logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)

@@ -6,6 +6,7 @@ import os
 
 import pykwalify.core
 import SimpleITK as sitk
+import six
 
 import radiomics
 from radiomics import generalinfo, getFeatureClasses, getInputImageTypes, imageoperations
@@ -73,7 +74,7 @@ class RadiomicsFeaturesExtractor:
     self.inputImages = {}
     self.enabledFeatures = {}
 
-    if len(args) == 1 and isinstance(args[0], basestring):
+    if len(args) == 1 and isinstance(args[0], six.string_types):
       self.loadParams(args[0])
     else:
       # Set default settings and update with and changed settings contained in kwargs
@@ -352,7 +353,7 @@ class RadiomicsFeaturesExtractor:
     If resampling is enabled, both image and mask are resampled and cropped to the tumormask (with additional
     padding as specified in padDistance) after assignment of image and mask.
     """
-    if isinstance(ImageFilePath, basestring) and os.path.exists(ImageFilePath):
+    if isinstance(ImageFilePath, six.string_types) and os.path.exists(ImageFilePath):
       image = sitk.ReadImage(ImageFilePath)
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       image = ImageFilePath
@@ -361,7 +362,7 @@ class RadiomicsFeaturesExtractor:
       if self.kwargs['verbose']: print "Error reading image Filepath or SimpleITK object"
       image = None
 
-    if isinstance(MaskFilePath, basestring) and os.path.exists(MaskFilePath):
+    if isinstance(MaskFilePath, six.string_types) and os.path.exists(MaskFilePath):
       mask = sitk.ReadImage(MaskFilePath)
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       mask = MaskFilePath

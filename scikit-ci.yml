@@ -54,7 +54,7 @@ build:
 
 test:
   commands:
-    - $<RUN_ENV> nosetests --with-xunit --logging-level=DEBUG --verbosity=3 tests/test_features.py
+    - $<RUN_ENV> python setup.py test  --args="--with-xunit --logging-level=DEBUG"
 
   circleci:
     commands:

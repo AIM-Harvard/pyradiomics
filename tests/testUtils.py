@@ -249,7 +249,7 @@ class RadiomicsTestUtils:
     csvFile = open(fileName, 'w')
     csvFileWriter = csv.writer(csvFile)
     # get the headers from the first row
-    header = list(data[list(data.keys())[0]].keys())
+    header = sorted(data[list(data.keys())[0]].keys())
     header = ['testCase'] + header
     csvFileWriter.writerow(header)
     for testCase in sorted(data.keys()):

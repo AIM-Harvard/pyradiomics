@@ -108,7 +108,7 @@ class RadiomicsTestUtils:
       self._featureClassName = className
 
       # Check if test settings have changed
-      if cmp(self._kwargs, self.getBaselineDict(className, testCase)) != 0:
+      if self._kwargs != self.getBaselineDict(className, testCase):
         self._kwargs = self.getBaselineDict(className, testCase)
         self._testCase = None  # forces image to be reloaded (as settings have changed)
 

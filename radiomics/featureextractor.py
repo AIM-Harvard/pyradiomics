@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+
 import collections
 from itertools import chain
 import logging
@@ -320,7 +322,7 @@ class RadiomicsFeaturesExtractor:
         for feature in enabledFeatures:
           shapeClass.enableFeatureByName(feature)
 
-      if self.kwargs['verbose']: print "\t\tComputing shape"
+      if self.kwargs['verbose']: print("\t\tComputing shape")
       shapeClass.calculateFeatures()
       for (featureName, featureValue) in shapeClass.featureValues.iteritems():
         newFeatureName = "original_shape_%s" % (featureName)
@@ -359,7 +361,7 @@ class RadiomicsFeaturesExtractor:
       image = ImageFilePath
     else:
       self.logger.warning('Error reading image Filepath or SimpleITK object')
-      if self.kwargs['verbose']: print "Error reading image Filepath or SimpleITK object"
+      if self.kwargs['verbose']: print("Error reading image Filepath or SimpleITK object")
       image = None
 
     if isinstance(MaskFilePath, six.string_types) and os.path.exists(MaskFilePath):
@@ -368,7 +370,7 @@ class RadiomicsFeaturesExtractor:
       mask = MaskFilePath
     else:
       self.logger.warning('Error reading mask Filepath or SimpleITK object')
-      if self.kwargs['verbose']: print "Error reading mask Filepath or SimpleITK object"
+      if self.kwargs['verbose']: print("Error reading mask Filepath or SimpleITK object")
       mask = None
 
     if self.kwargs['interpolator'] is not None and self.kwargs['resampledPixelSpacing'] is not None:
@@ -417,7 +419,7 @@ class RadiomicsFeaturesExtractor:
           for feature in enabledFeatures:
             featureClass.enableFeatureByName(feature)
 
-        if self.kwargs['verbose']: print "\t\tComputing %s" % (featureClassName)
+        if self.kwargs['verbose']: print("\t\tComputing %s" % (featureClassName))
         featureClass.calculateFeatures()
         for (featureName, featureValue) in featureClass.featureValues.iteritems():
           newFeatureName = "%s_%s_%s" % (inputImageName, featureClassName, featureName)

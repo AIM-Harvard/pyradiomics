@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import csv
 import os
 
@@ -16,12 +18,12 @@ def main():
   keywordSettings['mask'] = 'label'
   keywordSettings['maskExclusion'] = ''
 
-  print "Scanning files..."
+  print("Scanning files...")
 
   datasetReader = DatasetHierarchyReader(inputDirectory, filetype=filetype)
   datasetHierarchyDict = datasetReader.ReadDatasetHierarchy()
 
-  print "Found %s patients, writing csv" % (str(len(datasetHierarchyDict.keys())))
+  print("Found %s patients, writing csv" % (str(len(datasetHierarchyDict.keys()))))
 
   try:
     with open(outputFile, 'wb') as outFile:
@@ -44,7 +46,7 @@ def main():
             cw.writerow([patientID, studyDate, 'N/A', imageFilepath, maskFilepath])
 
   except Exception, e:
-    print e
+    print(e)
 
 
 if __name__ == '__main__':

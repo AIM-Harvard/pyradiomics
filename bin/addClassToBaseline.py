@@ -1,3 +1,6 @@
+
+from __future__ import print_function
+
 import collections
 import csv
 import os
@@ -34,17 +37,17 @@ def main():
       if len(testCases) > 0: break
 
   if len(testCases) == 0:
-    print ("No baselinefiles containing testcases found, exiting...")
+    print("No baselinefiles containing testcases found, exiting...")
     exit(-1)
 
   newClasses = [cls for cls in featureClasses if
                 not os.path.exists(os.path.join(baselineDir, 'baseline_%s.csv' % (cls)))]
 
   if len(newClasses) == 0:
-    print "No new classes to add, exiting..."
+    print("No new classes to add, exiting...")
     exit(0)
 
-  print "Adding new classes: ", newClasses
+  print("Adding new classes: ", newClasses)
 
   newBaseline = {}
 
@@ -59,21 +62,21 @@ def main():
   for cls in newClasses:
     newBaseline[cls] = {}
 
-  print "Computing new baseline"
+  print("Computing new baseline")
   for testCase in testCases:
-    print "\tCalculating test case", testCase
+    print("\tCalculating test case", testCase)
     imagePath = os.path.join(dataDir, testCase + '_image.nrrd')
     maskPath = os.path.join(dataDir, testCase + '_label.nrrd')
     image, mask = extractor.loadImage(imagePath, maskPath)
     if image is None or mask is None:
-      print "Error during loading of image/mask, testcase:", testCase
+      print("Error during loading of image/mask, testcase:", testCase)
       continue  # testImage or mask not found / error during loading
 
     provenance = extractor.getProvenance(imagePath, maskPath, mask)
 
     image, mask, bb = imageoperations.cropToTumorMask(image, mask)
     for cls in newClasses:
-      print "\t\tCalculating class", cls
+      print("\t\tCalculating class", cls)
       newBaseline[cls][testCase] = collections.OrderedDict()
       newBaseline[cls][testCase]["Patient ID"] = testCase
       newBaseline[cls][testCase].update(provenance)
@@ -82,7 +85,7 @@ def main():
       featureClass.calculateFeatures()
       newBaseline[cls][testCase].update(featureClass.featureValues)
 
-  print "Writing new baseline"
+  print("Writing new baseline")
   for cls in newClasses:
     baselineFile = os.path.join(baselineDir, 'baseline_%s.csv' % (cls))
     with open(baselineFile, 'wb') as baseline:

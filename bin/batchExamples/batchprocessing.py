@@ -1,3 +1,6 @@
+
+from __future__ import print_function
+
 import collections
 import csv
 import logging
@@ -35,7 +38,7 @@ def main():
   radiomics.logger.handlers[0].setLevel(logging.WARNING)
 
   logging.info('Loading CSV')
-  print "Loading CSV"
+  print("Loading CSV")
 
   flists = []
   try:
@@ -45,8 +48,8 @@ def main():
   except Exception:
     logging.error('CSV READ FAILED:\n%s', traceback.format_exc())
 
-  print "Loading Done"
-  print ("Patients: " + str(len(flists)))
+  print("Loading Done")
+  print("Patients: " + str(len(flists)))
 
   kwargs = {}
   kwargs['binWidth'] = 25
@@ -62,7 +65,7 @@ def main():
   # extractor.enableInputImages(wavelet= {'level': 2})
   for idx, entry in enumerate(flists, start=1):
 
-    print "(%d/%d) Processing Patient: %s, Study: %s, Reader: %s" % (idx, len(flists), entry[0], entry[1], entry[2])
+    print("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s" % (idx, len(flists), entry[0], entry[1], entry[2]))
     logging.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
                  entry[2])
 

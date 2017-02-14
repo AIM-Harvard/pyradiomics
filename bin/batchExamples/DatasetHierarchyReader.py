@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+
 import collections
 import glob
 import os
@@ -50,7 +52,7 @@ class DatasetHierarchyReader(object):
         recDirectory = os.path.join(studyDirectory, "Reconstructions")
         if not os.path.exists(recDirectory):
           os.mkdir(recDirectory)
-          print "\tCreated:", recDirectory
+          print("\tCreated:", recDirectory)
 
     return recDirectory, images
 
@@ -65,7 +67,7 @@ class DatasetHierarchyReader(object):
         segDirectory = os.path.join(studyDirectory, "Segmentations")
         if not os.path.exists(segDirectory):
           os.mkdir(segDirectory)
-          print "\tCreated:", segDirectory
+          print("\tCreated:", segDirectory)
 
     return segDirectory, labels
 
@@ -80,7 +82,7 @@ class DatasetHierarchyReader(object):
         resDirectory = os.path.join(studyDirectory, "Resources")
         if not os.path.exists(resDirectory):
           os.mkdir(resDirectory)
-          print "\tCreated:", resDirectory
+          print("\tCreated:", resDirectory)
 
     return resDirectory, resources
 
@@ -115,14 +117,14 @@ class DatasetHierarchyReader(object):
         matchedMasks.append(maskFilepath)
 
     if len(matchedImages) < 1:
-      print "ERROR: No Images Matched"
+      print("ERROR: No Images Matched")
     elif len(matchedImages) > 1:
-      print "ERROR: Multiple Images Matched"
+      print("ERROR: Multiple Images Matched")
 
     if len(matchedMasks) < 1:
-      print "ERROR: No Masks Matched"
+      print("ERROR: No Masks Matched")
     elif len(matchedMasks) > 1:
-      print "ERROR: Multiple Masks Matched"
+      print("ERROR: Multiple Masks Matched")
 
     if (len(matchedImages) == 1) and (len(matchedMasks) == 1):
       return matchedImages[0], matchedMasks[0]

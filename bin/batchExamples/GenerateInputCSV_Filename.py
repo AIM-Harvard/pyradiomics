@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import csv
 import os
 
@@ -32,11 +34,11 @@ def main():
   outputFile = DATA_ROOT_PATH + r"/Included/FileList.csv"
   filetype = ".nrrd"
 
-  print "Scanning files..."
+  print("Scanning files...")
 
   datasetHierarchyDict = scanpatients(inputDirectory, filetype)
 
-  print "Found %s patients, writing csv" % (len(datasetHierarchyDict.keys()))
+  print("Found %s patients, writing csv" % (len(datasetHierarchyDict.keys())))
 
   try:
     with open(outputFile, 'wb') as outFile:
@@ -58,7 +60,7 @@ def main():
 
                   cw.writerow([patient, i_name, s_name, im_file, seg_file])
   except Exception, e:
-    print e
+    print(e)
 
 
 def scanpatients(f, filetype):

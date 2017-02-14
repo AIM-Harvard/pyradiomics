@@ -8,6 +8,7 @@ import numpy
 import pywt
 import SimpleITK as sitk
 import six
+from six.moves import range
 
 logger = logging.getLogger(__name__)
 
@@ -66,11 +67,11 @@ def generateAngles(size, maxDistance=1):
 
   angles = []
 
-  for z in xrange(1, maxDistance + 1):
+  for z in range(1, maxDistance + 1):
     angles.append((0, 0, z))
-    for y in xrange(-maxDistance, maxDistance + 1):
+    for y in range(-maxDistance, maxDistance + 1):
       angles.append((0, z, y))
-      for x in xrange(-maxDistance, maxDistance + 1):
+      for x in range(-maxDistance, maxDistance + 1):
         angles.append((z, y, x))
 
   angles = numpy.array(angles)

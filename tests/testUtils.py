@@ -179,7 +179,7 @@ class RadiomicsTestUtils:
       cls = baselineFile[9:-4]
       self._logger.debug('Reading baseline for class %s', cls)
       self._baseline[cls] = {}
-      with open(os.path.join(self._baselineDir, baselineFile), 'rb') as baselineReader:
+      with open(os.path.join(self._baselineDir, baselineFile), 'r' if six.PY3 else 'rb') as baselineReader:
         csvReader = csv.reader(baselineReader)
         headers = six.next(csvReader)
         for testRow in csvReader:

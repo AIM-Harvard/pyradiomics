@@ -27,8 +27,13 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     cpif = sitk.ConstantPadImageFilter()
 
     padding = numpy.tile(1, 3)
-    cpif.SetPadLowerBound(padding)
-    cpif.SetPadUpperBound(padding)
+    try:
+      cpif.SetPadLowerBound(padding)
+      cpif.SetPadUpperBound(padding)
+    except TypeError:
+      # newer versions of SITK/python want a tuple or list
+      cpif.SetPadLowerBound(padding.tolist())
+      cpif.SetPadUpperBound(padding.tolist())
 
     self.inputMask = cpif.Execute(self.inputMask)
 

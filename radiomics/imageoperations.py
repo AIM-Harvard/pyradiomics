@@ -122,8 +122,13 @@ def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
   # Crop Image
   logger.debug('Cropping to size %s', (boundingBox[1::2] - boundingBox[0::2]) + 1)
   cif = sitk.CropImageFilter()
-  cif.SetLowerBoundaryCropSize(ijkMinBounds)
-  cif.SetUpperBoundaryCropSize(ijkMaxBounds)
+  try:
+    cif.SetLowerBoundaryCropSize(ijkMinBounds)
+    cif.SetUpperBoundaryCropSize(ijkMaxBounds)
+  except TypeError:
+    # newer versions of SITK/python want a tuple or list
+    cif.SetLowerBoundaryCropSize(ijkMinBounds.tolist())
+    cif.SetUpperBoundaryCropSize(ijkMaxBounds.tolist())
   croppedImageNode = cif.Execute(imageNode)
   croppedMaskNode = cif.Execute(maskNode)
 

@@ -191,20 +191,21 @@ class RadiomicsTestUtils:
     Use utility methods to get and test the results against the expected baseline value for this key.
     """
 
+    longName = '%s_%s' % (self._featureClassName, featureName)
     if value is None:
-      self._diffs[self._testCase][featureName] = None
-      self._results[self._testCase][featureName] = None
+      self._diffs[self._testCase][longName] = None
+      self._results[self._testCase][longName] = None
     assert (value is not None)
 
     if math.isnan(value):
-      self._diffs[self._testCase][featureName] = numpy.nan
-      self._results[self._testCase][featureName] = numpy.nan
+      self._diffs[self._testCase][longName] = numpy.nan
+      self._results[self._testCase][longName] = numpy.nan
     assert (not math.isnan(value))
 
     # save the result using the baseline class and feature names
     self._logger.debug('checkResults: featureName = %s', featureName)
 
-    self._results[self._testCase][featureName] = value
+    self._results[self._testCase][longName] = value
 
     assert featureName in self._baseline[self._featureClassName][self._testCase]
     baselineValue = float(self._baseline[self._featureClassName][self._testCase][featureName])
@@ -220,7 +221,7 @@ class RadiomicsTestUtils:
       percentDiff = abs(1.0 - (value / baselineValue))
 
     # save the difference
-    self._diffs[self._testCase][featureName] = percentDiff
+    self._diffs[self._testCase][longName] = percentDiff
 
     # check for a less than three percent difference
     if (percentDiff >= 0.03):
@@ -244,10 +245,10 @@ class RadiomicsTestUtils:
 
     {'id1' : {'f1':n1, 'f2':n2}, 'id2' : {'f1':n3, 'f2':n4}}
     """
-    csvFile = open(fileName, 'wb')
+    csvFile = open(fileName, 'w')
     csvFileWriter = csv.writer(csvFile)
     # get the headers from the first row
-    header = sorted(data[data.keys()[0]].keys())
+    header = list(data[list(data.keys())[0]].keys())
     header = ['testCase'] + header
     csvFileWriter.writerow(header)
     for testCase in sorted(data.keys()):
@@ -255,7 +256,7 @@ class RadiomicsTestUtils:
       thisCase['testCase'] = testCase
       row = []
       for h in header:
-        row = row + [thisCase[h]]
+        row = row + [thisCase.get(h, "N/A")]
       csvFileWriter.writerow(row)
     csvFile.close()
     self._logger.info('Wrote to file %s', fileName)

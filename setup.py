@@ -89,7 +89,7 @@ setup(
     keywords='radiomics cancerimaging medicalresearch computationalimaging',
 
     install_requires=requirements,
-    setup_requires=['cython', 'numpy>=1.9.2'],
+    setup_requires=['numpy>=1.9.2'],
     test_suite='nose.collector',
     tests_require=dev_requirements
 )

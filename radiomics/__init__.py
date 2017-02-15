@@ -136,11 +136,13 @@ _cMatsState = 0
 try:
   logger.debug("Loading C extensions")
   from radiomics import _cmatrices as cMatrices
+  from radiomics import _cshape as cShape
   _cMatsState = 1
   enableCExtensions()
 except Exception:
   logger.warning("Error loading C extensions, switching to python calculation:\n%s", traceback.format_exc())
   cMatrices = None  # set cMatrices to None to prevent an import error in the feature classes.
+  cShape = None
 
 from ._version import get_versions
 

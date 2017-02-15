@@ -48,6 +48,8 @@ commands['test'] = NoseTestCommand
 incDirs = [sysconfig.get_python_inc(), numpy.get_include()]
 
 ext = [Extension("radiomics._cmatrices", ["radiomics/src/_cmatrices.c", "radiomics/src/cmatrices.c"],
+                 include_dirs=incDirs),
+       Extension("radiomics._cshape", ["radiomics/src/_cshape.c", "radiomics/src/cshape.c"],
                  include_dirs=incDirs)]
 
 setup(

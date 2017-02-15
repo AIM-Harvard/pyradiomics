@@ -251,20 +251,20 @@ class RadiomicsTestUtils:
     # Get the headers from the first testCase in _testedSet
     # If no tests were run, the length of _testedSet will be 0, and no files should be written
     if len(self._testedSet) > 0:
-      csvFile = open(fileName, 'w')
-      csvFileWriter = csv.writer(csvFile, lineterminator='\n')
-      testedCases = sorted(self._testedSet)
-      header = sorted(data[testedCases[0]].keys())
-      header = ['testCase'] + header
-      csvFileWriter.writerow(header)
-      for testCase in testedCases:
-        thisCase = data[testCase]
-        thisCase['testCase'] = testCase
-        row = []
-        for h in header:
-          row = row + [thisCase.get(h, "N/A")]
-        csvFileWriter.writerow(row)
-      csvFile.close()
-      self._logger.info('Wrote to file %s', fileName)
+      with open(fileName, 'w') as csvFile:
+        csvFileWriter = csv.writer(csvFile, lineterminator='\n')
+        testedCases = sorted(self._testedSet)
+        header = sorted(data[testedCases[0]].keys())
+        header = ['testCase'] + header
+        csvFileWriter.writerow(header)
+        for testCase in testedCases:
+          thisCase = data[testCase]
+          thisCase['testCase'] = testCase
+          row = []
+          for h in header:
+            row = row + [thisCase.get(h, "N/A")]
+          csvFileWriter.writerow(row)
+        csvFile.close()
+        self._logger.info('Wrote to file %s', fileName)
     else:
       self._logger.info('No test cases run, aborting file write to %s', fileName)

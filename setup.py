@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from distutils import sysconfig
+
+import numpy
+
+from setuptools import Extension, setup
+
 from setuptools.command.test import test as TestCommand
+
 
 import versioneer
 
@@ -10,6 +16,9 @@ with open('requirements.txt', 'r') as fp:
 
 with open('requirements-dev.txt', 'r') as fp:
     dev_requirements = list(filter(bool, (line.strip() for line in fp)))
+
+with open('requirements-setup.txt', 'r') as fp:
+    setup_requirements = list(filter(bool, (line.strip() for line in fp)))
 
 class NoseTestCommand(TestCommand):
     """Command to run unit tests using nose driver after in-place build"""
@@ -36,6 +45,11 @@ class NoseTestCommand(TestCommand):
 commands = versioneer.get_cmdclass()
 commands['test'] = NoseTestCommand
 
+incDirs = [sysconfig.get_python_inc(), numpy.get_include()]
+
+ext = [Extension("radiomics._cmatrices", ["radiomics/src/_cmatrices.c", "radiomics/src/cmatrices.c"],
+                 include_dirs=incDirs)]
+
 setup(
     name='pyradiomics',
 
@@ -48,6 +62,7 @@ setup(
     cmdclass=commands,
 
     packages=['radiomics', 'radiomics.scripts'],
+    ext_modules=ext,
     zip_safe=False,
     data_files=[
       ('data', ['data/paramSchema.yaml', 'data/schemaFuncs.py'])],
@@ -78,5 +93,6 @@ setup(
 
     install_requires=requirements,
     test_suite='nose.collector',
-    tests_require=dev_requirements
+    tests_require=dev_requirements,
+    setup_requires=setup_requirements
 )

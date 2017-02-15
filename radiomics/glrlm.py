@@ -3,7 +3,7 @@ from itertools import chain
 import numpy
 from six.moves import range
 
-from radiomics import base, imageoperations
+from radiomics import base, cMatrices, cMatsEnabled, imageoperations
 
 
 class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
@@ -93,10 +93,14 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
 
-    self._calculateGLRLM()
+    if cMatsEnabled():
+      self.P_glrlm = self._calculateCMatrix()
+    else:
+      self.P_glrlm = self._calculateMatrix()
+
     self._calculateCoefficients()
 
-  def _calculateGLRLM(self):
+  def _calculateMatrix(self):
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
 
@@ -152,11 +156,34 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
       if not isMultiElement:
         P[:] = 0
 
+    P_glrlm = self._applyMatrixOptions(P_glrlm, angles)
+
+    return P_glrlm
+
+  def _calculateCMatrix(self):
+    Ng = self.coefficients['Ng']
+    Nr = self.coefficients['Nr']
+
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
+
+    P_glrlm = cMatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)
+    P_glrlm = self._applyMatrixOptions(P_glrlm, angles)
+
+    return P_glrlm
+
+  def _applyMatrixOptions(self, P_glrlm, angles):
+    """
+    Further process the calculated matrix by cropping the matrix to between minimum and maximum observed gray-levels and
+    up to maximum observed run-length. Optionally apply a weighting factor. Finally delete empty angles and store the
+    sum of the matrix in ``self.coefficients``.
+    """
+
     # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
     # Crop run-length axis of GLRLMs up to maximum observed run-length
     P_glrlm_bounds = numpy.argwhere(P_glrlm)
     (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1  # noqa: F841
-    self.P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
+    P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
 
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:
@@ -175,16 +202,18 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
           self.logger.warning('weigthing norm "%s" is unknown, weighting factor is set to 1', self.weightingNorm)
           weights[a_idx] = 1
 
-      self.P_glrlm = numpy.sum(self.P_glrlm * weights[None, None, :], 2, keepdims=True)
+      P_glrlm = numpy.sum(P_glrlm * weights[None, None, :], 2, keepdims=True)
 
-    sumP_glrlm = numpy.sum(self.P_glrlm, (0, 1))
+    sumP_glrlm = numpy.sum(P_glrlm, (0, 1))
 
     # Delete empty angles if no weighting is applied
-    if self.P_glrlm.shape[2] > 1:
-      self.P_glrlm = numpy.delete(self.P_glrlm, numpy.where(sumP_glrlm == 0), 2)
+    if P_glrlm.shape[2] > 1:
+      P_glrlm = numpy.delete(P_glrlm, numpy.where(sumP_glrlm == 0), 2)
       sumP_glrlm = numpy.delete(sumP_glrlm, numpy.where(sumP_glrlm == 0), 0)
 
     self.coefficients['sumP_glrlm'] = sumP_glrlm
+
+    return P_glrlm
 
   def _calculateCoefficients(self):
 

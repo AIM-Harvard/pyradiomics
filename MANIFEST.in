@@ -1,2 +1,17 @@
-include versioneer.py
+include CONTRIBUTING.md
+include LICENSE.txt
 include radiomics/_version.py
+include README.md
+include requirements.txt
+include requirements-dev.txt
+include radiomics/src/*.[ch]
+include versioneer.py
+
+recursive-include data *
+exclude data/PyradiomicsFeatures.csv data/Baseline2PyradiomicsFeaturesDiff.csv
+
+recursive-include tests *
+recursive-include docs *.rst conf.py Makefile make.bat
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]

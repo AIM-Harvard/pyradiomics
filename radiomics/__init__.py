@@ -15,7 +15,6 @@ from . import base, imageoperations
 
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
-in_py3 = sys.version_info[0] > 2
 
 
 def debug(debug_on=True):

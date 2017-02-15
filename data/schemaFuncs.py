@@ -1,11 +1,12 @@
 import pywt
+import six
 
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
 
 featureClasses = RadiomicsFeaturesExtractor.getFeatureClasses()
 
 def checkWavelet(value, rule_obj, path):
-  if not isinstance(value, basestring):
+  if not isinstance(value, six.string_types):
     raise TypeError('Wavelet not expected type (str)')
   wavelist = pywt.wavelist()
   if value not in wavelist:
@@ -16,7 +17,7 @@ def checkWavelet(value, rule_obj, path):
 def checkInterpolator(value, rule_obj, path):
   if value is None:
     return True
-  if isinstance(value, basestring):
+  if isinstance(value, six.string_types):
     enum = {'sitkNearestNeighbor',
             'sitkLinear',
             'sitkBSpline',
@@ -40,7 +41,7 @@ def checkInterpolator(value, rule_obj, path):
 def checkWeighting(value, rule_obj, path):
   if value is None:
     return True
-  elif isinstance(value, basestring):
+  elif isinstance(value, six.string_types):
     enum = ['euclidean', 'manhattan', 'infinity', 'no_weighting']
     if value not in enum:
       raise ValueError('WeightingNorm value "%s" not valid, possible values: %s' % (value, enum))
@@ -53,10 +54,10 @@ def checkFeatureClass(value, rule_obj, path):
   global featureClasses
   if value is None:
     raise TypeError('featureClass dictionary cannot be None value')
-  for className, features in value.iteritems():
+  for className, features in six.iteritems(value):
     if className not in featureClasses.keys():
       raise ValueError(
-        'Feature Class %s is not recognized. Available feature classes are %s' % (className, featureClasses.keys()))
+        'Feature Class %s is not recognized. Available feature classes are %s' % (className, list(featureClasses.keys())))
     if features is not None:
       if not isinstance(features, list):
         raise TypeError('Value of feature class %s not expected type (list)' % (className))

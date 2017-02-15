@@ -15,6 +15,7 @@ dependencies:
 
 test:
   override:
+     - unlink venv # Workaround https://github.com/pypa/setuptools/pull/971
      - circleci-matrix:
         parallel: true
 

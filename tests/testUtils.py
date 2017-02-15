@@ -8,6 +8,7 @@ import os
 from nose_parameterized import parameterized
 import numpy
 import SimpleITK as sitk
+import six
 
 from radiomics import imageoperations
 
@@ -40,10 +41,10 @@ def custom_name_func(testcase_func, param_num, param):
 
   logger.debug('custom_name_func: function name = %s, param_num = {0:0>3}, param.args = %s'.format(param_num),
                testcase_func.__name__, param.args)
-  return "%s_%s" % (
+  return str("%s_%s" % (
     testcase_func.__name__,
     parameterized.to_safe_name("_".join(str(x) for x in param.args)),
-  )
+  ))
 
 
 class RadiomicsTestUtils:
@@ -107,14 +108,14 @@ class RadiomicsTestUtils:
       self._featureClassName = className
 
       # Check if test settings have changed
-      if cmp(self._kwargs, self.getBaselineDict(className, testCase)) != 0:
+      if self._kwargs != self.getBaselineDict(className, testCase):
         self._kwargs = self.getBaselineDict(className, testCase)
         self._testCase = None  # forces image to be reloaded (as settings have changed)
 
     # Next, set testCase if necessary
     if self._testCase != testCase:
-      imageName = os.path.join(self._dataDir, testCase + '_image.nrrd')
-      maskName = os.path.join(self._dataDir, testCase + '_label.nrrd')
+      imageName = str(os.path.join(self._dataDir, testCase + '_image.nrrd'))
+      maskName = str(os.path.join(self._dataDir, testCase + '_label.nrrd'))
 
       self._logger.info("Reading the image and mask for test case %s", testCase)
       self._image = sitk.ReadImage(imageName)
@@ -158,7 +159,7 @@ class RadiomicsTestUtils:
     """
     Return all the test cases for which there are baseline information.
     """
-    return self._baseline[self._baseline.keys()[0]].keys()
+    return self._baseline[list(self._baseline.keys())[0]].keys()
 
   def getFeatureClasses(self):
     """
@@ -178,9 +179,9 @@ class RadiomicsTestUtils:
       cls = baselineFile[9:-4]
       self._logger.debug('Reading baseline for class %s', cls)
       self._baseline[cls] = {}
-      with open(os.path.join(self._baselineDir, baselineFile), 'rb') as baselineReader:
+      with open(os.path.join(self._baselineDir, baselineFile), 'r' if six.PY3 else 'rb') as baselineReader:
         csvReader = csv.reader(baselineReader)
-        headers = csvReader.next()
+        headers = six.next(csvReader)
         for testRow in csvReader:
           self._baseline[cls][testRow[0]] = {}
           for val_idx, val in enumerate(testRow[1:], start=1):

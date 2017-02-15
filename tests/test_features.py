@@ -67,13 +67,13 @@ class TestFeatures:
 def teardown_module():
   print("")
   res = testUtils.getResults()
-  print 'Results:'
-  print res
+  print('Results:')
+  print(res)
   resultsFile = os.path.join(testUtils.getDataDir(), 'PyradiomicsFeatures.csv')
   testUtils.writeCSV(res, resultsFile)
   diff = testUtils.getDiffs()
-  print 'Differences from baseline:'
-  print diff
+  print('Differences from baseline:')
+  print(diff)
   diffFile = os.path.join(testUtils.getDataDir(), 'Baseline2PyradiomicsFeaturesDiff.csv')
   testUtils.writeCSV(diff, diffFile)
   logging.info(

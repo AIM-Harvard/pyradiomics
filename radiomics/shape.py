@@ -50,6 +50,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       self.SurfaceArea = self._calculateSurfaceArea()
 
   def _calculateSurfaceArea(self):
+    self.maskArray = self.maskArray.astype('int')  # needed for the interpolate function to work correctly
     # define relative locations of the 8 voxels of a sampling cube
     gridAngles = numpy.array([(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0),
                               (1, 0, 0), (1, 0, 1), (1, 1, 1), (1, 1, 0)])

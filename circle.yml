@@ -15,7 +15,9 @@ dependencies:
 
 test:
   override:
-     - unlink venv # Workaround https://github.com/pypa/setuptools/pull/971
+     # Workaround https://github.com/pypa/setuptools/pull/971
+     - (unlink venv > /dev/null 2>&1 && echo "symlink removed") || echo "no symlink"
+
      - circleci-matrix:
         parallel: true
 

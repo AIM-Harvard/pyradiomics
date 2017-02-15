@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include "cmatrices.h"
@@ -134,13 +135,10 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   PyObject *image_obj, *mask_obj, *angles_obj;
   PyArrayObject *image_arr, *mask_arr, *angles_arr;
   int Sx, Sy, Sz, Na;
-  int tempDims[2];
-  PyArrayObject *temp_arr;
   int *image;
   signed char *mask;
   int *angles;
   int *tempData;
-  int tempData_size, k;
   int maxRegion;
   int dims[2];
   PyArrayObject *glszm_arr;
@@ -191,31 +189,32 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   }
 
   // Initialize temporary output array (elements not set)
-  // add +1 to the first dimension so in the case every voxel represents a separate region,
+  // add +1 to the size so in the case every voxel represents a separate region,
   // tempData still contains a -1 element at the end
-  tempDims[0] = Ns + 1;
-  tempDims[1] = 2;
-  temp_arr = (PyArrayObject *)PyArray_FromDims(2, (int*)tempDims, NPY_INT);
+  tempData = (int *)calloc((2 * Ns) + 1, sizeof(int));
+  if (tempData == NULL)  // No memory allocated
+  {
+	  Py_DECREF(image_arr);
+	  Py_DECREF(mask_arr);
+	  Py_DECREF(angles_arr);
+	  PyErr_SetString(PyExc_RuntimeError, "Failed to allocate memory for tempData");
+	  return NULL;
+  }
 
   // Get arrays in Ctype
   image = (int *)PyArray_DATA(image_arr);
   mask = (signed char *)PyArray_DATA(mask_arr);
   angles = (int *)PyArray_DATA(angles_arr);
-  tempData = (int *)PyArray_DATA(temp_arr);
-
-  // Set all elements to 0
-  tempData_size = tempDims[0] * tempDims[1];
-  for (k = 0; k < tempData_size; k++) tempData[k] = -1;
 
   //Calculate GLSZM
   maxRegion = 0;
   maxRegion = calculate_glszm(image, mask, Sx, Sy, Sz, angles, Na, tempData, Ng, Ns);
   if (maxRegion == -1) // Error occured
   {
+	  free(tempData);
     Py_DECREF(image_arr);
     Py_DECREF(mask_arr);
     Py_DECREF(angles_arr);
-    Py_DECREF(temp_arr);
     PyErr_SetString(PyExc_RuntimeError, "Calculation of GLSZM Failed.");
     return NULL;
   }
@@ -225,7 +224,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   Py_DECREF(mask_arr);
   Py_DECREF(angles_arr);
 
-  // Initialize temporary output array (elements not set)
+  // Initialize output array (elements not set)
   if (maxRegion == 0) maxRegion = 1;
   dims[0] = Ng;
   dims[1] = maxRegion;
@@ -234,14 +233,14 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 
   if (!fill_glszm(tempData, glszm, Ng, maxRegion))
   {
-    Py_DECREF(temp_arr);
+    free(tempData);
     Py_DECREF(glszm_arr);
     PyErr_SetString(PyExc_RuntimeError, "Error filling GLSZM.");
-  return NULL;
+    return NULL;
   }
 
   // Clean up tempData
-  Py_DECREF(temp_arr);
+  free(tempData);
 
   return PyArray_Return(glszm_arr);
 }

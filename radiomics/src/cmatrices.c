@@ -146,6 +146,9 @@ int calculate_glszm(int *image, signed char *mask, int Sx, int Sy, int Sz, int *
       }
     }
   }
+
+if (regionCounter >= max_region_idx) return -1; // index out of range
+tempData[(regionCounter * 2)] = -1; // Set the first element after last region to -1 to stop the loop in fill_glszm
 return maxRegion;
 }
 

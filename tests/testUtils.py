@@ -264,7 +264,6 @@ class RadiomicsTestUtils:
           for h in header:
             row = row + [thisCase.get(h, "N/A")]
           csvFileWriter.writerow(row)
-        csvFile.close()
         self._logger.info('Wrote to file %s', fileName)
     else:
       self._logger.info('No test cases run, aborting file write to %s', fileName)

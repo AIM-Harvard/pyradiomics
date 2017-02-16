@@ -8,6 +8,7 @@ import logging
 import os
 import pkgutil
 import sys
+import traceback
 
 import numpy  # noqa: F401
 
@@ -15,7 +16,6 @@ from . import base, imageoperations
 
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
-
 
 def debug(debug_on=True):
   """
@@ -72,6 +72,27 @@ def getFeatureClasses():
   return _featureClasses
 
 
+def pythonMatrixCalculation(usePython=False):
+  """
+  By default, calculation of matrices is done in C, using extension ``_cmatrices.py``
+
+  If an error occurs during loading of this extension, a warning is logged and the extension is disabled,
+  matrices are then calculated in python.
+  Calculation in python can be forced by calling this function, specifying ``pyMatEnabled = True``
+
+  Re-enabling use of C implementation is also done by this function, but if extension is not loaded correctly,
+  a warning is logged and matrix calculation uses python.
+  """
+  global cMatsEnabled
+  if usePython:
+    cMatsEnabled = False
+  elif _cMatLoaded:
+    cMatsEnabled = True
+  else:
+    logger.warning("C Matrices not loaded correctly, cannot calculate matrices in C")
+    cMatsEnabled = False
+
+
 def getInputImageTypes():
   """
   Returns a list of possible input image types. This function finds the image types dynamically by matching the
@@ -98,6 +119,18 @@ formatter = logging.Formatter("%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 debug(False)  # force level=WARNING, in case logging default is set differently (issue 102)
+
+try:
+  import _cmatrices as cMatrices
+  import _cshape as cShape
+  cMatsEnabled = True
+  _cMatLoaded = True
+except Exception:
+  logger.warning("Error loading C Matrices, switching to python calculation\n%s", traceback.format_exc())
+  cMatrices = None
+  cShape = None
+  cMatsEnabled = False
+  _cMatLoaded = False
 
 _featureClasses = None
 _inputImages = None

@@ -2,8 +2,8 @@ import numpy
 from six.moves import range
 from tqdm import trange
 
+import radiomics
 from radiomics import base, imageoperations
-
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   r"""
@@ -59,14 +59,17 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLSZM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.coefficients = {}
-    self.P_glszm = {}
+    self.P_glszm = None
 
     # binning
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
     self.coefficients['Np'] = self.targetVoxelArray.size
 
-    self._calculateGLSZM()
+    if radiomics.cMatsEnabled:
+      self.P_glszm = self._calculateCGLSZM()
+    else:
+      self.P_glszm = self._calculateGLSZM()
     self._calculateCoefficients()
 
   def _calculateGLSZM(self):
@@ -131,7 +134,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area
     P_glszm_bounds = numpy.argwhere(P_glszm)
     (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1  # noqa: F841
-    self.P_glszm = P_glszm[xstart:xstop, :ystop]
+    return P_glszm[xstart:xstop, :ystop]
+
+  def _calculateCGLSZM(self):
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
+    Ng = self.coefficients['Ng']
+    Ns = self.coefficients['Np']
+
+    return radiomics.cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
 
   def _calculateCoefficients(self):
     sumP_glszm = numpy.sum(self.P_glszm, (0, 1))

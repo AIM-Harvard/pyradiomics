@@ -150,7 +150,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     if self.verbose: bar = trange(Ng, desc='calculate GLCM')
 
     # iterate over gray levels for center voxel
-    for i in xrange(1, Ng + 1):
+    for i in range(1, Ng + 1):
       # give some progress
       if self.verbose: bar.update()
 

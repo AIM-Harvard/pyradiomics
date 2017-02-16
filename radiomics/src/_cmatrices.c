@@ -25,15 +25,60 @@ static PyMethodDef module_methods[] = {
   { NULL, NULL, 0, NULL }
 };
 
-PyMODINIT_FUNC
-init_cmatrices(void) {
-  PyObject *m = Py_InitModule3("_cmatrices", module_methods, module_docstring);
-  if (m == NULL)
-    return;
+#if PY_MAJOR_VERSION >= 3
 
-  // Initialize numpy functionality
-  import_array();
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "_cmatrices",        /* m_name */
+  module_docstring,    /* m_doc */
+  -1,                  /* m_size */
+  module_methods,      /* m_methods */
+  NULL,                /* m_reload */
+  NULL,                /* m_traverse */
+  NULL,                /* m_clear */
+  NULL,                /* m_free */
+};
+
+#endif
+
+static PyObject *
+moduleinit(void)
+{
+    PyObject *m;
+
+#if PY_MAJOR_VERSION >= 3
+    m = PyModule_Create(&moduledef);
+#else
+    m = Py_InitModule3("_cmatrices",
+                       module_methods, module_docstring);
+#endif
+
+  if (m == NULL)
+      return NULL;
+
+  return m;
 }
+
+#if PY_MAJOR_VERSION < 3
+  PyMODINIT_FUNC
+  init_cmatrices(void)
+  {
+    // Initialize numpy functionality
+    import_array();
+
+    moduleinit();
+
+  }
+#else
+  PyMODINIT_FUNC
+  PyInit__cmatrices(void)
+  {
+    // Initialize numpy functionality
+    import_array();
+
+    return moduleinit();
+  }
+#endif
 
 static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
 {

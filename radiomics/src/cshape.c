@@ -1,4 +1,4 @@
-#include "cmatrices.h"
+#include "cshape.h"
 #include <math.h>
 
 // Declare the look-up tables, these are filled at the bottom of this code file.
@@ -84,7 +84,7 @@ double calculate_surfacearea(char *mask, int *size, double *spacing)
   return surfaceArea;
 }
 
-int interpolate(double *vertEntry, int a1, int a2, double *spacing)
+void interpolate(double *vertEntry, int a1, int a2, double *spacing)
 {
   int d;
 

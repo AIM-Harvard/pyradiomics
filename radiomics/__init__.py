@@ -56,12 +56,14 @@ def enableCExtensions(enabled=True):
   """
   global _cMatsState, logger
   if enabled:
+    # If extensions are not yet enabled (_cMatsState == 2), check whether they are loaded (_cMatsState == 1) and if so,
+    # enable them. Otherwise, log a warning.
     if _cMatsState == 1:  # Extension loaded but not enabled
       logger.info("Enabling C extensions")
       _cMatsState = 2  # Enables matrix calculation in C
-    else:  # _cMatsState = 0; Extension not loaded correctly, do not enable matrix calculation in C and log warning
+    elif _cMatsState == 0:  # _Extension not loaded correctly, do not enable matrix calculation in C and log warning
       logger.warning("C Matrices not loaded correctly, cannot calculate matrices in C")
-  elif _cMatsState == 2:
+  elif _cMatsState == 2:  # enabled = False, _cMatsState = 2: extensions currently enabled, disable them
     logger.info("Disabling C extensions")
     _cMatsState = 1
 

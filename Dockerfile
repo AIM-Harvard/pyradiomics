@@ -1,5 +1,5 @@
 FROM centos:5
-MAINTAINER http://github.com/QIICR
+MAINTAINER http://github.com/radiomics
 
 RUN yum update -y && \
   yum groupinstall -y "Development Tools" && \

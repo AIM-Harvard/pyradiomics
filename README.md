@@ -5,7 +5,7 @@
 
 [![Travis CI](https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master)](https://travis-ci.org/Radiomics/pyradiomics)
 
-# pyradiomics v1.0
+# pyradiomics v1.0.1
 
 ## Radiomics feature extraction in Python
 
@@ -54,10 +54,14 @@ Furthermore, an instruction video is available [here](http://radiomics.io/pyradi
 
 ### Installation
 
-To install this package run the following commands from the root directory:
+PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4.
+To install this package on unix like systems run the following commands from the root directory:
 
-    python -m pip install -r requirements.txt
-    python setup.py install
+    sudo python -m pip install -r requirements.txt
+    sudo python setup.py install
+
+Detailed installation instructions, as well as instructions for installing PyRadiomics on Windows are available in the 
+[documentation](http://pyradiomics.readthedocs.io/en/latest/installation.html).
 
 ### Usage
 
@@ -87,7 +91,6 @@ See also the [requirements file](requirements.txt).
 
 ### WIP
  - Implementation of this package as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org)
- - Enhancing performance by implementation of C for computationally expensive code
 
 ### License
 This package is covered by the [3D Slicer License](LICENSE.txt).

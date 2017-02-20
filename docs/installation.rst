@@ -8,7 +8,7 @@ Get the code
 
 * Ensure you have the version control system ``git`` installed on your machine.
 
-* Ensure that you have ``python`` installed on your machine, at least version 2.7.
+* Ensure that you have ``python`` installed on your machine, at least version 2.7 or 3.4.
 
 * Clone the repository:
 

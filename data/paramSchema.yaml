@@ -8,6 +8,10 @@ mapping:
     mapping:
       verbose:
         type: bool
+      enableCExtensions:
+        type: bool
+      additionalInfo:
+        type: bool
       label:
         type: int
       binWidth:

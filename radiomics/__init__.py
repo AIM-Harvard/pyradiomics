@@ -1,4 +1,3 @@
-
 # For convenience, import collection and numpy
 # into the "pyradiomics" namespace
 
@@ -8,6 +7,7 @@ import logging
 import os
 import pkgutil
 import sys
+import traceback
 
 import numpy  # noqa: F401
 
@@ -40,6 +40,36 @@ def debug(debug_on=True):
   else:
     logger.setLevel(logging.WARNING)
     debugging = False
+
+
+def enableCExtensions(enabled=True):
+  """
+  By default, calculation of GLCM, GLRLM and GLSZM is done in C, using extension ``_cmatrices.py``
+
+  If an error occurs during loading of this extension, a warning is logged and the extension is disabled,
+  matrices are then calculated in python.
+  The C extension can be disabled by calling this function as ``enableCExtensions(False)``, which forces the calculation
+  of the matrices to full-python mode.
+
+  Re-enabling use of C implementation is also done by this function, but if the extension is not loaded correctly,
+  a warning is logged and matrix calculation is forced to full-python mode.
+  """
+  global _cMatsState, logger
+  if enabled:
+    # If extensions are not yet enabled (_cMatsState == 2), check whether they are loaded (_cMatsState == 1) and if so,
+    # enable them. Otherwise, log a warning.
+    if _cMatsState == 1:  # Extension loaded but not enabled
+      logger.info("Enabling C extensions")
+      _cMatsState = 2  # Enables matrix calculation in C
+    elif _cMatsState == 0:  # _Extension not loaded correctly, do not enable matrix calculation in C and log warning
+      logger.warning("C Matrices not loaded correctly, cannot calculate matrices in C")
+  elif _cMatsState == 2:  # enabled = False, _cMatsState = 2: extensions currently enabled, disable them
+    logger.info("Disabling C extensions")
+    _cMatsState = 1
+
+
+def cMatsEnabled():
+  return _cMatsState == 2
 
 
 def getFeatureClasses():
@@ -101,6 +131,20 @@ debug(False)  # force level=WARNING, in case logging default is set differently 
 
 _featureClasses = None
 _inputImages = None
+
+# Indicates status of C extensions: 0 = not loaded, 1 = loaded but not enabled, 2 = enabled
+_cMatsState = 0
+
+try:
+  logger.debug("Loading C extensions")
+  from radiomics import _cmatrices as cMatrices
+  from radiomics import _cshape as cShape
+  _cMatsState = 1
+  enableCExtensions()
+except Exception:
+  logger.warning("Error loading C extensions, switching to python calculation:\n%s", traceback.format_exc())
+  cMatrices = None  # set cMatrices to None to prevent an import error in the feature classes.
+  cShape = None
 
 from ._version import get_versions
 

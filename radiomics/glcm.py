@@ -2,7 +2,7 @@ import numpy
 from six.moves import range
 from tqdm import trange
 
-from radiomics import base, imageoperations
+from radiomics import base, cMatrices, cMatsEnabled, imageoperations
 
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):
@@ -124,10 +124,14 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
 
-    self._calculateGLCM()
+    if cMatsEnabled():
+      self.P_glcm = self._calculateCMatrix()
+    else:
+      self.P_glcm = self._calculateMatrix()
+
     self._calculateCoefficients()
 
-  def _calculateGLCM(self):
+  def _calculateMatrix(self):
     r"""
     Compute GLCMs for the input image for every direction in 3D.
     Calculated GLCMs are placed in array P_glcm with shape (i/j, a)
@@ -142,7 +146,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
 
-    self.P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
+    P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
 
     if self.verbose: bar = trange(Ng, desc='calculate GLCM')
 
@@ -167,12 +171,32 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           # that are also a neighbour of a voxel with gray level i for angle a.
           # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
           count = len(neighbour_indices.intersection(j_indices))
-          self.P_glcm[i - 1, j - 1, a_idx] = count
+          P_glcm[i - 1, j - 1, a_idx] = count
     if self.verbose: bar.close()
+
+    P_glcm = self._applyMatrixOptions(P_glcm, angles)
+
+    return P_glcm
+
+  def _calculateCMatrix(self):
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
+    Ng = self.coefficients['Ng']
+
+    P_glcm = cMatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
+    P_glcm = self._applyMatrixOptions(P_glcm, angles)
+
+    return P_glcm
+
+  def _applyMatrixOptions(self, P_glcm, angles):
+    """
+    Further process calculated matrix by optionally making it symmetrical and/or applying a weighting factor.
+    Finally, delete empty angles and normalize the GLCM by dividing it by the sum of its elements.
+    """
 
     # Optionally make GLCMs symmetrical for each angle
     if self.symmetricalGLCM:
-      self.P_glcm += numpy.transpose(self.P_glcm, (1, 0, 2))
+      P_glcm += numpy.transpose(P_glcm, (1, 0, 2))
 
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:
@@ -191,17 +215,17 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           self.logger.warning('weigthing norm "%s" is unknown, W is set to 1', self.weightingNorm)
           weights[a_idx] = 1
 
-      self.P_glcm = numpy.sum(self.P_glcm * weights[None, None, :], 2, keepdims=True)
+      P_glcm = numpy.sum(P_glcm * weights[None, None, :], 2, keepdims=True)
 
-    sumP_glcm = numpy.sum(self.P_glcm, (0, 1), keepdims=True)  # , keepdims=True)
+    sumP_glcm = numpy.sum(P_glcm, (0, 1), keepdims=True)
 
     # Delete empty angles if no weighting is applied
-    if self.P_glcm.shape[2] > 1:
-      self.P_glcm = numpy.delete(self.P_glcm, numpy.where(sumP_glcm == 0), 2)
+    if P_glcm.shape[2] > 1:
+      P_glcm = numpy.delete(P_glcm, numpy.where(sumP_glcm == 0), 2)
       sumP_glcm = numpy.delete(sumP_glcm, numpy.where(sumP_glcm == 0), 2)
 
     # Normalize each glcm
-    self.P_glcm = self.P_glcm / sumP_glcm
+    return P_glcm / sumP_glcm
 
   # check if ivector and jvector can be replaced
   def _calculateCoefficients(self):

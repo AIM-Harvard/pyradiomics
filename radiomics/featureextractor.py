@@ -31,6 +31,8 @@ class RadiomicsFeaturesExtractor:
   Alternatively, at initialisation, the following general settings can be specified in kwargs:
 
   - verbose [False]: Boolean, set to False to disable status update printing.
+  - enableCExtensions [True]: Boolean, set to False to force calculation to full-python mode. See also
+    :py:func:`~radiomics.enableCExtensions()`.
   - additionalInfo [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
     output. See also :py:func:`~addProvenance()`.
   - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
@@ -85,6 +87,7 @@ class RadiomicsFeaturesExtractor:
                      'padDistance': 5,
                      'label': 1,
                      'verbose': False,
+                     'enableCExtensions': True,
                      'additionalInfo': True}
       self.kwargs.update(kwargs)
 
@@ -173,6 +176,7 @@ class RadiomicsFeaturesExtractor:
                    'padDistance': 5,
                    'label': 1,
                    'verbose': False,
+                   'enableCExtensions': True,
                    'additionalInfo': True}
     self.kwargs.update(kwargs)
 
@@ -295,6 +299,10 @@ class RadiomicsFeaturesExtractor:
         is used. Default label is 1.
     :returns: dictionary containing calculated signature ("<filter>_<featureClass>_<featureName>":value).
     """
+    # Enable or disable C extensions for high performance matrix calculation. Only logs a message (INFO) when setting is
+    # successfully changed. If an error occurs, full-python mode is forced and a warning is logged.
+    radiomics.enableCExtensions(self.kwargs['enableCExtensions'])
+
     if label is not None:
       self.kwargs.update({'label': label})
 
@@ -303,7 +311,7 @@ class RadiomicsFeaturesExtractor:
     featureVector = collections.OrderedDict()
     image, mask = self.loadImage(imageFilepath, maskFilepath)
 
-    if self.kwargs.get('additionalInfo'):
+    if self.kwargs['additionalInfo']:
       featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
     # Bounding box only needs to be calculated once after resampling, store the value, so it doesn't get calculated

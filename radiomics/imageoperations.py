@@ -184,7 +184,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   bbNewUBound = numpy.where(bbNewUBound > maxUbound, maxUbound, bbNewUBound)
 
   # Calculate the new size. Cast to int to prevent error in sitk.
-  newSize = numpy.array(bbNewUBound - bbNewLBound + 1, dtype='int')
+  newSize = numpy.array(bbNewUBound - bbNewLBound + 1, dtype='int').tolist()
 
   # Determine continuous index of bbNewLBound in terms of the original Index coordinate space
   bbOriginalLBound = bbNewLBound / spacingRatio

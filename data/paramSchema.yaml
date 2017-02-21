@@ -18,6 +18,14 @@ mapping:
         type: float
         range:
           min-ex: 0
+      normalize:
+        type: bool
+      normalizeScale:
+        type: float
+        range:
+          min-ex: 0
+      removeOutliers:
+        type: bool
       resampledPixelSpacing:
         seq:
           - type: int

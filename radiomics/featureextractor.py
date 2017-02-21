@@ -36,6 +36,12 @@ class RadiomicsFeaturesExtractor:
   - additionalInfo [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
     output. See also :py:func:`~addProvenance()`.
   - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
+  - normalize [False]: Boolean, set to True to enable normalizing of the image before any resampling. See also
+    :py:func:`~imageoperations.normalizeImage`.
+  - normalizeScale [1]: Float, determines the scale after normalizing the image. If normalizing is disabled, this has
+    no effect.
+  - removeOutliers [True]: Boolean, set to True to enable removal of outliers (mean +/- 3 stds) before normalizing the
+    image. If normalizing is disabled, this has no effect. See also :py:func:`~imageoperations.normalizeImage`.
   - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
   - interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
     Enumerated value, possible values:
@@ -82,7 +88,10 @@ class RadiomicsFeaturesExtractor:
       self.loadParams(args[0])
     else:
       # Set default settings and update with and changed settings contained in kwargs
-      self.kwargs = {'resampledPixelSpacing': None,  # No resampling by default
+      self.kwargs = {'normalize': False,
+                     'normalizeScale': 1,
+                     'removeOutliers': True,
+                     'resampledPixelSpacing': None,  # No resampling by default
                      'interpolator': sitk.sitkBSpline,
                      'padDistance': 5,
                      'label': 1,
@@ -171,7 +180,10 @@ class RadiomicsFeaturesExtractor:
       self.enabledFeatures = enabledFeatures
 
     # Set default settings and update with and changed settings contained in kwargs
-    self.kwargs = {'resampledPixelSpacing': None,  # No resampling by default
+    self.kwargs = {'normalize': False,
+                   'normalizeScale': 1,
+                   'removeOutliers': True,
+                   'resampledPixelSpacing': None,  # No resampling by default
                    'interpolator': sitk.sitkBSpline,
                    'padDistance': 5,
                    'label': 1,
@@ -287,11 +299,11 @@ class RadiomicsFeaturesExtractor:
   def execute(self, imageFilepath, maskFilepath, label=None):
     """
     Compute radiomics signature for provide image and mask combination.
-    First, image and mask are loaded and resampled if necessary. Second, if enabled, provenance information is
-    calculated and stored as part of the result. Next, shape features are calculated on a cropped (no padding) version
-    of the original image. Then other featureclasses are calculated using all specified input images in ``inputImages``.
-    Images are cropped to tumor mask (no padding) after application of any filter and before being passed to the feature
-    class. Finally, the dictionary containing all calculated features is returned.
+    First, image and mask are loaded and normalized/resampled if necessary. Second, if enabled, provenance information
+    is calculated and stored as part of the result. Next, shape features are calculated on a cropped (no padding)
+    version of the original image. Then other featureclasses are calculated using all specified input images in
+    ``inputImages``. Images are cropped to tumor mask (no padding) after application of any filter and before being
+    passed to the feature class. Finally, the dictionary containing all calculated features is returned.
 
     :param imageFilepath: SimpleITK Image, or string pointing to image file location
     :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
@@ -360,7 +372,9 @@ class RadiomicsFeaturesExtractor:
     All other cases are ignored (nothing calculated).
     Equal approach is used for assignment of mask using MaskFilePath.
 
-    If resampling is enabled, both image and mask are resampled and cropped to the tumormask (with additional
+    If normalizing is enabled image is first normalized before any resampling is applied.
+
+    If resampling is enabled, both image and mask are resampled and cropped to the tumor mask (with additional
     padding as specified in padDistance) after assignment of image and mask.
     """
     if isinstance(ImageFilePath, six.string_types) and os.path.exists(ImageFilePath):
@@ -380,6 +394,9 @@ class RadiomicsFeaturesExtractor:
       self.logger.warning('Error reading mask Filepath or SimpleITK object')
       if self.kwargs['verbose']: print("Error reading mask Filepath or SimpleITK object")
       mask = None
+
+    if self.kwargs['normalize']:
+      image = imageoperations.normalizeImage(image, self.kwargs['normalizeScale'], self.kwargs['removeOutliers'])
 
     if self.kwargs['interpolator'] is not None and self.kwargs['resampledPixelSpacing'] is not None:
       image, mask = imageoperations.resampleImage(image, mask,
@@ -436,6 +453,9 @@ class RadiomicsFeaturesExtractor:
     return featureVector
 
   def getFeatureClassNames(self):
+    """
+    Returns a list of all possible feature classes.
+    """
     return self.featureClasses.keys()
 
   def getFeatureNames(self, featureClassName):

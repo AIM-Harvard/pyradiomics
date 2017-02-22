@@ -138,7 +138,8 @@ def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
 
 
 def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, label=1, padDistance=5):
-  """Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
+  """
+  Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
 
   'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing (list of 3 elements).
 
@@ -231,6 +232,39 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 
   return resampledImageNode, resampledMaskNode
 
+def normalizeImage(image, scale=1, outliers=None):
+  r"""
+  Normalizes the image by centering it at the mean with standard deviation. Normalization is based on all gray values in
+  the image, not just those inside the segementation.
+
+  :math:`f(x) = \frac{s(x - \mu_x)}{\sigma_x}`
+
+  Where:
+
+  - :math:`x` and :math:`f(x)` are the original and normalized intensity, respectively.
+  - :math:`\mu_x` and :math:`\sigma_x` are the mean and standard deviation of the image instensity values.
+  - :math:`s` is an optional scaling defined by ``scale``. By default, it is set to 1.
+
+  Optionally, outliers can be removed, in which case values for which :math:`x > \mu_x + n\sigma_x` or
+  :math:`x < \mu_x - n\sigma_x` are set to :math:`\mu_x + n\sigma_x` and :math:`\mu_x - n\sigma_x`, respectively.
+  Here, :math:`n>0` and defined by ``outliers``. This, in turn, is controlled by the ``removeOutliers`` parameter.
+  Removal of outliers is done after the values of the image are normalized, but before ``scale`` is applied.
+  """
+  image = sitk.Normalize(image)
+
+  if outliers is not None:
+    imageArr = sitk.GetArrayFromImage(image)
+
+    imageArr[imageArr > outliers] = outliers
+    imageArr[imageArr < -outliers] = -outliers
+
+    newImage = sitk.GetImageFromArray(imageArr)
+    newImage.CopyInformation(image)
+
+  image *= scale
+
+  return image
+
 
 def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
   # this mode is useful to generate the mask of thresholded voxels
@@ -309,32 +343,32 @@ def getLoGImage(inputImage, **kwargs):
 
 def getWaveletImage(inputImage, **kwargs):
   """
-      Apply wavelet filter to image and compute signature for each filtered image.
+  Apply wavelet filter to image and compute signature for each filtered image.
 
-      Following settings are possible:
+  Following settings are possible:
 
-      - start_level [0]: integer, 0 based level of wavelet which should be used as first set of decompositions
-        from which a signature is calculated
-      - level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
-      - wavelet ["coif1"]: string, type of wavelet decomposition. Enumerated value, validated against possible values
-        present in the ``pyWavelet.wavelist()``. Current possible values (pywavelet version 0.4.0) (where an
-        aditional number is needed, range of values is indicated in []):
+  - start_level [0]: integer, 0 based level of wavelet which should be used as first set of decompositions
+    from which a signature is calculated
+  - level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
+  - wavelet ["coif1"]: string, type of wavelet decomposition. Enumerated value, validated against possible values
+    present in the ``pyWavelet.wavelist()``. Current possible values (pywavelet version 0.4.0) (where an
+    aditional number is needed, range of values is indicated in []):
 
-        - haar
-        - dmey
-        - sym[2-20]
-        - db[1-20]
-        - coif[1-5]
-        - bior[1.1, 1.3, 1.5, 2.2, 2.4, 2.6, 2.8, 3.1, 3.3, 3.5, 3.7, 3.9, 4.4, 5.5, 6.8]
-        - rbio[1.1, 1.3, 1.5, 2.2, 2.4, 2.6, 2.8, 3.1, 3.3, 3.5, 3.7, 3.9, 4.4, 5.5, 6.8]
+    - haar
+    - dmey
+    - sym[2-20]
+    - db[1-20]
+    - coif[1-5]
+    - bior[1.1, 1.3, 1.5, 2.2, 2.4, 2.6, 2.8, 3.1, 3.3, 3.5, 3.7, 3.9, 4.4, 5.5, 6.8]
+    - rbio[1.1, 1.3, 1.5, 2.2, 2.4, 2.6, 2.8, 3.1, 3.3, 3.5, 3.7, 3.9, 4.4, 5.5, 6.8]
 
-      Returned filter name reflects wavelet type:
-      wavelet[level]-<decompositionName>
+  Returned filter name reflects wavelet type:
+  wavelet[level]-<decompositionName>
 
-      N.B. only levels greater than the first level are entered into the name.
+  N.B. only levels greater than the first level are entered into the name.
 
-      :return: Yields each wavelet decomposition and final approximation, corresponding filter name and ``kwargs``
-      """
+  :return: Yields each wavelet decomposition and final approximation, corresponding filter name and ``kwargs``
+  """
   global logger
 
   approx, ret = _swt3(inputImage, kwargs.get('wavelet', 'coif1'), kwargs.get('level', 1), kwargs.get('start_level', 0))

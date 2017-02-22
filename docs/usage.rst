@@ -98,6 +98,7 @@ Interactive Use
 * Import the necessary classes::
 
      from radiomics import featureextractor
+     import six
      import sys, os
 
 * Set up a pyradiomics directory variable::
@@ -153,6 +154,7 @@ Using feature classes directly
 
      from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm
      import SimpleITK as sitk
+     import six
      import sys, os
 
 * Set up a data directory variable::

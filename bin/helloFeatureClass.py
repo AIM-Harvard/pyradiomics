@@ -149,7 +149,7 @@ for (key, val) in six.iteritems(glszmFeatures.featureValues):
 #
 if applyLog:
   sigmaValues = numpy.arange(5., 0., -.5)[::1]
-  for logImage, inputImageName, inputKwargs in imageoperations.applyFilterLoG(image, sigma=sigmaValues, verbose=True):
+  for logImage, inputImageName, inputKwargs in imageoperations.getLoGImage(image, sigma=sigmaValues, verbose=True):
     logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **inputKwargs)
     logFirstorderFeatures.enableAllFeatures()
     logFirstorderFeatures.calculateFeatures()
@@ -160,7 +160,7 @@ if applyLog:
 # Show FirstOrder features, calculated on a wavelet filtered image
 #
 if applyWavelet:
-  for decompositionImage, decompositionName, inputKwargs in imageoperations.applyFilterWavelet(image):
+  for decompositionImage, decompositionName, inputKwargs in imageoperations.getWaveletImage(image):
     waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(decompositionImage, mask, **inputKwargs)
     waveletFirstOrderFeaturs.enableAllFeatures()
     waveletFirstOrderFeaturs.calculateFeatures()

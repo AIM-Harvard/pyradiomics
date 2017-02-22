@@ -65,17 +65,20 @@ Joost J.M. van Griethuysen et al, “Computational Radiomics System to Decode th
 Installation
 ------------
 
+PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4.
+
 * Clone the repository
 
   * ``git clone git://github.com/Radiomics/pyradiomics``
 
-* Install on your system, with prerequisites:
+* Install on your system (Linux, Mac OSX), with prerequisites:
 
   * ``cd pyradiomics``
   * ``sudo python -m pip install -r requirements.txt``
   * ``sudo python setup.py install``
 
-* For more detailed installation instructions see :ref:`Installation Details<installation-label>`
+* For more detailed installation instructions and installation on Windows see
+  :ref:`Installation Details<installation-label>`
 
 .. toctree::
    :maxdepth: 2

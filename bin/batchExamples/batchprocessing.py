@@ -56,12 +56,13 @@ def main():
   kwargs['resampledPixelSpacing'] = None  # [3,3,3]
   kwargs['interpolator'] = sitk.sitkBSpline
   kwargs['verbose'] = True
+  kwargs['enableCExtensions'] = False
 
   logging.info('pyradiomics version: %s', radiomics.__version__)
   logging.info('Extracting features with kwarg settings: %s', str(kwargs))
 
   extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
-  extractor.enableInputImages(original={})
+  extractor.enableInputImages(Original={})
   # extractor.enableInputImages(wavelet= {'level': 2})
   for idx, entry in enumerate(flists, start=1):
 

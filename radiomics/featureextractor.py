@@ -15,7 +15,7 @@ from radiomics import generalinfo, getFeatureClasses, getInputImageTypes, imageo
 
 
 class RadiomicsFeaturesExtractor:
-  """
+  r"""
   Wrapper class for calculation of a radiomics signature.
   At and after initialisation various settings can be used to customize the resultant signature.
   This includes which classes and features to use, as well as what should be done in terms of preprocessing the image
@@ -28,7 +28,8 @@ class RadiomicsFeaturesExtractor:
   It initialisation, a parameters file can be provided containing all necessary settings. This is done by passing the
   location of the file as the single argument in the initialization call, without specifying it as a keyword argument.
   If such a file location is provided, any additional kwargs are ignored.
-  Alternatively, at initialisation, the following general settings can be specified in kwargs:
+  Alternatively, at initialisation, the following general settings can be specified in the parameter file or ``kwargs``,
+  with default values in brackets:
 
   - verbose [False]: Boolean, set to False to disable status update printing.
   - enableCExtensions [True]: Boolean, set to False to force calculation to full-python mode. See also
@@ -40,8 +41,11 @@ class RadiomicsFeaturesExtractor:
     :py:func:`~imageoperations.normalizeImage`.
   - normalizeScale [1]: Float, determines the scale after normalizing the image. If normalizing is disabled, this has
     no effect.
-  - removeOutliers [True]: Boolean, set to True to enable removal of outliers (mean +/- 3 stds) before normalizing the
-    image. If normalizing is disabled, this has no effect. See also :py:func:`~imageoperations.normalizeImage`.
+  - removeOutliers [None]: Float, defines the outliers to remove from the image. An outlier is defined as values that
+    differ more than :math:`n\sigma_x` from the mean, where :math:`n>0` and equal to the value of this setting. If this
+    parameter is omitted (providing it without a value (i.e. None) in the parameter file will throw an error), no
+    outliers are removed. If normalizing is disabled, this has no effect. See also
+    :py:func:`~imageoperations.normalizeImage`.
   - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
   - interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
     Enumerated value, possible values:
@@ -90,7 +94,7 @@ class RadiomicsFeaturesExtractor:
       # Set default settings and update with and changed settings contained in kwargs
       self.kwargs = {'normalize': False,
                      'normalizeScale': 1,
-                     'removeOutliers': True,
+                     'removeOutliers': None,
                      'resampledPixelSpacing': None,  # No resampling by default
                      'interpolator': sitk.sitkBSpline,
                      'padDistance': 5,
@@ -182,7 +186,7 @@ class RadiomicsFeaturesExtractor:
     # Set default settings and update with and changed settings contained in kwargs
     self.kwargs = {'normalize': False,
                    'normalizeScale': 1,
-                   'removeOutliers': True,
+                   'removeOutliers': None,
                    'resampledPixelSpacing': None,  # No resampling by default
                    'interpolator': sitk.sitkBSpline,
                    'padDistance': 5,

@@ -25,7 +25,9 @@ mapping:
         range:
           min-ex: 0
       removeOutliers:
-        type: bool
+        type: float
+        range:
+          min-ex: 0
       resampledPixelSpacing:
         seq:
           - type: int

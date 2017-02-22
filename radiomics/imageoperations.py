@@ -232,7 +232,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 
   return resampledImageNode, resampledMaskNode
 
-def normalizeImage(image, scale=1, removeOutliers=True):
+def normalizeImage(image, scale=1, outliers=None):
   r"""
   Normalizes the image by centering it at the mean with standard deviation. Normalization is based on all gray values in
   the image, not just those inside the segementation.
@@ -245,25 +245,23 @@ def normalizeImage(image, scale=1, removeOutliers=True):
   - :math:`\mu_x` and :math:`\sigma_x` are the mean and standard deviation of the image instensity values.
   - :math:`s` is an optional scaling defined by ``scale``. By default, it is set to 1.
 
-  Optionally, outliers can be removed, in which case values for which :math:`x > \mu_x + 3\sigma_x` or
-  :math:`x < \mu_x - 3\sigma_x` are set to :math:`\mu_x + 3\sigma_x` and :math:`\mu_x - 3\sigma_x`, respectively.
-  This is done before the values of the image are normalized.
+  Optionally, outliers can be removed, in which case values for which :math:`x > \mu_x + n\sigma_x` or
+  :math:`x < \mu_x - n\sigma_x` are set to :math:`\mu_x + n\sigma_x` and :math:`\mu_x - n\sigma_x`, respectively.
+  Here, :math:`n>0` and defined by ``outliers``. This, in turn, is controlled by the ``removeOutliers`` parameter.
+  Removal of outliers is done after the values of the image are normalized, but before ``scale`` is applied.
   """
+  image = sitk.Normalize(image)
 
-  if removeOutliers:
+  if outliers is not None:
     imageArr = sitk.GetArrayFromImage(image)
-    mu = numpy.mean(imageArr)
-    sigma = numpy.std(imageArr)
 
-    imageArr[imageArr > (mu + 3 * sigma)] = mu + 3 * sigma
-    imageArr[imageArr < (mu - 3 * sigma)] = mu - 3 * sigma
+    imageArr[imageArr > outliers] = outliers
+    imageArr[imageArr < -outliers] = -outliers
 
     newImage = sitk.GetImageFromArray(imageArr)
     newImage.CopyInformation(image)
-  else:
-    newImage = image
 
-  image = sitk.Normalize(newImage) * scale
+  image *= scale
 
   return image
 

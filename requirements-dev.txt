@@ -1,2 +1,4 @@
+cmake
 flake8
 flake8-import-order
+scikit-build

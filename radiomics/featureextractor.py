@@ -283,6 +283,9 @@ class RadiomicsFeaturesExtractor:
     """
     Enable or disable all features in given class.
     """
+    if not featureClass in self.getFeatureClassNames():
+      print("Feature class "+featureClass+" is not recognized")
+      return
     if enabled:
       self.enabledFeatures[featureClass] = []
     elif featureClass in self.enabledFeatures:

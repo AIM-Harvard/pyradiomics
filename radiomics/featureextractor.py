@@ -65,6 +65,16 @@ class RadiomicsFeaturesExtractor:
     Padding is needed for some filters (e.g. LoG). Value of padded voxels are set to original gray level intensity,
     padding does not exceed original image boundaries. **N.B. After application of filters image is cropped again
     without padding.**
+  - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
+    angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles()`
+  - force2Dextraction [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
+    the 'slice' can be defined in ``force2Ddimension``. If input ROI is already a 2D ROI, features are automatically
+    extracted in 2D. See also :py:func:`~radiomics.imageoperations.generateAngles()`
+  - force2Ddimension [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. Value 0
+    identifies the 'z' dimension (axial plane feature extraction), and features will be extracted from the xy plane.
+    Similarly, 1 identifies the y dimension (coronal plane) and 2 the x dimension (saggital plane). if
+    ``force2Dextraction`` is set to False, this parameter has no effect. See also
+    :py:func:`~radiomics.imageoperations.generateAngles()`
 
   .. note::
 

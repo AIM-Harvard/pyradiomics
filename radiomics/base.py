@@ -38,6 +38,8 @@ class RadiomicsFeaturesBase(object):
 
   def __init__(self, inputImage, inputMask, **kwargs):
     self.logger = logging.getLogger(self.__module__)
+    self.logger.debug('Initializing feature class')
+
     self.binWidth = kwargs.get('binWidth', 25)
     self.label = kwargs.get('label', 1)
     self.verbose = kwargs.get('verbose', False)

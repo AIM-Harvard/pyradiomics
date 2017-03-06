@@ -44,13 +44,13 @@ def main():
   rLogger = logging.getLogger('radiomics')
   rLogger.handlers = []
   rLogger.setLevel(logLevel)
-
-  logger = logging.getLogger()
-  logger.setLevel(logLevel)
   handler = logging.StreamHandler(args.log_file)
   handler.setLevel(logLevel)
   handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
-  logger.addHandler(handler)
+  rLogger.addHandler(handler)
+
+  # Initialize logging for script log messages
+  logger = logging.getLogger('radiomics.script')
 
   # Initialize extractor
   try:
@@ -58,8 +58,8 @@ def main():
       extractor = featureextractor.RadiomicsFeaturesExtractor(args.param[0])
     else:
       extractor = featureextractor.RadiomicsFeaturesExtractor()
-    logging.info('Extracting features with kwarg settings: %s\n\tImage:%s\n\tMask:%s',
-                 str(extractor.kwargs), os.path.abspath(args.image), os.path.abspath(args.mask))
+    logger.info('Extracting features with kwarg settings: %s\n\tImage:%s\n\tMask:%s',
+                str(extractor.kwargs), os.path.abspath(args.image), os.path.abspath(args.mask))
     featureVector = collections.OrderedDict()
     featureVector['image'] = os.path.basename(args.image)
     featureVector['mask'] = os.path.basename(args.mask)
@@ -68,8 +68,8 @@ def main():
 
     if args.format == 'csv':
       writer = csv.writer(args.out, lineterminator='\n')
-      writer.writerow(featureVector.keys())
-      writer.writerow(featureVector.values())
+      writer.writerow(list(featureVector.keys()))
+      writer.writerow(list(featureVector.values()))
     elif args.format == 'json':
       json.dump(featureVector, args.out)
       args.out.write('\n')
@@ -77,7 +77,7 @@ def main():
       for k, v in six.iteritems(featureVector):
         args.out.write('%s: %s\n' % (k, v))
   except Exception:
-    logging.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
+    logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
 
   args.out.close()
   args.log_file.close()

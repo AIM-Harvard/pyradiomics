@@ -40,13 +40,13 @@ def main():
   rLogger = logging.getLogger('radiomics')
   rLogger.handlers = []
   rLogger.setLevel(logLevel)
-
-  logger = logging.getLogger()
-  logger.setLevel(logLevel)
   handler = logging.StreamHandler(args.log_file)
   handler.setLevel(logLevel)
   handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
-  logger.addHandler(handler)
+  rLogger.addHandler(handler)
+
+  # Initialize logging for batch log messages
+  logger = logging.getLogger('radiomics.batch')
 
   # Load patient list
   flists = []
@@ -63,24 +63,25 @@ def main():
 
   # Initialize extractor
   try:
+    logger.debug("Initializing extractor")
     if args.param is not None:
       extractor = featureextractor.RadiomicsFeaturesExtractor(args.param[0])
     else:
       extractor = featureextractor.RadiomicsFeaturesExtractor()
   except Exception:
-    logging.error('EXTRACTOR INITIALIZATION FAILED:\n%s', traceback.format_exc())
+    logger.error('EXTRACTOR INITIALIZATION FAILED:\n%s', traceback.format_exc())
     args.outFile.close()
     args.log_file.close()
     exit(-1)
 
   # Extract features
-  logging.info('Extracting features with kwarg settings: %s', str(extractor.kwargs))
+  logger.info('Extracting features with kwarg settings: %s', str(extractor.kwargs))
 
-  headers = False
+  headers = None
   for idx, entry in enumerate(flists, start=1):
 
-    logging.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
-                 entry[2])
+    logger.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
+                entry[2])
 
     imageFilepath = entry[3]
     maskFilepath = entry[4]
@@ -98,15 +99,19 @@ def main():
 
         if args.format == 'csv':
           writer = csv.writer(args.outFile, lineterminator='\n')
-          if not headers:
-            writer.writerow(list(featureVector.keys()))
-            headers = True
-          writer.writerow(list(featureVector.values()))
+          if headers is None:
+            headers = list(featureVector.keys())
+            writer.writerow(headers)
+
+          row = []
+          for h in headers:
+            row.append(featureVector.get(h, "N/A"))
+          writer.writerow(row)
         elif args.format == 'json':
           json.dump(featureVector, args.out)
           args.out.write('\n')
       except Exception:
-        logging.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
+        logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
 
   args.outFile.close()
   args.log_file.close()

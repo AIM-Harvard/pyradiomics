@@ -21,28 +21,26 @@ def main():
   progress_filename = outPath + os.path.sep + "pyrad_log.txt"
 
   # Enable writing out the log using radiomics logger
-  logging.getLogger().setLevel(logging.INFO)  # Prints out log messages in this script
-
-  # Write out all log entries to log file
+  logLevel = logging.INFO
+  rLogger = logging.getLogger('radiomics')
+  rLogger.setLevel(logLevel)
   handler = logging.FileHandler(filename=progress_filename, mode='w')
-  formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
-  handler.setFormatter(formatter)
-  logging.getLogger().addHandler(handler)
-
-  # Package logging
-  # radiomics.debug()  # Switch on radiomics logging from level=DEBUG (default level=WARNING)
-  # Alternative: specify level
-  radiomics.logger.setLevel(logging.INFO)
+  handler.setLevel(logLevel)
+  handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+  rLogger.addHandler(handler)
 
   # Prevent radiomics logger from printing out log entries with level < WARNING to the console
   radiomics.logger.handlers[0].setLevel(logging.WARNING)
 
-  logging.info('Loading CSV')
+  # Initialize logging for batch log messages
+  logger = logging.getLogger('radiomics.batch')
+
+  logger.info('Loading CSV')
   print("Loading CSV")
 
   flists = []
   try:
-    with open(inputCSV, 'rb') as inFile:
+    with open(inputCSV, 'r') as inFile:
       cr = csv.reader(inFile, lineterminator='\n')
       flists = [row for row in cr]
   except Exception:
@@ -58,17 +56,20 @@ def main():
   kwargs['verbose'] = True
   kwargs['enableCExtensions'] = False
 
-  logging.info('pyradiomics version: %s', radiomics.__version__)
-  logging.info('Extracting features with kwarg settings: %s', str(kwargs))
+  logger.info('pyradiomics version: %s', radiomics.__version__)
+  logger.info('Extracting features with kwarg settings: %s', str(kwargs))
 
   extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
   extractor.enableInputImages(Original={})
   # extractor.enableInputImages(wavelet= {'level': 2})
+
+  headers = None
+
   for idx, entry in enumerate(flists, start=1):
 
     print("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s" % (idx, len(flists), entry[0], entry[1], entry[2]))
-    logging.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
-                 entry[2])
+    logger.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
+                entry[2])
 
     imageFilepath = entry[3]
     maskFilepath = entry[4]
@@ -84,12 +85,18 @@ def main():
       try:
         featureVector.update(extractor.execute(imageFilepath, maskFilepath))
 
-        with open(outputFilepath, 'ab') as outputFile:
+        with open(outputFilepath, 'a') as outputFile:
           writer = csv.writer(outputFile, lineterminator='\n')
-          if idx == 1: writer.writerow(featureVector.keys())
-          writer.writerow(featureVector.values())
+          if headers is None:
+            headers = list(featureVector.keys())
+            writer.writerow(headers)
+
+          row = []
+          for h in headers:
+            row.append(featureVector.get(h, "N/A"))
+          writer.writerow(row)
       except Exception:
-        logging.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
+        logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
 
-
-main()
+if __name__ == '__main__':
+  main()

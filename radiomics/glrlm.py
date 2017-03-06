@@ -63,7 +63,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     - 'no_weighting': GLCMs are weighted by factor 1 and summed
     - None: Applies no weighting, mean of values calculated on separate matrices is returned.
 
-    In case of other values, an warning is logged and GLCMs are all weighted by factor 1 and summed.
+    In case of other values, an warning is logged and option 'no_weighting' is used.
 
   References
 

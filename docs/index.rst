@@ -24,6 +24,9 @@ Currently supports the following feature classes:
 * `Gray Level Run Length Matrix <http://www.insight-journal.org/browse/publication/231>`_ (GLRLM)
 * `Gray Level Size Zone Matrix <https://en.wikipedia.org/wiki/Gray_level_size_zone_matrix>`_ (GLSZM)
 
+Detailed description on feature classes and individual features is provided in
+:ref:`Feature Definitions <radiomics-features-label>`.
+
 Filter Classes
 --------------
 
@@ -36,12 +39,15 @@ Aside from the feature classes, there are also some built-in optional filters:
 * Logarithm
 * Exponential
 
+For more information, see also :ref:`radiomics-imageoperations-label`.
+
 Supporting reproducible extraction
 ----------------------------------
 
-Aside from calculating features, the pyradiomics package includes provenance information in the
+Aside from calculating features, the pyradiomics package includes additional information in the
 output. This information contains information on used image and mask, as well as applied settings
-and filters, thereby enabling fully reproducible feature extraction.
+and filters, thereby enabling fully reproducible feature extraction. For more information, see
+:ref:`radiomics-generalinfo-label`.
 
 Citation
 --------
@@ -81,12 +87,13 @@ PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3
   :ref:`Installation Details<installation-label>`
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Table of Contents
 
    installation
    usage
    radiomics
+   features
 
 Pyradiomics Indices and Tables
 ------------------------------
@@ -106,12 +113,12 @@ This package is covered by the 3D Slicer License.
 Developers
 ----------
 
- - `Joost van Griethuysen <https://github.com/JoostJM>`_ :sup:`1,3,4`
- - `Andriy Fedorov <https://github.com/fedorov>`_ :sup:`2`
- - `Nicole Aucoin <https://github.com/naucoin>`_ :sup:`2`
+ - `Joost van Griethuysen <https://github.com/JoostJM>`_:sup:`1,3,4`
+ - `Andriy Fedorov <https://github.com/fedorov>`_:sup:`2`
+ - `Nicole Aucoin <https://github.com/naucoin>`_:sup:`2`
  - `Jean-Christophe Fillion-Robin <https://github.com/jcfr>`_:sup:`5`
- - `Ahmed Hosny <https://github.com/ahmedhosny>`_ :sup:`1`
- - `Steve Pieper <https://github.com/pieper>`_ :sup:`6`
+ - `Ahmed Hosny <https://github.com/ahmedhosny>`_:sup:`1`
+ - `Steve Pieper <https://github.com/pieper>`_:sup:`6`
  - `Hugo Aerts (PI) <https://github.com/hugoaerts>`_:sup:`1,2`
  
 :sup:`1`\ Department of Radiation Oncology, Dana-Farber Cancer Institute, Brigham and Women's Hospital, Harvard Medical School, Boston, MA,

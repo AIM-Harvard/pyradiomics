@@ -124,6 +124,7 @@ class RadiomicsFeaturesExtractor:
     """
     Parse specified parameters file and use it to update settings in kwargs, enabled feature(Classes) and input
     images:
+
     - settings not specified in parameters are set to their default value.
     - enabledFeatures are replaced by those in parameters. If no featureClass parameters were specified, all
       featureClasses and features are enabled.

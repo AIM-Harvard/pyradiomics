@@ -84,7 +84,6 @@ class RadiomicsFeaturesExtractor:
     self.inputImages = getInputImageTypes()
 
     self.kwargs = {}
-    self.provenance_on = True
     self.inputImages = {}
     self.enabledFeatures = {}
 

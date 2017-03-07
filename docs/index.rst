@@ -24,8 +24,7 @@ Currently supports the following feature classes:
 * `Gray Level Run Length Matrix <http://www.insight-journal.org/browse/publication/231>`_ (GLRLM)
 * `Gray Level Size Zone Matrix <https://en.wikipedia.org/wiki/Gray_level_size_zone_matrix>`_ (GLSZM)
 
-Detailed description on feature classes and individual features is provided in
-:ref:`Feature Definitions <radiomics-features-label>`.
+Detailed description on feature classes and individual features is provided in section :ref:`radiomics-features-label`.
 
 Filter Classes
 --------------

@@ -80,9 +80,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
 
     eps = numpy.spacing(1)
-
-    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
-
+    binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
+    bins = numpy.histogram(self.targetVoxelArray, binEdges)[0]
     try:
       bins = bins + eps
       bins = bins / float(bins.sum())
@@ -284,14 +283,14 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`uniformity = \displaystyle\sum^{N_l}_{i=1}{p(i)^2}`
 
-    Uniformity is a measure of the sum of the squares of each intensity
-    value. This is a measure of the heterogeneity of the image array,
-    where a greater uniformity implies a greater heterogeneity or a
-    greater range of discrete intensity values.
+    Uniformity is a measure of the sum of the squares of each intensity value. This is a measure of the heterogeneity of
+    the image array, where a greater uniformity implies a greater heterogeneity or a greater range of discrete intensity
+    values.
     """
-    eps = numpy.spacing(1)
 
-    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
+    eps = numpy.spacing(1)
+    binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
+    bins = numpy.histogram(self.targetVoxelArray, binEdges)[0]
     try:
       bins = bins / (float(bins.sum() + eps))
       return (numpy.sum(bins ** 2))

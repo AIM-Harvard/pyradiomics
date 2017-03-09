@@ -16,8 +16,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     super(RadiomicsShape, self).__init__(inputImage, inputMask, **kwargs)
 
     self.pixelSpacing = numpy.array(inputImage.GetSpacing()[::-1])
-    z, x, y = self.pixelSpacing
-    self.cubicMMPerVoxel = z * x * y
 
     # Use SimpleITK for some shape features
     self.lssif = sitk.LabelShapeStatisticsImageFilter()
@@ -301,12 +299,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     """
     return self.lssif.GetFlatness(self.label)
-
-  def getRoundnessFeatureValue(self):
-    """
-
-    """
-    return self.lssif.GetRoundness(self.label)
 
   def _interpolate(self, grid, p1, p2):
     diff = (.5 - self.maskArray[tuple(grid[p1])]) / (self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])

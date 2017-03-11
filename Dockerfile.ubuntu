@@ -1,0 +1,19 @@
+# Build Pyradiomics inside Ubuntu 16.04
+
+FROM ubuntu:16.04
+
+MAINTAINER "Daniel Blezek" daniel.blezek@gmail.com
+
+# Install Scipy https://www.scipy.org/install.html
+USER root
+RUN apt-get update && apt-get install -y python-pip python-numpy python-scipy python-nose
+
+ADD . /root/pyradiomics
+WORKDIR /root/pyradiomics
+RUN python -m pip install -r requirements.txt
+RUN python setup.py install
+
+VOLUME ["/data"]
+WORKDIR /data
+ENTRYPOINT ["pyradiomics"]
+

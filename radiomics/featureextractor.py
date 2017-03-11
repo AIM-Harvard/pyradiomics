@@ -84,7 +84,6 @@ class RadiomicsFeaturesExtractor:
     self.inputImages = getInputImageTypes()
 
     self.kwargs = {}
-    self.provenance_on = True
     self.inputImages = {}
     self.enabledFeatures = {}
 
@@ -284,6 +283,9 @@ class RadiomicsFeaturesExtractor:
     """
     Enable or disable all features in given class.
     """
+    if featureClass not in self.getFeatureClassNames():
+      print("Feature class "+featureClass+" is not recognized")
+      return
     if enabled:
       self.enabledFeatures[featureClass] = []
     elif featureClass in self.enabledFeatures:
@@ -327,44 +329,45 @@ class RadiomicsFeaturesExtractor:
     featureVector = collections.OrderedDict()
     image, mask = self.loadImage(imageFilepath, maskFilepath)
 
-    if self.kwargs['additionalInfo']:
-      featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
+    if image is not None and mask is not None:
+      if self.kwargs['additionalInfo']:
+        featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
-    # Bounding box only needs to be calculated once after resampling, store the value, so it doesn't get calculated
-    # after every filter
-    boundingBox = None
+      # Bounding box only needs to be calculated once after resampling, store the value, so it doesn't get calculated
+      # after every filter
+      boundingBox = None
 
-    # If shape should be calculation, handle it separately here
-    if 'shape' in self.enabledFeatures.keys():
-      croppedImage, croppedMask, boundingBox = \
-        imageoperations.cropToTumorMask(image, mask, self.kwargs['label'], boundingBox)
-      enabledFeatures = self.enabledFeatures['shape']
-      shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
-      if enabledFeatures is None or len(enabledFeatures) == 0:
-        shapeClass.enableAllFeatures()
-      else:
-        for feature in enabledFeatures:
-          shapeClass.enableFeatureByName(feature)
+      # If shape should be calculation, handle it separately here
+      if 'shape' in self.enabledFeatures.keys():
+        croppedImage, croppedMask, boundingBox = \
+          imageoperations.cropToTumorMask(image, mask, self.kwargs['label'], boundingBox)
+        enabledFeatures = self.enabledFeatures['shape']
+        shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
+        if enabledFeatures is None or len(enabledFeatures) == 0:
+          shapeClass.enableAllFeatures()
+        else:
+          for feature in enabledFeatures:
+            shapeClass.enableFeatureByName(feature)
 
-      if self.kwargs['verbose']: print("\t\tComputing shape")
-      shapeClass.calculateFeatures()
-      for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
-        newFeatureName = "original_shape_%s" % (featureName)
-        featureVector[newFeatureName] = featureValue
+        if self.kwargs['verbose']: print("\t\tComputing shape")
+        shapeClass.calculateFeatures()
+        for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
+          newFeatureName = "original_shape_%s" % (featureName)
+          featureVector[newFeatureName] = featureValue
 
-    # Make generators for all enabled input image types
-    imageGenerators = []
-    for imageType, customKwargs in six.iteritems(self.inputImages):
-      args = self.kwargs.copy()
-      args.update(customKwargs)
-      self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
-      imageGenerators = chain(imageGenerators, eval('imageoperations.get%sImage(image, **args)' % (imageType)))
+      # Make generators for all enabled input image types
+      imageGenerators = []
+      for imageType, customKwargs in six.iteritems(self.inputImages):
+        args = self.kwargs.copy()
+        args.update(customKwargs)
+        self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
+        imageGenerators = chain(imageGenerators, eval('imageoperations.get%sImage(image, **args)' % (imageType)))
 
-    # Calculate features for all (filtered) images in the generator
-    for inputImage, inputImageName, inputKwargs in imageGenerators:
-      inputImage, inputMask, boundingBox = \
-        imageoperations.cropToTumorMask(inputImage, mask, self.kwargs['label'], boundingBox)
-      featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
+      # Calculate features for all (filtered) images in the generator
+      for inputImage, inputImageName, inputKwargs in imageGenerators:
+        inputImage, inputMask, boundingBox = \
+          imageoperations.cropToTumorMask(inputImage, mask, self.kwargs['label'], boundingBox)
+        featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
 
     return featureVector
 
@@ -392,22 +395,23 @@ class RadiomicsFeaturesExtractor:
 
     if isinstance(MaskFilePath, six.string_types) and os.path.exists(MaskFilePath):
       mask = sitk.ReadImage(MaskFilePath)
-    elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
+    elif isinstance(MaskFilePath, sitk.SimpleITK.Image):
       mask = MaskFilePath
     else:
       self.logger.warning('Error reading mask Filepath or SimpleITK object')
       if self.kwargs['verbose']: print("Error reading mask Filepath or SimpleITK object")
       mask = None
 
-    if self.kwargs['normalize']:
-      image = imageoperations.normalizeImage(image, self.kwargs['normalizeScale'], self.kwargs['removeOutliers'])
+    if image is not None and mask is not None:
+      if self.kwargs['normalize']:
+        image = imageoperations.normalizeImage(image, self.kwargs['normalizeScale'], self.kwargs['removeOutliers'])
 
-    if self.kwargs['interpolator'] is not None and self.kwargs['resampledPixelSpacing'] is not None:
-      image, mask = imageoperations.resampleImage(image, mask,
-                                                  self.kwargs['resampledPixelSpacing'],
-                                                  self.kwargs['interpolator'],
-                                                  self.kwargs['label'],
-                                                  self.kwargs['padDistance'])
+      if self.kwargs['interpolator'] is not None and self.kwargs['resampledPixelSpacing'] is not None:
+        image, mask = imageoperations.resampleImage(image, mask,
+                                                    self.kwargs['resampledPixelSpacing'],
+                                                    self.kwargs['interpolator'],
+                                                    self.kwargs['label'],
+                                                    self.kwargs['padDistance'])
 
     return image, mask
 

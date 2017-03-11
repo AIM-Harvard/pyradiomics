@@ -34,34 +34,6 @@ ENV FC /opt/rh/devtoolset-2/root/usr/bin/gfortran
 #  make prefix=/usr install && \
 #  cd .. && rm -rf git-${GIT_VERSION}*
 
-# Build and install git from source.
-WORKDIR /usr/src
-ENV GIT_VERSION 2.5.0
-RUN wget --no-check-certificate https://www.kernel.org/pub/software/scm/git/git-${GIT_VERSION}.tar.gz && \
-  tar xvzf git-${GIT_VERSION}.tar.gz && \
-  cd git-${GIT_VERSION} && \
-  ./configure --prefix=/usr && \
-  make && \
-  make install && \
-  cd .. && rm -rf git-${GIT_VERSION}*
-
-# Build and install CMake from source.
-WORKDIR /usr/src
-RUN git clone git://cmake.org/cmake.git CMake && \
-  cd CMake && \
-  git checkout v3.7.2 && \
-  mkdir /usr/src/CMake-build && \
-  cd /usr/src/CMake-build && \
-  /usr/src/CMake/bootstrap \
-    --parallel=$(grep -c processor /proc/cpuinfo) \
-    --prefix=/usr && \
-  make -j$(grep -c processor /proc/cpuinfo) && \
-  ./bin/cmake \
-    -DCMAKE_BUILD_TYPE:STRING=Release \
-    -DCMAKE_USE_OPENSSL:BOOL=ON . && \
-  make install && \
-  cd .. && rm -rf CMake*
-
 # Build and install Python from source.
 WORKDIR /usr/src
 ENV PYTHON_VERSION 2.7.10
@@ -73,19 +45,10 @@ RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VER
   make install && \
   cd .. && rm -rf Python-${PYTHON_VERSION}*
 
-# Build and install ninja from source.
-WORKDIR /usr/src
-RUN git clone https://github.com/martine/ninja.git && \
-  cd ninja && \
-  git checkout v1.6.0 && \
-  ./configure.py --bootstrap && \
-  mv ninja /usr/bin/ && \
-  cd .. && rm -rf ninja
-
 # Install pyradiomics
 WORKDIR /usr/src
-RUN git clone https://github.com/radiomics/pyradiomics.git && \
-  cd pyradiomics && \
+ADD . pyradiomics/
+RUN cd pyradiomics && \
   python --version && \
   wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py && \
   python get-pip.py && \

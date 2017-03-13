@@ -50,16 +50,16 @@ class RadiomicsFeaturesExtractor:
   - interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
     Enumerated value, possible values:
 
-    - sitkNearestNeighbor
-    - sitkLinear
-    - sitkBSpline
-    - sitkGaussian
-    - sitkLabelGaussian
-    - sitkHammingWindowedSinc
-    - sitkCosineWindowedSinc
-    - sitkWelchWindowedSinc
-    - sitkLanczosWindowedSinc
-    - sitkBlackmanWindowedSinc
+    - sitkNearestNeighbor (= 1)
+    - sitkLinear (= 2)
+    - sitkBSpline (= 3)
+    - sitkGaussian (= 4)
+    - sitkLabelGaussian (= 5)
+    - sitkHammingWindowedSinc (= 6)
+    - sitkCosineWindowedSinc (= 7)
+    - sitkWelchWindowedSinc (= 8)
+    - sitkLanczosWindowedSinc (= 9)
+    - sitkBlackmanWindowedSinc (= 10)
 
   - padDistance [5]: Integer, set the number of voxels pad cropped tumor volume with during resampling. Padding occurs
     in new feature space and is done on all faces, i.e. size increases in x, y and z direction by 2*padDistance.
@@ -91,16 +91,7 @@ class RadiomicsFeaturesExtractor:
       self.loadParams(args[0])
     else:
       # Set default settings and update with and changed settings contained in kwargs
-      self.kwargs = {'normalize': False,
-                     'normalizeScale': 1,
-                     'removeOutliers': None,
-                     'resampledPixelSpacing': None,  # No resampling by default
-                     'interpolator': sitk.sitkBSpline,
-                     'padDistance': 5,
-                     'label': 1,
-                     'verbose': False,
-                     'enableCExtensions': True,
-                     'additionalInfo': True}
+      self.kwargs = self._getDefaultSettings()
       self.kwargs.update(kwargs)
 
       self.inputImages = {'Original': {}}
@@ -108,6 +99,25 @@ class RadiomicsFeaturesExtractor:
       self.enabledFeatures = {}
       for featureClassName in self.getFeatureClassNames():
         self.enabledFeatures[featureClassName] = []
+
+  @classmethod
+  def _getDefaultSettings(cls):
+    """
+    Returns a dictionary containg the default settings specified in this class. These settings cover global toolbox
+    settings, such as ``enableCExtensions``, as well as the image pre-processing settings (e.g. resampling). Feature
+    class specific are defined in the respective feature classes and and not included here. Similarly, filter specific
+    settings are defined in ``imageoperations.py`` and also not included here.
+    """
+    return {'normalize': False,
+            'normalizeScale': 1,
+            'removeOutliers': None,
+            'resampledPixelSpacing': None,  # No resampling by default
+            'interpolator': 'sitkBSpline',  # Alternative: sitk.sitkBSpline,
+            'padDistance': 5,
+            'label': 1,
+            'verbose': False,
+            'enableCExtensions': True,
+            'additionalInfo': True}
 
   def addProvenance(self, provenance_on=True):
     """
@@ -184,16 +194,7 @@ class RadiomicsFeaturesExtractor:
       self.enabledFeatures = enabledFeatures
 
     # Set default settings and update with and changed settings contained in kwargs
-    self.kwargs = {'normalize': False,
-                   'normalizeScale': 1,
-                   'removeOutliers': None,
-                   'resampledPixelSpacing': None,  # No resampling by default
-                   'interpolator': sitk.sitkBSpline,
-                   'padDistance': 5,
-                   'label': 1,
-                   'verbose': False,
-                   'enableCExtensions': True,
-                   'additionalInfo': True}
+    self.kwargs = self._getDefaultSettings()
     self.kwargs.update(kwargs)
 
   def enableAllInputImages(self):

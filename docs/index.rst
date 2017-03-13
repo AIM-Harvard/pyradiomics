@@ -63,9 +63,12 @@ Joost J.M. van Griethuysen et al, “Computational Radiomics System to Decode th
 * PyWavelets (Wavelet filter)
 * pykwalify (Enabling yaml parameters file checking)
 * tqdm (Progressbar)
+* six (Python 3 Compatibility)
 * sphinx (Generating documentation)
 * sphinx_rtd_theme (Template for documentation)
 * nose-parameterized (Testing)
+
+See also the `requirements file <https://github.com/Radiomics/pyradiomics/blob/master/requirements.txt>`_.
 
 Installation
 ------------
@@ -104,7 +107,7 @@ Pyradiomics Indices and Tables
 License
 -------
 
-This package is covered by the 3D Slicer License.
+This package is covered by the open source `3D Slicer License <https://github.com/Radiomics/pyradiomics/blob/master/LICENSE.txt>`_.
 
 **This work was supported in part by the US National Cancer Institute grant
 5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.**

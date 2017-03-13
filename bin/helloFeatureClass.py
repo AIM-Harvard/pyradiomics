@@ -58,7 +58,7 @@ firstOrderFeatures.enableFeatureByName('Mean', True)
 print('Will calculate the following first order features: ')
 for f in firstOrderFeatures.enabledFeatures.keys():
   print('  ', f)
-  print(eval('firstOrderFeatures.get' + f + 'FeatureValue.__doc__'))
+  print(getattr(firstOrderFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating first order features...')
 firstOrderFeatures.calculateFeatures()
@@ -77,7 +77,7 @@ shapeFeatures.enableAllFeatures()
 print('Will calculate the following Shape features: ')
 for f in shapeFeatures.enabledFeatures.keys():
   print('  ', f)
-  print(eval('shapeFeatures.get' + f + 'FeatureValue.__doc__'))
+  print(getattr(shapeFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating Shape features...')
 shapeFeatures.calculateFeatures()
@@ -96,7 +96,7 @@ glcmFeatures.enableAllFeatures()
 print('Will calculate the following GLCM features: ')
 for f in glcmFeatures.enabledFeatures.keys():
   print('  ', f)
-  print(eval('glcmFeatures.get' + f + 'FeatureValue.__doc__'))
+  print(getattr(glcmFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating GLCM features...')
 glcmFeatures.calculateFeatures()
@@ -115,7 +115,7 @@ glrlmFeatures.enableAllFeatures()
 print('Will calculate the following GLRLM features: ')
 for f in glrlmFeatures.enabledFeatures.keys():
   print('  ', f)
-  print(eval('glrlmFeatures.get' + f + 'FeatureValue.__doc__'))
+  print(getattr(glrlmFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating GLRLM features...')
 glrlmFeatures.calculateFeatures()
@@ -134,7 +134,7 @@ glszmFeatures.enableAllFeatures()
 print('Will calculate the following GLSZM features: ')
 for f in glszmFeatures.enabledFeatures.keys():
   print('  ', f)
-  print(eval('glszmFeatures.get' + f + 'FeatureValue.__doc__'))
+  print(getattr(glszmFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating GLSZM features...')
 glszmFeatures.calculateFeatures()

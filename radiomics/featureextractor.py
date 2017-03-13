@@ -363,7 +363,7 @@ class RadiomicsFeaturesExtractor:
         args = self.kwargs.copy()
         args.update(customKwargs)
         self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
-        imageGenerators = chain(imageGenerators, eval('imageoperations.get%sImage(image, **args)' % (imageType)))
+        imageGenerators = chain(imageGenerators, getattr(imageoperations, 'get%sImage' % imageType)(image, **args))
 
       # Calculate features for all (filtered) images in the generator
       for inputImage, inputImageName, inputKwargs in imageGenerators:

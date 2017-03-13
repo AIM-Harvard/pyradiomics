@@ -66,7 +66,7 @@ for cls, features in six.iteritems(extractor.enabledFeatures):
     features = extractor.getFeatureNames(cls)
   for f in features:
     print(f)
-    print(eval('extractor.featureClasses["%s"].get%sFeatureValue.__doc__' % (cls, f)))
+    print(getattr(extractor.featureClasses[cls], 'get%sFeatureValue' % f).__doc__)
 
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)

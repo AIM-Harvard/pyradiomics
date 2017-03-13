@@ -210,7 +210,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 
   try:
     if isinstance(interpolator, six.string_types):
-      interpolator = eval("sitk.%s" % (interpolator))
+      interpolator = getattr(sitk, interpolator)
   except:
     logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)
     interpolator = sitk.sitkBSpline

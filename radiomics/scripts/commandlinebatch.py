@@ -36,7 +36,7 @@ def main():
   args = parser.parse_args()
 
   # Initialize Logging
-  logLevel = eval('logging.' + args.logging_level)
+  logLevel = getattr(logging, args.logging_level)
   rLogger = logging.getLogger('radiomics')
   rLogger.handlers = []
   rLogger.setLevel(logLevel)

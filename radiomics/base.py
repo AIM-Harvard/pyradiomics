@@ -67,9 +67,9 @@ class RadiomicsFeaturesBase(object):
   def calculateFeatures(self):
     self.logger.debug('Calculating features')
     for feature in self.enabledFeatures.keys():
-      call = 'self.get' + feature + 'FeatureValue()'
       try:
-        self.featureValues[feature] = eval(call)
+        # Use getattr to get the feature calculation methods, then use '()' to evaluate those methods
+        self.featureValues[feature] = getattr(self, 'get%sFeatureValue' % feature)()
       except Exception:
         self.featureValues[feature] = numpy.nan
         self.logger.error('FAILED: %s', traceback.format_exc())

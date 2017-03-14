@@ -8,15 +8,14 @@ from radiomics import base, cMatsEnabled, cShape
 class RadiomicsShape(base.RadiomicsFeaturesBase):
   r"""
   In this group of features we included descriptors of the three-dimensional size and shape of the tumor region.
-  Let in the following definitions denote :math:`V` the volume and :math:`A` the surface area of the volume of interest.
+  Let in the following definitions denote :math:`V` the volume (mm\ :sup:`3`) and :math:`A` the surface area of the
+  volume (mm\ :sup:`2`) of interest.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsShape, self).__init__(inputImage, inputMask, **kwargs)
 
     self.pixelSpacing = numpy.array(inputImage.GetSpacing()[::-1])
-    z, x, y = self.pixelSpacing
-    self.cubicMMPerVoxel = z * x * y
 
     # Use SimpleITK for some shape features
     self.lssif = sitk.LabelShapeStatisticsImageFilter()
@@ -163,13 +162,13 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getSurfaceAreaFeatureValue(self):
     r"""
-    Calculate the surface area of the tumor region in square millimeters.
+    Calculate the surface area of the tumor region in square millimeters using a marching cubes algorithm.
 
     :math:`A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\textbf{a}_i\textbf{b}_i \times \textbf{a}_i\textbf{c}_i|}`
 
     Where:
 
-    :math:`N` is the number of triangles forming the surface of the volume
+    :math:`N` is the number of triangles forming the surface mesh of the volume (ROI)
 
     :math:`a_ib_i` and :math:`a_ic_i` are the edges of the :math:`i`\ :sup:`th` triangle formed by points :math:`a_i`,
     :math:`b_i` and :math:`c_i`
@@ -182,35 +181,84 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Calculate the surface area to volume ratio of the tumor region
 
     :math:`surface\ to\ volume\ ratio = \frac{A}{V}`
+
+    Here, a lower value indicates a more compact (sphere-like) shape.
     """
     return (self.SurfaceArea / self.Volume)
+
+  def getSphericityFeatureValue(self):
+    r"""
+    Calculate the Sphericity of the tumor region.
+
+    :math:`sphericity = \frac{\sqrt[3]{36 \pi V^2}}{A}`
+
+    Sphericity is a measure of the roundness of the shape of the tumor region relative to a sphere. It is a
+    dimensionless measure, independent of scale and orientation. The value range is :math:`0 < sphericity \leq 1`, where
+    a value of 1 indicates a perfect sphere (a sphere has the smallest possible surface area for a given volume,
+    compared to other solids).
+
+    **N.B. This feature is correlated to Compactness 1, Compactness 2 and Spherical Disproportion. In the default
+    parameter file provided in the** ``pyradiomics\\bin`` **folder, only Compactness 1 and Compactness 2 are therefore
+    disabled.**
+    """
+    return (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0) / self.SurfaceArea
 
   def getCompactness1FeatureValue(self):
     r"""
     Calculate the compactness (1) of the tumor region.
 
-    :math:`compactness\ 1 = \frac{V}{\sqrt{\pi}A^{\frac{2}{3}}}`
+    :math:`compactness\ 1 = \frac{V}{\sqrt{\pi A^3}}`
 
-    Compactness 1 is a measure of how compact the shape of the tumor is
-    relative to a sphere (most compact). It is a dimensionless measure,
-    independent of scale and orientation. Compactness 1 is defined as the
-    ratio of volume to the :math:`\sqrt{\text{surface area}^3}`. This is a measure of the
-    compactness of the shape of the image ROI
+    Similar to Sphericity, Compactness 1 is a measure of how compact the shape of the tumor is relative to a sphere
+    (most compact). It is therefore correlated to Sphericity and redundant. It is provided here for completeness.
+    The value range is :math:`0 < compactness\ 1 \leq \frac{1}{6 \pi}`, where a value of :math:`\frac{1}{6 \pi}`
+    indicates a perfect sphere.
+
+    By definition, :math:`compactness\ 1 = \frac{1}{6 \pi}\sqrt{compactness\ 2} =
+    \frac{1}{6 \pi}\sqrt{sphericity^3}`.
+
+    **N.B. This feature is correlated to Compactness 2, Sphericity and Spherical Disproportion. In the default
+    parameter file provided in the** ``pyradiomics\\bin`` **folder, only Compactness 1 and Compactness 2 are therefore
+    disabled.**
     """
-    return ((self.Volume) / ((self.SurfaceArea) ** (2.0 / 3.0) * numpy.sqrt(numpy.pi)))
+    return ((self.Volume) / ((self.SurfaceArea) ** (3.0 / 2.0) * numpy.sqrt(numpy.pi)))
 
   def getCompactness2FeatureValue(self):
     r"""
     Calculate the Compactness (2) of the tumor region.
 
-    :math:`compactness\ 2 = 36\pi\frac{V^2}{A^3}`
+    :math:`compactness\ 2 = 36 \pi \frac{V^2}{A^3}`
 
-    Compactness 2 is a measure of how compact the shape of the tumor is
-    relative to a sphere (most compact). It is a dimensionless measure,
-    independent of scale and orientation. This is a measure of the compactness
-    of the shape of the image ROI.
+    Similar to Sphericity and Compactness 1, Compactness 2 is a measure of how compact the shape of the tumor is
+    relative to a sphere (most compact). It is a dimensionless measure, independent of scale and orientation. The value
+    range is :math:`0 < compactness\ 2 \leq 1`, where a value of 1 indicates a perfect sphere.
+
+    By definition, :math:`compactness\ 2 = (sphericity)^3`
+
+    **N.B. This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
+    parameter file provided in the** ``pyradiomics\\bin`` **folder, only Compactness 1 and Compactness 2 are therefore
+    disabled.**
     """
     return ((36.0 * numpy.pi) * ((self.Volume) ** 2.0) / ((self.SurfaceArea) ** 3.0))
+
+  def getSphericalDisproportionFeatureValue(self):
+    r"""
+    Calculate the Spherical Disproportion of the tumor region.
+
+    :math:`spherical\ disproportion = \frac{A}{4\pi R^2} = \frac{A}{\sqrt[3]{36 \pi V^2}}`
+
+    Where :math:`R` is the radius of a sphere with the same volume as the tumor, and equal to
+    :math:`\sqrt[3]{\frac{3V}{4\pi}}`.
+
+    Spherical Disproportion is the ratio of the surface area of the tumor region to the surface area of a sphere with
+    the same volume as the tumor region, and by definition, the inverse of Sphericity. Therefore, the value range is
+    :math:`spherical\ disproportion \geq 1`, with a value of 1 indicating a perfect sphere.
+
+    **N.B. This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
+    parameter file provided in the** ``pyradiomics\\bin`` **folder, only Compactness 1 and Compactness 2 are therefore
+    disabled.**
+    """
+    return self.SurfaceArea / (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0)
 
   def getMaximum3DDiameterFeatureValue(self):
     r"""
@@ -240,32 +288,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     return self._getMaximum2Ddiameter(2)
 
-  def getSphericalDisproportionFeatureValue(self):
-    r"""
-    Calculate the Spherical Disproportion of the tumor region.
-
-    :math:`spherical\ disproportion = \frac{A}{4\pi R^2}`
-
-    Where :math:`R` is the radius of a sphere with the same volume as the tumor.
-
-    Spherical Disproportion is the ratio of the surface area of the
-    tumor region to the surface area of a sphere with the same
-    volume as the tumor region.
-    """
-    R = self.lssif.GetEquivalentSphericalRadius(self.label)
-    return ((self.SurfaceArea) / (4.0 * numpy.pi * (R ** 2.0)))
-
-  def getSphericityFeatureValue(self):
-    r"""
-    Calculate the Sphericity of the tumor region.
-
-    :math:`sphericity = \frac{\pi^{\frac{1}{3}}(6V)^{\frac{2}{3}}}{A}`
-
-    Sphericity is a measure of the roundness of the shape of the tumor region
-    relative to a sphere. This is another measure of the compactness of a tumor.
-    """
-    return (((numpy.pi) ** (1.0 / 3.0) * (6.0 * self.Volume) ** (2.0 / 3.0)) / (self.SurfaceArea))
-
   def getElongationFeatureValue(self):
     """
 
@@ -277,12 +299,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     """
     return self.lssif.GetFlatness(self.label)
-
-  def getRoundnessFeatureValue(self):
-    """
-
-    """
-    return self.lssif.GetRoundness(self.label)
 
   def _interpolate(self, grid, p1, p2):
     diff = (.5 - self.maskArray[tuple(grid[p1])]) / (self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])

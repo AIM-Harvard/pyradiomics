@@ -22,7 +22,7 @@ setting:
   label: 1
   interpolator: 'sitkBSpline' # This is an enumerated value, here None is not allowed
   resampledPixelSpacing: # This disables resampling, as it is interpreted as None, to enable it, specify spacing in x, y, z as [x, y , z]
-  verbose: True
+  verbose: False
   weightingNorm: # If no value is specified, it is interpreted as None
 
 # Input images to use: original for unfiltered image and/or any other filters, see documentation of featureextractor.py

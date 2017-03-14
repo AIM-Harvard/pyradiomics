@@ -11,9 +11,10 @@ import traceback
 
 import six
 
+import radiomics
 from radiomics import featureextractor
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(usage='%(prog)s image mask [Options]')
 parser.add_argument('image', metavar='Image',
                     help='Features are extracted from the Region Of Interest (ROI) in the image')
 parser.add_argument('mask', metavar='Mask', help='Mask identifying the ROI in the Image')
@@ -32,25 +33,35 @@ parser.add_argument('--label', '-l', metavar='N', nargs=1, default=None, type=in
 parser.add_argument('--logging-level', metavar='LEVEL',
                     choices=['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                     default='WARNING', help='Set capture level for logging')
-parser.add_argument('--log-file', metavar='FILE', nargs='?', type=argparse.FileType('w'), default=sys.stderr,
+parser.add_argument('--log-file', metavar='FILE', nargs=1, type=argparse.FileType('w'), default=None,
                     help='File to append logger output to')
-
+parser.add_argument('--verbosity', '-v', action='store', nargs='?', default=3, const=4, type=int, choices=range(0, 6),
+                    help='Regulate output to stderr. By default [3], level WARNING and up are printed. By specifying '
+                    'this argument without a value, level INFO [4] is assumed. A higher value results in more verbose '
+                    'output.')
+parser.add_argument('--version', action='version', help='Print version and exit',
+                    version='%(prog)s ' + radiomics.__version__)
 
 def main():
   args = parser.parse_args()
 
   # Initialize Logging
   logLevel = getattr(logging, args.logging_level)
-  rLogger = logging.getLogger('radiomics')
-  rLogger.handlers = []
-  rLogger.setLevel(logLevel)
-  handler = logging.StreamHandler(args.log_file)
-  handler.setLevel(logLevel)
-  handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
-  rLogger.addHandler(handler)
+  rLogger = radiomics.logger
+
+  # Set up optional logging to file
+  if args.log_file is not None:
+    rLogger.setLevel(logLevel)
+    handler = logging.StreamHandler(args.log_file)
+    handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+    rLogger.addHandler(handler)
+
+  # Set verbosity of output (stderr)
+  verboseLevel = (6 - args.verbosity) * 10  # convert to python logging level
+  radiomics.setVerbosity(verboseLevel)
 
   # Initialize logging for script log messages
-  logger = logging.getLogger('radiomics.script')
+  logger = rLogger.getChild('script')
 
   # Initialize extractor
   try:
@@ -58,7 +69,7 @@ def main():
       extractor = featureextractor.RadiomicsFeaturesExtractor(args.param[0])
     else:
       extractor = featureextractor.RadiomicsFeaturesExtractor()
-    logger.info('Extracting features with kwarg settings: %s\n\tImage:%s\n\tMask:%s',
+    logger.info('Extracting features with kwarg settings: %s\n\tImage: %s\n\tMask: %s',
                 str(extractor.kwargs), os.path.abspath(args.image), os.path.abspath(args.mask))
     featureVector = collections.OrderedDict()
     featureVector['image'] = os.path.basename(args.image)
@@ -80,7 +91,8 @@ def main():
     logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
 
   args.out.close()
-  args.log_file.close()
+  if args.log_file is not None:
+    args.log_file.close()
 
 
 if __name__ == "__main__":

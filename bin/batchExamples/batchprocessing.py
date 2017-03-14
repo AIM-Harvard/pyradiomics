@@ -20,20 +20,22 @@ def main():
   outputFilepath = outPath + os.path.sep + "radiomics_features.csv"
   progress_filename = outPath + os.path.sep + "pyrad_log.txt"
 
-  # Enable writing out the log using radiomics logger
-  logLevel = logging.INFO
+  # Configure logging
   rLogger = logging.getLogger('radiomics')
-  rLogger.setLevel(logLevel)
+
+  # Set logging level
+  # rLogger.setLevel(logging.INFO)  # Not needed, default log level of logger is INFO
+
+  # Create handler for writing to log file
   handler = logging.FileHandler(filename=progress_filename, mode='w')
-  handler.setLevel(logLevel)
   handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
   rLogger.addHandler(handler)
 
-  # Prevent radiomics logger from printing out log entries with level < WARNING to the console
-  radiomics.logger.handlers[0].setLevel(logging.WARNING)
-
   # Initialize logging for batch log messages
-  logger = logging.getLogger('radiomics.batch')
+  logger = rLogger.getChild('batch')
+
+  # Set verbosity level for output to stderr (default level = WARNING)
+  # radiomics.setVerbosity(logging.INFO)
 
   logger.info('Loading CSV')
   print("Loading CSV")
@@ -53,7 +55,6 @@ def main():
   kwargs['binWidth'] = 25
   kwargs['resampledPixelSpacing'] = None  # [3,3,3]
   kwargs['interpolator'] = sitk.sitkBSpline
-  kwargs['verbose'] = True
   kwargs['enableCExtensions'] = False
 
   logger.info('pyradiomics version: %s', radiomics.__version__)

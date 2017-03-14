@@ -6,17 +6,18 @@ import csv
 import json
 import logging
 import os.path
-import sys
 import traceback
 
+import radiomics
 from radiomics import featureextractor
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(usage='%(prog)s In Out [Options]')
 parser.add_argument('inFile', metavar='In', type=argparse.FileType('r'),
                     help='CSV file containing combinations of image and mask. Each row represents one combination with '
                          'the following elements: (1) Patient Name, (2) Image type, (3) Reader, (4) Image location and '
                          '(5) Mask location')
-parser.add_argument('outFile', metavar='Out', type=argparse.FileType('w'), help='File to write results to')
+parser.add_argument('outFile', metavar='Out', type=argparse.FileType('w'),
+                    help='File to write results to')
 parser.add_argument('--format', '-f', choices=['csv', 'json'], default='csv', help='Format for the output. '
                     'Default is "csv": one row of feature names, followed by one row of feature values for each '
                     'image-mask combination. For "json": Features are written in a JSON format dictionary '
@@ -28,8 +29,14 @@ parser.add_argument('--label', '-l', metavar='N', nargs=1, default=None, type=in
 parser.add_argument('--logging-level', metavar='LEVEL',
                     choices=['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                     default='WARNING', help='Set capture level for logging')
-parser.add_argument('--log-file', metavar='FILE', nargs='?', type=argparse.FileType('w'), default=sys.stderr,
+parser.add_argument('--log-file', metavar='FILE', nargs=1, type=argparse.FileType('w'), default=None,
                     help='File to append logger output to')
+parser.add_argument('--verbosity', '-v', action='store', nargs='?', default=3, const=4, type=int, choices=range(0, 6),
+                    help='Regulate output to stderr. By default [3], level WARNING and up are printed. By specifying '
+                    'this argument without a value, level INFO [4] is assumed. A higher value results in more verbose '
+                    'output.')
+parser.add_argument('--version', action='version', help='Print version and exit',
+                    version='%(prog)s ' + radiomics.__version__)
 
 
 def main():
@@ -37,16 +44,21 @@ def main():
 
   # Initialize Logging
   logLevel = getattr(logging, args.logging_level)
-  rLogger = logging.getLogger('radiomics')
-  rLogger.handlers = []
-  rLogger.setLevel(logLevel)
-  handler = logging.StreamHandler(args.log_file)
-  handler.setLevel(logLevel)
-  handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
-  rLogger.addHandler(handler)
+  rLogger = radiomics.logger
 
-  # Initialize logging for batch log messages
-  logger = logging.getLogger('radiomics.batch')
+  # Set up optional logging to file
+  if args.log_file is not None:
+    rLogger.setLevel(logLevel)
+    handler = logging.StreamHandler(args.log_file)
+    handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+    rLogger.addHandler(handler)
+
+  # Set verbosity of output (stderr)
+  verboseLevel = (6 - args.verbosity) * 10  # convert to python logging level
+  radiomics.setVerbosity(verboseLevel)
+
+  # Initialize logging for script log messages
+  logger = rLogger.getChild('batch')
 
   # Load patient list
   flists = []
@@ -58,7 +70,8 @@ def main():
     logging.error('CSV READ FAILED:\n%s', traceback.format_exc())
     args.inFile.close()
     args.outFile.close()
-    args.log_file.close()
+    if args.log_file is not None:
+      args.log_file.close()
     exit(-1)
 
   # Initialize extractor
@@ -114,7 +127,8 @@ def main():
         logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
 
   args.outFile.close()
-  args.log_file.close()
+  if args.log_file is not None:
+    args.log_file.close()
 
 
 if __name__ == "__main__":

@@ -6,6 +6,8 @@ import numpy
 import SimpleITK as sitk
 import six
 
+import radiomics
+
 class RadiomicsFeaturesBase(object):
   """
   This is the abstract class, which defines the common interface for the feature classes. All feature classes inherit
@@ -39,10 +41,10 @@ class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):
     self.logger = logging.getLogger(self.__module__)
     self.logger.debug('Initializing feature class')
+    self.verbose = radiomics.handler.level <= logging.INFO  # check if the handler to stderr is set to INFO or lower
 
     self.binWidth = kwargs.get('binWidth', 25)
     self.label = kwargs.get('label', 1)
-    self.verbose = kwargs.get('verbose', False)
 
     # all features are disabled by default
     self.disableAllFeatures()
@@ -54,7 +56,6 @@ class RadiomicsFeaturesBase(object):
 
     if inputImage is None or inputMask is None:
       self.logger.warning('Missing input image or mask')
-      if self.verbose: print('ERROR: missing input image or mask')
       return
 
     self.imageArray = sitk.GetArrayFromImage(self.inputImage)

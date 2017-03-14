@@ -19,27 +19,64 @@ if sys.version_info < (2, 6, 0):
 
 def debug(debug_on=True):
   """
-  Set up logging system for the whole package.
-  By default, module hierarchy is reflected in log, as child loggers are created by module
-  This is achieved by the following line in base.py: ``self.logger = logging.getLogger(self.__module__)``
-  To use same instance in each module, set ``self.logger=logging.getLogger('radiomics')``.
+  Control level of logger and stderr output of the toolbox. By default, this output reflects module hierarchy, as child
+  loggers are created by module. This is achieved by the following line in base.py:
+  ``self.logger = logging.getLogger(self.__module__)``. To use same instance in each module, set
+  ``self.logger=logging.getLogger('radiomics')``.
 
-  At command line, turn on debugging for all pyradiomics functions with:
+  At command line, turn on debugging output to stderr for all pyradiomics functions with:
 
   ``import radiomics``\n
   ``radiomics.debug()``
 
-  Turn off debugging with:
+  This set the level of both the logger and the handler for output to stderr to level = DEBUG. If level of logger is
+  already at level "DEBUG" or "NOTSET", level of logger is not changed.
+
+  Turn off debugging with (only changes the level of the handler for output to stderr):
 
   ``radiomics.debug(False)``
+
+  By default, the radiomics logger is set to level "INFO" and the stderr handler to level "WARNING". Therefore a log
+  storing the extraction log messages from level "INFO" and up can be easily set up by adding an appropriate handler to
+  the radiomics logger.
   """
   global logger, debugging
   if debug_on:
-    logger.setLevel(logging.DEBUG)
+    setVerbosity(logging.DEBUG)  # set the output to stderr to DEBUG
     debugging = True
   else:
-    logger.setLevel(logging.WARNING)
+    setVerbosity(logging.WARNING)  # set the output to stderr to WARNING
     debugging = False
+
+
+def setVerbosity(level):
+  """
+  Assumes the handler added to the radiomics logger at initialization of the toolbox is not removed from the logger
+  handlers.
+
+  Using the ``level`` (Python defined logging levels) argument, determine how much PyRadiomics should print out to the
+  stderr, the following levels are possible:
+
+  - 60: Quiet mode, no messages are printed to the stderr
+  - 50: Only log messages of level "CRITICAL" are printed
+  - 40: Log messages of level "ERROR" and up are printed
+  - 30: Log messages of level "WARNING" and up are printed
+  - 20: Log messages of level "INFO" and up are printed
+  - 10: Log messages of level "DEBUG" and up are printed (i.e. all log messages)
+
+  **N.B. This does not affect the level of the logger itself (e.g. if verbosity level = 3, log messages with DEBUG level
+  can still be stored in a log file if an appropriate handler is added to the logger and the logging level of the logger
+  has been set to the correct level**
+  """
+  global logger, handler
+  if level < 10:  # Lowest level: DEBUG
+    level = 10
+  if level > 60:  # Highest level = 50 (CRITICAL), level 60 results in a 'quiet' mode
+    level = 60
+
+  handler.setLevel(level)
+  if handler.level < logger.level:  # reduce level of logger if necessary
+    logger.setLevel(level)
 
 
 def enableCExtensions(enabled=True):
@@ -126,12 +163,14 @@ def getInputImageTypes():
 
 debugging = True
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)  # Set default level of logger to INFO to reflect most common setting for a log file
+
 handler = logging.StreamHandler()
 # formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M")
 formatter = logging.Formatter("%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-debug(False)  # force level=WARNING, in case logging default is set differently (issue 102)
+debug(False)  # force level=WARNING for stderr handler, in case logging default is set differently (issue 102)
 
 _featureClasses = None
 _inputImages = None
@@ -140,7 +179,6 @@ _inputImages = None
 _cMatsState = 0
 
 try:
-  logger.debug("Loading C extensions")
   from radiomics import _cmatrices as cMatrices
   from radiomics import _cshape as cShape
   _cMatsState = 1

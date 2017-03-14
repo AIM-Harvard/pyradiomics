@@ -23,13 +23,28 @@ if not os.path.exists(maskName):
   print('Error: problem finding input labelmap', maskName)
   exit()
 
+# Uncomment line below to output debug and info log messaging to stderr
+# radiomics.debug()  # Switch on radiomics logging to stderr output from level=DEBUG (default level=WARNING)
+
+# Alternative: regulate verbosity with radiomics.verbosity
+# radiomics.setVerbosity(logging.INFO)
+
+# Get the PyRadiomics logger (default log-level = INFO
+logger = radiomics.logger
+logger.setLevel(logging.DEBUG)  # set level to DEBUG to include debug log messages in log file
+
+# Write out all log entries to a file
+handler = logging.FileHandler(filename='testLog.txt', mode='w')
+formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 # Define settings for signature calculation
 # These are currently set equal to the respective default values
 kwargs = {}
 kwargs['binWidth'] = 25
 kwargs['resampledPixelSpacing'] = None  # [3,3,3] is an example for defining resampling (voxels with size 3x3x3mm)
 kwargs['interpolator'] = sitk.sitkBSpline
-kwargs['verbose'] = True
 
 # Initialize wrapperClass to generate signature
 extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
@@ -45,20 +60,6 @@ extractor.disableAllFeatures()
 
 # Only enable mean and skewness in firstorder
 extractor.enableFeaturesByName(firstorder=['Mean', 'Skewness'])
-
-# Enable writing out the log using radiomics logger
-radiomics.debug()  # Switch on radiomics logging from level=DEBUG (default level=WARNING)
-
-# Prevent radiomics logger from printing out log entries with level < WARNING to the console
-logger = logging.getLogger('radiomics')
-logger.handlers[0].setLevel(logging.WARNING)
-logger.propagate = False  # Do not pass log messages on to root logger
-
-# Write out all log entries to a file
-handler = logging.FileHandler(filename='testLog.txt', mode='w')
-formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 print("Active features:")
 for cls, features in six.iteritems(extractor.enabledFeatures):

@@ -6,8 +6,6 @@ mapping:
   setting: &settings
     type: map
     mapping:
-      verbose:
-        type: bool
       enableCExtensions:
         type: bool
       additionalInfo:

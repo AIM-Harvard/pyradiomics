@@ -31,7 +31,6 @@ class RadiomicsFeaturesExtractor:
   Alternatively, at initialisation, the following general settings can be specified in the parameter file or ``kwargs``,
   with default values in brackets:
 
-  - verbose [False]: Boolean, set to False to disable status update printing.
   - enableCExtensions [True]: Boolean, set to False to force calculation to full-python mode. See also
     :py:func:`~radiomics.enableCExtensions()`.
   - additionalInfo [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
@@ -97,7 +96,7 @@ class RadiomicsFeaturesExtractor:
         self.logger.info('Applying custom settings')
         self.kwargs.update(kwargs)
       else:
-        self.logger('No customized settings, applying defaults')
+        self.logger.info('No customized settings, applying defaults')
 
       self.logger.debug("Settings: %s", self.kwargs)
 
@@ -122,7 +121,6 @@ class RadiomicsFeaturesExtractor:
             'interpolator': 'sitkBSpline',  # Alternative: sitk.sitkBSpline,
             'padDistance': 5,
             'label': 1,
-            'verbose': False,
             'enableCExtensions': True,
             'additionalInfo': True}
 
@@ -385,6 +383,8 @@ class RadiomicsFeaturesExtractor:
         croppedImage, croppedMask, boundingBox = \
           imageoperations.cropToTumorMask(image, mask, self.kwargs['label'], boundingBox)
         enabledFeatures = self.enabledFeatures['shape']
+
+        self.logger.info("Computing shape")
         shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
         if enabledFeatures is None or len(enabledFeatures) == 0:
           shapeClass.enableAllFeatures()
@@ -392,7 +392,6 @@ class RadiomicsFeaturesExtractor:
           for feature in enabledFeatures:
             shapeClass.enableFeatureByName(feature)
 
-        if self.kwargs['verbose']: print("\t\tComputing shape")
         shapeClass.calculateFeatures()
         for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
           newFeatureName = "original_shape_%s" % (featureName)
@@ -500,6 +499,8 @@ class RadiomicsFeaturesExtractor:
         continue
 
       if featureClassName in self.getFeatureClassNames():
+        self.logger.info('Computing %s', featureClassName)
+
         featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
 
         if enabledFeatures is None or len(enabledFeatures) == 0:
@@ -508,7 +509,6 @@ class RadiomicsFeaturesExtractor:
           for feature in enabledFeatures:
             featureClass.enableFeatureByName(feature)
 
-        if self.kwargs['verbose']: print("\t\tComputing %s" % (featureClassName))
         featureClass.calculateFeatures()
         for (featureName, featureValue) in six.iteritems(featureClass.featureValues):
           newFeatureName = "%s_%s_%s" % (inputImageName, featureClassName, featureName)

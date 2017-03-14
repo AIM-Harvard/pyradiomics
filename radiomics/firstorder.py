@@ -21,8 +21,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   - voxelArrayShift [0]: Integer, This amount is added to the gray level intensity in features Energy, Total Energy and
     RMS, this is to prevent negative values. __If using CT data, or data normalized with mean 0, consider setting this
-    parameter to a fixed value that ensures non-negative numbers in the image. Bear in mind however, that the larger the
-    value, the larger the volume confounding effect will be.__
+    parameter to a fixed value (e.g. 2000) that ensures non-negative numbers in the image. Bear in mind however, that
+    the larger the value, the larger the volume confounding effect will be.__
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

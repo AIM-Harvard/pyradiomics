@@ -22,7 +22,7 @@ def getBinEdges(binwidth, parameterValues):
   the bin edges are equally spaced from zero, and that the leftmost edge :math:`\leq \min(X_{gl})`.
 
   *Example: for a ROI with values ranging from 54 to 166, and a bin width of 25, the bin edges will be [50, 75, 100,
-  125, 150, 200].*
+  125, 150, 175].*
 
   This value can be directly passed to ``numpy.histogram`` to generate a histogram or ``numpy.digitize`` to discretize
   the ROI gray values. See also :py:func:`binImage()`.

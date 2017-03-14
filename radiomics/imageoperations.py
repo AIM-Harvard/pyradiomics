@@ -13,13 +13,19 @@ logger = logging.getLogger(__name__)
 
 
 def getBinEdges(binwidth, parameterValues):
-  """
+  r"""
   Calculate and return the histogram using parameterValues (1D array of all segmented voxels in the image). Parameter
   ``binWidth`` determines the fixed width of each bin. This ensures comparable voxels after binning, a fixed bin count
   would be dependent on the intensity range in the segmentation.
 
-  Returns the bin edges, a list of the edges of the calculated bins, length is N(bins) + 1. This value can be directly
-  passed to ``numpy.histogram`` to generate a histogram or ``numpy.digitize`` to discretize the ROI gray values.
+  Returns the bin edges, a list of the edges of the calculated bins, length is N(bins) + 1. Bins are defined such, that
+  the bin edges are equally spaced from zero, and that the leftmost edge :math:`\leq \min(X_{gl})`.
+
+  *Example: for a ROI with values ranging from 54 to 166, and a bin width of 25, the bin edges will be [50, 75, 100,
+  125, 150, 200].*
+
+  This value can be directly passed to ``numpy.histogram`` to generate a histogram or ``numpy.digitize`` to discretize
+  the ROI gray values. See also :py:func:`binImage()`.
   """
   global logger
 
@@ -43,14 +49,21 @@ def getBinEdges(binwidth, parameterValues):
 
 
 def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates):
-  """
-  Discretizes the parameterMatrix (matrix representation of the gray levels in the image) using the binEdges calculated
+  r"""
+  Discretizes the parameterMatrix (matrix representation of the gray levels in the ROI) using the binEdges calculated
   using :py:func:`getBinEdges`. Only voxels defined by parameterMatrixCoordinates (defining the segmentation) are used
   for calculation of histogram and subsequently discretized. Voxels outside segmentation are left unchanged.
 
-  If the range of gray level intensities is equally dividable by the binWidth, i.e. :math:`( \max{X} - \min{X}) \mod
-  \text{binWidth} = 0`, the maximum intensity will be encoded as numBins + 1, therefore the maximum number of gray level
-  intensities in the ROI after binning is number of bins + 1.
+  :math:`X_{b, i} = \lfloor \frac{X_{gl, i}}{W} \rfloor - \lfloor \frac {\min(X_{gl})}{W} \rfloor + 1`
+
+  Here, :math:`X_{gl, i}` and :math:`X_{b, i}` are gray level intensities before and after discretization, respectively.
+  :math:`{W}` is the bin width value (specfied in ``binWidth`` parameter). The first part of the formula ensures that
+  the bins are equally spaced from 0, whereas the second part ensures that the minimum gray level intensity inside the
+  ROI after binning is always 1.
+
+  If the range of gray level intensities is equally dividable by the binWidth, i.e. :math:`(\max(X_{gl})- \min(X_{gl}))
+  \mod W = 0`, the maximum intensity will be encoded as numBins + 1, therefore the maximum number of gray
+  level intensities in the ROI after binning is number of bins + 1.
 
   **N.B. This is different from the assignment of voxels to the bins by** ``numpy.histogram`` **, which has half-open
   bins, with the exception of the rightmost bin, which means this maximum values are assigned to the topmost bin.**

@@ -27,9 +27,8 @@ def main():
             'gldm_a': 0}
 
   extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
-  featureClasses = extractor.getFeatureClassNames()
 
-  for cls in featureClasses:
+  for cls in extractor.getFeatureClassNames():
     if os.path.exists(os.path.join(baselineDir, 'baseline_%s.csv' % (cls))):
       with open(os.path.join(baselineDir, 'baseline_%s.csv' % (cls)), 'rb') as baselineFile:
         csvReader = csv.reader(baselineFile)
@@ -42,7 +41,7 @@ def main():
     print("No baselinefiles containing testcases found, exiting...")
     exit(-1)
 
-  newClasses = [cls for cls in featureClasses if
+  newClasses = [cls for cls in extractor.getFeatureClassNames() if
                 not os.path.exists(os.path.join(baselineDir, 'baseline_%s.csv' % (cls)))]
 
   if len(newClasses) == 0:

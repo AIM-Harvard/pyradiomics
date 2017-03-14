@@ -14,7 +14,6 @@ testUtils = RadiomicsTestUtils()
 testCases = testUtils.getTestCases()
 
 extractor = RadiomicsFeaturesExtractor()
-featureClassNames = extractor.getFeatureClassNames()
 
 featureClass = None
 
@@ -23,10 +22,9 @@ class TestFeatures:
   def generate_scenarios():
     global testCases
     global extractor
-    global featureClassNames
 
     for testCase in testCases:
-      for featureClassName in featureClassNames:
+      for featureClassName in extractor.getFeatureClassNames():
         featureNames = extractor.featureClasses[featureClassName].getFeatureNames()
         assert (featureNames is not None)
         assert (len(featureNames) > 0)

@@ -51,8 +51,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   - Guillaume Thibault; Bernard Fertil; Claire Navarro; Sandrine Pereira; Pierre Cau; Nicolas Levy; Jean Sequeira;
     Jean-Luc Mari (2009). "Texture Indexes and Gray Level Size Zone Matrix. Application to Cell Nuclei Classification".
     Pattern Recognition and Information Processing (PRIP): 140-145.
-
-  - https://en.wikipedia.org/wiki/Gray_level_size_zone_matrix
+  - `<https://en.wikipedia.org/wiki/Gray_level_size_zone_matrix`>_
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

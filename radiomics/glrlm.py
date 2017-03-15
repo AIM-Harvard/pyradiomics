@@ -69,14 +69,13 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   - Galloway MM. 1975. Texture analysis using gray level run lengths. Computer Graphics and Image Processing,
     4(2):172-179.
-
   - Chu A., Sehgal C.M., Greenleaf J. F. 1990. Use of gray value distribution of run length for texture analysis.
     Pattern Recognition Letters, 11(6):415-419
-
   - Xu D., Kurani A., Furst J., Raicu D. 2004. Run-Length Encoding For Volumetric Texture. International Conference on
     Visualization, Imaging and Image Processing (VIIP), p. 452-458
-
   - Tang X. 1998. Texture information in run-length matrices. IEEE Transactions on Image Processing 7(11):1602-1609.
+  - `Tustison N., Gee J. Run-Length Matrices For Texture Analysis. Insight Journal 2008 January - June.
+    <http://www.insight-journal.org/browse/publication/231>`_
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

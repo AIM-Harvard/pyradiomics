@@ -105,10 +105,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   - Haralick, R., Shanmugan, K., Dinstein, I; Textural features for image classification;
     IEEE Transactions on Systems, Man and Cybernetics; 1973(3), p610-621
-
-  - https://en.wikipedia.org/wiki/Co-occurrence_matrix
-
-  - http://www.fp.ucalgary.ca/mhallbey/the_glcm.htm
+  - `<https://en.wikipedia.org/wiki/Co-occurrence_matrix>`_
+  - `<http://www.fp.ucalgary.ca/mhallbey/the_glcm.htm>`_
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

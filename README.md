@@ -10,20 +10,28 @@
 ## Radiomics feature extraction in Python
 
 This is an open-source python package for the extraction of Radiomics features from 2D and 3D images and 
-binary masks.
+segmentations.
 
 Image loading and preprocessing (e.g. resampling and cropping) are first done using `SimpleITK`. 
 Then, loaded data are converted into numpy arrays for further calculation using feature classes
 outlined below.
+
+With this package we aim to establish a reference standard for Radiomic Analysis, and provide a tested and mantained
+open-source platform for easy and reproducible Radiomic Feature extraction.
+
+By doing so, we hope to increase awareness of radiomic capabilities and expand the community.
+
+**If you publish any work which uses this package, please cite the following publication:**\
+*van Griethuysen et al, “Computational Radiomics System to Decode the Radiographic Phenotype”; Submitted*
 
 ### Feature Classes
 Currently supports the following feature classes:
 
  - First Order Statistics
  - Shape-based
- - [Gray Level Cooccurence Matrix](https://en.wikipedia.org/wiki/Co-occurrence_matrix) (GLCM)
- - [Gray Level Run Length Matrix](http://www.insight-journal.org/browse/publication/231) (GLRLM)
- - [Gray Level Size Zone Matrix](https://en.wikipedia.org/wiki/Gray_level_size_zone_matrix) (GLSZM)
+ - Gray Level Cooccurence Matrix (GLCM)
+ - Gray Level Run Length Matrix (GLRLM)
+ - Gray Level Size Zone Matrix (GLSZM)
 
 ### Filter Classes
 Aside from the feature classes, there are also some built-in optional filters:
@@ -71,11 +79,6 @@ and `pyradiomicsbatch`, for single image extraction and batchprocessing, respect
 Finally, a convenient front-end interface is provided as the 'Radiomics'
 extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRadiomics).
 
-### Citation 
-If you publish any work which uses this package, please cite the following publication:
-
-Joost J.M. van Griethuysen et al, “Computational Radiomics System to Decode the Radiographic Phenotype”; Submitted
-
 ### 3rd-party packages used in pyradiomics:
 
  - SimpleITK
@@ -95,9 +98,6 @@ See also the [requirements file](requirements.txt).
 
 ### License
 This package is covered by the open source [3D Slicer License](LICENSE.txt).
-
-**This work was supported in part by the US National Cancer Institute grant 
-5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.**
 
 ### Developers
  - [Joost van Griethuysen](https://github.com/JoostJM)<sup>1,3,4</sup>
@@ -122,3 +122,5 @@ We are happy to help you with any questions. Please contact us on the [pyradiomi
 We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.md) on how to contribute
 to PyRadiomics.
 
+**This work was supported in part by the US National Cancer Institute grant 
+5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.**

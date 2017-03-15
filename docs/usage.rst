@@ -1,3 +1,5 @@
+.. _radiomics-usage-label:
+
 =====
 Usage
 =====

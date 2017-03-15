@@ -139,7 +139,9 @@ environments:
     - Python 3.4 32 and 64 bits (Windows and Linux)
     - Python 3.5 32 and 64 bits (Windows and Linux)
 
-Python 3 testing for mac is currently disabled for Mac due to some issues with the SimpleITK package for python 3.
+.. note::
+
+    Python 3 testing for mac is currently disabled for Mac due to some issues with the SimpleITK package for python 3.
 
 There are 3 testing scripts run for PyRadiomics. The first test is ``test_cmatrices``, which asserts if the matrices
 calculated by the C extensions match those calculated by Python. A threshold of 1e-3 is used to allow for machine

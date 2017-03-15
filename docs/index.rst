@@ -37,6 +37,7 @@ Table of Contents
    radiomics
    features
    developers
+   FAQs <faq>
 
 Feature Classes
 ---------------
@@ -149,5 +150,7 @@ We'd welcome your contributions to PyRadiomics. Please read the
 to PyRadiomics. Information on adding / customizing feature classes and filters can be found in the :ref:`developers`
 section.
 
-**This work was supported in part by the US National Cancer Institute grant
-5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.**
+.. note::
+
+   This work was supported in part by the US National Cancer Institute grant
+   5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.

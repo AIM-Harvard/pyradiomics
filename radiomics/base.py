@@ -3,8 +3,8 @@ import logging
 import traceback
 
 import numpy
-import six
 import SimpleITK as sitk
+import six
 
 class RadiomicsFeaturesBase(object):
   """

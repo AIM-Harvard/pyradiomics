@@ -67,14 +67,15 @@ class RadiomicsFeaturesExtractor:
     padding does not exceed original image boundaries. **N.B. After application of filters image is cropped again
     without padding.**
 
-  N.B. Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
+  .. note::
 
-  In addition to these general settings, filter or featureclass specific settings can be defined here also.
+    Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
+
+  In addition to these general settings, filter or feature class specific settings can be defined here also.
   For more information on possible settings, see the respective filters and feature classes.
 
   By default, all features in all feature classes are enabled.
   By default, only `Original` input image is enabled (No filter applied).
-  N.B. for log, the sigma is set to range 0.5-5.0, step size 0.5.
   """
 
   def __init__(self, *args, **kwargs):
@@ -126,7 +127,7 @@ class RadiomicsFeaturesExtractor:
     (ROI) is also provided, including original image spacing, total number of voxels in the ROI and total number of
     fully connected volumes in the ROI.
 
-    To disable this, call ``addProvenance(False)``
+    To disable this, call ``addProvenance(False)``.
     """
     self.kwargs['additionalInfo'] = provenance_on
 
@@ -433,9 +434,14 @@ class RadiomicsFeaturesExtractor:
     """
     Compute signature using image, mask, \*\*kwargs settings.
 
-    This function computes the signature for just the passed image (original or filtered), it does not preprocess or
+    This function computes the signature for just the passed image (original or derived), it does not preprocess or
     apply a filter to the passed image. Features / Classes to use for calculation of signature are defined in
     self.enabledFeatures. See also :py:func:`enableFeaturesByName`.
+
+    .. note::
+
+      shape descriptors are independent of gray level and therefore calculated separately (handeled in `execute`). In
+      this function, no shape functions are calculated.
     """
     featureVector = collections.OrderedDict()
 

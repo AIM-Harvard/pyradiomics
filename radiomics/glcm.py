@@ -9,7 +9,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   r"""
   A Gray Level Co-occurrence Matrix (GLCM) of size :math:`N_g \times N_g` describes the second-order joint probability function of an image region
   constrained by the mask and is defined as :math:`\textbf{P}(i,j|\delta,\alpha)`.
-  The :math:`(i,j)`\ :sup:`th` element of this matrix represents the number of times the combination of
+  The :math:`(i,j)^{\text{th}}` element of this matrix represents the number of times the combination of
   levels :math:`i` and :math:`j` occur in two pixels in the image,
   that are separated by a distance of :math:`\delta` pixels in direction :math:`\alpha`, and :math:`N_g`
   is the number of discrete gray level intensities.
@@ -89,7 +89,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   The following class specific settings are possible:
 
   - symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
-    which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`.
+    which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`. A symmetrical matrix
+    corresponds to the GLCM as defined by Haralick et al.
   - weightingNorm [None]: string, indicates which norm should be used when applying distance weighting.
     Enumerated setting, possible values:
 
@@ -312,9 +313,11 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     :math:`\mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)i}`
 
-    N.B. As this formula represents the average of the distribution of :math:`i`, it is independent from the
-    distribution of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where both distrubutions
-    are equal.
+    .. warning::
+
+      As this formula represents the average of the distribution of :math:`i`, it is independent from the
+      distribution of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where
+      :math:`p_x(i) = p_y(j) \text{, where } i = j`.
     """
 
     return self.coefficients['ux'].mean()
@@ -356,7 +359,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     r"""
     Using coefficients :math:`\mu_x` and :math:`\mu_y`, calculate and return the mean Cluster Tendency.
 
-    :math:`cluster\ prominence = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(i+j-\mu_x(i)-\mu_y(j)\big)^2p(i,j)}`
+    :math:`cluster\ tendency = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(i+j-\mu_x(i)-\mu_y(j)\big)^2p(i,j)}`
 
     Cluster Tendency is a measure of groupings of voxels with similar gray-level values.
     """
@@ -410,7 +413,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     r"""
     Using coefficient :math:`p_{x-y}`, calculate and return the mean Difference Average.
 
-    :math:`Difference\ average = \displaystyle\sum^{N_g-1}_{k=0}{k\textbf{P}_{x-y}(k)}`
+    :math:`difference\ average = \displaystyle\sum^{N_g-1}_{k=0}{k\textbf{P}_{x-y}(k)}`
 
     Difference Average measures the relationship between occurrences of pairs
     with similar intensity values and occurrences of pairs with differing intensity
@@ -439,7 +442,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     r"""
     Using coefficients :math:`p_{x-y}` and DifferenceAverage (DA) calculate and return the mean Difference Variance.
 
-    :math:`Difference\ variance = \displaystyle\sum^{N_g-1}_{k=0}{(1-DA)^2\textbf{P}_{x-y}(k)}`
+    :math:`difference\ variance = \displaystyle\sum^{N_g-1}_{k=0}{(1-DA)^2\textbf{P}_{x-y}(k)}`
 
     Difference Variance is a measure of heterogeneity that places higher weights on
     differing intensity level pairs that deviate more from the mean.
@@ -698,7 +701,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumSquaresFeatureValue(self):
     r"""
-    Using coefficients :math:`i` and math:`\mu_x`, calculate and return the mean Sum of Squares (also known as
+    Using coefficients :math:`i` and :math:`\mu_x`, calculate and return the mean Sum of Squares (also known as
     Variance) of the :math:`i` distribution.
 
     :math:`sum\ squares = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{(i-\mu_x)^2p(i,j)}`
@@ -706,8 +709,11 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Sum of Squares or Variance is a measure in the distribution of neigboring intensity level pairs
     about the mean intensity level in the GLCM.
 
-    N.B. This formula represents the variance of the distribution of :math:`i` and is independent from the distribution
-    of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where VAR(i) is equal to VAR(j).
+    .. warning::
+
+      This formula represents the variance of the distribution of :math:`i` and is independent from the distribution
+      of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where
+      :math:`p_x(i) = p_y(j) \text{, where } i = j`
     """
     i = self.coefficients['i']
     ux = self.coefficients['ux']

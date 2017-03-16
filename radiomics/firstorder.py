@@ -175,7 +175,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     Robust Mean Absolute Deviation is the mean distance of all intensity values
     from the Mean Value calculated on the subset of image array with gray levels in between, or equal
-    to the 10\ :sub:`th` and 90\ :sub:`th` percentile.
+    to the 10\ :sup:`th` and 90\ :sup:`th` percentile.
     """
     prcnt10 = self.get10PercentileFeatureValue()
     prcnt90 = self.get90PercentileFeatureValue()

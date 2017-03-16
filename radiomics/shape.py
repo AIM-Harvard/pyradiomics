@@ -164,14 +164,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     r"""
     Calculate the surface area of the tumor region in square millimeters using a marching cubes algorithm.
 
-    :math:`A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\textbf{a}_i\textbf{b}_i \times \textbf{a}_i\textbf{c}_i|}`
+    :math:`A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\text{a}_i\text{b}_i \times \text{a}_i\text{c}_i|}`
 
     Where:
 
     :math:`N` is the number of triangles forming the surface mesh of the volume (ROI)
 
-    :math:`a_ib_i` and :math:`a_ic_i` are the edges of the :math:`i`\ :sup:`th` triangle formed by points :math:`a_i`,
-    :math:`b_i` and :math:`c_i`
+    :math:`\text{a}_i\text{b}_i` and :math:`\text{a}_i\text{c}_i` are the edges of the :math:`i^{\text{th}}` triangle
+    formed by points :math:`\text{a}_i`, :math:`\text{b}_i` and :math:`\text{c}_i`
 
     """
     return (self.SurfaceArea)
@@ -197,9 +197,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     a value of 1 indicates a perfect sphere (a sphere has the smallest possible surface area for a given volume,
     compared to other solids).
 
-    **N.B. This feature is correlated to Compactness 1, Compactness 2 and Spherical Disproportion. In the default
-    parameter file provided in the** ``pyradiomics\\bin`` **folder, only Compactness 1 and Compactness 2 are therefore
-    disabled.**
+    .. note::
+
+      This feature is correlated to Compactness 1, Compactness 2 and Spherical Disproportion. In the default
+      parameter file provided in the ``pyradiomics\bin`` folder, Compactness 1 and Compactness 2 are therefore
+      disabled.
     """
     return (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0) / self.SurfaceArea
 
@@ -217,9 +219,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     By definition, :math:`compactness\ 1 = \frac{1}{6 \pi}\sqrt{compactness\ 2} =
     \frac{1}{6 \pi}\sqrt{sphericity^3}`.
 
-    **N.B. This feature is correlated to Compactness 2, Sphericity and Spherical Disproportion. In the default
-    parameter file provided in the** ``pyradiomics\\bin`` **folder, only Compactness 1 and Compactness 2 are therefore
-    disabled.**
+    .. note::
+
+      This feature is correlated to Compactness 2, Sphericity and Spherical Disproportion. In the default
+      parameter file provided in the ``pyradiomics\bin`` folder, Compactness 1 and Compactness 2 are therefore
+      disabled.
     """
     return ((self.Volume) / ((self.SurfaceArea) ** (3.0 / 2.0) * numpy.sqrt(numpy.pi)))
 
@@ -235,9 +239,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     By definition, :math:`compactness\ 2 = (sphericity)^3`
 
-    **N.B. This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
-    parameter file provided in the** ``pyradiomics\\bin`` **folder, only Compactness 1 and Compactness 2 are therefore
-    disabled.**
+    .. note::
+
+      This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
+      parameter file provided in the ``pyradiomics\bin`` folder, Compactness 1 and Compactness 2 are therefore
+      disabled.
     """
     return ((36.0 * numpy.pi) * ((self.Volume) ** 2.0) / ((self.SurfaceArea) ** 3.0))
 
@@ -254,9 +260,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     the same volume as the tumor region, and by definition, the inverse of Sphericity. Therefore, the value range is
     :math:`spherical\ disproportion \geq 1`, with a value of 1 indicating a perfect sphere.
 
-    **N.B. This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
-    parameter file provided in the** ``pyradiomics\\bin`` **folder, only Compactness 1 and Compactness 2 are therefore
-    disabled.**
+    .. note::
+
+      This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
+      parameter file provided in the ``pyradiomics\bin`` folder, Compactness 1 and Compactness 2 are therefore
+      disabled.
     """
     return self.SurfaceArea / (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0)
 

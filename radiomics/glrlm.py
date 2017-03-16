@@ -218,9 +218,13 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Delete empty angles if no weighting is applied
     if P_glrlm.shape[2] > 1:
-      self.logger.debug('Deleting %d empty angles', len(numpy.where(sumP_glrlm == 0)[0]))
-      P_glrlm = numpy.delete(P_glrlm, numpy.where(sumP_glrlm == 0), 2)
-      sumP_glrlm = numpy.delete(sumP_glrlm, numpy.where(sumP_glrlm == 0), 0)
+      emptyAngles = numpy.where(sumP_glrlm == 0)
+      if len(emptyAngles[0]) > 0:  # One or more angles are 'empty'
+        self.logger.debug('Deleting %d empty angles:\n%s', len(emptyAngles[0]), angles[emptyAngles])
+        P_glrlm = numpy.delete(P_glrlm, emptyAngles, 2)
+        sumP_glrlm = numpy.delete(sumP_glrlm, emptyAngles, 0)
+      else:
+        self.logger.debug('No empty angles')
 
     self.coefficients['sumP_glrlm'] = sumP_glrlm
 

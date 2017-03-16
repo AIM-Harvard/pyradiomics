@@ -229,9 +229,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     # Delete empty angles if no weighting is applied
     if P_glcm.shape[2] > 1:
-      self.logger.debug('Deleting %d empty angles', len(numpy.where(sumP_glcm == 0)[0]))
-      P_glcm = numpy.delete(P_glcm, numpy.where(sumP_glcm == 0), 2)
-      sumP_glcm = numpy.delete(sumP_glcm, numpy.where(sumP_glcm == 0), 0)
+      emptyAngles = numpy.where(sumP_glcm == 0)
+      if len(emptyAngles[0]) > 0:  # One or more angles are 'empty'
+        self.logger.debug('Deleting %d empty angles:\n%s', len(emptyAngles[0]), angles[emptyAngles])
+        P_glcm = numpy.delete(P_glcm, emptyAngles, 2)
+        sumP_glcm = numpy.delete(sumP_glcm, emptyAngles, 0)
+      else:
+        self.logger.debug('No empty angles')
 
     # Normalize each glcm
     return P_glcm / sumP_glcm

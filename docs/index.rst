@@ -11,8 +11,6 @@ With this package we aim to establish a reference standard for Radiomic Analysis
 open-source platform for easy and reproducible Radiomic Feature extraction. By doing so, we hope to increase awareness
 of radiomic capabilities and expand the community. The platform supports both the feature extraction in 2D and 3D.
 
-2D and 3D images and segmentations.
-
 **If you publish any work which uses this package, please cite the following publication:**
 *van Griethuysen et al, “Computational Radiomics System to Decode the Radiographic Phenotype”; Submitted*
 

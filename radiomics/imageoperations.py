@@ -210,7 +210,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
 
   try:
     if isinstance(interpolator, six.string_types):
-      interpolator = eval("sitk.%s" % (interpolator))
+      interpolator = getattr(sitk, interpolator)
   except:
     logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)
     interpolator = sitk.sitkBSpline
@@ -545,7 +545,9 @@ def getLogarithmImage(inputImage, **kwargs):
 
   :math:`f(x) = \left\{ {\begin{array}{lcl}
   c\log{(x + 1)} & \mbox{for} & x \ge 0 \\
-  -c\log{(-x + 1)} & \mbox{for} & x < 0\end{array}} \right.,\text{ where } c=\displaystyle\frac{\max(x)}{\max(f(x))}`
+  -c\log{(-x + 1)} & \mbox{for} & x < 0\end{array}} \right. \text{, where } c=\left\{ {\begin{array}{lcl}
+  \frac{\max(x)}{\log(\max(x) + 1)} & if & \max(x) \geq 0 \\
+  \frac{\max(x)}{-\log(-\max(x) - 1)} & if & \max(x) < 0 \end{array}} \right.`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 

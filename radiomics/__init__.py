@@ -69,6 +69,10 @@ def enableCExtensions(enabled=True):
 
 
 def cMatsEnabled():
+  """
+  Returns a boolean indicating whether or not the C extensions are enabled. This function is called by the feature
+  classes to switch between C-enhanced calculation and full python mode.
+  """
   return _cMatsState == 2
 
 

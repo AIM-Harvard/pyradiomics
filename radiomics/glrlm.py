@@ -11,7 +11,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
   A Gray Level Run Length Matrix (GLRLM) quantifies gray level runs in an image.
   A gray level run is defined as the length in number of pixels,
   of consecutive pixels that have the same gray level value. In a gray level run length matrix
-  :math:`\textbf{P}(i,j|\theta)`, the :math:`(i,j)`\ :sup:`th` element describes the number of times
+  :math:`\textbf{P}(i,j|\theta)`, the :math:`(i,j)^{\text{th}}` element describes the number of times
   a gray level :math:`i` appears consecutively :math:`j` times in the direction specified by :math:`\theta`.
 
   As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
@@ -63,20 +63,19 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     - 'no_weighting': GLCMs are weighted by factor 1 and summed
     - None: Applies no weighting, mean of values calculated on separate matrices is returned.
 
-    In case of other values, an warning is logged and GLCMs are all weighted by factor 1 and summed.
+    In case of other values, an warning is logged and option 'no_weighting' is used.
 
   References
 
   - Galloway MM. 1975. Texture analysis using gray level run lengths. Computer Graphics and Image Processing,
     4(2):172-179.
-
   - Chu A., Sehgal C.M., Greenleaf J. F. 1990. Use of gray value distribution of run length for texture analysis.
     Pattern Recognition Letters, 11(6):415-419
-
   - Xu D., Kurani A., Furst J., Raicu D. 2004. Run-Length Encoding For Volumetric Texture. International Conference on
     Visualization, Imaging and Image Processing (VIIP), p. 452-458
-
   - Tang X. 1998. Texture information in run-length matrices. IEEE Transactions on Image Processing 7(11):1602-1609.
+  - `Tustison N., Gee J. Run-Length Matrices For Texture Analysis. Insight Journal 2008 January - June.
+    <http://www.insight-journal.org/browse/publication/231>`_
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -344,7 +343,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{N_p}}`
 
-    Measures the homogeneity and distribution of runs of an image.
+    Measures the coarseness of the texture by taking the ratio of number of runs and number of voxels in the ROI.
+    Values are in range :math:`\frac{1}{N_p} \leq RP \leq 1`, with higher values indicating a larger portion of the ROI
+    consists of short runs (indicates a more fine texture).
     """
     Np = self.coefficients['Np']
 

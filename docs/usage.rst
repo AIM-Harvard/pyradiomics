@@ -1,3 +1,5 @@
+.. _radiomics-usage-label:
+
 =====
 Usage
 =====
@@ -177,4 +179,4 @@ Using feature classes directly
      for (key,val) in six.iteritems(firstOrderFeatures.featureValues):
        print("\t%s: %s" % (key, val))
 
-* See the :ref:`radomics package<radiomics-firstorder-label>` for more features that you can calculate.
+* See the :ref:`radiomics-features-label` section for more features that you can calculate.

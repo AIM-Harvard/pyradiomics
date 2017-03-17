@@ -72,9 +72,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     :math:`entropy = -\displaystyle\sum^{N_l}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}`
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
-    Entropy specifies the uncertainty/randomness in the
-    image values. It measures the average amount of
-    information required to encode the image values.
+
+    Entropy specifies the uncertainty/randomness in the image values. It measures the average amount of information
+    required to encode the image values.
     """
 
     eps = numpy.spacing(1)
@@ -91,6 +91,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   def getMinimumFeatureValue(self):
     r"""
     Calculate the Minimum Value in the image array.
+
+    :math:`minimum = \min(\textbf{X})`
     """
 
     return (numpy.min(self.targetVoxelArray))
@@ -112,6 +114,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   def getMaximumFeatureValue(self):
     r"""
     Calculate the Maximum Value in the image array.
+
+    :math:`maximum = \max(\textbf{X})`
     """
 
     return (numpy.max(self.targetVoxelArray))
@@ -171,7 +175,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     Robust Mean Absolute Deviation is the mean distance of all intensity values
     from the Mean Value calculated on the subset of image array with gray levels in between, or equal
-    to the 10\ :sub:`th` and 90\ :sub:`th` percentile.
+    to the 10\ :sup:`th` and 90\ :sup:`th` percentile.
     """
     prcnt10 = self.get10PercentileFeatureValue()
     prcnt90 = self.get90PercentileFeatureValue()

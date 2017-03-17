@@ -6,20 +6,20 @@
 Welcome to pyradiomics documentation!
 =====================================
 
-This is an open-source python package for the extraction of Radiomics features from 2D and 3D images and
-segmentations.
+This is an open-source python package for the extraction of Radiomics features from medical imaging.
+With this package we aim to establish a reference standard for Radiomic Analysis, and provide a tested and maintained
+open-source platform for easy and reproducible Radiomic Feature extraction. By doing so, we hope to increase awareness
+of radiomic capabilities and expand the community. The platform supports both the feature extraction in 2D and 3D.
 
-Image loading and preprocessing (e.g. resampling and cropping) are first done using ``SimpleITK``.
-Then, loaded data are converted into numpy arrays for further calculation using feature classes
-outlined below.
-
-With this package we aim to establish a reference standard for Radiomic Analysis, and provide a tested and mantained
-open-source platform for easy and reproducible Radiomic Feature extraction.
-
-By doing so, we hope to increase awareness of radiomic capabilities and expand the community.
+2D and 3D images and segmentations.
 
 **If you publish any work which uses this package, please cite the following publication:**
 *van Griethuysen et al, “Computational Radiomics System to Decode the Radiographic Phenotype”; Submitted*
+
+.. note::
+
+   This work was supported in part by the US National Cancer Institute grant
+   5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.
 
 Table of Contents
 -----------------
@@ -44,15 +44,15 @@ Feature Classes
 
 Currently supports the following feature classes:
 
-* :ref:`First Order Statistics <radiomics-firstorder-label>` (19 features)
-* :ref:`Shape-based <radiomics-shape-label>` (13 features)
-* :ref:`Gray Level Cooccurence Matrix <radiomics-glcm-label>` (GLCM) (28 features)
-* :ref:`Gray Level Run Length Matrix <radiomics-glrlm-label>` (GLRLM) (16 features)
-* :ref:`Gray Level Size Zone Matrix <radiomics-glszm-label>` (GLSZM) (16 features)
+* :ref:`First Order Statistics <radiomics-firstorder-label>`
+* :ref:`Shape-based <radiomics-shape-label>`
+* :ref:`Gray Level Cooccurence Matrix <radiomics-glcm-label>` (GLCM)
+* :ref:`Gray Level Run Length Matrix <radiomics-glrlm-label>` (GLRLM)
+* :ref:`Gray Level Size Zone Matrix <radiomics-glszm-label>` (GLSZM)
 
-On average, Pyradiomics extracts 961 features per image, which consist of the 13 shape descriptors and features
-extracted from original and derived images (LoG with 3 sigma levels, 1 level of Wavelet decomposistions yielding 8
-derived images).
+On average, Pyradiomics extracts :math:`\approx 1300` features per image, which consist of the 13 shape descriptors and
+features extracted from original and derived images (LoG with 5 sigma levels, 1 level of Wavelet decomposistions
+yielding 8 derived images and images derived using Square, Square Root, Logarithm and Exponential filters).
 
 Detailed description on feature classes and individual features is provided in section :ref:`radiomics-features-label`.
 
@@ -81,8 +81,8 @@ and filters, thereby enabling fully reproducible feature extraction. For more in
 3rd-party packages used in pyradiomics
 --------------------------------------
 
-* SimpleITK
-* numpy
+* SimpleITK (Image loading and preprocessing)
+* numpy (Feature calculation)
 * PyWavelets (Wavelet filter)
 * pykwalify (Enabling yaml parameters file checking)
 * tqdm (Progressbar)
@@ -149,8 +149,3 @@ We'd welcome your contributions to PyRadiomics. Please read the
 `contributing guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_ on how to contribute
 to PyRadiomics. Information on adding / customizing feature classes and filters can be found in the :ref:`developers`
 section.
-
-.. note::
-
-   This work was supported in part by the US National Cancer Institute grant
-   5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.

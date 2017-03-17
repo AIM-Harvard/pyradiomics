@@ -413,7 +413,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     r"""
     Using coefficient :math:`p_{x-y}`, calculate and return the mean Difference Average.
 
-    :math:`difference\ average = \displaystyle\sum^{N_g-1}_{k=0}{k\textbf{P}_{x-y}(k)}`
+    :math:`difference\ average = \displaystyle\sum^{N_g-1}_{k=0}{kp_{x-y}(k)}`
 
     Difference Average measures the relationship between occurrences of pairs
     with similar intensity values and occurrences of pairs with differing intensity
@@ -442,7 +442,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     r"""
     Using coefficients :math:`p_{x-y}` and DifferenceAverage (DA) calculate and return the mean Difference Variance.
 
-    :math:`difference\ variance = \displaystyle\sum^{N_g-1}_{k=0}{(1-DA)^2\textbf{P}_{x-y}(k)}`
+    :math:`difference\ variance = \displaystyle\sum^{N_g-1}_{k=0}{(1-DA)^2p_{x-y}(k)}`
 
     Difference Variance is a measure of heterogeneity that places higher weights on
     differing intensity level pairs that deviate more from the mean.
@@ -553,7 +553,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Inverse Difference Moment.
 
-    :math:`IDM = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{\textbf{P}(i,j)}{1+|i-j|^2} }`
+    :math:`IDM = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{p(i,j)}{1+|i-j|^2} }`
 
     IDM (inverse difference moment)  is a measure of the local
     homogeneity of an image. IDM weights are the inverse of the Contrast
@@ -587,7 +587,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the mean Inverse Difference.
 
-    :math:`ID = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{\textbf{P}(i,j)}{1+|i-j|} }`
+    :math:`ID = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{p(i,j)}{1+|i-j|} }`
 
     ID (inverse difference) is another measure of the local homogeneity of an image.
     With more uniform gray levels, the denominator will remain low, resulting in a higher overall value.

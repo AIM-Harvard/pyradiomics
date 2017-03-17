@@ -297,14 +297,38 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return self._getMaximum2Ddiameter(2)
 
   def getElongationFeatureValue(self):
-    """
+    r"""
+    Calculate the elongation of the shape, which is defined as:
 
+    .. math::
+
+      Elongation = \frac{\lambda_{\text{longest}}}{\lambda_{\text{intermediate}}}
+
+    Here, :math:`\lambda_{\text{longest}}` and :math:`\lambda_{\text{intermediate}}` are the lengths of the largest and
+    second largest principal component axes.
+
+    References:
+
+    - Andrey P, Kieu K, Kress C, Lehmann G, Tirichine L, Liu Z, et al. Statistical analysis of 3D images detects regular
+      spatial distributions of centromeres and chromocenters in animal and plant nuclei. PLoS Comput Biol. 2010;6:27.
     """
     return self.lssif.GetElongation(self.label)
 
   def getFlatnessFeatureValue(self):
-    """
+    r"""
+    Calculate the flatness of the shape, which is defined as:
 
+    .. math::
+
+      Flatness = \frac{\lambda_{\text{intermediate}}}{\lambda_{\text{shortest}}}
+
+    Here, :math:`\lambda_{\text{intermediate}}` and :math:`\lambda_{\text{shortest}}` are the lengths of the second
+    largest and smallest principal component axes.
+
+    References:
+
+    - Andrey P, Kieu K, Kress C, Lehmann G, Tirichine L, Liu Z, et al. Statistical analysis of 3D images detects regular
+      spatial distributions of centromeres and chromocenters in animal and plant nuclei. PLoS Comput Biol. 2010;6:27.
     """
     return self.lssif.GetFlatness(self.label)
 

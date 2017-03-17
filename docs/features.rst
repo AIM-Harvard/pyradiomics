@@ -7,11 +7,11 @@ Radiomic Features
 This section contains the definitions of the various features that can be extracted using PyRadiomics. They are
 subdivided into the following classes:
 
-* :ref:`radiomics-firstorder-label`
-* :ref:`radiomics-shape-label`
-* :ref:`radiomics-glcm-label`
-* :ref:`radiomics-glszm-label`
-* :ref:`radiomics-glrlm-label`
+* :ref:`radiomics-firstorder-label` (19 features)
+* :ref:`radiomics-shape-label` (13 features)
+* :ref:`radiomics-glcm-label` (28 features)
+* :ref:`radiomics-glszm-label` (16 features)
+* :ref:`radiomics-glrlm-label` (16 features)
 
 All feature classes, with the exception of shape can be calculated on either the original image and/or a derived image,
 obtained by applying one of several filters. The shape descriptors are independent of gray value, and are extracted from

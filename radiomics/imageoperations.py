@@ -26,6 +26,11 @@ def getBinEdges(binwidth, parameterValues):
 
   This value can be directly passed to ``numpy.histogram`` to generate a histogram or ``numpy.digitize`` to discretize
   the ROI gray values. See also :py:func:`binImage()`.
+
+  References
+
+  - Leijenaar RTH, Nalbantov G, Carvalho S, et al. The effect of SUV discretization in quantitative FDG-PET Radiomics:
+    the need for standardized methodology in tumor texture analysis. Sci Rep. 2015;5(August):11075.
   """
   global logger
 

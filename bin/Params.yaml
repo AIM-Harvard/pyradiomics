@@ -42,8 +42,7 @@ featureClass:
           'Maximum2DDiameterColumn',
           'Maximum2DDiameterRow',
           'Elongation',
-          'Flatness',
-          'Roundness'] # Only enable these shape descriptors (disables redundant Compactness 1 and Compactness 2)
+          'Flatness'] # Only enable these shape descriptors (disables redundant Compactness 1 and Compactness 2)
   firstorder: [] # specifying an empty list has the same effect as specifying nothing.
   glcm: # for lists none values are allowed, in this case, all features are enabled
   glrlm:

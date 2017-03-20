@@ -6,17 +6,18 @@ import csv
 import json
 import logging
 import os.path
-import sys
 import traceback
 
+import radiomics
 from radiomics import featureextractor
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(usage='%(prog)s In Out [Options]')
 parser.add_argument('inFile', metavar='In', type=argparse.FileType('r'),
                     help='CSV file containing combinations of image and mask. Each row represents one combination with '
                          'the following elements: (1) Patient Name, (2) Image type, (3) Reader, (4) Image location and '
                          '(5) Mask location')
-parser.add_argument('outFile', metavar='Out', type=argparse.FileType('w'), help='File to write results to')
+parser.add_argument('outFile', metavar='Out', type=argparse.FileType('w'),
+                    help='File to write results to')
 parser.add_argument('--format', '-f', choices=['csv', 'json'], default='csv', help='Format for the output. '
                     'Default is "csv": one row of feature names, followed by one row of feature values for each '
                     'image-mask combination. For "json": Features are written in a JSON format dictionary '
@@ -28,8 +29,14 @@ parser.add_argument('--label', '-l', metavar='N', nargs=1, default=None, type=in
 parser.add_argument('--logging-level', metavar='LEVEL',
                     choices=['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                     default='WARNING', help='Set capture level for logging')
-parser.add_argument('--log-file', metavar='FILE', nargs='?', type=argparse.FileType('w'), default=sys.stderr,
+parser.add_argument('--log-file', metavar='FILE', nargs=1, type=argparse.FileType('w'), default=None,
                     help='File to append logger output to')
+parser.add_argument('--verbosity', '-v', action='store', nargs='?', default=3, const=4, type=int, choices=range(0, 6),
+                    help='Regulate output to stderr. By default [3], level WARNING and up are printed. By specifying '
+                    'this argument without a value, level INFO [4] is assumed. A higher value results in more verbose '
+                    'output.')
+parser.add_argument('--version', action='version', help='Print version and exit',
+                    version='%(prog)s ' + radiomics.__version__)
 
 
 def main():
@@ -37,16 +44,21 @@ def main():
 
   # Initialize Logging
   logLevel = getattr(logging, args.logging_level)
-  rLogger = logging.getLogger('radiomics')
-  rLogger.handlers = []
-  rLogger.setLevel(logLevel)
+  rLogger = radiomics.logger
 
-  logger = logging.getLogger()
-  logger.setLevel(logLevel)
-  handler = logging.StreamHandler(args.log_file)
-  handler.setLevel(logLevel)
-  handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
-  logger.addHandler(handler)
+  # Set up optional logging to file
+  if args.log_file is not None:
+    rLogger.setLevel(logLevel)
+    handler = logging.StreamHandler(args.log_file)
+    handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+    rLogger.addHandler(handler)
+
+  # Set verbosity of output (stderr)
+  verboseLevel = (6 - args.verbosity) * 10  # convert to python logging level
+  radiomics.setVerbosity(verboseLevel)
+
+  # Initialize logging for script log messages
+  logger = rLogger.getChild('batch')
 
   # Load patient list
   flists = []
@@ -58,29 +70,31 @@ def main():
     logging.error('CSV READ FAILED:\n%s', traceback.format_exc())
     args.inFile.close()
     args.outFile.close()
-    args.log_file.close()
+    if args.log_file is not None:
+      args.log_file.close()
     exit(-1)
 
   # Initialize extractor
   try:
+    logger.debug("Initializing extractor")
     if args.param is not None:
       extractor = featureextractor.RadiomicsFeaturesExtractor(args.param[0])
     else:
       extractor = featureextractor.RadiomicsFeaturesExtractor()
   except Exception:
-    logging.error('EXTRACTOR INITIALIZATION FAILED:\n%s', traceback.format_exc())
+    logger.error('EXTRACTOR INITIALIZATION FAILED:\n%s', traceback.format_exc())
     args.outFile.close()
     args.log_file.close()
     exit(-1)
 
   # Extract features
-  logging.info('Extracting features with kwarg settings: %s', str(extractor.kwargs))
+  logger.info('Extracting features with kwarg settings: %s', str(extractor.kwargs))
 
-  headers = False
+  headers = None
   for idx, entry in enumerate(flists, start=1):
 
-    logging.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
-                 entry[2])
+    logger.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
+                entry[2])
 
     imageFilepath = entry[3]
     maskFilepath = entry[4]
@@ -98,18 +112,23 @@ def main():
 
         if args.format == 'csv':
           writer = csv.writer(args.outFile, lineterminator='\n')
-          if not headers:
-            writer.writerow(list(featureVector.keys()))
-            headers = True
-          writer.writerow(list(featureVector.values()))
+          if headers is None:
+            headers = list(featureVector.keys())
+            writer.writerow(headers)
+
+          row = []
+          for h in headers:
+            row.append(featureVector.get(h, "N/A"))
+          writer.writerow(row)
         elif args.format == 'json':
           json.dump(featureVector, args.out)
           args.out.write('\n')
       except Exception:
-        logging.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
+        logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
 
   args.outFile.close()
-  args.log_file.close()
+  if args.log_file is not None:
+    args.log_file.close()
 
 
 if __name__ == "__main__":

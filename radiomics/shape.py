@@ -18,11 +18,15 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.pixelSpacing = numpy.array(inputImage.GetSpacing()[::-1])
 
     # Use SimpleITK for some shape features
+    self.logger.debug("Extracting simple ITK shape features")
+
     self.lssif = sitk.LabelShapeStatisticsImageFilter()
     self.lssif.SetComputeFeretDiameter(True)
     self.lssif.Execute(inputMask)
 
     # Pad inputMask to prevent index-out-of-range errors
+    self.logger.debug("Padding the mask with 0s")
+
     cpif = sitk.ConstantPadImageFilter()
 
     padding = numpy.tile(1, 3)
@@ -40,6 +44,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
     self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
+    self.logger.debug('Pre-calculate Volume and Surface Area')
+
     # Volume and Surface Area are pre-calculated
     self.Volume = self.lssif.GetPhysicalSize(self.label)
     if cMatsEnabled():
@@ -47,7 +53,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     else:
       self.SurfaceArea = self._calculateSurfaceArea()
 
+    self.logger.debug('Feature class initialized')
+
   def _calculateSurfaceArea(self):
+    self.logger.debug("Calculating Surface Area in Python")
+
     # define relative locations of the 8 voxels of a sampling cube
     gridAngles = numpy.array([(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0),
                               (1, 0, 0), (1, 0, 1), (1, 1, 1), (1, 1, 0)])
@@ -119,6 +129,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return S_A
 
   def _calculateCSurfaceArea(self):
+    self.logger.debug("Calculating Surface Area in C")
+
     return cShape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
 
   def _getMaximum2Ddiameter(self, dim):

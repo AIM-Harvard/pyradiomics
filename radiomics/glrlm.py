@@ -99,7 +99,11 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
+    self.logger.debug('Feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
+
   def _calculateMatrix(self):
+    self.logger.debug("Calculating GLRLM matrix in Python")
+
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
 
@@ -111,6 +115,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
 
+    self.logger.debug('Calculating diagonals')
     for angle in angles:
       staticDims, = numpy.where(angle == 0)  # indices for static dimensions for current angle (z, y, x)
       movingDims, = numpy.where(angle != 0)  # indices for moving dimensions for current angle (z, y, x)
@@ -139,6 +144,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Run-Length Encoding (rle) for the list of diagonals
     # (1 list per direction/angle)
+    self.logger.debug('Calculating run lengths')
     for angle_idx, angle in enumerate(matrixDiagonals):
       P = P_glrlm[:, :, angle_idx]
       # Check whether delineation is 2D for current angle (all diagonals contain 0 or 1 non-pad value)
@@ -160,6 +166,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     return P_glrlm
 
   def _calculateCMatrix(self):
+    self.logger.debug("Calculating GLRLM matrix in C")
+
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
 
@@ -177,15 +185,18 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     up to maximum observed run-length. Optionally apply a weighting factor. Finally delete empty angles and store the
     sum of the matrix in ``self.coefficients``.
     """
+    self.logger.debug('Process calculated matrix')
 
     # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
     # Crop run-length axis of GLRLMs up to maximum observed run-length
+    self.logger.debug('Cropping calculated matrix to observed gray levels and maximum observed zone size')
     P_glrlm_bounds = numpy.argwhere(P_glrlm)
     (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1  # noqa: F841
     P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
 
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:
+      self.logger.debug("Applying weighting (%s)", self.weightingNorm)
       pixelSpacing = self.inputImage.GetSpacing()[::-1]
       weights = numpy.empty(len(angles))
       for a_idx, a in enumerate(angles):
@@ -207,14 +218,20 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Delete empty angles if no weighting is applied
     if P_glrlm.shape[2] > 1:
-      P_glrlm = numpy.delete(P_glrlm, numpy.where(sumP_glrlm == 0), 2)
-      sumP_glrlm = numpy.delete(sumP_glrlm, numpy.where(sumP_glrlm == 0), 0)
+      emptyAngles = numpy.where(sumP_glrlm == 0)
+      if len(emptyAngles[0]) > 0:  # One or more angles are 'empty'
+        self.logger.debug('Deleting %d empty angles:\n%s', len(emptyAngles[0]), angles[emptyAngles])
+        P_glrlm = numpy.delete(P_glrlm, emptyAngles, 2)
+        sumP_glrlm = numpy.delete(sumP_glrlm, emptyAngles, 0)
+      else:
+        self.logger.debug('No empty angles')
 
     self.coefficients['sumP_glrlm'] = sumP_glrlm
 
     return P_glrlm
 
   def _calculateCoefficients(self):
+    self.logger.debug("Calculating GLRLM coefficients")
 
     pr = numpy.sum(self.P_glrlm, 0)
     pg = numpy.sum(self.P_glrlm, 1)

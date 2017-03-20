@@ -31,7 +31,6 @@ class RadiomicsFeaturesExtractor:
   Alternatively, at initialisation, the following general settings can be specified in the parameter file or ``kwargs``,
   with default values in brackets:
 
-  - verbose [False]: Boolean, set to False to disable status update printing.
   - enableCExtensions [True]: Boolean, set to False to force calculation to full-python mode. See also
     :py:func:`~radiomics.enableCExtensions()`.
   - additionalInfo [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
@@ -82,18 +81,24 @@ class RadiomicsFeaturesExtractor:
     self.logger = logging.getLogger(__name__)
 
     self.featureClasses = getFeatureClasses()
-    self.inputImages = getInputImageTypes()
 
     self.kwargs = {}
     self.inputImages = {}
     self.enabledFeatures = {}
 
     if len(args) == 1 and isinstance(args[0], six.string_types):
+      self.logger.info("Loading parameter file")
       self.loadParams(args[0])
     else:
       # Set default settings and update with and changed settings contained in kwargs
       self.kwargs = self._getDefaultSettings()
-      self.kwargs.update(kwargs)
+      if len(kwargs) > 0:
+        self.logger.info('Applying custom settings')
+        self.kwargs.update(kwargs)
+      else:
+        self.logger.info('No customized settings, applying defaults')
+
+      self.logger.debug("Settings: %s", self.kwargs)
 
       self.inputImages = {'Original': {}}
 
@@ -116,7 +121,6 @@ class RadiomicsFeaturesExtractor:
             'interpolator': 'sitkBSpline',  # Alternative: sitk.sitkBSpline,
             'padDistance': 5,
             'label': 1,
-            'verbose': False,
             'enableCExtensions': True,
             'additionalInfo': True}
 
@@ -182,10 +186,14 @@ class RadiomicsFeaturesExtractor:
     enabledFeatures = params.get('featureClass', {})
     kwargs = params.get('setting', {})
 
+    self.logger.debug("Parameter file parsed. Applying settings")
+
     if len(inputImages) == 0:
       self.inputImages = {'Original': {}}
     else:
       self.inputImages = inputImages
+
+    self.logger.debug("Enabled input images: %s", self.inputImages)
 
     if len(enabledFeatures) == 0:
       self.enabledFeatures = {}
@@ -194,21 +202,28 @@ class RadiomicsFeaturesExtractor:
     else:
       self.enabledFeatures = enabledFeatures
 
+    self.logger.debug("Enabled features: %s", enabledFeatures)
+
     # Set default settings and update with and changed settings contained in kwargs
     self.kwargs = self._getDefaultSettings()
     self.kwargs.update(kwargs)
+
+    self.logger.debug("Settings: %s", kwargs)
 
   def enableAllInputImages(self):
     """
     Enable all possible input images without any custom settings.
     """
-    for imageType in self.inputImages:
+    self.logger.debug('Enabling all input image types')
+    for imageType in getInputImageTypes():
       self.inputImages[imageType] = {}
+    self.logger.debug('Enabled input images types: %s', self.inputImages)
 
   def disableAllInputImages(self):
     """
     Disable all input images.
     """
+    self.logger.debug('Disabling all input image types')
     self.inputImages = {}
 
   def enableInputImageByName(self, inputImage, enabled=True, customArgs=None):
@@ -243,12 +258,21 @@ class RadiomicsFeaturesExtractor:
     :py:func:`~radiomics.imageoperations.getExponentialImage`,
     respectively).
     """
+    if inputImage not in getInputImageTypes():
+      self.logger.warning('Input image type %s is not recognized', inputImage)
+      return
+
     if enabled:
       if customArgs is None:
         customArgs = {}
+        self.logger.debug('Enabling input image type %s (no additional custom settings)', inputImage)
+      else:
+        self.logger.debug('Enabling input image type %s (additional custom settings: %s)', inputImage, customArgs)
       self.inputImages[inputImage] = customArgs
     elif inputImage in self.inputImages:
+      self.logger.debug('Disabling input image type %s', inputImage)
       del self.inputImages[inputImage]
+    self.logger.debug('Enabled input images types: %s', self.inputImages)
 
   def enableInputImages(self, **inputImages):
     """
@@ -267,19 +291,24 @@ class RadiomicsFeaturesExtractor:
 
     :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings (dictionary)
     """
+    self.logger.debug('Updating enabled input images types with %s', inputImages)
     self.inputImages.update(inputImages)
+    self.logger.debug('Enabled input images types: %s', self.inputImages)
 
   def enableAllFeatures(self):
     """
     Enable all classes and all features.
     """
+    self.logger.debug('Enabling all features in all feature classes')
     for featureClassName in self.getFeatureClassNames():
       self.enabledFeatures[featureClassName] = []
+    self.logger.debug('Enabled features: %s', self.enabledFeatures)
 
   def disableAllFeatures(self):
     """
     Disable all classes.
     """
+    self.logger.debug('Disabling all feature classes')
     self.enabledFeatures = {}
 
   def enableFeatureClassByName(self, featureClass, enabled=True):
@@ -287,12 +316,16 @@ class RadiomicsFeaturesExtractor:
     Enable or disable all features in given class.
     """
     if featureClass not in self.getFeatureClassNames():
-      print("Feature class "+featureClass+" is not recognized")
+      self.logger.warning('Feature class %s is not recognized', featureClass)
       return
+
     if enabled:
+      self.logger.debug('Enabling all features in class %s', featureClass)
       self.enabledFeatures[featureClass] = []
     elif featureClass in self.enabledFeatures:
+      self.logger.debug('Disabling feature class %s', featureClass)
       del self.enabledFeatures[featureClass]
+    self.logger.debug('Enabled features: %s', self.enabledFeatures)
 
   def enableFeaturesByName(self, **enabledFeatures):
     """
@@ -303,7 +336,9 @@ class RadiomicsFeaturesExtractor:
     not yet present in enabledFeatures.keys are added.
     To disable the entire class, use :py:func:`disableAllFeatures` or :py:func:`enableFeatureClassByName` instead.
     """
+    self.logger.debug('Updating enabled features with %s', enabledFeatures)
     self.enabledFeatures.update(enabledFeatures)
+    self.logger.debug('Enabled features: %s', self.enabledFeatures)
 
   def execute(self, imageFilepath, maskFilepath, label=None):
     """
@@ -328,6 +363,9 @@ class RadiomicsFeaturesExtractor:
       self.kwargs.update({'label': label})
 
     self.logger.info('Calculating features with label: %d', self.kwargs['label'])
+    self.logger.debug('Enabled input images types: %s', self.inputImages)
+    self.logger.debug('Enabled features: %s', self.enabledFeatures)
+    self.logger.debug('Current settings: %s', self.kwargs)
 
     featureVector = collections.OrderedDict()
     image, mask = self.loadImage(imageFilepath, maskFilepath)
@@ -345,6 +383,8 @@ class RadiomicsFeaturesExtractor:
         croppedImage, croppedMask, boundingBox = \
           imageoperations.cropToTumorMask(image, mask, self.kwargs['label'], boundingBox)
         enabledFeatures = self.enabledFeatures['shape']
+
+        self.logger.info("Computing shape")
         shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
         if enabledFeatures is None or len(enabledFeatures) == 0:
           shapeClass.enableAllFeatures()
@@ -352,13 +392,13 @@ class RadiomicsFeaturesExtractor:
           for feature in enabledFeatures:
             shapeClass.enableFeatureByName(feature)
 
-        if self.kwargs['verbose']: print("\t\tComputing shape")
         shapeClass.calculateFeatures()
         for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
           newFeatureName = "original_shape_%s" % (featureName)
           featureVector[newFeatureName] = featureValue
 
       # Make generators for all enabled input image types
+      self.logger.debug('Creating input image type iterator')
       imageGenerators = []
       for imageType, customKwargs in six.iteritems(self.inputImages):
         args = self.kwargs.copy()
@@ -366,11 +406,17 @@ class RadiomicsFeaturesExtractor:
         self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
         imageGenerators = chain(imageGenerators, getattr(imageoperations, 'get%sImage' % imageType)(image, **args))
 
+      self.logger.debug('Extracting features')
       # Calculate features for all (filtered) images in the generator
       for inputImage, inputImageName, inputKwargs in imageGenerators:
-        inputImage, inputMask, boundingBox = \
-          imageoperations.cropToTumorMask(inputImage, mask, self.kwargs['label'], boundingBox)
+        self.logger.info('Calculating features for %s image, with settings: %s', inputImageName, str(inputKwargs))
+        inputImage, inputMask, boundingBox = imageoperations.cropToTumorMask(inputImage,
+                                                                             mask,
+                                                                             self.kwargs['label'],
+                                                                             boundingBox)
         featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
+
+      self.logger.debug('Features extracted')
 
     return featureVector
 
@@ -387,14 +433,14 @@ class RadiomicsFeaturesExtractor:
     If resampling is enabled, both image and mask are resampled and cropped to the tumor mask (with additional
     padding as specified in padDistance) after assignment of image and mask.
     """
+    self.logger.info('Loading image and mask')
     if isinstance(ImageFilePath, six.string_types) and os.path.exists(ImageFilePath):
       image = sitk.ReadImage(ImageFilePath)
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       image = ImageFilePath
     else:
       self.logger.warning('Error reading image Filepath or SimpleITK object')
-      if self.kwargs['verbose']: print("Error reading image Filepath or SimpleITK object")
-      image = None
+      return None, None  # this function is expected to always return a tuple of 2 elements
 
     if isinstance(MaskFilePath, six.string_types) and os.path.exists(MaskFilePath):
       mask = sitk.ReadImage(MaskFilePath)
@@ -402,19 +448,18 @@ class RadiomicsFeaturesExtractor:
       mask = MaskFilePath
     else:
       self.logger.warning('Error reading mask Filepath or SimpleITK object')
-      if self.kwargs['verbose']: print("Error reading mask Filepath or SimpleITK object")
-      mask = None
+      return None, None  # this function is expected to always return a tuple of 2 elements
 
-    if image is not None and mask is not None:
-      if self.kwargs['normalize']:
-        image = imageoperations.normalizeImage(image, self.kwargs['normalizeScale'], self.kwargs['removeOutliers'])
+    # This point is only reached if image and mask loaded correctly
+    if self.kwargs['normalize']:
+      image = imageoperations.normalizeImage(image, self.kwargs['normalizeScale'], self.kwargs['removeOutliers'])
 
-      if self.kwargs['interpolator'] is not None and self.kwargs['resampledPixelSpacing'] is not None:
-        image, mask = imageoperations.resampleImage(image, mask,
-                                                    self.kwargs['resampledPixelSpacing'],
-                                                    self.kwargs['interpolator'],
-                                                    self.kwargs['label'],
-                                                    self.kwargs['padDistance'])
+    if self.kwargs['interpolator'] is not None and self.kwargs['resampledPixelSpacing'] is not None:
+      image, mask = imageoperations.resampleImage(image, mask,
+                                                  self.kwargs['resampledPixelSpacing'],
+                                                  self.kwargs['interpolator'],
+                                                  self.kwargs['label'],
+                                                  self.kwargs['padDistance'])
 
     return image, mask
 
@@ -424,6 +469,8 @@ class RadiomicsFeaturesExtractor:
     resampled mask which is passed to the feature classes. Returns a dictionary with keynames coded as
     "general_info_<item>". For more information on generated items, see :ref:`generalinfo<radiomics-generalinfo-label>`
     """
+    self.logger.info('Adding additional extraction information')
+
     provenanceVector = collections.OrderedDict()
     generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.kwargs, self.inputImages)
     for k, v in six.iteritems(generalinfoClass.execute()):
@@ -452,6 +499,8 @@ class RadiomicsFeaturesExtractor:
         continue
 
       if featureClassName in self.getFeatureClassNames():
+        self.logger.info('Computing %s', featureClassName)
+
         featureClass = self.featureClasses[featureClassName](image, mask, **kwargs)
 
         if enabledFeatures is None or len(enabledFeatures) == 0:
@@ -460,7 +509,6 @@ class RadiomicsFeaturesExtractor:
           for feature in enabledFeatures:
             featureClass.enableFeatureByName(feature)
 
-        if self.kwargs['verbose']: print("\t\tComputing %s" % (featureClassName))
         featureClass.calculateFeatures()
         for (featureName, featureValue) in six.iteritems(featureClass.featureValues):
           newFeatureName = "%s_%s_%s" % (inputImageName, featureClassName, featureName)

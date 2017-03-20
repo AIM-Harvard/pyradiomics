@@ -35,8 +35,7 @@ applyWavelet = False
 # Can be enabled by setting 'resampledPixelSpacing' to a list of 3 floats (new voxel size in mm for x, y and z)
 kwargs = {'binWidth': 25,
           'interpolator': sitk.sitkBSpline,
-          'resampledPixelSpacing': None,
-          'verbose': True}
+          'resampledPixelSpacing': None}
 
 #
 # If enabled, resample image (resampled image is automatically cropped.

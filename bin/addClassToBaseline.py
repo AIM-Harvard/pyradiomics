@@ -16,8 +16,7 @@ def main():
 
   testCases = []
 
-  kwargs = {'verbose': False,
-            'binWidth': 25,
+  kwargs = {'binWidth': 25,
             'interpolator': None,
             'resampledPixelSpacing': None,
             'padDistance': 5,

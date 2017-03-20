@@ -72,6 +72,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
+    self.logger.debug('Feature class initialized, calculated GLSZM with shape %s', self.P_glszm.shape)
+
   def _calculateMatrix(self):
     """
     Number of times a region with a
@@ -79,6 +81,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     For 3D-images this concerns a 26-connected region, for 2D an 8-connected region
     """
+    self.logger.debug("Calculating GLSZM matrix in Python")
+
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
 
@@ -132,11 +136,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area
+    self.logger.debug('Cropping calculated matrix to observed gray levels and maximum observed zone size')
     P_glszm_bounds = numpy.argwhere(P_glszm)
     (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1  # noqa: F841
     return P_glszm[xstart:xstop, :ystop]
 
   def _calculateCMatrix(self):
+    self.logger.debug("Calculating GLSZM matrix in C")
+
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
     Ng = self.coefficients['Ng']
@@ -145,6 +152,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     return cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
 
   def _calculateCoefficients(self):
+    self.logger.debug("Calculating GLSZM coefficients")
+
     sumP_glszm = numpy.sum(self.P_glszm, (0, 1))
 
     # set sum to numpy.spacing(1) if sum is 0?

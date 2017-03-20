@@ -66,8 +66,7 @@ setup(
     packages=['radiomics', 'radiomics.scripts'],
     ext_modules=ext,
     zip_safe=False,
-    data_files=[
-      ('data', ['data/paramSchema.yaml', 'data/schemaFuncs.py'])],
+    package_data={'radiomics': ['schemas/paramSchema.yaml', 'schemas/schemaFuncs.py']},
 
     entry_points={
         'console_scripts': [

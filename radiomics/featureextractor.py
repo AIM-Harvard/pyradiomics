@@ -176,7 +176,7 @@ class RadiomicsFeaturesExtractor:
 
     If supplied params file does not match the requirements, a pykwalify error is raised.
     """
-    dataDir = os.path.abspath(os.path.join(radiomics.__path__[0], '..', 'data'))
+    dataDir = os.path.abspath(os.path.join(radiomics.__path__[0], 'schemas'))
     schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
     schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
     c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])

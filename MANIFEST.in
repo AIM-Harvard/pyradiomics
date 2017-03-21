@@ -1,11 +1,12 @@
 include CONTRIBUTING.md
 include LICENSE.txt
-include radiomics/_version.py
 include README.md
 include requirements.txt
 include requirements-dev.txt
-include radiomics/src/*.[ch]
+include requirements-setup.txt
 include versioneer.py
+
+recursive-include radiomics *
 
 recursive-include data *
 exclude data/PyradiomicsFeatures.csv data/Baseline2PyradiomicsFeaturesDiff.csv

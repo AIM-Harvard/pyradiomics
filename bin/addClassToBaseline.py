@@ -74,7 +74,8 @@ def main():
 
     provenance = extractor.getProvenance(imagePath, maskPath, mask)
 
-    image, mask, bb = imageoperations.cropToTumorMask(image, mask)
+    bb = imageoperations.checkMask(image, mask)
+    image, mask = imageoperations.cropToTumorMask(image, mask, bb)
     for cls in newClasses:
       print("\t\tCalculating class", cls)
       newBaseline[cls][testCase] = collections.OrderedDict()

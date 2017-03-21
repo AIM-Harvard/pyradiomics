@@ -149,26 +149,83 @@ def generateAngles(size, **kwargs):
   return angles
 
 
-def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
+def checkMask(imageNode, maskNode, **kwargs):
+  """
+  Checks whether the Region of Interest (ROI) defined in the mask size and dimensions match constraints, specified in
+  settings. The following checks are performed.
+
+  1. Check whether the mask corresponds to the image (i.e. has a similar size, spacing, direction and origin). **N.B.
+     This check is performed by SimpleITK, if it fails, an error is thrown.** Global tolerance for direction and origin
+     can be set in SimpleITK.ProcessObject (SetGlobalDefaultDirectionTolerance and SetGlobalDefaultCoordinateTolerance,
+     respectively). Tolerance is 1e-6 by default.
+  2. Check if the label is present in the mask
+  3. Count the number of dimensions in which the size of the ROI > 1 (i.e. does the ROI represent a single voxel (0), a
+     line (1), a surface (2) or a volume (3)) and compare this to the minimum number of dimension required (specified in
+     ``minimumROIDimensions``).
+  4. Optional. Check if there are at least N voxels in the ROI. N is defined in ``minimumROISize``, this test is skipped
+     if ``minimumROISize = None``.
+
+  If a check fails, an error is logged and a None value is returned. No features will be extracted for this mask.
+  If the mask passes all tests, this function returns the bounding box, which is used in the :py:func:`cropToTumorMask`
+  function. The bounding box is calculated during (1.) and used for the subsequent checks. The bounding box is
+  calculated by SimpleITK.LabelStatisticsImageFilter() and returned as a tuple of indices: (L_x, U_x, L_y, U_y, L_z,
+  U_z), where 'L' and 'U' are lower and upper bound, respectively, and 'x', 'y' and 'z' the three image dimensions.
+
+  By reusing the bounding box calculated here, calls to SimpleITK.LabelStatisticsImageFilter() are reduced, improving
+  performance.
+
+  Uses the following settings:
+
+  - minimumROIDimensions [1]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively).
+    Single-voxel segmentations are always excluded.
+  - minimumROISize [None]: Integer, > 0,  specifies the minimum number of voxels required. Test is skipped if
+    this parameter is set to None.
+  """
+  global logger
+
+  label = kwargs.get('label', 1)
+  minDims = kwargs.get('minimumROIDimensions', 1)
+  minSize = kwargs.get('minimumROISize', None)
+
+  logger.debug('Checking mask with label %d', label)
+  logger.debug('Calculating bounding box')
+  # Determine bounds
+  lsif = sitk.LabelStatisticsImageFilter()
+  lsif.Execute(imageNode, maskNode)
+  # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
+  boundingBox = numpy.array(lsif.GetBoundingBox(label))
+
+  if label not in lsif.GetLabels():
+    logger.error('Label (%g) not present in mask', label)
+    return None
+
+  logger.debug('Checking minimum number of dimensions requirements (%d)', minDims)
+  ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
+  if ndims <= minDims:
+    logger.error('mask has too few dimensions (number of dimensions %d, minimum required %d)', ndims, minDims)
+    return None
+
+  if minSize is not None:
+    logger.debug('Checking minimum size requirements (minimum size: %d)', minSize)
+    roiSize = lsif.GetCount(label)
+    if roiSize <= minSize:
+      logger.error('Size of the ROI is too small (minimum size: %g, ROI size: %g', minSize, roiSize)
+      return None
+
+  return boundingBox
+
+
+def cropToTumorMask(imageNode, maskNode, boundingBox, label=1):
   """
   Create a sitkImage of the segmented region of the image based on the input label.
 
   Create a sitkImage of the labelled region of the image, cropped to have a
   cuboid shape equal to the ijk boundaries of the label.
 
-  Returns both the cropped version of the image and the cropped version of the labelmap, as well
-  as the computed bounding box. The bounding box is returned as a tuple of indices: (L_x, U_x, L_y, U_y, L_z, U_z),
-  where 'L' and 'U' are lower and upper bound, respectively, and 'x', 'y' and 'z' the three image dimensions.
-
-  This can be used in subsequent calls to this function for the same images. This
-  improves computation time, as it will reduce the number of calls to SimpleITK.LabelStatisticsImageFilter().
-
+  :param boundingBox: The bounding box used to crop the image. This is the bounding box as returned by
+    :py:func:`checkMask`.
   :param label: [1], value of the label, onto which the image and mask must be cropped.
-  :param boundingBox: [None], during a subsequent call, the boundingBox of a previous call can be passed
-    here, removing the need to recompute it. During a first call to this function for a image/mask with a
-    certain label, this value must be None or omitted.
-  :return: Cropped image and mask (SimpleITK image instances) and the bounding box generated by SimpleITK
-    LabelStatisticsImageFilter.
+  :return: Cropped image and mask (SimpleITK image instances).
 
   """
   global logger
@@ -176,14 +233,6 @@ def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
   oldMaskID = maskNode.GetPixelID()
   maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
   size = numpy.array(maskNode.GetSize())
-
-  # If the boundingbox has not yet been calculated, calculate it now and return it at the end of the function
-  if boundingBox is None:
-    logger.debug("Calculating bounding box")
-    # Determine bounds
-    lsif = sitk.LabelStatisticsImageFilter()
-    lsif.Execute(imageNode, maskNode)
-    boundingBox = numpy.array(lsif.GetBoundingBox(label))
 
   ijkMinBounds = boundingBox[0::2]
   ijkMaxBounds = size - boundingBox[1::2] - 1
@@ -203,7 +252,7 @@ def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
 
   croppedMaskNode = sitk.Cast(croppedMaskNode, oldMaskID)
 
-  return croppedImageNode, croppedMaskNode, boundingBox
+  return croppedImageNode, croppedMaskNode
 
 
 def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, label=1, padDistance=5):

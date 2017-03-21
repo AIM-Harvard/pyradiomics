@@ -76,7 +76,7 @@ def generateAngles(size, **kwargs):
 
     - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for
       which angles should be generated.
-    - force2Dextraction [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
+    - force2D [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
       the 'slice' can be defined in ``force2Ddimension``. If input ROI is already a 2D ROI, features are automatically
       extracted in 2D.
     - force2Ddimension [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. Value 0
@@ -91,7 +91,7 @@ def generateAngles(size, **kwargs):
   logger.debug("Generating angles")
 
   distances = kwargs.get('distances', [1])
-  force2Dextraction = kwargs.get('force2Dextraction', False)
+  force2Dextraction = kwargs.get('force2D', False)
   force2Ddimension = kwargs.get('force2Ddimension', 0)
 
   maxDistance = max(distances)

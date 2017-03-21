@@ -67,7 +67,7 @@ class RadiomicsFeaturesExtractor:
     without padding.**
   - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
     angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles()`
-  - force2Dextraction [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
+  - force2D [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
     the 'slice' can be defined in ``force2Ddimension``. If input ROI is already a 2D ROI, features are automatically
     extracted in 2D. See also :py:func:`~radiomics.imageoperations.generateAngles()`
   - force2Ddimension [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. Value 0
@@ -130,6 +130,9 @@ class RadiomicsFeaturesExtractor:
             'resampledPixelSpacing': None,  # No resampling by default
             'interpolator': 'sitkBSpline',  # Alternative: sitk.sitkBSpline,
             'padDistance': 5,
+            'distances': [1],
+            'force2D': False,
+            'force2Ddimension': 0,
             'label': 1,
             'enableCExtensions': True,
             'additionalInfo': True}

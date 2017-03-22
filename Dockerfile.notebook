@@ -28,5 +28,13 @@ ADD bin/Params.yaml /home/jovyan/work/
 RUN mkdir /data
 RUN ln -s /data /home/jovyan/work/data
 
+RUN chown -R jovyan:users /home/jovyan/work
+
+# Trust the notebooks that we've installed
+USER jovyan
+RUN jupyter trust /home/jovyan/work/RadiomicsExample.ipynb
+RUN jupyter trust /home/jovyan/work/FeatureVisualization.ipynb
+RUN jupyter trust /home/jovyan/work/FilteringEffects.ipynb
+
 # The user's data will show up as /data
 VOLUME /data

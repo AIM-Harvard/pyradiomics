@@ -22,7 +22,9 @@ open-source platform for easy and reproducible Radiomic Feature extraction.
 By doing so, we hope to increase awareness of radiomic capabilities and expand the community.
 
 **If you publish any work which uses this package, please cite the following publication:**\
-*van Griethuysen et al, “Computational Radiomics System to Decode the Radiographic Phenotype”; Submitted*
+*Joost JM van Griethuysen, Andriy Fedorov, Chintan Parmar, Ahmed Hosny, Nicole Aucoin, Vivek Narayan, Regina GH 
+Beets-Tan, Jean-Christophe Fillion-Robin, Steve Pieper, Hugo JWL Aerts, “Computational Radiomics System to Decode the
+Radiographic Phenotype”; Submitted 2017*
 
 ### Feature Classes
 Currently supports the following feature classes:

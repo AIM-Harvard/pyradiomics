@@ -81,12 +81,6 @@ or for a less secure notebook, skip the randomly generated token
 
 and open the local webpage at http://localhost:8888/ with the current directory at http://localhost:8888/tree/data.
 
-Testing the command line versions:
-
-    docker run --rm -it -v `pwd`/data:/data radiomics/cli /data/brain1_image.nrrd /data/brain1_label.nrrd > cli.txt
-    docker run --rm -it -v `pwd`/data:/data radiomics/cli2 /data/brain1_image.nrrd /data/brain1_label.nrrd > cli2.txt
-    diff cli.txt cli2.txt
-
 ### Usage
 
 PyRadiomics can be easily used in a Python script through the `featureextractor`

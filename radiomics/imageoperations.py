@@ -84,25 +84,46 @@ def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates):
   return parameterMatrix, binEdges
 
 
-def generateAngles(size, maxDistance=1):
-  """
-  Generate all possible angles from distance 1 until maxDistance in 3D.
+def generateAngles(size, **kwargs):
+  r"""
+  Generate all possible angles from distance 1 until the maximum distance in ``distances`` in 3D.
   E.g. for d = 1, 13 angles are generated (representing the 26-connected region).
   For d = 2, 13 + 49 = 62 angles are generated (representing the 26 connected region for distance 1, and the 98
   connected region for distance 2)
 
-  Impossible angles (where 'neighbouring' voxels will always be outside delineation) are deleted.
+  First, only generated angles are retained, for which the maximum step size in any dimension (i.e. the infinity norm
+  distance from the center voxel) is present in ``distances``. Next, impossible angles (where 'neighbouring' voxels will
+  always be outside delineation) are deleted. Finally, if ``force2Dextraction`` is enabled, all angles
+  defining a step in the ``force2Ddimension`` are removed (e.g. if this dimension is 0, all angles that have a non-zero
+  step size at index 0 (z dimension) are removed, resulting in angles that only move in the x and/or y dimension).
 
   :param size: dimensions (z, x, y) of the bounding box of the tumor mask.
-  :param maxDistance: [1] Maximum distance between center voxel and neighbour
+  :param kwargs: The following additional parameters can be specified here (default values in brackets):
+
+    - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for
+      which angles should be generated.
+    - force2D [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
+      the 'slice' can be defined in ``force2Ddimension``. If input ROI is already a 2D ROI, features are automatically
+      extracted in 2D.
+    - force2Ddimension [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. Value 0
+      identifies the 'z' dimension (axial plane feature extraction), and features will be extracted from the xy plane.
+      Similarly, 1 identifies the y dimension (coronal plane) and 2 the x dimension (saggital plane). if
+      ``force2Dextraction`` is set to False, this parameter has no effect.
+
   :return: numpy array with shape (N, 3), where N is the number of unique angles
   """
   global logger
 
   logger.debug("Generating angles")
 
+  distances = kwargs.get('distances', [1])
+  force2Dextraction = kwargs.get('force2D', False)
+  force2Ddimension = kwargs.get('force2Ddimension', 0)
+
+  maxDistance = max(distances)
   angles = []
 
+  # Generate all possible angles for distance = 1 to maxDistance
   for z in range(1, maxDistance + 1):
     angles.append((0, 0, z))
     for y in range(-maxDistance, maxDistance + 1):
@@ -110,9 +131,18 @@ def generateAngles(size, maxDistance=1):
       for x in range(-maxDistance, maxDistance + 1):
         angles.append((z, y, x))
 
-  angles = numpy.array(angles)
+  if maxDistance > 1:  # multiple distances, check if some angles need to be removed
+    angles = numpy.array([angle for angle in angles if numpy.max(numpy.abs(angle)) in distances])
+  else:  # all generated angles must be retained
+    angles = numpy.array(angles)
 
+  # Remove 'impossible' angles: these angles always point to a 'neighbor' outside the ROI and therefore never yield a
+  # valid voxel-pair.
   angles = numpy.delete(angles, numpy.where(numpy.min(size - numpy.abs(angles), 1) <= 0), 0)
+
+  if force2Dextraction:
+    # Remove all angles that move in the force2Ddimension, retaining all that move only in the force 2D plane
+    angles = numpy.delete(angles, numpy.where(angles[:, force2Ddimension] != 0), 0)
 
   logger.debug("Generated %d angles", len(angles))
 

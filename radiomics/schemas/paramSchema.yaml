@@ -38,6 +38,18 @@ mapping:
         type: int
         range:
           min: 0
+      distances:
+        seq:
+          - type: int
+            range:
+              min-ex: 0
+      force2D:
+        type: bool
+      force2Ddimension:
+        type: int
+        range:
+          min: 0
+          max: 2
       sigma:
         seq:
           - type: float

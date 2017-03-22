@@ -43,6 +43,7 @@ class RadiomicsFeaturesBase(object):
     self.logger.debug('Initializing feature class')
     self.verbose = radiomics.handler.level <= logging.INFO  # check if the handler to stderr is set to INFO or lower
 
+    self.kwargs = kwargs
     self.binWidth = kwargs.get('binWidth', 25)
     self.label = kwargs.get('label', 1)
 

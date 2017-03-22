@@ -113,7 +113,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     matrixDiagonals = []
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
 
     self.logger.debug('Calculating diagonals')
     for angle in angles:
@@ -172,7 +172,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Nr = self.coefficients['Nr']
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
 
     P_glrlm = cMatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)
     P_glrlm = self._applyMatrixOptions(P_glrlm, angles)

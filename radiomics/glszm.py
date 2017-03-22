@@ -84,7 +84,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.logger.debug("Calculating GLSZM matrix in Python")
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
 
     # Empty GLSZ matrix
     P_glszm = numpy.zeros((self.coefficients['Ng'], self.coefficients['Np']))
@@ -145,7 +145,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.logger.debug("Calculating GLSZM matrix in C")
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
     Ng = self.coefficients['Ng']
     Ns = self.coefficients['Np']
 

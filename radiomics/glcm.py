@@ -147,7 +147,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.matrix[self.maskArray == 0] = -1
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
 
     P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
 
@@ -185,7 +185,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.logger.debug("Calculating GLCM matrix in C")
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
     Ng = self.coefficients['Ng']
 
     P_glcm = cMatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)

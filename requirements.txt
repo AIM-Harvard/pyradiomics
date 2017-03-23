@@ -8,3 +8,4 @@ pykwalify>=1.6.0
 six>=1.10.0
 sphinx>=1.4
 sphinx_rtd_theme>=0.2.2
+pandas>=0.19.2

@@ -3,6 +3,7 @@ import logging
 import traceback
 
 import numpy
+import pandas
 import SimpleITK as sitk
 import six
 
@@ -88,7 +89,7 @@ class RadiomicsFeaturesBase(object):
     Disables all features. Additionally resets any calculated features.
     """
     self.enabledFeatures = {}
-    self.featureValues = {}
+    self.featureValues = pandas.Series()
 
   @classmethod
   def getFeatureNames(cls):
@@ -107,9 +108,9 @@ class RadiomicsFeaturesBase(object):
   def calculateFeatures(self):
     """
     Calculates all features enabled in  ``enabledFeatures``. A feature is enabled if it's key is present in this
-    dictionary and it's value is True.
+    dictionary and it's value is ``True``.
 
-    Calculated values are stored in the ``featureValues`` dictionary, with feature name as key and the calculated
+    Calculated values are stored in the ``featureValues`` pandas Series, with feature name as label and the calculated
     feature value as value. If an exception is thrown during calculation, the error is logged, and the value is set to
     NaN.
     """

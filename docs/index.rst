@@ -83,6 +83,7 @@ and filters, thereby enabling fully reproducible feature extraction. For more in
 
 * SimpleITK (Image loading and preprocessing)
 * numpy (Feature calculation)
+* pandas (Data handling)
 * PyWavelets (Wavelet filter)
 * pykwalify (Enabling yaml parameters file checking)
 * tqdm (Progressbar)

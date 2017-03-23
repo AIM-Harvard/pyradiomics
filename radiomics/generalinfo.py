@@ -1,6 +1,6 @@
-import collections
 import logging
 
+import pandas
 import SimpleITK as sitk
 import six
 
@@ -47,10 +47,10 @@ class GeneralInfo():
 
   def execute(self):
     """
-    Calculate and return a dictionary containing all general info items. Format is <info_item>:<value>, where any ',' in
+    Return a pandas Series containing all general info items. Format is <info_item>:<value>, where any ',' in
     <value> are replaced by ';' to prevent column alignment errors in csv formatted output.
     """
-    generalInfo = collections.OrderedDict()
+    generalInfo = pandas.Series()
     for el in self.elements:
       generalInfo[el] = str(getattr(self, 'get%sValue' % el)()).replace(',', ';')
     return generalInfo

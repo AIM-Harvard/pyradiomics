@@ -5,7 +5,7 @@
 
 [![Travis CI](https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master)](https://travis-ci.org/Radiomics/pyradiomics)
 
-# pyradiomics v1.1.0
+# pyradiomics v1.1.1
 
 ## Radiomics feature extraction in Python
 

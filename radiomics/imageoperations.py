@@ -48,7 +48,7 @@ def getBinEdges(binwidth, parameterValues):
   if len(binEdges) == 1:  # Flat region, ensure that there is 1 bin
     binEdges = [binEdges[0] - .5, binEdges[0] + .5]  # Simulates binEdges returned by numpy.histogram if bins = 1
 
-  logger.debug("Calculated %d bins for bin width %g with edges: %s)", len(binEdges) - 1, binwidth, binEdges)
+  logger.debug('Calculated %d bins for bin width %g with edges: %s)', len(binEdges) - 1, binwidth, binEdges)
 
   return binEdges  # numpy.histogram(parameterValues, bins=binedges)
 
@@ -114,7 +114,7 @@ def generateAngles(size, **kwargs):
   """
   global logger
 
-  logger.debug("Generating angles")
+  logger.debug('Generating angles')
 
   distances = kwargs.get('distances', [1])
   force2Dextraction = kwargs.get('force2D', False)
@@ -144,31 +144,92 @@ def generateAngles(size, **kwargs):
     # Remove all angles that move in the force2Ddimension, retaining all that move only in the force 2D plane
     angles = numpy.delete(angles, numpy.where(angles[:, force2Ddimension] != 0), 0)
 
-  logger.debug("Generated %d angles", len(angles))
+  logger.debug('Generated %d angles', len(angles))
 
   return angles
 
 
-def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
+def checkMask(imageNode, maskNode, **kwargs):
+  """
+  Checks whether the Region of Interest (ROI) defined in the mask size and dimensions match constraints, specified in
+  settings. The following checks are performed.
+
+  1. Check whether the mask corresponds to the image (i.e. has a similar size, spacing, direction and origin). **N.B.
+     This check is performed by SimpleITK, if it fails, an error is thrown.** Global tolerance for direction and origin
+     can be set in SimpleITK.ProcessObject (SetGlobalDefaultDirectionTolerance and SetGlobalDefaultCoordinateTolerance,
+     respectively). Tolerance is 1e-6 by default.
+  2. Check if the label is present in the mask
+  3. Count the number of dimensions in which the size of the ROI > 1 (i.e. does the ROI represent a single voxel (0), a
+     line (1), a surface (2) or a volume (3)) and compare this to the minimum number of dimension required (specified in
+     ``minimumROIDimensions``).
+  4. Optional. Check if there are at least N voxels in the ROI. N is defined in ``minimumROISize``, this test is skipped
+     if ``minimumROISize = None``.
+
+  If a check fails, an error is logged and a None value is returned. No features will be extracted for this mask.
+  If the mask passes all tests, this function returns the bounding box, which is used in the :py:func:`cropToTumorMask`
+  function. The bounding box is calculated during (1.) and used for the subsequent checks. The bounding box is
+  calculated by SimpleITK.LabelStatisticsImageFilter() and returned as a tuple of indices: (L_x, U_x, L_y, U_y, L_z,
+  U_z), where 'L' and 'U' are lower and upper bound, respectively, and 'x', 'y' and 'z' the three image dimensions.
+
+  By reusing the bounding box calculated here, calls to SimpleITK.LabelStatisticsImageFilter() are reduced, improving
+  performance.
+
+  Uses the following settings:
+
+  - minimumROIDimensions [1]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively).
+    Single-voxel segmentations are always excluded.
+  - minimumROISize [None]: Integer, > 0,  specifies the minimum number of voxels required. Test is skipped if
+    this parameter is set to None.
+
+  .. note::
+    If resampling is enabled and ROI is within image physical space, the resampling forces the mask and image to the
+    same physical space. This also ensures check 1. passes.
+  """
+  global logger
+
+  label = kwargs.get('label', 1)
+  minDims = kwargs.get('minimumROIDimensions', 1)
+  minSize = kwargs.get('minimumROISize', None)
+
+  logger.debug('Checking mask with label %d', label)
+  logger.debug('Calculating bounding box')
+  # Determine bounds
+  lsif = sitk.LabelStatisticsImageFilter()
+  lsif.Execute(imageNode, maskNode)
+  # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
+  boundingBox = numpy.array(lsif.GetBoundingBox(label))
+
+  if label not in lsif.GetLabels():
+    logger.error('Label (%g) not present in mask', label)
+    return None
+
+  logger.debug('Checking minimum number of dimensions requirements (%d)', minDims)
+  ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
+  if ndims <= minDims:
+    logger.error('mask has too few dimensions (number of dimensions %d, minimum required %d)', ndims, minDims)
+    return None
+
+  if minSize is not None:
+    logger.debug('Checking minimum size requirements (minimum size: %d)', minSize)
+    roiSize = lsif.GetCount(label)
+    if roiSize <= minSize:
+      logger.error('Size of the ROI is too small (minimum size: %g, ROI size: %g', minSize, roiSize)
+      return None
+
+  return boundingBox
+
+
+def cropToTumorMask(imageNode, maskNode, boundingBox, label=1):
   """
   Create a sitkImage of the segmented region of the image based on the input label.
 
   Create a sitkImage of the labelled region of the image, cropped to have a
   cuboid shape equal to the ijk boundaries of the label.
 
-  Returns both the cropped version of the image and the cropped version of the labelmap, as well
-  as the computed bounding box. The bounding box is returned as a tuple of indices: (L_x, U_x, L_y, U_y, L_z, U_z),
-  where 'L' and 'U' are lower and upper bound, respectively, and 'x', 'y' and 'z' the three image dimensions.
-
-  This can be used in subsequent calls to this function for the same images. This
-  improves computation time, as it will reduce the number of calls to SimpleITK.LabelStatisticsImageFilter().
-
+  :param boundingBox: The bounding box used to crop the image. This is the bounding box as returned by
+    :py:func:`checkMask`.
   :param label: [1], value of the label, onto which the image and mask must be cropped.
-  :param boundingBox: [None], during a subsequent call, the boundingBox of a previous call can be passed
-    here, removing the need to recompute it. During a first call to this function for a image/mask with a
-    certain label, this value must be None or omitted.
-  :return: Cropped image and mask (SimpleITK image instances) and the bounding box generated by SimpleITK
-    LabelStatisticsImageFilter.
+  :return: Cropped image and mask (SimpleITK image instances).
 
   """
   global logger
@@ -176,14 +237,6 @@ def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
   oldMaskID = maskNode.GetPixelID()
   maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
   size = numpy.array(maskNode.GetSize())
-
-  # If the boundingbox has not yet been calculated, calculate it now and return it at the end of the function
-  if boundingBox is None:
-    logger.debug("Calculating bounding box")
-    # Determine bounds
-    lsif = sitk.LabelStatisticsImageFilter()
-    lsif.Execute(imageNode, maskNode)
-    boundingBox = numpy.array(lsif.GetBoundingBox(label))
 
   ijkMinBounds = boundingBox[0::2]
   ijkMaxBounds = size - boundingBox[1::2] - 1
@@ -203,44 +256,95 @@ def cropToTumorMask(imageNode, maskNode, label=1, boundingBox=None):
 
   croppedMaskNode = sitk.Cast(croppedMaskNode, oldMaskID)
 
-  return croppedImageNode, croppedMaskNode, boundingBox
+  return croppedImageNode, croppedMaskNode
 
 
 def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, label=1, padDistance=5):
   """
-  Resamples image or label to the specified pixel spacing (The default interpolator is Bspline)
+  Resamples image and mask to the specified pixel spacing (The default interpolator is Bspline).
 
-  'imageNode' is a SimpleITK Object, and 'resampledPixelSpacing' is the output pixel spacing (list of 3 elements).
+  'imageNode' and 'maskNode' are SimpleITK Objects, and 'resampledPixelSpacing' is the output pixel spacing (sequence of
+  3 elements).
 
   Only part of the image and labelmap are resampled. The resampling grid is aligned to the input origin, but only voxels
-  covering the area of the image defined by the bounding box and the padDistance are resampled. This results in a
-  resampled and partially cropped return image and labelmap. Additional padding is required as some filters also sample
-  voxels outside of segmentation boundaries. For feature calculation, image and mask are cropped to the bounding box
-  without any additional padding, as the feature classes do not need the gray level values outside the segmentation.
+  covering the area of the image ROI (defined by the bounding box) and the padDistance are resampled. This results in a
+  resampled and partially cropped image and mask. Additional padding is required as some filters also sample voxels
+  outside of segmentation boundaries. For feature calculation, image and mask are cropped to the bounding box without
+  any additional padding, as the feature classes do not need the gray level values outside the segmentation.
+
+  The resampling grid is calculated using only the input mask. Even when image and mask have different directions, both
+  the cropped image and mask will have the same direction (equal to direction of the mask). Spacing and size are
+  determined by settings and bounding box of the ROI.
+
+  .. note::
+    Before resampling the bounds of the non-padded ROI are compared to the bounds. If the ROI bounding box includes
+    areas outside of the physical space of the image, an error is logged and (None, None) is returned. No features will
+    be extracted. This enables the input image and mask to have different geometry, so long as the ROI defines an area
+    within the image.
+
+  .. note::
+    The additional padding is adjusted, so that only the physical space within the mask is resampled. This is done to
+    prevent resampling outside of the image. Please note that this assumes the image and mask to image the same physical
+    space. If this is not the case, it is possible that voxels outside the image are included in the resampling grid,
+    these will be assigned a value of 0. It is therefore recommended, but not enforced, to use an input mask which has
+    the same or a smaller physical space than the image.
   """
   global logger
+  logger.debug('Resampling image and mask')
 
   if imageNode is None or maskNode is None:
-    return None
+    return None, None  # this function is expected to always return a tuple of 2 elements
 
-  oldSpacing = numpy.array(imageNode.GetSpacing())
+  logger.debug('Comparing resampled spacing to original spacing (image and mask')
+  maskSpacing = numpy.array(maskNode.GetSpacing())
+  imageSpacing = numpy.array(imageNode.GetSpacing())
 
   # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
-  if numpy.array_equal(oldSpacing, resampledPixelSpacing):
-    logger.debug("New spacing equal to old, no resampling required")
+  if numpy.array_equal(maskSpacing, resampledPixelSpacing) and numpy.array_equal(imageSpacing, resampledPixelSpacing):
+    logger.info('New spacing equal to old, no resampling required')
     return imageNode, maskNode
 
   # Determine bounds of cropped volume in terms of original Index coordinate space
   lssif = sitk.LabelShapeStatisticsImageFilter()
   lssif.Execute(maskNode)
-  bb = numpy.array(
-    lssif.GetBoundingBox(label))  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
 
+  logger.debug('Checking if label %d is persent in the mask', label)
+  if label not in lssif.GetLabels():
+    logger.error('Label (%d) not present in mask', label)
+    return None, None  # this function is expected to always return a tuple of 2 elements
+
+  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
+  bb = numpy.array(lssif.GetBoundingBox(label))
+
+  # Determine if the ROI is within the physical space of the image
+
+  logger.debug('Comparing physical space of bounding box to physical space of image')
+  # Step 1: Get the origin and UBound corners of the bounding box in physical space
+  # The additional 0.5 represents the difference between the voxel center and the voxel corner
+  # Upper bound index of ROI = bb[:3] + bb[3:] - 1 (LBound + Size - 1), .5 is added to get corner
+  physicalBounds = (maskNode.TransformContinuousIndexToPhysicalPoint(bb[3:] - .5),  # Origin
+                    maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] + bb[3:] - 0.5))  # UBound
+  logger.debug('ROI bounds (mm): %s', physicalBounds)
+
+  # Step 2: Determine the physical bounds of the image in a similar manner as in step 1
+  imageBounds = (imageNode.TransformContinuousIndexToPhysicalPoint([-0.5, -0.5, -0.5]),  # Origin
+                 imageNode.TransformContinuousIndexToPhysicalPoint(numpy.array(imageNode.GetSize()) + 0.5))  # UBound
+  logger.debug('Image bounds (mm): %s', imageBounds)
+
+  # Check if any of the physical bounds of the bounding box are outside the physical space of the image
+  # Use numpy.max and numpy.min to correct for negative directions
+  if numpy.any(numpy.min(imageBounds, axis=0) > numpy.min(physicalBounds, axis=0)) or \
+     numpy.any(numpy.max(imageBounds, axis=0) < numpy.max(physicalBounds, axis=0)):
+    logger.error('Physical space of bounding box is larger than physical space of image:\n\t'
+                 'ROI physical bounds %s\n\tImage physical bounds %s', physicalBounds, imageBounds)
+    return None, None
+
+  logger.debug('ROI valid, calculating resampling grid')
   # Do not resample in those directions where labelmap spans only one slice.
-  oldSize = numpy.array(imageNode.GetSize())
-  resampledPixelSpacing = numpy.where(bb[3:] != 1, resampledPixelSpacing, oldSpacing)
+  maskSize = numpy.array(maskNode.GetSize())
+  resampledPixelSpacing = numpy.where(bb[3:] != 1, resampledPixelSpacing, maskSpacing)
 
-  spacingRatio = oldSpacing / resampledPixelSpacing
+  spacingRatio = maskSpacing / resampledPixelSpacing
 
   # Determine bounds of cropped volume in terms of new Index coordinate space,
   # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
@@ -249,7 +353,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   bbNewUBound = numpy.ceil((bb[:3] + bb[3:] - 0.5) * spacingRatio + padDistance)
 
   # Ensure resampling is not performed outside bounds of original image
-  maxUbound = numpy.ceil(oldSize * spacingRatio) - 1
+  maxUbound = numpy.ceil(maskSize * spacingRatio) - 1
   bbNewLBound = numpy.where(bbNewLBound < 0, 0, bbNewLBound)
   bbNewUBound = numpy.where(bbNewUBound > maxUbound, maxUbound, bbNewUBound)
 
@@ -265,18 +369,18 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # index to calculate where the new 0 of the new Index coordinate space (of the original volume
   # in terms of the original spacing, and add the minimum bounds of the cropped area to
   # get the new Index coordinate space of the cropped volume in terms of the original Index coordinate space.
-  # Then use the ITK functionality to bring the contiuous index into the physical space (mm)
-  newOriginIndex = numpy.array(.5 * (resampledPixelSpacing - oldSpacing) / oldSpacing)
+  # Then use the ITK functionality to bring the continuous index into the physical space (mm)
+  newOriginIndex = numpy.array(.5 * (resampledPixelSpacing - maskSpacing) / maskSpacing)
   newCroppedOriginIndex = newOriginIndex + bbOriginalLBound
-  newOrigin = imageNode.TransformContinuousIndexToPhysicalPoint(newCroppedOriginIndex)
+  newOrigin = maskNode.TransformContinuousIndexToPhysicalPoint(newCroppedOriginIndex)
 
-  oldImagePixelType = imageNode.GetPixelID()
-  oldMaskPixelType = maskNode.GetPixelID()
+  imagePixelType = imageNode.GetPixelID()
+  maskPixelType = maskNode.GetPixelID()
 
-  imageDirection = numpy.array(imageNode.GetDirection())
+  direction = numpy.array(maskNode.GetDirection())
 
   logger.info('Applying resampling from spacing %s and size %s to spacing %s and size %s',
-              oldSpacing, oldSize, resampledPixelSpacing, newSize)
+              maskSpacing, maskSize, resampledPixelSpacing, newSize)
 
   try:
     if isinstance(interpolator, six.string_types):
@@ -288,17 +392,17 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   rif = sitk.ResampleImageFilter()
 
   rif.SetOutputSpacing(resampledPixelSpacing)
-  rif.SetOutputDirection(imageDirection)
+  rif.SetOutputDirection(direction)
   rif.SetSize(newSize)
   rif.SetOutputOrigin(newOrigin)
 
   logger.debug('Resampling image')
-  rif.SetOutputPixelType(oldImagePixelType)
+  rif.SetOutputPixelType(imagePixelType)
   rif.SetInterpolator(interpolator)
   resampledImageNode = rif.Execute(imageNode)
 
   logger.debug('Resampling mask')
-  rif.SetOutputPixelType(oldMaskPixelType)
+  rif.SetOutputPixelType(maskPixelType)
   rif.SetInterpolator(sitk.sitkNearestNeighbor)
   resampledMaskNode = rif.Execute(maskNode)
 
@@ -324,11 +428,11 @@ def normalizeImage(image, scale=1, outliers=None):
   Removal of outliers is done after the values of the image are normalized, but before ``scale`` is applied.
   """
   global logger
-  logger.debug("Normalizing image with scale %d", scale)
+  logger.debug('Normalizing image with scale %d', scale)
   image = sitk.Normalize(image)
 
   if outliers is not None:
-    logger.debug("Removing outliers > %g standard deviations", outliers)
+    logger.debug('Removing outliers > %g standard deviations', outliers)
     imageArr = sitk.GetArrayFromImage(image)
 
     imageArr[imageArr > outliers] = outliers
@@ -365,8 +469,8 @@ def getOriginalImage(inputImage, **kwargs):
   :return: Yields original image, 'original' and ``kwargs``
   """
   global logger
-  logger.debug("Yielding original image")
-  yield inputImage, "original", kwargs
+  logger.debug('Yielding original image')
+  yield inputImage, 'original', kwargs
 
 
 def getLoGImage(inputImage, **kwargs):
@@ -388,7 +492,7 @@ def getLoGImage(inputImage, **kwargs):
   """
   global logger
 
-  logger.debug("Generating LoG images")
+  logger.debug('Generating LoG images')
 
   # Check if size of image is > 4 in all 3D directions (otherwise, LoG filter will fail)
   size = numpy.array(inputImage.GetSize())
@@ -408,7 +512,7 @@ def getLoGImage(inputImage, **kwargs):
         lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
         lrgif.SetNormalizeAcrossScale(True)
         lrgif.SetSigma(sigma)
-        inputImageName = "log-sigma-%s-mm-3D" % (str(sigma).replace('.', '-'))
+        inputImageName = 'log-sigma-%s-mm-3D' % (str(sigma).replace('.', '-'))
         logger.debug('Yielding %s image', inputImageName)
         yield lrgif.Execute(inputImage), inputImageName, kwargs
       else:
@@ -450,7 +554,7 @@ def getWaveletImage(inputImage, **kwargs):
   """
   global logger
 
-  logger.debug("Generating Wavelet images")
+  logger.debug('Generating Wavelet images')
 
   approx, ret = _swt3(inputImage, kwargs.get('wavelet', 'coif1'), kwargs.get('level', 1), kwargs.get('start_level', 0))
 
@@ -473,11 +577,11 @@ def getWaveletImage(inputImage, **kwargs):
   yield approx, inputImageName, kwargs
 
 
-def _swt3(inputImage, wavelet="coif1", level=1, start_level=0):
+def _swt3(inputImage, wavelet='coif1', level=1, start_level=0):
   matrix = sitk.GetArrayFromImage(inputImage)
   matrix = numpy.asarray(matrix)
   if matrix.ndim != 3:
-    raise ValueError("Expected 3D data array")
+    raise ValueError('Expected 3D data array')
 
   original_shape = matrix.shape
   adjusted_shape = tuple([dim + 1 if dim % 2 != 0 else dim for dim in original_shape])
@@ -594,7 +698,7 @@ def getSquareImage(inputImage, **kwargs):
   im.CopyInformation(inputImage)
 
   logger.debug('Yielding square image')
-  yield im, "square", kwargs
+  yield im, 'square', kwargs
 
 
 def getSquareRootImage(inputImage, **kwargs):
@@ -623,7 +727,7 @@ def getSquareRootImage(inputImage, **kwargs):
   im.CopyInformation(inputImage)
 
   logger.debug('Yielding squareroot image')
-  yield im, "squareroot", kwargs
+  yield im, 'squareroot', kwargs
 
 
 def getLogarithmImage(inputImage, **kwargs):
@@ -655,7 +759,7 @@ def getLogarithmImage(inputImage, **kwargs):
   im.CopyInformation(inputImage)
 
   logger.debug('Yielding logarithm image')
-  yield im, "logarithm", kwargs
+  yield im, 'logarithm', kwargs
 
 
 def getExponentialImage(inputImage, **kwargs):
@@ -680,4 +784,4 @@ def getExponentialImage(inputImage, **kwargs):
   im.CopyInformation(inputImage)
 
   logger.debug('Yielding exponential image')
-  yield im, "exponential", kwargs
+  yield im, 'exponential', kwargs

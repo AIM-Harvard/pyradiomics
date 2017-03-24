@@ -44,7 +44,8 @@ kwargs = {'binWidth': 25,
 if kwargs['interpolator'] is not None and kwargs['resampledPixelSpacing'] is not None:
   image, mask = imageoperations.resampleImage(image, mask, kwargs['resampledPixelSpacing'], kwargs['interpolator'])
 else:
-  image, mask, bb = imageoperations.cropToTumorMask(image, mask)
+  bb = imageoperations.checkMask(image, mask)
+  image, mask = imageoperations.cropToTumorMask(image, mask, bb)
 
 #
 # Show the first order feature calculations

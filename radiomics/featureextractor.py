@@ -33,19 +33,23 @@ class RadiomicsFeaturesExtractor:
 
   - enableCExtensions [True]: Boolean, set to False to force calculation to full-python mode. See also
     :py:func:`~radiomics.enableCExtensions()`.
+  - minimumROIDimensions [1]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively).
+    Single-voxel segmentations are always excluded.
+  - minimumROISize [None]: Integer, > 0, specifies the minimum number of voxels required. Test is skipped
+    if this parameter is omitted (specifying it as None in the parameter file will throw an error).
   - additionalInfo [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
     output. See also :py:func:`~addProvenance()`.
-  - binWidth [25]: Float, size of the bins when making a histogram and for discretization of the image gray level.
+  - binWidth [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
   - normalize [False]: Boolean, set to True to enable normalizing of the image before any resampling. See also
     :py:func:`~imageoperations.normalizeImage`.
-  - normalizeScale [1]: Float, determines the scale after normalizing the image. If normalizing is disabled, this has
-    no effect.
-  - removeOutliers [None]: Float, defines the outliers to remove from the image. An outlier is defined as values that
-    differ more than :math:`n\sigma_x` from the mean, where :math:`n>0` and equal to the value of this setting. If this
-    parameter is omitted (providing it without a value (i.e. None) in the parameter file will throw an error), no
+  - normalizeScale [1]: Float, > 0, determines the scale after normalizing the image. If normalizing is disabled, this
+    has no effect.
+  - removeOutliers [None]: Float, > 0, defines the outliers to remove from the image. An outlier is defined as values
+    that differ more than :math:`n\sigma_x` from the mean, where :math:`n>0` and equal to the value of this setting. If
+    this parameter is omitted (providing it without a value (i.e. None) in the parameter file will throw an error), no
     outliers are removed. If normalizing is disabled, this has no effect. See also
     :py:func:`~imageoperations.normalizeImage`.
-  - resampledPixelSpacing [None]: List of 3 floats, sets the size of the voxel in (x, y, z) plane when resampling.
+  - resampledPixelSpacing [None]: List of 3 floats (> 0), sets the size of the voxel in (x, y, z) plane when resampling.
   - interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
     Enumerated value, possible values:
 
@@ -60,11 +64,11 @@ class RadiomicsFeaturesExtractor:
     - sitkLanczosWindowedSinc (= 9)
     - sitkBlackmanWindowedSinc (= 10)
 
-  - padDistance [5]: Integer, set the number of voxels pad cropped tumor volume with during resampling. Padding occurs
-    in new feature space and is done on all faces, i.e. size increases in x, y and z direction by 2*padDistance.
-    Padding is needed for some filters (e.g. LoG). Value of padded voxels are set to original gray level intensity,
-    padding does not exceed original image boundaries. **N.B. After application of filters image is cropped again
-    without padding.**
+  - padDistance [5]: Integer, :math:`\geq 0`, set the number of voxels pad cropped tumor volume with during resampling.
+    Padding occurs in new feature space and is done on all faces, i.e. size increases in x, y and z direction by
+    2*padDistance. Padding is needed for some filters (e.g. LoG). Value of padded voxels are set to original gray level
+    intensity, padding does not exceed original image boundaries. **N.B. After application of filters image is cropped
+    again without padding.**
   - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
     angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles()`
   - force2D [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
@@ -124,7 +128,9 @@ class RadiomicsFeaturesExtractor:
     class specific are defined in the respective feature classes and and not included here. Similarly, filter specific
     settings are defined in ``imageoperations.py`` and also not included here.
     """
-    return {'normalize': False,
+    return {'minimumROIDimensions': 1,
+            'minimumROISize': None,  # Skip testing the ROI size by default
+            'normalize': False,
             'normalizeScale': 1,
             'removeOutliers': None,
             'resampledPixelSpacing': None,  # No resampling by default
@@ -383,53 +389,57 @@ class RadiomicsFeaturesExtractor:
     featureVector = collections.OrderedDict()
     image, mask = self.loadImage(imageFilepath, maskFilepath)
 
-    if image is not None and mask is not None:
-      if self.kwargs['additionalInfo']:
-        featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
+    if image is None or mask is None:
+      # No features can be extracted, return the empty featureVector
+      return featureVector
 
-      # Bounding box only needs to be calculated once after resampling, store the value, so it doesn't get calculated
-      # after every filter
-      boundingBox = None
+    # Check whether loaded mask contains a valid ROI for feature extraction
+    boundingBox = imageoperations.checkMask(image, mask, **self.kwargs)
 
-      # If shape should be calculation, handle it separately here
-      if 'shape' in self.enabledFeatures.keys():
-        croppedImage, croppedMask, boundingBox = \
-          imageoperations.cropToTumorMask(image, mask, self.kwargs['label'], boundingBox)
-        enabledFeatures = self.enabledFeatures['shape']
+    if boundingBox is None:
+      # Mask checks failed, do not extract features and return the empty featureVector
+      return featureVector
 
-        self.logger.info("Computing shape")
-        shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
-        if enabledFeatures is None or len(enabledFeatures) == 0:
-          shapeClass.enableAllFeatures()
-        else:
-          for feature in enabledFeatures:
-            shapeClass.enableFeatureByName(feature)
+    self.logger.debug('Image and Mask loaded and valid, starting extraction')
 
-        shapeClass.calculateFeatures()
-        for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
-          newFeatureName = "original_shape_%s" % (featureName)
-          featureVector[newFeatureName] = featureValue
+    if self.kwargs['additionalInfo']:
+      featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
-      # Make generators for all enabled input image types
-      self.logger.debug('Creating input image type iterator')
-      imageGenerators = []
-      for imageType, customKwargs in six.iteritems(self.inputImages):
-        args = self.kwargs.copy()
-        args.update(customKwargs)
-        self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
-        imageGenerators = chain(imageGenerators, getattr(imageoperations, 'get%sImage' % imageType)(image, **args))
+    # If shape should be calculation, handle it separately here
+    if 'shape' in self.enabledFeatures.keys():
+      croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox, self.kwargs['label'])
+      enabledFeatures = self.enabledFeatures['shape']
 
-      self.logger.debug('Extracting features')
-      # Calculate features for all (filtered) images in the generator
-      for inputImage, inputImageName, inputKwargs in imageGenerators:
-        self.logger.info('Calculating features for %s image, with settings: %s', inputImageName, str(inputKwargs))
-        inputImage, inputMask, boundingBox = imageoperations.cropToTumorMask(inputImage,
-                                                                             mask,
-                                                                             self.kwargs['label'],
-                                                                             boundingBox)
-        featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
+      self.logger.info('Computing shape')
+      shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
+      if enabledFeatures is None or len(enabledFeatures) == 0:
+        shapeClass.enableAllFeatures()
+      else:
+        for feature in enabledFeatures:
+          shapeClass.enableFeatureByName(feature)
 
-      self.logger.debug('Features extracted')
+      shapeClass.calculateFeatures()
+      for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
+        newFeatureName = 'original_shape_%s' % (featureName)
+        featureVector[newFeatureName] = featureValue
+
+    # Make generators for all enabled input image types
+    self.logger.debug('Creating input image type iterator')
+    imageGenerators = []
+    for imageType, customKwargs in six.iteritems(self.inputImages):
+      args = self.kwargs.copy()
+      args.update(customKwargs)
+      self.logger.info('Adding image type "%s" with settings: %s' % (imageType, str(args)))
+      imageGenerators = chain(imageGenerators, getattr(imageoperations, 'get%sImage' % imageType)(image, **args))
+
+    self.logger.debug('Extracting features')
+    # Calculate features for all (filtered) images in the generator
+    for inputImage, inputImageName, inputKwargs in imageGenerators:
+      self.logger.info('Calculating features for %s image', inputImageName)
+      inputImage, inputMask = imageoperations.cropToTumorMask(inputImage, mask, boundingBox, self.kwargs['label'])
+      featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
+
+    self.logger.debug('Features extracted')
 
     return featureVector
 
@@ -524,7 +534,7 @@ class RadiomicsFeaturesExtractor:
 
         featureClass.calculateFeatures()
         for (featureName, featureValue) in six.iteritems(featureClass.featureValues):
-          newFeatureName = "%s_%s_%s" % (inputImageName, featureClassName, featureName)
+          newFeatureName = '%s_%s_%s' % (inputImageName, featureClassName, featureName)
           featureVector[newFeatureName] = featureValue
 
     return featureVector

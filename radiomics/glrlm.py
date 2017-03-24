@@ -102,7 +102,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.logger.debug('Feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
 
   def _calculateMatrix(self):
-    self.logger.debug("Calculating GLRLM matrix in Python")
+    self.logger.debug('Calculating GLRLM matrix in Python')
 
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
@@ -166,7 +166,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     return P_glrlm
 
   def _calculateCMatrix(self):
-    self.logger.debug("Calculating GLRLM matrix in C")
+    self.logger.debug('Calculating GLRLM matrix in C')
 
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
@@ -196,7 +196,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:
-      self.logger.debug("Applying weighting (%s)", self.weightingNorm)
+      self.logger.debug('Applying weighting (%s)', self.weightingNorm)
       pixelSpacing = self.inputImage.GetSpacing()[::-1]
       weights = numpy.empty(len(angles))
       for a_idx, a in enumerate(angles):
@@ -231,7 +231,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     return P_glrlm
 
   def _calculateCoefficients(self):
-    self.logger.debug("Calculating GLRLM coefficients")
+    self.logger.debug('Calculating GLRLM coefficients')
 
     pr = numpy.sum(self.P_glrlm, 0)
     pg = numpy.sum(self.P_glrlm, 1)

@@ -27,6 +27,12 @@ custom settings and which features and input image types to enable. Possible gen
 types are documented :ref:`here <radiomics-featureextractor-label>`, with additional feature class specific settings
 documented at the start of the :ref:`feature class <radiomics-features-label>`.
 
+**When I try to load my own parameter file, I get error:"CoreError: Unable to load any data from source yaml file"**
+
+This error is thrown by PyKwalify when it is unable to read the parameter file. The most common cause is when the file
+is indented using tabs, which throws a "token ('\t') not recognized error". Instead, ensure that all indentations are
+made using 2 or 4 spaces.
+
 **What file types are supported by PyRadiomics for input image and mask?**
 
 PyRadiomics uses SimpleITK for image loading and handling. Therefore, all image types supported by SimpleITK can be

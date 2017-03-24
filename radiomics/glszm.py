@@ -6,12 +6,12 @@ from radiomics import base, cMatrices, cMatsEnabled, imageoperations
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   r"""
-  A Gray Level Size Zone (GLSZM) quantifies gray level zones in an image.
-  A gray level zone is defined as a the number of connected voxels that share the same
-  gray level intensity. A voxel is considered connected if the distance is 1 according to the infinity norm. This
-  yields a 26-connected region in a 3D image, and an 8-connected region in a 2D image.
-  In a gray level size zone matrix :math:`P(i,j)` the :math:`(i,j)^{\text{th}}` element describes the number of times
-  a gray level zone with gray level :math:`i` and size :math:`j` appears in image.
+  A Gray Level Size Zone (GLSZM) quantifies gray level zones in an image. A gray level zone is defined as a the number
+  of connected voxels that share the same gray level intensity. A voxel is considered connected if the distance is 1
+  according to the infinity norm (26-connected region in a 3D, 8-connected region in 2D).
+  In a gray level size zone matrix :math:`P(i,j)` the :math:`(i,j)^{\text{th}}` element equals the number of zones
+  with gray level :math:`i` and size :math:`j` appear in image. Contrary to GLCM and GLRLM, the GLSZM is rotation
+  independent, with only one matrix calculated for all directions in the ROI.
 
   As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
 
@@ -35,15 +35,16 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   Let:
 
-  :math:`\textbf{P}(i,j)` be the size zone matrix
+  - :math:`\textbf{P}(i,j)` be the size zone matrix
+  - :math:`p(i,j)` be the normalized size zone matrix, defined as :math:`p(i,j) = \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
+  - :math:`N_g` be the number of discreet intensity values in the image
+  - :math:`N_s` be the number of discreet zone sizes in the image
+  - :math:`N_p` be the number of voxels in the image
 
-  :math:`p(i,j)` be the normalized size zone matrix, defined as :math:`p(i,j) = \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
+  .. note::
 
-  :math:`N_g` be the number of discreet intensity values in the image
-
-  :math:`N_s` be the number of discreet zone sizes in the image
-
-  :math:`N_p` be the number of voxels in the image
+    The mathematical formulas that define the GLSZM features correspond to the definitions of features extracted from
+    the GLRLM.
 
   References
 
@@ -169,12 +170,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getSmallAreaEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Small Area Emphasis (SAE) value.
+    **1. Small Area Emphasis (SAE)**
 
-    :math:`SAE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    A measure of the distribution of small size zones, with a greater value indicative
-    of more smaller size zones and more fine textures.
+      \textit{SAE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{j^2}}}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    SAE is a measure of the distribution of small size zones, with a greater value indicative of more smaller size zones
+    and more fine textures.
     """
     try:
       sae = numpy.sum(self.coefficients['pr'] / (self.coefficients['jvector'] ** 2)) / self.coefficients['sumP_glszm']
@@ -184,12 +188,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getLargeAreaEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Large Area Emphasis (LAE) value.
+    **2. Large Area Emphasis (LAE)**
 
-    :math:`LAE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)j^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    A measure of the distribution of large area size zones, with a greater value indicative
-    of more larger size zones and more coarse textures.
+      \textit{LAE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)j^2}}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    LAE is a measure of the distribution of large area size zones, with a greater value indicative of more larger size
+    zones and more coarse textures.
     """
     try:
       lae = numpy.sum(self.coefficients['pr'] * (self.coefficients['jvector'] ** 2)) / self.coefficients['sumP_glszm']
@@ -199,12 +206,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getGrayLevelNonUniformityFeatureValue(self):
     r"""
-    Calculate and return the Gray Level Non-Uniformity (GLN) value.
+    **3. Gray Level Non-Uniformity (GLN)**
 
-    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    Measures the variability of gray-level intensity values in the image, with a lower value indicating
-    more homogeneity in intensity values.
+      \textit{GLN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    GLN measures the variability of gray-level intensity values in the image, with a lower value indicating more
+    homogeneity in intensity values.
     """
     try:
       iv = numpy.sum(self.coefficients['pg'] ** 2) / self.coefficients['sumP_glszm']
@@ -214,12 +224,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getGrayLevelNonUniformityNormalizedFeatureValue(self):
     r"""
-    Calculate and return the Gray Level Non-Uniformity Normalized (GLNN) value.
+    **4. Gray Level Non-Uniformity Normalized (GLNN)**
 
-    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+    .. math::
 
-    Measures the variability of gray-level intensity values in the image, with a lower value indicating
-    a greater similarity in intensity values. This is the normalized version of the GLN formula.
+      \textit{GLNN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}
+      {\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}
+
+    GLNN measures the variability of gray-level intensity values in the image, with a lower value indicating a greater
+    similarity in intensity values. This is the normalized version of the GLN formula.
     """
     try:
       ivn = numpy.sum(self.coefficients['pg'] ** 2) / self.coefficients['sumP_glszm'] ** 2
@@ -229,12 +242,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getSizeZoneNonUniformityFeatureValue(self):
     r"""
-    Calculate and return the Size-Zone Non-Uniformity (SZN) value.
+    **5. Size-Zone Non-Uniformity (SZN)**
 
-    :math:`SZN = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    Measures the variability of size zone volumes in the image, with a lower value indicating
-    more homogeneity in size zone volumes.
+      \textit{SZN} = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    SZN measures the variability of size zone volumes in the image, with a lower value indicating more homogeneity in size
+    zone volumes.
     """
     try:
       szv = numpy.sum(self.coefficients['pr'] ** 2) / self.coefficients['sumP_glszm']
@@ -244,12 +260,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getSizeZoneNonUniformityNormalizedFeatureValue(self):
     r"""
-    Calculate and return the Size-Zone Non-Uniformity Normalized (SZNN) value.
+    **6. Size-Zone Non-Uniformity Normalized (SZNN)**
 
-    :math:`SZNN = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+    .. math::
 
-    Measures the variability of size zone volumes throughout the image, with a lower value indicating
-    more homogeneity among zone size volumes in the image. This is the normalized version of the SZN formula.
+      \textit{SZNN} = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}
+      {\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}
+
+    SZNN measures the variability of size zone volumes throughout the image, with a lower value indicating more
+    homogeneity among zone size volumes in the image. This is the normalized version of the SZN formula.
     """
     try:
       szvn = numpy.sum(self.coefficients['pr'] ** 2) / self.coefficients['sumP_glszm'] ** 2
@@ -259,11 +278,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getZonePercentageFeatureValue(self):
     r"""
-    Calculate and return the Zone Percentage (ZP) value.
+    **7. Zone Percentage (ZP)**
 
-    :math:`ZP = \sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{N_p}}`
+    .. math::
 
-    Measures the coarseness of the texture by taking the ratio of number of zones and number of voxels in the ROI.
+      \textit{ZP} = \sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{N_p}}
+
+    ZP measures the coarseness of the texture by taking the ratio of number of zones and number of voxels in the ROI.
+
     Values are in range :math:`\frac{1}{N_p} \leq ZP \leq 1`, with higher values indicating a larger portion of the ROI
     consists of small zones (indicates a more fine texture).
     """
@@ -275,13 +297,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getGrayLevelVarianceFeatureValue(self):
     r"""
-    Calculate and return the Gray Level Variance (GLV) value.
+    **8. Gray Level Variance (GLV)**
 
-    :math:`GLV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)(i - \mu)^2}`, where
+    .. math::
 
-    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)i}`
+      \textit{GLV} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)(i - \mu)^2}
 
-    Measures the variance in gray level intensities for the zones.
+    Here, :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)i}`
+
+    GLV measures the variance in gray level intensities for the zones.
     """
     ivector = self.coefficients['ivector']
     sumP_glszm = self.coefficients['sumP_glszm']
@@ -291,13 +315,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getZoneVarianceFeatureValue(self):
     r"""
-    Calculate and return the Zone Variance (ZV) value.
+    **9. Zone Variance (ZV)**
 
-    :math:`ZV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)(j - \mu)^2}`, where
+    .. math::
 
-    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)j}`
+      \textit{ZV} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)(j - \mu)^2}
 
-    Measures the variance in zone size volumes for the zones.
+    Here, :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)j}`
+
+    ZV measures the variance in zone size volumes for the zones.
     """
     jvector = self.coefficients['jvector']
     sumP_glszm = self.coefficients['sumP_glszm']
@@ -307,14 +333,16 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getZoneEntropyFeatureValue(self):
     r"""
-    Calculate and return the Zone Entropy (ZE) value.
+    **10. Zone Entropy (ZE)**
 
-    :math:`ZE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}`
+    .. math::
+
+      \textit{ZE} = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
 
-    Measures the uncertainty/randomness in the distribution of zone sizes and gray levels. A higher value indicates more
-    heterogeneneity in the texture patterns.
+    ZE measures the uncertainty/randomness in the distribution of zone sizes and gray levels. A higher value indicates
+    more heterogeneneity in the texture patterns.
     """
     eps = numpy.spacing(1)
     sumP_glszm = self.coefficients['sumP_glszm']
@@ -323,12 +351,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getLowGrayLevelZoneEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Low Gray Level Zone Emphasis (LGLZE) value.
+    **11. Low Gray Level Zone Emphasis (LGLZE)**
 
-    :math:`LGLZE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    Measures the distribution of lower gray-level size zones, with a higher value indicating a greater proportion of
-    lower gray-level values and size zones in the image.
+      \textit{LGLZE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    LGLZE measures the distribution of lower gray-level size zones, with a higher value indicating a greater proportion
+    of lower gray-level values and size zones in the image.
     """
     try:
       lie = numpy.sum((self.coefficients['pg'] / (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_glszm']
@@ -338,12 +369,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getHighGrayLevelZoneEmphasisFeatureValue(self):
     r"""
-    Calculate and return the High Gray Level Zone Emphasis (HGLZE) value.
+    **12. High Gray Level Zone Emphasis (HGLZE)**
 
-    :math:`HGLZE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    Measures the distribution of the higher gray-level values, with a higher value indicating a greater proportion of
-    higher gray-level values and size zones in the image.
+      \textit{HGLZE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2}}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    HGLZE measures the distribution of the higher gray-level values, with a higher value indicating a greater proportion
+    of higher gray-level values and size zones in the image.
     """
     try:
       hie = numpy.sum((self.coefficients['pg'] * (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_glszm']
@@ -353,11 +387,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getSmallAreaLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Small Area Low Gray Level Emphasis (SALGLE) value.
+    **13. Small Area Low Gray Level Emphasis (SALGLE)**
 
-    :math:`SALGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    Measures the proportion in the image of the joint distribution of smaller size zones with lower gray-level values.
+      \textit{SALGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    SALGLE measures the proportion in the image of the joint distribution of smaller size zones with lower gray-level
+    values.
     """
     try:
       lisae = numpy.sum(
@@ -369,11 +407,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getSmallAreaHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Small Area High Gray Level Emphasis (SAHGLE) value.
+    **14. Small Area High Gray Level Emphasis (SAHGLE)**
 
-    :math:`SAHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    Measures the proportion in the image of the joint distribution of smaller size zones with higher gray-level values.
+      \textit{SAHGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    SAHGLE measures the proportion in the image of the joint distribution of smaller size zones with higher gray-level
+    values.
     """
     try:
       hisae = numpy.sum(
@@ -385,11 +427,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getLargeAreaLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Large Area Low Gray Level Emphasis (LALGLE) value.
+    **15. Large Area Low Gray Level Emphasis (LALGLE)**
 
-    :math:`LALGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    Measures the proportion in the image of the joint distribution of larger size zones with lower gray-level values.
+      \textit{LALGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    LALGLE measures the proportion in the image of the joint distribution of larger size zones with lower gray-level
+    values.
     """
     try:
       lilae = numpy.sum(
@@ -401,11 +447,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def getLargeAreaHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Large Area High Gray Level Emphasis (LAHGLE) value.
+    **16. Large Area High Gray Level Emphasis (LAHGLE)**
 
-    :math:`LAHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
 
-    Measures the proportion in the image of the joint distribution of larger size zones with higher gray-level values.
+      \textit{LAHGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2j^2}}
+      {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
+
+    LAHGLE measures the proportion in the image of the joint distribution of larger size zones with higher gray-level
+    values.
     """
     try:
       hilae = numpy.sum(

@@ -7,9 +7,14 @@ from radiomics import base, cMatsEnabled, cShape
 
 class RadiomicsShape(base.RadiomicsFeaturesBase):
   r"""
-  In this group of features we included descriptors of the three-dimensional size and shape of the tumor region.
-  Let in the following definitions denote :math:`V` the volume (mm\ :sup:`3`) and :math:`A` the surface area of the
-  volume (mm\ :sup:`2`) of interest.
+  In this group of features we included descriptors of the three-dimensional size and shape of the ROI. These features
+  are independent from the gray level intensity distribution in the ROI and are therefore only calculated on the
+  non-derived image and mask.
+
+  Let:
+
+  - :math:`V` the volume of the ROI in mm\ :sup:`3`
+  - :math:`A` the surface area of the ROI in mm\ :sup:`2`
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -168,15 +173,20 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getVolumeFeatureValue(self):
     r"""
-    Calculate the volume of the tumor region in cubic millimeters.
+    **1. Volume**
+
+    The volume of the ROI is approximated by multiplying the number of voxels in the ROI by the volume of a single
+    voxel.
     """
     return self.Volume
 
   def getSurfaceAreaFeatureValue(self):
     r"""
-    Calculate the surface area of the tumor region in square millimeters using a marching cubes algorithm.
+    **2. Surface Area**
 
-    :math:`A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\text{a}_i\text{b}_i \times \text{a}_i\text{c}_i|}`
+    .. math::
+
+      A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\text{a}_i\text{b}_i \times \text{a}_i\text{c}_i|}
 
     Where:
 
@@ -185,24 +195,35 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     :math:`\text{a}_i\text{b}_i` and :math:`\text{a}_i\text{c}_i` are the edges of the :math:`i^{\text{th}}` triangle
     formed by points :math:`\text{a}_i`, :math:`\text{b}_i` and :math:`\text{c}_i`
 
+    Surface Area is an approximation of the surface of the ROI in mm2, calculated using a marching cubes algorithm.
+
+    References:
+
+    - Lorensen WE, Cline HE. Marching cubes: A high resolution 3D surface construction algorithm. ACM SIGGRAPH Comput
+      Graph `Internet <http://portal.acm.org/citation.cfm?doid=37402.37422>`_. 1987;21:163-9.
     """
     return (self.SurfaceArea)
 
   def getSurfaceVolumeRatioFeatureValue(self):
     r"""
-    Calculate the surface area to volume ratio of the tumor region
+    **3. Surface Area to Volum ratio**
 
-    :math:`surface\ to\ volume\ ratio = \frac{A}{V}`
+    .. math::
 
-    Here, a lower value indicates a more compact (sphere-like) shape.
+      \textit{surface to volume ratio} = \frac{A}{V}
+
+    Here, a lower value indicates a more compact (sphere-like) shape. This feature is not dimensionless, and is
+    therefore (partly) dependent on the volume of the ROI.
     """
     return (self.SurfaceArea / self.Volume)
 
   def getSphericityFeatureValue(self):
     r"""
-    Calculate the Sphericity of the tumor region.
+    **4. Sphericity**
 
-    :math:`sphericity = \frac{\sqrt[3]{36 \pi V^2}}{A}`
+    .. math::
+
+      \textit{sphericity} = \frac{\sqrt[3]{36 \pi V^2}}{A}
 
     Sphericity is a measure of the roundness of the shape of the tumor region relative to a sphere. It is a
     dimensionless measure, independent of scale and orientation. The value range is :math:`0 < sphericity \leq 1`, where
@@ -219,9 +240,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getCompactness1FeatureValue(self):
     r"""
-    Calculate the compactness (1) of the tumor region.
+    **5. Compactness 1**
 
-    :math:`compactness\ 1 = \frac{V}{\sqrt{\pi A^3}}`
+    .. math::
+
+      \textit{compactness 1} = \frac{V}{\sqrt{\pi A^3}}
 
     Similar to Sphericity, Compactness 1 is a measure of how compact the shape of the tumor is relative to a sphere
     (most compact). It is therefore correlated to Sphericity and redundant. It is provided here for completeness.
@@ -241,9 +264,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getCompactness2FeatureValue(self):
     r"""
-    Calculate the Compactness (2) of the tumor region.
+    **6. Compactness 2**
 
-    :math:`compactness\ 2 = 36 \pi \frac{V^2}{A^3}`
+    .. math::
+
+      \textit{compactness 2} = 36 \pi \frac{V^2}{A^3}
 
     Similar to Sphericity and Compactness 1, Compactness 2 is a measure of how compact the shape of the tumor is
     relative to a sphere (most compact). It is a dimensionless measure, independent of scale and orientation. The value
@@ -261,9 +286,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getSphericalDisproportionFeatureValue(self):
     r"""
-    Calculate the Spherical Disproportion of the tumor region.
+    **7. Spherical Disproportion**
 
-    :math:`spherical\ disproportion = \frac{A}{4\pi R^2} = \frac{A}{\sqrt[3]{36 \pi V^2}}`
+    .. math::
+
+      \textit{spherical disproportion} = \frac{A}{4\pi R^2} = \frac{A}{\sqrt[3]{36 \pi V^2}}
 
     Where :math:`R` is the radius of a sphere with the same volume as the tumor, and equal to
     :math:`\sqrt[3]{\frac{3V}{4\pi}}`.
@@ -282,69 +309,86 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getMaximum3DDiameterFeatureValue(self):
     r"""
-    Calculate the largest pairwise euclidean distance between tumor surface voxels.
+    **8. Maximum 3D diameter**
+
+    Maximum 3D diameter is defined as the largest pairwise Euclidean distance between surface voxels in the ROI.
+
     Also known as Feret Diameter.
     """
     return self.lssif.GetFeretDiameter(self.label)
 
   def getMaximum2DDiameterSliceFeatureValue(self):
     r"""
-    Calculate the largest pairwise euclidean distance between tumor surface voxels in the row-column plane.
+    **9. Maximum 2D diameter (Slice)**
+
+    Maximum 2D diameter (Slice) is defined as the largest pairwise Euclidean distance between tumor surface voxels in
+    the row-column (generally the axial) plane.
     """
 
     return self._getMaximum2Ddiameter(0)
 
   def getMaximum2DDiameterColumnFeatureValue(self):
     r"""
-    Calculate the largest pairwise euclidean distance between tumor surface voxels in the row-slice plane.
+    **10. Maximum 2D diameter (Column)**
+
+    Maximum 2D diameter (Column) is defined as the largest pairwise Euclidean distance between tumor surface voxels in
+    the row-slice (usually the coronal) plane.
     """
 
     return self._getMaximum2Ddiameter(1)
 
   def getMaximum2DDiameterRowFeatureValue(self):
     r"""
-    Calculate the largest pairwise euclidean distance between tumor surface voxels in the column-slice plane.
+    **11. Maximum 2D diameter (Row)**
+
+    Maximum 2D diameter (Row) is defined as the largest pairwise Euclidean distance between tumor surface voxels in the
+    column-slice (usually the sagittal) plane.
     """
 
     return self._getMaximum2Ddiameter(2)
 
   def getMajorAxisFeatureValue(self):
     r"""
+    **12. Major Axis**
 
     .. math::
 
-      \textit{Major Axis} = 4 \sqrt{\lambda_{\text{major}}}
+      \textit{major axis} = 4 \sqrt{\lambda_{\text{major}}}
 
     """
     return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[2]) * 4
 
   def getMinorAxisFeatureValue(self):
     r"""
+    **13. Minor Axis**
 
     .. math::
 
-      \textit{Major Axis} = 4 \sqrt{\lambda_{\text{minor}}}
+      \textit{minor axis} = 4 \sqrt{\lambda_{\text{minor}}}
 
     """
     return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[1]) * 4
 
   def getLeastAxisFeatureValue(self):
     r"""
+    **14. Least Axis**
 
     .. math::
 
-      \textit{Major Axis} = 4 \sqrt{\lambda_{\text{least}}}
+      \textit{least axis} = 4 \sqrt{\lambda_{\text{least}}}
 
     """
     return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[0]) * 4
 
   def getElongationFeatureValue(self):
     r"""
-    Calculate the elongation of the shape, which is defined as:
+    **15. Elongation**
+
+    Elongation is calculated using its implementation in SimpleITK, and is defined as:
 
     .. math::
 
-      Elongation = \sqrt{\frac{\lambda_{\text{minor}}}{\lambda_{\text{major}}}}
+      \textit{elongation} = \sqrt{\frac{\lambda_{\text{minor}}}{\lambda_{\text{major}}}}
 
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{minor}}` are the lengths of the largest and second
     largest principal component axes. The values range between 1 (where the cross section through the first and second
@@ -356,11 +400,13 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getFlatnessFeatureValue(self):
     r"""
-    Calculate the flatness of the shape, which is defined as:
+    **16. Flatness**
+
+    Flatness is calculated using its implementation in SimpleITK, and is defined as:
 
     .. math::
 
-      Flatness = \sqrt{\frac{\lambda_{\text{least}}}{\lambda_{\text{major}}}}
+      \textit{flatness} = \sqrt{\frac{\lambda_{\text{least}}}{\lambda_{\text{major}}}}
 
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{least}}` are the lengths of the largest and smallest
     principal component axes. The values range between 1 (non-flat, sphere-like) and 0 (a flat object).

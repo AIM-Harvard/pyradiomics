@@ -400,7 +400,7 @@ class RadiomicsFeaturesExtractor:
       # Mask checks failed, do not extract features and return the empty featureVector
       return featureVector
 
-    self.logger.debug("Image and Mask loaded and valid, starting extraction")
+    self.logger.debug('Image and Mask loaded and valid, starting extraction')
 
     if self.kwargs['additionalInfo']:
       featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
@@ -410,7 +410,7 @@ class RadiomicsFeaturesExtractor:
       croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox, self.kwargs['label'])
       enabledFeatures = self.enabledFeatures['shape']
 
-      self.logger.info("Computing shape")
+      self.logger.info('Computing shape')
       shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.kwargs)
       if enabledFeatures is None or len(enabledFeatures) == 0:
         shapeClass.enableAllFeatures()
@@ -420,7 +420,7 @@ class RadiomicsFeaturesExtractor:
 
       shapeClass.calculateFeatures()
       for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
-        newFeatureName = "original_shape_%s" % (featureName)
+        newFeatureName = 'original_shape_%s' % (featureName)
         featureVector[newFeatureName] = featureValue
 
     # Make generators for all enabled input image types
@@ -429,13 +429,13 @@ class RadiomicsFeaturesExtractor:
     for imageType, customKwargs in six.iteritems(self.inputImages):
       args = self.kwargs.copy()
       args.update(customKwargs)
-      self.logger.info("Applying filter: '%s' with settings: %s" % (imageType, str(args)))
+      self.logger.info('Adding image type "%s" with settings: %s' % (imageType, str(args)))
       imageGenerators = chain(imageGenerators, getattr(imageoperations, 'get%sImage' % imageType)(image, **args))
 
     self.logger.debug('Extracting features')
     # Calculate features for all (filtered) images in the generator
     for inputImage, inputImageName, inputKwargs in imageGenerators:
-      self.logger.info('Calculating features for %s image, with settings: %s', inputImageName, str(inputKwargs))
+      self.logger.info('Calculating features for %s image', inputImageName)
       inputImage, inputMask = imageoperations.cropToTumorMask(inputImage, mask, boundingBox, self.kwargs['label'])
       featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
 
@@ -534,7 +534,7 @@ class RadiomicsFeaturesExtractor:
 
         featureClass.calculateFeatures()
         for (featureName, featureValue) in six.iteritems(featureClass.featureValues):
-          newFeatureName = "%s_%s_%s" % (inputImageName, featureClassName, featureName)
+          newFeatureName = '%s_%s_%s' % (inputImageName, featureClassName, featureName)
           featureVector[newFeatureName] = featureValue
 
     return featureVector

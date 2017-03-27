@@ -47,12 +47,13 @@ class GeneralInfo():
 
   def execute(self):
     """
-    Return a pandas Series containing all general info items. Format is <info_item>:<value>, where any ',' in
-    <value> are replaced by ';' to prevent column alignment errors in csv formatted output.
+    Return a pandas Series containing all general info items. Format is <info_item>:<value>, where the type
+    of the value is preserved. For CSV format, this will result in conversion to string and quotes where necessary, for
+    JSON, the values will be interpreted and stored as JSON strings.
     """
     generalInfo = pandas.Series()
     for el in self.elements:
-      generalInfo[el] = str(getattr(self, 'get%sValue' % el)()).replace(',', ';')
+      generalInfo[el] = getattr(self, 'get%sValue' % el)()
     return generalInfo
 
   def getBoundingBoxValue(self):

@@ -140,7 +140,7 @@ class RadiomicsTestUtils:
   def getBaselineSettings(self, featureClass, testCase):
     dictSeries = self._baseline.get('%s_general_info_GeneralSettings' % featureClass, None)
     if dictSeries is not None:
-      return ast.literal_eval(str(dictSeries[testCase]).replace(';', ','))
+      return ast.literal_eval(dictSeries[testCase])
     return {}
 
   def getTestCase(self):

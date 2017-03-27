@@ -107,8 +107,8 @@ class RadiomicsTestUtils:
       self._featureClassName = className
 
       # Check if test settings have changed
-      if self._kwargs != self.getBaselineDict(className, testCase):
-        self._kwargs = self.getBaselineDict(className, testCase)
+      if self._kwargs != self.getBaselineSettings(className, testCase):
+        self._kwargs = self.getBaselineSettings(className, testCase)
         self._testCase = None  # forces image to be reloaded (as settings have changed)
 
     # Next, set testCase if necessary
@@ -140,10 +140,10 @@ class RadiomicsTestUtils:
 
     return True
 
-  def getBaselineDict(self, featureClass, testCase):
-    dictStr = self._baseline[featureClass][testCase].get('general_info_GeneralSettings', None)
-    if dictStr is not None:
-      return ast.literal_eval(str(dictStr).replace(';', ','))
+  def getBaselineSettings(self, featureClass, testCase):
+    dictSeries = self._baseline[featureClass][testCase].get('general_info_GeneralSettings', None)
+    if dictSeries is not None:
+      return ast.literal_eval(dictSeries)
     return {}
 
   def getTestCase(self):

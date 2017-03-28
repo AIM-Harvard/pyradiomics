@@ -7,7 +7,6 @@ import json
 import logging
 import os.path
 import sys
-import traceback
 
 import six
 
@@ -26,19 +25,21 @@ parser.add_argument('--format', '-f', choices=['txt', 'csv', 'json'], default='t
                          'Default is "txt": one feature per line in format "name:value". For "csv": one row of feature '
                          'names, followed by one row of feature values. For "json": Features are written in a JSON '
                          'format dictionary "{name:value}"')
-parser.add_argument('--param', '-p', metavar='FILE', nargs=1, type=str, default=None,
+parser.add_argument('--param', '-p', metavar='FILE', type=str, default=None,
                     help='Parameter file containing the settings to be used in extraction')
-parser.add_argument('--label', '-l', metavar='N', nargs=1, default=None, type=int,
+parser.add_argument('--label', '-l', metavar='N', default=None, type=int,
                     help='Value of label in mask to use for feature extraction')
 parser.add_argument('--logging-level', metavar='LEVEL',
                     choices=['NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                     default='WARNING', help='Set capture level for logging')
-parser.add_argument('--log-file', metavar='FILE', nargs=1, type=argparse.FileType('w'), default=None,
+parser.add_argument('--log-file', metavar='FILE', type=argparse.FileType('w'), default=None,
                     help='File to append logger output to')
 parser.add_argument('--verbosity', '-v', action='store', nargs='?', default=3, const=4, type=int, choices=range(0, 6),
                     help='Regulate output to stderr. By default [3], level WARNING and up are printed. By specifying '
                     'this argument without a value, level INFO [4] is assumed. A higher value results in more verbose '
                     'output.')
+parser.add_argument('--shorten-path', dest='shorten', action='store_true',
+                    help='specify this argument to image and mask path to just the file names')
 parser.add_argument('--version', action='version', help='Print version and exit',
                     version='%(prog)s ' + radiomics.__version__)
 
@@ -66,14 +67,15 @@ def main():
   # Initialize extractor
   try:
     if args.param is not None:
-      extractor = featureextractor.RadiomicsFeaturesExtractor(args.param[0])
+      extractor = featureextractor.RadiomicsFeaturesExtractor(args.param)
     else:
       extractor = featureextractor.RadiomicsFeaturesExtractor()
     logger.info('Extracting features with kwarg settings: %s\n\tImage: %s\n\tMask: %s',
                 str(extractor.kwargs), os.path.abspath(args.image), os.path.abspath(args.mask))
     featureVector = collections.OrderedDict()
-    featureVector['image'] = os.path.basename(args.image)
-    featureVector['mask'] = os.path.basename(args.mask)
+    if args.shorten:
+      featureVector['Image'] = os.path.basename(args.image)
+      featureVector['Mask'] = os.path.basename(args.mask)
 
     featureVector.update(extractor.execute(args.image, args.mask, args.label))
 
@@ -88,7 +90,7 @@ def main():
       for k, v in six.iteritems(featureVector):
         args.out.write('%s: %s\n' % (k, v))
   except Exception:
-    logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
+    logger.error('FEATURE EXTRACTION FAILED', exc_info=True)
 
   args.out.close()
   if args.log_file is not None:

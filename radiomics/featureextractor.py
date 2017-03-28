@@ -361,12 +361,16 @@ class RadiomicsFeaturesExtractor:
 
   def execute(self, imageFilepath, maskFilepath, label=None):
     """
-    Compute radiomics signature for provide image and mask combination.
-    First, image and mask are loaded and normalized/resampled if necessary. Second, if enabled, provenance information
-    is calculated and stored as part of the result. Next, shape features are calculated on a cropped (no padding)
-    version of the original image. Then other featureclasses are calculated using all specified input images in
-    ``inputImages``. Images are cropped to tumor mask (no padding) after application of any filter and before being
-    passed to the feature class. Finally, the dictionary containing all calculated features is returned.
+    Compute radiomics signature for provide image and mask combination. It comprises of the following steps:
+
+    1. Image and mask are loaded and normalized/resampled if necessary.
+    2. Validity of ROI is checked using :py:func:`~imageoperations.checkMask`, which also computes and returns the
+       bounding box.
+    3. If enabled, provenance information is calculated and stored as part of the result.
+    4. Shape features are calculated on a cropped (no padding) version of the original image.
+    5. Other enabled featureclasses are calculated using all specified input image types in ``inputImages``. Images are
+       cropped to tumor mask (no padding) after application of any filter and before being passed to the feature class.
+    6. The calculated features is returned as ``collections.OrderedDict``.
 
     :param imageFilepath: SimpleITK Image, or string pointing to image file location
     :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
@@ -386,6 +390,7 @@ class RadiomicsFeaturesExtractor:
     self.logger.debug('Enabled features: %s', self.enabledFeatures)
     self.logger.debug('Current settings: %s', self.kwargs)
 
+    # 1. Load the image and mask
     featureVector = collections.OrderedDict()
     image, mask = self.loadImage(imageFilepath, maskFilepath)
 
@@ -393,7 +398,7 @@ class RadiomicsFeaturesExtractor:
       # No features can be extracted, return the empty featureVector
       return featureVector
 
-    # Check whether loaded mask contains a valid ROI for feature extraction
+    # 2. Check whether loaded mask contains a valid ROI for feature extraction and get bounding box
     boundingBox = imageoperations.checkMask(image, mask, **self.kwargs)
 
     if boundingBox is None:
@@ -402,10 +407,11 @@ class RadiomicsFeaturesExtractor:
 
     self.logger.debug('Image and Mask loaded and valid, starting extraction')
 
+    # 3. Add the additional information if enabled
     if self.kwargs['additionalInfo']:
       featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
-    # If shape should be calculation, handle it separately here
+    # 4. If shape descriptors should be calculated, handle it separately here
     if 'shape' in self.enabledFeatures.keys():
       croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox, self.kwargs['label'])
       enabledFeatures = self.enabledFeatures['shape']
@@ -423,6 +429,7 @@ class RadiomicsFeaturesExtractor:
         newFeatureName = 'original_shape_%s' % (featureName)
         featureVector[newFeatureName] = featureValue
 
+    # 5. Calculate other enabled feature classes using enabled input image types
     # Make generators for all enabled input image types
     self.logger.debug('Creating input image type iterator')
     imageGenerators = []

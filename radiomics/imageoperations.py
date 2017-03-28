@@ -322,21 +322,21 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Step 1: Get the origin and UBound corners of the bounding box in physical space
   # The additional 0.5 represents the difference between the voxel center and the voxel corner
   # Upper bound index of ROI = bb[:3] + bb[3:] - 1 (LBound + Size - 1), .5 is added to get corner
-  physicalBounds = (maskNode.TransformContinuousIndexToPhysicalPoint(bb[3:] - .5),  # Origin
-                    maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] + bb[3:] - 0.5))  # UBound
-  logger.debug('ROI bounds (mm): %s', physicalBounds)
+  ROIBounds = (maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] - .5),  # Origin
+               maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] + bb[3:] - 0.5))  # UBound
+  # Step 2: Translate the ROI physical bounds to the image coordinate space
+  ROIBounds = (imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[0]),  # Origin
+               imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[1]))
 
-  # Step 2: Determine the physical bounds of the image in a similar manner as in step 1
-  imageBounds = (imageNode.TransformContinuousIndexToPhysicalPoint([-0.5, -0.5, -0.5]),  # Origin
-                 imageNode.TransformContinuousIndexToPhysicalPoint(numpy.array(imageNode.GetSize()) + 0.5))  # UBound
-  logger.debug('Image bounds (mm): %s', imageBounds)
+  logger.debug('ROI bounds (image coordinate space): %s', ROIBounds)
 
-  # Check if any of the physical bounds of the bounding box are outside the physical space of the image
-  # Use numpy.max and numpy.min to correct for negative directions
-  if numpy.any(numpy.min(imageBounds, axis=0) > numpy.min(physicalBounds, axis=0)) or \
-     numpy.any(numpy.max(imageBounds, axis=0) < numpy.max(physicalBounds, axis=0)):
-    logger.error('Physical space of bounding box is larger than physical space of image:\n\t'
-                 'ROI physical bounds %s\n\tImage physical bounds %s', physicalBounds, imageBounds)
+  # Check if any of the ROI bounds are outside the image indices (i.e. -0.5 < ROI < Im.Size -0.5)
+  # The additional 0.5 is to allow for different spacings (defines the edges, not the centers of the edge-voxels
+  tolerance = 1e-3  # Define a tolerance to correct for machine precision errors
+  if numpy.any(numpy.min(ROIBounds, axis=0) < (- .5 - tolerance)) or \
+     numpy.any(numpy.max(ROIBounds, axis=0) > (numpy.array(imageNode.GetSize()) - .5 + tolerance)):
+    logger.error('Bounding box of ROI is larger than image space:\n\t'
+                 'ROI bounds (image coordinate space) %s\n\tImage Size %s', ROIBounds, imageNode.GetSize())
     return None, None
 
   logger.debug('ROI valid, calculating resampling grid')

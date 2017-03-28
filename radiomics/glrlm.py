@@ -197,6 +197,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:
       self.logger.debug('Applying weighting (%s)', self.weightingNorm)
+      # Correct the number of voxels for the number of times it is used (once per angle), affects run percentage
+      self.coefficients['Np'] *= len(angles)
+
       pixelSpacing = self.inputImage.GetSpacing()[::-1]
       weights = numpy.empty(len(angles))
       for a_idx, a in enumerate(angles):

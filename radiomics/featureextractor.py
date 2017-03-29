@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import collections
 from itertools import chain
 import logging
 import os
 
+import pandas
 import pykwalify.core
 import SimpleITK as sitk
 import six
@@ -101,7 +101,7 @@ class RadiomicsFeaturesExtractor:
     self.enabledFeatures = {}
 
     if len(args) == 1 and isinstance(args[0], six.string_types):
-      self.logger.info("Loading parameter file")
+      self.logger.info('Loading parameter file')
       self.loadParams(args[0])
     else:
       # Set default settings and update with and changed settings contained in kwargs
@@ -205,14 +205,14 @@ class RadiomicsFeaturesExtractor:
     enabledFeatures = params.get('featureClass', {})
     kwargs = params.get('setting', {})
 
-    self.logger.debug("Parameter file parsed. Applying settings")
+    self.logger.debug('Parameter file parsed. Applying settings')
 
     if len(inputImages) == 0:
       self.inputImages = {'Original': {}}
     else:
       self.inputImages = inputImages
 
-    self.logger.debug("Enabled input images: %s", self.inputImages)
+    self.logger.debug('Enabled input images: %s', self.inputImages)
 
     if len(enabledFeatures) == 0:
       self.enabledFeatures = {}
@@ -221,13 +221,13 @@ class RadiomicsFeaturesExtractor:
     else:
       self.enabledFeatures = enabledFeatures
 
-    self.logger.debug("Enabled features: %s", enabledFeatures)
+    self.logger.debug('Enabled features: %s', enabledFeatures)
 
     # Set default settings and update with and changed settings contained in kwargs
     self.kwargs = self._getDefaultSettings()
     self.kwargs.update(kwargs)
 
-    self.logger.debug("Settings: %s", kwargs)
+    self.logger.debug('Settings: %s', kwargs)
 
   def enableAllInputImages(self):
     """
@@ -361,18 +361,22 @@ class RadiomicsFeaturesExtractor:
 
   def execute(self, imageFilepath, maskFilepath, label=None):
     """
-    Compute radiomics signature for provide image and mask combination.
-    First, image and mask are loaded and normalized/resampled if necessary. Second, if enabled, provenance information
-    is calculated and stored as part of the result. Next, shape features are calculated on a cropped (no padding)
-    version of the original image. Then other featureclasses are calculated using all specified input images in
-    ``inputImages``. Images are cropped to tumor mask (no padding) after application of any filter and before being
-    passed to the feature class. Finally, the dictionary containing all calculated features is returned.
+    Compute radiomics signature for provide image and mask combination. It comprises of the following steps:
+
+    1. Image and mask are loaded and normalized/resampled if necessary.
+    2. Validity of ROI is checked using :py:func:`~imageoperations.checkMask`, which also computes and returns the
+       bounding box.
+    3. If enabled, provenance information is calculated and stored as part of the result.
+    4. Shape features are calculated on a cropped (no padding) version of the original image.
+    5. Other enabled featureclasses are calculated using all specified input image types in ``inputImages``. Images are
+       cropped to tumor mask (no padding) after application of any filter and before being passed to the feature class.
+    6. The pandas Series containing all calculated features is returned.
 
     :param imageFilepath: SimpleITK Image, or string pointing to image file location
     :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
     :param label: Integer, value of the label for which to extract features. If not specified, last specified label
         is used. Default label is 1.
-    :returns: dictionary containing calculated signature ("<filter>_<featureClass>_<featureName>":value).
+    :returns: pandas Series with calculated values. values are labelled as "<filter>_<featureClass>_<featureName>".
     """
     # Enable or disable C extensions for high performance matrix calculation. Only logs a message (INFO) when setting is
     # successfully changed. If an error occurs, full-python mode is forced and a warning is logged.
@@ -386,14 +390,15 @@ class RadiomicsFeaturesExtractor:
     self.logger.debug('Enabled features: %s', self.enabledFeatures)
     self.logger.debug('Current settings: %s', self.kwargs)
 
-    featureVector = collections.OrderedDict()
+    # 1. Load the image and mask
+    featureVector = pandas.Series()
     image, mask = self.loadImage(imageFilepath, maskFilepath)
 
     if image is None or mask is None:
       # No features can be extracted, return the empty featureVector
       return featureVector
 
-    # Check whether loaded mask contains a valid ROI for feature extraction
+    # 2. Check whether loaded mask contains a valid ROI for feature extraction and get bounding box
     boundingBox = imageoperations.checkMask(image, mask, **self.kwargs)
 
     if boundingBox is None:
@@ -402,10 +407,11 @@ class RadiomicsFeaturesExtractor:
 
     self.logger.debug('Image and Mask loaded and valid, starting extraction')
 
+    # 3. Adding the additional information if enabled
     if self.kwargs['additionalInfo']:
-      featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
+      featureVector = self.getProvenance(imageFilepath, maskFilepath, mask)
 
-    # If shape should be calculation, handle it separately here
+    # 4. If shape should be calculation, handle it separately here
     if 'shape' in self.enabledFeatures.keys():
       croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox, self.kwargs['label'])
       enabledFeatures = self.enabledFeatures['shape']
@@ -419,10 +425,13 @@ class RadiomicsFeaturesExtractor:
           shapeClass.enableFeatureByName(feature)
 
       shapeClass.calculateFeatures()
-      for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
-        newFeatureName = 'original_shape_%s' % (featureName)
-        featureVector[newFeatureName] = featureValue
 
+      # Rename indices to have unique identifier
+      shapeClass.featureValues.index = ['original_shape_%s' % idx for idx in shapeClass.featureValues.index]
+
+      featureVector = featureVector.append(shapeClass.featureValues)
+
+    # 5. Calculate other enabled feature classes using enabled input image types
     # Make generators for all enabled input image types
     self.logger.debug('Creating input image type iterator')
     imageGenerators = []
@@ -437,10 +446,11 @@ class RadiomicsFeaturesExtractor:
     for inputImage, inputImageName, inputKwargs in imageGenerators:
       self.logger.info('Calculating features for %s image', inputImageName)
       inputImage, inputMask = imageoperations.cropToTumorMask(inputImage, mask, boundingBox, self.kwargs['label'])
-      featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
+      featureVector = featureVector.append(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
 
     self.logger.debug('Features extracted')
 
+    # 6. Return result
     return featureVector
 
   def loadImage(self, ImageFilePath, MaskFilePath):
@@ -489,15 +499,14 @@ class RadiomicsFeaturesExtractor:
   def getProvenance(self, imageFilepath, maskFilepath, mask):
     """
     Generates provenance information for reproducibility. Takes the original image & mask filepath, as well as the
-    resampled mask which is passed to the feature classes. Returns a dictionary with keynames coded as
+    resampled mask which is passed to the feature classes. Returns a pandas Series with values labelled as
     "general_info_<item>". For more information on generated items, see :ref:`generalinfo<radiomics-generalinfo-label>`
     """
     self.logger.info('Adding additional extraction information')
 
-    provenanceVector = collections.OrderedDict()
     generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.kwargs, self.inputImages)
-    for k, v in six.iteritems(generalinfoClass.execute()):
-      provenanceVector['general_info_%s' % (k)] = v
+    provenanceVector = generalinfoClass.execute()
+    provenanceVector.index = ['general_info_%s' % idx for idx in provenanceVector.index]
     return provenanceVector
 
   def computeFeatures(self, image, mask, inputImageName, **kwargs):
@@ -513,7 +522,7 @@ class RadiomicsFeaturesExtractor:
       shape descriptors are independent of gray level and therefore calculated separately (handeled in `execute`). In
       this function, no shape functions are calculated.
     """
-    featureVector = collections.OrderedDict()
+    featureVector = pandas.Series()
 
     # Calculate feature classes
     for featureClassName, enabledFeatures in six.iteritems(self.enabledFeatures):
@@ -533,9 +542,12 @@ class RadiomicsFeaturesExtractor:
             featureClass.enableFeatureByName(feature)
 
         featureClass.calculateFeatures()
-        for (featureName, featureValue) in six.iteritems(featureClass.featureValues):
-          newFeatureName = '%s_%s_%s' % (inputImageName, featureClassName, featureName)
-          featureVector[newFeatureName] = featureValue
+
+        # Rename indices to have unique identifier
+        featureClass.featureValues.index = \
+            ['%s_%s_%s' % (inputImageName, featureClassName, idx) for idx in featureClass.featureValues.index]
+
+        featureVector = featureVector.append(featureClass.featureValues)
 
     return featureVector
 

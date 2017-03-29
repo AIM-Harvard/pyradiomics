@@ -1,12 +1,10 @@
 
 from __future__ import print_function
 
-import collections
-import csv
 import logging
 import os
-import traceback
 
+import pandas
 import SimpleITK as sitk
 
 import radiomics
@@ -35,69 +33,60 @@ def main():
   logger = rLogger.getChild('batch')
 
   # Set verbosity level for output to stderr (default level = WARNING)
-  # radiomics.setVerbosity(logging.INFO)
+  radiomics.setVerbosity(logging.INFO)
 
   logger.info('Loading CSV')
-  print("Loading CSV")
 
-  flists = []
   try:
-    with open(inputCSV, 'r') as inFile:
-      cr = csv.reader(inFile, lineterminator='\n')
-      flists = [row for row in cr]
+    flists = pandas.read_csv(inputCSV).T  # Transpose data so that each column represents one test case
   except Exception:
-    logging.error('CSV READ FAILED:\n%s', traceback.format_exc())
+    logging.error('CSV READ FAILED', exc_info=True)
+    exit(-1)
 
-  print("Loading Done")
-  print("Patients: " + str(len(flists)))
+  logging.info('Loading Done')
+  logging.info('Patients: %d', len(flists))
 
   kwargs = {}
   kwargs['binWidth'] = 25
   kwargs['resampledPixelSpacing'] = None  # [3,3,3]
   kwargs['interpolator'] = sitk.sitkBSpline
-  kwargs['enableCExtensions'] = False
+  kwargs['enableCExtensions'] = True
 
   logger.info('pyradiomics version: %s', radiomics.__version__)
   logger.info('Extracting features with kwarg settings: %s', str(kwargs))
 
   extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
-  extractor.enableInputImages(Original={})
+  # extractor.enableInputImages(Original={}) # Original enabled by default
   # extractor.enableInputImages(wavelet= {'level': 2})
 
-  headers = None
+  results = pandas.DataFrame()
 
-  for idx, entry in enumerate(flists, start=1):
+  for entry in flists:  # Loop over all columns (i.e. the test cases)
+    logger.info("(%d/%d) Processing Patient (Image: %s, Mask: %s)",
+                entry + 1,
+                len(flists),
+                flists[entry]['Image'],
+                flists[entry]['Mask'])
 
-    print("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s" % (idx, len(flists), entry[0], entry[1], entry[2]))
-    logger.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
-                entry[2])
-
-    imageFilepath = entry[3]
-    maskFilepath = entry[4]
+    imageFilepath = flists[entry]['Image']
+    maskFilepath = flists[entry]['Mask']
 
     if (imageFilepath is not None) and (maskFilepath is not None):
-      featureVector = collections.OrderedDict()
-      featureVector['PatientID'] = entry[0]
-      featureVector['Study'] = entry[1]
-      featureVector['Reader'] = entry[2]
-      featureVector['image'] = os.path.basename(imageFilepath)
-      featureVector['mask'] = os.path.basename(maskFilepath)
+      featureVector = flists[entry]
+      featureVector['Image'] = os.path.basename(imageFilepath)
+      featureVector['Mask'] = os.path.basename(maskFilepath)
 
       try:
-        featureVector.update(extractor.execute(imageFilepath, maskFilepath))
-
-        with open(outputFilepath, 'a') as outputFile:
-          writer = csv.writer(outputFile, lineterminator='\n')
-          if headers is None:
-            headers = list(featureVector.keys())
-            writer.writerow(headers)
-
-          row = []
-          for h in headers:
-            row.append(featureVector.get(h, "N/A"))
-          writer.writerow(row)
+        featureVector = featureVector.append(extractor.execute(imageFilepath, maskFilepath))
       except Exception:
-        logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
+        logger.error('FEATURE EXTRACTION FAILED:', exc_info=True)
+
+      featureVector.name = entry
+      results = results.join(featureVector, how='outer')  # If feature extraction failed, results will be all NaN
+
+  logger.info('Extraction complete, writing CSV')
+  results.T.to_csv(outputFilepath, index=False, na_rep='NaN')
+  logger.info('CSV writing complete')
 
 if __name__ == '__main__':
   main()

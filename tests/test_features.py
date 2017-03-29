@@ -6,6 +6,7 @@ import logging
 import os
 
 from nose_parameterized import parameterized
+import numpy
 
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
 from testUtils import custom_name_func, RadiomicsTestUtils
@@ -54,11 +55,12 @@ class TestFeatures:
 
     assert (featureClass is not None)
 
-    featureClass.disableAllFeatures()
-    featureClass.enableFeatureByName(featureName)
-    featureClass.calculateFeatures()
-    # get the result and test it
-    val = featureClass.featureValues[featureName]
+    try:
+      val = getattr(featureClass, 'get%sFeatureValue' % featureName)()
+    except Exception:
+      logging.error('Feature calculation Failed', exc_info=True)
+      val = numpy.nan
+
     testUtils.checkResult(featureName, val)
 
 

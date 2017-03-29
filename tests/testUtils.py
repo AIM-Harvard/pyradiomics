@@ -1,14 +1,13 @@
 
 import ast
-import csv
 import logging
 import math
 import os
 
 from nose_parameterized import parameterized
 import numpy
+import pandas
 import SimpleITK as sitk
-import six
 
 from radiomics import imageoperations
 
@@ -69,7 +68,8 @@ class RadiomicsTestUtils:
     self._baselineDir = os.path.join(self._dataDir, 'baseline')
     self._mappingDir = os.path.join(self._dataDir, 'mapping')
 
-    self._baseline = {}
+    self._baseline = pandas.DataFrame()
+    self._featureClasses = set()
     self.readBaselineFiles()
 
     self._kwargs = {}
@@ -78,11 +78,8 @@ class RadiomicsTestUtils:
     self._testCase = None
     self._testedSet = set()
 
-    self._results = {}
-    self._diffs = {}
-    for testCase in self.getTestCases():
-      self._results[testCase] = {}
-      self._diffs[testCase] = {}
+    self._results = pandas.DataFrame(index=self.getTestCases())
+    self._diffs = pandas.DataFrame(index=self.getTestCases())
 
   def setFeatureClassAndTestCase(self, className, testCase):
     """
@@ -107,8 +104,8 @@ class RadiomicsTestUtils:
       self._featureClassName = className
 
       # Check if test settings have changed
-      if self._kwargs != self.getBaselineDict(className, testCase):
-        self._kwargs = self.getBaselineDict(className, testCase)
+      if self._kwargs != self.getBaselineSettings(className, testCase):
+        self._kwargs = self.getBaselineSettings(className, testCase)
         self._testCase = None  # forces image to be reloaded (as settings have changed)
 
     # Next, set testCase if necessary
@@ -140,10 +137,10 @@ class RadiomicsTestUtils:
 
     return True
 
-  def getBaselineDict(self, featureClass, testCase):
-    dictStr = self._baseline[featureClass][testCase].get('general_info_GeneralSettings', None)
-    if dictStr is not None:
-      return ast.literal_eval(str(dictStr).replace(';', ','))
+  def getBaselineSettings(self, featureClass, testCase):
+    dictSeries = self._baseline.get('%s_general_info_GeneralSettings' % featureClass, None)
+    if dictSeries is not None:
+      return ast.literal_eval(dictSeries[testCase])
     return {}
 
   def getTestCase(self):
@@ -162,13 +159,13 @@ class RadiomicsTestUtils:
     """
     Return all the test cases for which there are baseline information.
     """
-    return self._baseline[list(self._baseline.keys())[0]].keys()
+    return self._baseline.index
 
   def getFeatureClasses(self):
     """
     Return all the feature classes for which there are baseline information.
     """
-    return self._baseline.keys()
+    return self._featureClasses
 
   def readBaselineFiles(self):
     """
@@ -181,14 +178,13 @@ class RadiomicsTestUtils:
     for baselineFile in baselineFiles:
       cls = baselineFile[9:-4]
       self._logger.debug('Reading baseline for class %s', cls)
-      self._baseline[cls] = {}
-      with open(os.path.join(self._baselineDir, baselineFile), 'r' if six.PY3 else 'rb') as baselineReader:
-        csvReader = csv.reader(baselineReader)
-        headers = six.next(csvReader)
-        for testRow in csvReader:
-          self._baseline[cls][testRow[0]] = {}
-          for val_idx, val in enumerate(testRow[1:], start=1):
-            self._baseline[cls][testRow[0]][headers[val_idx]] = val
+
+      baseline = pandas.read_csv(os.path.join(self._baselineDir, baselineFile))
+      assert 'Patient ID' in baseline
+      baseline.set_index('Patient ID', inplace=True)
+      baseline.columns = ['%s_%s' % (cls, feature) for feature in baseline.columns]
+      self._baseline = self._baseline.join(baseline, how='outer')
+      self._featureClasses.add(cls)
 
   def checkResult(self, featureName, value):
     """
@@ -196,23 +192,27 @@ class RadiomicsTestUtils:
     """
 
     longName = '%s_%s' % (self._featureClassName, featureName)
+    if longName not in self._results:
+      self._results = self._results.join(pandas.Series(name=longName))
+      self._diffs = self._diffs.join(pandas.Series(name=longName))
+
     if value is None:
-      self._diffs[self._testCase][longName] = None
-      self._results[self._testCase][longName] = None
+      self._diffs[longName][self._testCase] = None
+      self._results[longName][self._testCase] = None
     assert (value is not None)
 
     if math.isnan(value):
-      self._diffs[self._testCase][longName] = numpy.nan
-      self._results[self._testCase][longName] = numpy.nan
+      self._diffs[longName][self._testCase] = numpy.nan
+      self._results[longName][self._testCase] = numpy.nan
     assert (not math.isnan(value))
 
     # save the result using the baseline class and feature names
     self._logger.debug('checkResults: featureName = %s', featureName)
 
-    self._results[self._testCase][longName] = value
+    self._results[longName][self._testCase] = value
 
-    assert featureName in self._baseline[self._featureClassName][self._testCase]
-    baselineValue = float(self._baseline[self._featureClassName][self._testCase][featureName])
+    assert longName in self._baseline
+    baselineValue = float(self._baseline[longName][self._testCase])
     self._logger.debug('checkResults: for featureName %s, got baseline value = %f', featureName, baselineValue)
 
     if baselineValue == 0.0:
@@ -225,7 +225,7 @@ class RadiomicsTestUtils:
       percentDiff = abs(1.0 - (value / baselineValue))
 
     # save the difference
-    self._diffs[self._testCase][longName] = percentDiff
+    self._diffs[longName][self._testCase] = percentDiff
 
     # check for a less than three percent difference
     if (percentDiff >= 0.03):
@@ -244,27 +244,12 @@ class RadiomicsTestUtils:
 
   def writeCSV(self, data, fileName):
     """
-    Write out data in a csv file.
-    Assumes a data structure with:
-
-    {'id1' : {'f1':n1, 'f2':n2}, 'id2' : {'f1':n3, 'f2':n4}}
+    Write out data in a csv file. Assumes data is a pandas DataFrame, with test cases as index (rows).
     """
     # Get the headers from the first testCase in _testedSet
     # If no tests were run, the length of _testedSet will be 0, and no files should be written
     if len(self._testedSet) > 0:
-      with open(fileName, 'w') as csvFile:
-        csvFileWriter = csv.writer(csvFile, lineterminator='\n')
-        testedCases = sorted(self._testedSet)
-        header = sorted(data[testedCases[0]].keys())
-        header = ['testCase'] + header
-        csvFileWriter.writerow(header)
-        for testCase in testedCases:
-          thisCase = data[testCase]
-          thisCase['testCase'] = testCase
-          row = []
-          for h in header:
-            row = row + [thisCase.get(h, "N/A")]
-          csvFileWriter.writerow(row)
-        self._logger.info('Wrote to file %s', fileName)
+      data[data.index.isin(self._testedSet)].to_csv(fileName)
+      self._logger.info('Wrote to file %s', fileName)
     else:
       self._logger.info('No test cases run, aborting file write to %s', fileName)

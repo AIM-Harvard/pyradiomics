@@ -1,8 +1,7 @@
 import numpy
 from six.moves import range
-from tqdm import trange
 
-from radiomics import base, cMatrices, cMatsEnabled, imageoperations
+from radiomics import base, cMatrices, cMatsEnabled, getProgressFunctions, imageoperations
 
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):
@@ -113,6 +112,15 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLCM, self).__init__(inputImage, inputMask, **kwargs)
 
+    if self.verbose:
+      self.initProgress, self.reportProgress, self.closeProgress = getProgressFunctions()
+      # Ensure that all three functions are defined before enabling progress reporting
+      if self.reportProgress is None or self.closeProgress is None:
+        self.initProgress = None
+    else:
+      # Ensure that even if progress functions are defined, progress is only given if 'verbose' is True
+      self.initProgress = None
+
     self.symmetricalGLCM = kwargs.get('symmetricalGLCM', True)
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
@@ -151,12 +159,14 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
 
-    if self.verbose: bar = trange(Ng, desc='calculate GLCM')
+    if self.initProgress is not None:  # This is only true when 'verbose' is true, and progress functions are defined
+      bar = self.initProgress(Ng, desc='calculate GLCM')
 
     # iterate over gray levels for center voxel
     for i in range(1, Ng + 1):
       # give some progress
-      if self.verbose: bar.update()
+      if self.initProgress is not None:
+        self.reportProgress(bar)
 
       # get the indices to all voxels which have the current gray level i
       i_indices = numpy.where(self.matrix == i)
@@ -175,7 +185,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
           count = len(neighbour_indices.intersection(j_indices))
           P_glcm[i - 1, j - 1, a_idx] = count
-    if self.verbose: bar.close()
+    if self.initProgress is not None:
+      self.closeProgress(bar)
 
     P_glcm = self._applyMatrixOptions(P_glcm, angles)
 

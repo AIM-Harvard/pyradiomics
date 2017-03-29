@@ -161,6 +161,18 @@ def getInputImageTypes():
   return _inputImages
 
 
+def getProgressFunctions():
+  """
+  WIP
+  """
+  global initProgress, reportProgress, closeProgress
+  return initProgress, reportProgress, closeProgress
+
+# Instantiate 3 variables to hold the functions needed to report progress
+initProgress = None
+reportProgress = None
+closeProgress = None
+
 debugging = True
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)  # Set default level of logger to INFO to reflect most common setting for a log file

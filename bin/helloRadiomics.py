@@ -61,6 +61,28 @@ extractor.disableAllFeatures()
 # Only enable mean and skewness in firstorder
 extractor.enableFeaturesByName(firstorder=['Mean', 'Skewness'])
 
+# ############################ Progress bar section #################################################
+# Uncomment this section to enable full python mode using tqdm package to print a progress bar during extraction of
+# glcm and glszm. Assumes the "tqdm" package is installed.
+
+# Comment out the following line to enable this section
+"""
+extractor.kwargs['enableCExtensions'] = False
+
+import tqdm
+radiomics.setVerbosity(logging.INFO)
+radiomics.initProgress = tqdm.trange
+# tqdm._tqdm.tqdm is the class of which an instance is returned by tqdm.trange. The update and close functions are
+# called on that object
+radiomics.reportProgress = tqdm._tqdm.tqdm.update
+radiomics.closeProgress = tqdm._tqdm.tqdm.close
+
+# Enable the GLCM class to show the progress bar
+extractor.enableFeatureClassByName('glcm')
+"""
+# Comment out the preceding line to enable this section
+# ############################ End of Progress bar section ###########################################
+
 print("Active features:")
 for cls, features in six.iteritems(extractor.enabledFeatures):
   if len(features) == 0:

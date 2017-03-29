@@ -1,8 +1,7 @@
 import numpy
 from six.moves import range
-from tqdm import trange
 
-from radiomics import base, cMatrices, cMatsEnabled, imageoperations
+from radiomics import base, cMatrices, cMatsEnabled, getProgressFunctions, imageoperations
 
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
@@ -57,6 +56,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLSZM, self).__init__(inputImage, inputMask, **kwargs)
 
+    if self.verbose:
+      self.initProgress, self.reportProgress, self.closeProgress = getProgressFunctions()
+      # Ensure that all three functions are defined before enabling progress reporting
+      if self.reportProgress is None or self.closeProgress is None:
+        self.initProgress = None
+    else:
+      # Ensure that even if progress functions are defined, progress is only given if 'verbose' is True
+      self.initProgress = None
+
     self.coefficients = {}
     self.P_glszm = {}
 
@@ -92,11 +100,12 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     # Iterate over all gray levels in the image
     numGrayLevels = self.coefficients['Ng'] + 1
 
-    if self.verbose: bar = trange(numGrayLevels - 1, desc='calculate GLSZM')
+    if self.initProgress is not None:  # This is only true when 'verbose' is true, and progress functions are defined
+      bar = self.initProgress(numGrayLevels - 1, desc='calculate GLSZM')
 
     for i in range(1, numGrayLevels):
-      # give some progress
-      if self.verbose: bar.update()
+      if self.initProgress is not None:
+        self.reportProgress(bar)
 
       ind = zip(*numpy.where(self.matrix == i))
       ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
@@ -132,7 +141,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
         # Update the gray level size zone matrix
         P_glszm[i - 1, regionSize - 1] += 1
 
-    if self.verbose: bar.close()
+    if self.initProgress is not None:
+      self.closeProgress(bar)
 
     # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area

@@ -161,17 +161,33 @@ def getInputImageTypes():
   return _inputImages
 
 
-def getProgressFunctions():
+class _dummyProgressReporter(object):
+
+  def __init__(self, iterable, desc=''):
+    self.desc = desc  # A description is not required, but is provided by PyRadiomics
+    self.iterable = iterable  # Iterable is required
+
+  def __iter__(self):
+    return self.iterable.__iter__()
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_value, tb):
+    pass
+
+
+def _getProgressReporter(*args, **kwargs):
   """
   WIP
   """
-  global initProgress, reportProgress, closeProgress
-  return initProgress, reportProgress, closeProgress
+  global progressReporter
+  if progressReporter is None:
+    return _dummyProgressReporter(*args, **kwargs)
+  else:
+    return progressReporter(*args, **kwargs)
 
-# Instantiate 3 variables to hold the functions needed to report progress
-initProgress = None
-reportProgress = None
-closeProgress = None
+progressReporter = None
 
 debugging = True
 logger = logging.getLogger(__name__)

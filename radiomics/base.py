@@ -41,7 +41,11 @@ class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):
     self.logger = logging.getLogger(self.__module__)
     self.logger.debug('Initializing feature class')
-    self.verbose = radiomics.handler.level <= logging.INFO  # check if the handler to stderr is set to INFO or lower
+    # check if the handler to stderr is set and its level is INFO or lower
+    if logging.NOTSET < radiomics.handler.level <= logging.INFO:
+      self.progressReporter = radiomics._getProgressReporter
+    else:
+      self.progressReporter = radiomics._dummyProgressReporter
 
     self.kwargs = kwargs
     self.binWidth = kwargs.get('binWidth', 25)

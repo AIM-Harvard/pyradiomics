@@ -1,7 +1,7 @@
 import numpy
 from six.moves import range
 
-from radiomics import base, cMatrices, cMatsEnabled, getProgressFunctions, imageoperations
+from radiomics import base, cMatrices, cMatsEnabled, imageoperations
 
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):
@@ -112,15 +112,6 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLCM, self).__init__(inputImage, inputMask, **kwargs)
 
-    if self.verbose:
-      self.initProgress, self.reportProgress, self.closeProgress = getProgressFunctions()
-      # Ensure that all three functions are defined before enabling progress reporting
-      if self.reportProgress is None or self.closeProgress is None:
-        self.initProgress = None
-    else:
-      # Ensure that even if progress functions are defined, progress is only given if 'verbose' is True
-      self.initProgress = None
-
     self.symmetricalGLCM = kwargs.get('symmetricalGLCM', True)
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
@@ -159,34 +150,28 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
 
-    if self.initProgress is not None:  # This is only true when 'verbose' is true, and progress functions are defined
-      bar = self.initProgress(Ng, desc='calculate GLCM')
+    # If verbosity > INFO, or no progress reporter is set in radiomics.progressReporter, _dummyProgressReporter is used,
+    # which just iterates over the iterator without reporting progress
+    with self.progressReporter(range(1, Ng + 1), desc='calculate GLCM') as bar:
+      # iterate over gray levels for center voxel
+      for i in bar:
+        # get the indices to all voxels which have the current gray level i
+        i_indices = numpy.where(self.matrix == i)
 
-    # iterate over gray levels for center voxel
-    for i in range(1, Ng + 1):
-      # give some progress
-      if self.initProgress is not None:
-        self.reportProgress(bar)
+        # iterate over gray levels for neighbouring voxel
+        for j in range(1, Ng + 1):
+          # get the indices to all voxels which have the current gray level j
+          j_indices = set(zip(*numpy.where(self.matrix == j)))
 
-      # get the indices to all voxels which have the current gray level i
-      i_indices = numpy.where(self.matrix == i)
+          for a_idx, a in enumerate(angles):
+            # get the corresponding indices of the neighbours for angle a
+            neighbour_indices = set(zip(*(i_indices + a[:, None])))
 
-      # iterate over gray levels for neighbouring voxel
-      for j in range(1, Ng + 1):
-        # get the indices to all voxels which have the current gray level j
-        j_indices = set(zip(*numpy.where(self.matrix == j)))
-
-        for a_idx, a in enumerate(angles):
-          # get the corresponding indices of the neighbours for angle a
-          neighbour_indices = set(zip(*(i_indices + a[:, None])))
-
-          # The following intersection yields the indices to voxels with gray level j
-          # that are also a neighbour of a voxel with gray level i for angle a.
-          # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
-          count = len(neighbour_indices.intersection(j_indices))
-          P_glcm[i - 1, j - 1, a_idx] = count
-    if self.initProgress is not None:
-      self.closeProgress(bar)
+            # The following intersection yields the indices to voxels with gray level j
+            # that are also a neighbour of a voxel with gray level i for angle a.
+            # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
+            count = len(neighbour_indices.intersection(j_indices))
+            P_glcm[i - 1, j - 1, a_idx] = count
 
     P_glcm = self._applyMatrixOptions(P_glcm, angles)
 

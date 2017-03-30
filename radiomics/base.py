@@ -45,7 +45,7 @@ class RadiomicsFeaturesBase(object):
     if logging.NOTSET < radiomics.handler.level <= logging.INFO:
       self.progressReporter = radiomics._getProgressReporter
     else:
-      self.progressReporter = radiomics._dummyProgressReporter
+      self.progressReporter = radiomics._DummyProgressReporter
 
     self.kwargs = kwargs
     self.binWidth = kwargs.get('binWidth', 25)

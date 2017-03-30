@@ -161,29 +161,53 @@ def getInputImageTypes():
   return _inputImages
 
 
-class _dummyProgressReporter(object):
+class _DummyProgressReporter(object):
+  """
+  This class represents the dummy Progress reporter and is used for where progress reporting is implemented, but not
+  enabled (when the progressReporter is not set or verbosity level > INFO).
 
+  PyRadiomics expects that the _getProgressReporter function returns an object that takes an iterable and 'desc' keyword
+  argument at initialization. Furthermore, it should be iterable, where it iterates over the iterable passed at
+  initialization and it should be used in a 'with' statement.
+
+  In this class, the __iter__ function redirects to the __iter__ function of the iterable passed at initialization.
+  The __enter__ and __exit__ functions enable usage in a 'with' statement
+  """
   def __init__(self, iterable, desc=''):
     self.desc = desc  # A description is not required, but is provided by PyRadiomics
     self.iterable = iterable  # Iterable is required
 
   def __iter__(self):
-    return self.iterable.__iter__()
+    return self.iterable.__iter__()  # Just iterate over the iterable passed at initialization
 
   def __enter__(self):
-    return self
+    return self  # The __enter__ function should return itself
 
   def __exit__(self, exc_type, exc_value, tb):
-    pass
+    pass  # Nothing needs to be closed or handled, so just specify 'pass'
 
 
 def _getProgressReporter(*args, **kwargs):
   """
-  WIP
+  This function returns an instance of the progressReporter, or, if it is not set (None), returns a dummy progress
+  reporter.
+
+  To enable progress reporting, the progressReporter variable should be set to a class object (NOT an instance), which
+  fits the following signature:
+
+  1. Accepts an iterable as the first positional argument and a keyword argument ('desc') specifying a label to display
+  2. Can be used in a 'with' statement (i.e. exposes a __enter__ and __exit__ function)
+  3. Is iterable (i.e. at least specifies an __iter__ function, which iterates over the iterable passed at
+     initialization).
+
+  It is also possible to create your own progress reporter. To achieve this, additionally specify a function `__next__`,
+  and have the `__iter__` function return `self`. The `__next__` function takes no arguments and returns a call to the
+  `__next__` function of the iterable (i.e. `return self.iterable.__next__()`). Any prints/progress reporting calls can
+  then be inserted in this function prior to the return statement.
   """
   global progressReporter
   if progressReporter is None:
-    return _dummyProgressReporter(*args, **kwargs)
+    return _DummyProgressReporter(*args, **kwargs)
   else:
     return progressReporter(*args, **kwargs)
 

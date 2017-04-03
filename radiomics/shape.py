@@ -308,23 +308,51 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     return self._getMaximum2Ddiameter(2)
 
+  def getMajorAxisFeatureValue(self):
+    r"""
+
+    .. math::
+
+      \textit{Major Axis} = 4 \sqrt{\lambda_{\text{major}}}
+
+    """
+    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[2]) * 4
+
+  def getMinorAxisFeatureValue(self):
+    r"""
+
+    .. math::
+
+      \textit{Major Axis} = 4 \sqrt{\lambda_{\text{minor}}}
+
+    """
+    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[1]) * 4
+
+  def getLeastAxisFeatureValue(self):
+    r"""
+
+    .. math::
+
+      \textit{Major Axis} = 4 \sqrt{\lambda_{\text{least}}}
+
+    """
+    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[0]) * 4
+
   def getElongationFeatureValue(self):
     r"""
     Calculate the elongation of the shape, which is defined as:
 
     .. math::
 
-      Elongation = \frac{\lambda_{\text{longest}}}{\lambda_{\text{intermediate}}}
+      Elongation = \sqrt{\frac{\lambda_{\text{minor}}}{\lambda_{\text{major}}}}
 
-    Here, :math:`\lambda_{\text{longest}}` and :math:`\lambda_{\text{intermediate}}` are the lengths of the largest and
-    second largest principal component axes.
-
-    References:
-
-    - Andrey P, Kieu K, Kress C, Lehmann G, Tirichine L, Liu Z, et al. Statistical analysis of 3D images detects regular
-      spatial distributions of centromeres and chromocenters in animal and plant nuclei. PLoS Comput Biol. 2010;6:27.
+    Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{minor}}` are the lengths of the largest and second
+    largest principal component axes. The values range between 1 (where the cross section through the first and second
+    largest principal moments is circle-like (non-elongated)) and 0 (where the object is a single point or 1 dimensional
+    line).
     """
-    return self.lssif.GetElongation(self.label)
+    principalMoments = self.lssif.GetPrincipalMoments(1)
+    return numpy.sqrt(principalMoments[1] / principalMoments[2])
 
   def getFlatnessFeatureValue(self):
     r"""
@@ -332,17 +360,13 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      Flatness = \frac{\lambda_{\text{intermediate}}}{\lambda_{\text{shortest}}}
+      Flatness = \sqrt{\frac{\lambda_{\text{least}}}{\lambda_{\text{major}}}}
 
-    Here, :math:`\lambda_{\text{intermediate}}` and :math:`\lambda_{\text{shortest}}` are the lengths of the second
-    largest and smallest principal component axes.
-
-    References:
-
-    - Andrey P, Kieu K, Kress C, Lehmann G, Tirichine L, Liu Z, et al. Statistical analysis of 3D images detects regular
-      spatial distributions of centromeres and chromocenters in animal and plant nuclei. PLoS Comput Biol. 2010;6:27.
+    Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{least}}` are the lengths of the largest and smallest
+    principal component axes. The values range between 1 (non-flat, sphere-like) and 0 (a flat object).
     """
-    return self.lssif.GetFlatness(self.label)
+    principalMoments = self.lssif.GetPrincipalMoments(1)
+    return numpy.sqrt(principalMoments[0] / principalMoments[2])
 
   def _interpolate(self, grid, p1, p2):
     diff = (.5 - self.maskArray[tuple(grid[p1])]) / (self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])

@@ -101,7 +101,7 @@ def main():
     maskFilepath = entry['Mask']
 
     if (imageFilepath is not None) and (maskFilepath is not None):
-      featureVector = collections.OrderedDict()
+      featureVector = collections.OrderedDict(entry)
       if args.shorten:
         featureVector['Image'] = os.path.basename(imageFilepath)
         featureVector['Mask'] = os.path.basename(maskFilepath)

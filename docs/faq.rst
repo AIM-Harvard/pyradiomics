@@ -66,14 +66,11 @@ Usage
 **How should the input file for** ``pyradiomicsbatch`` **be structured?**
 
 Currently, the input file for ``pyradiomicsbatch`` is a csv file specifying the combinations of images and masks for
-which to extract features. It does not contain a header line, and each line represents one such combination.
-Each line has 5 elements: Patient, Image, Mask, Image location, Mask location. Only the last two elements are 'active'
-(used during extraction), the are the locations of the image and mask files on the computer. The first three elements
-are copied to the output and are there to enable easy clustering of the results or correlation to outcome. These three
-elements are chosen, because patients can have multiple scans (or multiple sequences, e.g. in MRI), and each image can
-be segmented by different readers. As they are not actively used by PyRadiomics, any value is valid, including empty
-values, as long as they are provided (e.g. ",,,<path/to/image>,<path/to/mask>" is valid,
-"<path/to/image>,<path/to/mask>" is not).
+which to extract features. It must contain a header line, where at least header "Image" and "Mask" should be specified
+(capital sensitive). These identify the columns that contain the file location of the image and the mask, respectively.
+Each subsequent line represents one combination of an image and a mask. Additional columns are also allowed, these are
+copied to the output in the same order as the input, with the additional columns of the calculated features appended
+at the end. *N.B. All header names should be unique and not match any of the produced header names by pyradiomics.*
 
 **I installed PyRadiomics, but when I run the jupyter notebook, I get** ``ImportError: No module named radiomics``
 

@@ -75,9 +75,15 @@ Command Line Use
 
     pyradiomicsbatch <path/to/input> <path/to/output>
 
-* The input file for batch processing is a CSV file where each row represents one combination of an image and a
-  segmentation and contains 5 elements: 1) patient ID, 2) sequence name (image identifier), 3) reader (segmentation
-  identifier), 4) path/to/image, 5) path/to/mask.
+* The input file for batch processing is a CSV file where the first row is contains headers and each subsequent row
+  represents one combination of an image and a segmentation and contains at least 2 elements: 1) path/to/image,
+  2) path/to/mask. The headers specify the column names and **must** be "Image" and "Mask" for image and mask location,
+  respectively (capital sensitive). Additional columns may also be specified, all columns are copied to the output in
+  the same order (with calculated features appended after last column).
+
+  .. note::
+
+    All headers should be unique and different from headers provided by PyRadiomics (``<filter>_<class>_<feature>``).
 
 * For more information on passing parameter files, setting up logging and controlling output format, run::
 

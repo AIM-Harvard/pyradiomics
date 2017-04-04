@@ -5,7 +5,6 @@ import collections
 import csv
 import logging
 import os
-import traceback
 
 import SimpleITK as sitk
 
@@ -35,21 +34,20 @@ def main():
   logger = rLogger.getChild('batch')
 
   # Set verbosity level for output to stderr (default level = WARNING)
-  # radiomics.setVerbosity(logging.INFO)
+  radiomics.setVerbosity(logging.INFO)
 
   logger.info('Loading CSV')
-  print("Loading CSV")
 
   flists = []
   try:
     with open(inputCSV, 'r') as inFile:
-      cr = csv.reader(inFile, lineterminator='\n')
+      cr = csv.DictReader(inFile, lineterminator='\n')
       flists = [row for row in cr]
   except Exception:
-    logging.error('CSV READ FAILED:\n%s', traceback.format_exc())
+    logging.error('CSV READ FAILED', exc_info=True)
 
-  print("Loading Done")
-  print("Patients: " + str(len(flists)))
+  logger.info('Loading Done')
+  logger.info('Patients: %d', len(flists))
 
   kwargs = {}
   kwargs['binWidth'] = 25
@@ -68,20 +66,15 @@ def main():
 
   for idx, entry in enumerate(flists, start=1):
 
-    print("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s" % (idx, len(flists), entry[0], entry[1], entry[2]))
-    logger.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
-                entry[2])
+    logger.info("(%d/%d) Processing Patient (Image: %s, Mask: %s)", idx, len(flists), entry['Image'], entry['Mask'])
 
-    imageFilepath = entry[3]
-    maskFilepath = entry[4]
+    imageFilepath = entry['Image']
+    maskFilepath = entry['Mask']
 
     if (imageFilepath is not None) and (maskFilepath is not None):
-      featureVector = collections.OrderedDict()
-      featureVector['PatientID'] = entry[0]
-      featureVector['Study'] = entry[1]
-      featureVector['Reader'] = entry[2]
-      featureVector['image'] = os.path.basename(imageFilepath)
-      featureVector['mask'] = os.path.basename(maskFilepath)
+      featureVector = collections.OrderedDict(entry)
+      featureVector['Image'] = os.path.basename(imageFilepath)
+      featureVector['Mask'] = os.path.basename(maskFilepath)
 
       try:
         featureVector.update(extractor.execute(imageFilepath, maskFilepath))
@@ -97,7 +90,7 @@ def main():
             row.append(featureVector.get(h, "N/A"))
           writer.writerow(row)
       except Exception:
-        logger.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
+        logger.error('FEATURE EXTRACTION FAILED', exc_info=True)
 
 if __name__ == '__main__':
   main()

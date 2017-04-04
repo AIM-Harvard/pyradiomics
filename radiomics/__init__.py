@@ -7,7 +7,6 @@ import logging
 import os
 import pkgutil
 import sys
-import traceback
 
 import numpy  # noqa: F401
 
@@ -184,7 +183,7 @@ try:
   _cMatsState = 1
   enableCExtensions()
 except Exception:
-  logger.warning("Error loading C extensions, switching to python calculation:\n%s", traceback.format_exc())
+  logger.warning("Error loading C extensions, switching to python calculation:", exc_info=True)
   cMatrices = None  # set cMatrices to None to prevent an import error in the feature classes.
   cShape = None
 

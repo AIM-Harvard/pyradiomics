@@ -1,6 +1,5 @@
 import numpy
 from six.moves import range
-from tqdm import trange
 
 from radiomics import base, cMatrices, cMatsEnabled, imageoperations
 
@@ -151,31 +150,28 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
 
-    if self.verbose: bar = trange(Ng, desc='calculate GLCM')
+    # If verbosity > INFO, or no progress reporter is set in radiomics.progressReporter, _dummyProgressReporter is used,
+    # which just iterates over the iterator without reporting progress
+    with self.progressReporter(range(1, Ng + 1), desc='calculate GLCM') as bar:
+      # iterate over gray levels for center voxel
+      for i in bar:
+        # get the indices to all voxels which have the current gray level i
+        i_indices = numpy.where(self.matrix == i)
 
-    # iterate over gray levels for center voxel
-    for i in range(1, Ng + 1):
-      # give some progress
-      if self.verbose: bar.update()
+        # iterate over gray levels for neighbouring voxel
+        for j in range(1, Ng + 1):
+          # get the indices to all voxels which have the current gray level j
+          j_indices = set(zip(*numpy.where(self.matrix == j)))
 
-      # get the indices to all voxels which have the current gray level i
-      i_indices = numpy.where(self.matrix == i)
+          for a_idx, a in enumerate(angles):
+            # get the corresponding indices of the neighbours for angle a
+            neighbour_indices = set(zip(*(i_indices + a[:, None])))
 
-      # iterate over gray levels for neighbouring voxel
-      for j in range(1, Ng + 1):
-        # get the indices to all voxels which have the current gray level j
-        j_indices = set(zip(*numpy.where(self.matrix == j)))
-
-        for a_idx, a in enumerate(angles):
-          # get the corresponding indices of the neighbours for angle a
-          neighbour_indices = set(zip(*(i_indices + a[:, None])))
-
-          # The following intersection yields the indices to voxels with gray level j
-          # that are also a neighbour of a voxel with gray level i for angle a.
-          # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
-          count = len(neighbour_indices.intersection(j_indices))
-          P_glcm[i - 1, j - 1, a_idx] = count
-    if self.verbose: bar.close()
+            # The following intersection yields the indices to voxels with gray level j
+            # that are also a neighbour of a voxel with gray level i for angle a.
+            # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
+            count = len(neighbour_indices.intersection(j_indices))
+            P_glcm[i - 1, j - 1, a_idx] = count
 
     P_glcm = self._applyMatrixOptions(P_glcm, angles)
 

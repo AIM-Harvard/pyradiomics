@@ -87,6 +87,62 @@ returned by multiple yield statements, or yield statements inside a loop. Please
 be returned on each call to yield and that ``inputImageName`` is a unique name for each returned derived image. Derived
 images must have the same dimensions and occupy the same physical space to ensure compatibility with the mask.
 
+------------------
+Progress Reporting
+------------------
+
+When operating in full-python mode, the calculation of the texture matrices can take some time. Therefor PyRadiomics
+provides the possibility to report the progress for calculation of GLCM and GLSZM.
+This is only enabled in full-python mode when the verbosity (:py:func:`~radiomics.setVerbosity()`) is set to INFO or
+DEBUG. By default, none is provided and no progress of matrix calculation will be reported.
+
+To enable progress reporting, the ``radiomics.progressReporter`` variable should be set to a class object (NOT an
+instance), which fits the following signature:
+
+1. Accepts an iterable as the first positional argument and a keyword argument ('desc') specifying a label to display
+2. Can be used in a 'with' statement (i.e. exposes a ``__enter__`` and ``__exit__`` function)
+3. Is iterable (i.e. at least specifies an ``__iter__`` function, which iterates over the iterable passed at
+   initialization)
+
+It is also possible to create your own progress reporter. To achieve this, additionally specify a function ``__next__``,
+and have the ``__iter__`` function return ``self``. The ``__next__`` function takes no arguments and returns a call to
+the ``__next__`` function of the iterable (i.e. ``return self.iterable.__next__()``). Any prints/progress reporting
+calls can then be inserted in this function prior to the return statement.
+
+In ``radiomics\__init__.py`` a dummy progress reporter (``_DummyProgressReporter``) is defined, which is used when
+calculating in full-python mode, but progress reporting is not enabled (verbosity > INFO) or the ``progressReporter``
+variable is not set.
+
+To design a custom progress reporter, the following code can be adapted and used as progressReporter::
+
+    class MyProgressReporter(object):
+        def __init__(self, iterable, desc=''):
+            self.desc = desc  # A description is which describes the progress that is reported
+            self.iterable = iterable  # Iterable is required
+
+        # This function identifies the class as iterable and should return an object which exposes
+        # the __next__ function that should be used to iterate over the object
+        def __iter__(self):
+            return self  # return self to 'intercept' the calls to __next__ to insert reporting code.
+
+        def __next__(self):
+            nextElement = self.iterable.__next__()
+            # Insert custom progress reporting code here. This is called for every iteration in the loop
+            # (once for each unique gray level in the ROI for GLCM and GLSZM)
+
+            # By inserting after the call `self.iterable.__next__()` the function will exit before the
+            # custom code is run when the stopIteration error is raised.
+            return nextElement
+
+        # This function is called when the 'with' statement is entered
+        def __enter__(self):
+            print (self.desc)  # Print out the description upon start of the loop
+            return self  # The __enter__ function should return itself
+
+        # This function is called when the 'with' statement is exited
+        def __exit__(self, exc_type, exc_value, tb):
+            pass  # If nothing needs to be closed or handled, so just specify 'pass'
+
 ------------------------------
 Addtional points for attention
 ------------------------------

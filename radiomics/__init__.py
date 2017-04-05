@@ -7,6 +7,8 @@ import logging
 import os
 import pkgutil
 import sys
+import tempfile
+import urllib
 
 import numpy  # noqa: F401
 
@@ -158,6 +160,50 @@ def getInputImageTypes():
                     if member.startswith('get') and member.endswith("Image")]
 
   return _inputImages
+
+
+def getTestCase(testCase, repoDirectory=None):
+  """
+
+  """
+  global logger
+  if testCase not in ['brain1', 'brain2', 'breast1', 'lung1', 'lung2']:
+    logger.error('Testcase "%s" not recognized!', testCase)
+    return None, None
+
+  # Use test cases included in the repository. If PyRadiomics is run from an installed version, the location of the
+  # repository needs to be specified
+  if repoDirectory is not None:
+    dataDir = os.path.join(repoDirectory, 'data')
+    imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
+    maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
+    if os.path.isfile(imageFile) and os.path.isfile(maskFile):
+      return imageFile, maskFile
+
+  # No repository directory specified, check if running in development mode (code run from repository)
+  dataDir = os.path.join(base.__path__[0], '..', 'data')  # This folder exists if radiomics is run from the repository
+  imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
+  maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
+  if os.path.isfile(imageFile) and os.path.isfile(maskFile):
+    return imageFile, maskFile
+
+  # Data folder not found (most likely running from installed version). Check if test case has been downloaded.
+  dataDir = os.path.join(tempfile.gettempdir(), 'pyradiomics', 'data')
+  imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
+  maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
+  if os.path.isfile(imageFile) and os.path.isfile(maskFile):
+    return imageFile, maskFile
+
+  # Testcase not found in temporary files, download them. First check if the folder is available
+  if not os.path.isdir(dataDir):
+    os.mkdir(dataDir)
+
+  # Download the test case files (image and label)
+  url = r'https://github.com/Radiomics/pyradiomics/raw/master/data/%s_%s.nrrd'
+  urllib.urlretrieve(url % (testCase, 'image'), imageFile)
+  urllib.urlretrieve(url % (testCase, 'label'), maskFile)
+
+  return imageFile, maskFile
 
 
 class _DummyProgressReporter(object):

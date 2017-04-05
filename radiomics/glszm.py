@@ -1,6 +1,5 @@
 import numpy
 from six.moves import range
-from tqdm import trange
 
 from radiomics import base, cMatrices, cMatsEnabled, imageoperations
 
@@ -11,7 +10,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   A gray level zone is defined as a the number of connected voxels that share the same
   gray level intensity. A voxel is considered connected if the distance is 1 according to the infinity norm. This
   yields a 26-connected region in a 3D image, and an 8-connected region in a 2D image.
-  In a gray level size zone matrix :math:`P(i,j)` the :math:`(i,j)`\ :sup:`th` element describes the number of times
+  In a gray level size zone matrix :math:`P(i,j)` the :math:`(i,j)^{\text{th}}` element describes the number of times
   a gray level zone with gray level :math:`i` and size :math:`j` appears in image.
 
   As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
@@ -51,8 +50,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   - Guillaume Thibault; Bernard Fertil; Claire Navarro; Sandrine Pereira; Pierre Cau; Nicolas Levy; Jean Sequeira;
     Jean-Luc Mari (2009). "Texture Indexes and Gray Level Size Zone Matrix. Application to Cell Nuclei Classification".
     Pattern Recognition and Information Processing (PRIP): 140-145.
-
-  - https://en.wikipedia.org/wiki/Gray_level_size_zone_matrix
+  - `<https://en.wikipedia.org/wiki/Gray_level_size_zone_matrix>`_
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -62,8 +60,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.P_glszm = {}
 
     # binning
-    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
+    self.matrix, self.binEdges = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
+    self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
     self.coefficients['Np'] = self.targetVoxelArray.size
 
     if cMatsEnabled():
@@ -73,6 +71,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
+    self.logger.debug('Feature class initialized, calculated GLSZM with shape %s', self.P_glszm.shape)
+
   def _calculateMatrix(self):
     """
     Number of times a region with a
@@ -80,72 +80,75 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     For 3D-images this concerns a 26-connected region, for 2D an 8-connected region
     """
+    self.logger.debug('Calculating GLSZM matrix in Python')
+
+    Ng = self.coefficients['Ng']
+    Np = self.coefficients['Np']
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
 
     # Empty GLSZ matrix
-    P_glszm = numpy.zeros((self.coefficients['Ng'], self.coefficients['Np']))
+    P_glszm = numpy.zeros((Ng, Np))
 
-    # Iterate over all gray levels in the image
-    numGrayLevels = self.coefficients['Ng'] + 1
+    # If verbosity > INFO, or no progress reporter is set in radiomics.progressReporter, _dummyProgressReporter is used,
+    # which just iterates over the iterator without reporting progress
+    with self.progressReporter(range(1, Ng + 1), desc='calculate GLSZM') as bar:
+      # Iterate over all gray levels in the image
+      for i in bar:
+        ind = zip(*numpy.where(self.matrix == i))
+        ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
 
-    if self.verbose: bar = trange(numGrayLevels - 1, desc='calculate GLSZM')
+        while ind:  # check if ind is not empty: unprocessed regions for current gray level
+          # Pop first coordinate of an unprocessed zone, start new stack
+          ind_region = [ind.pop()]
 
-    for i in range(1, numGrayLevels):
-      # give some progress
-      if self.verbose: bar.update()
+          # Define regionSize
+          regionSize = 0
 
-      ind = zip(*numpy.where(self.matrix == i))
-      ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
+          # Grow zone for item popped from stack of region indices, loop until stack of region indices is exhausted
+          # Each loop represents one voxel belonging to current zone. Therefore, count number of loops as regionSize
+          while ind_region:
+            regionSize += 1
 
-      while ind:  # check if ind is not empty: unprocessed regions for current gray level
-        # Pop first coordinate of an unprocessed zone, start new stack
-        ind_region = [ind.pop()]
+            # Use pop to remove next node for set of unprocessed region indices
+            ind_node = ind_region.pop()
 
-        # Define regionSize
-        regionSize = 0
+            # get all coordinates in the 26-connected region, 2 voxels per angle
+            region_full = [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles]
+            region_full += [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles * -1]
 
-        # Grow zone for item popped from stack of region indices, loop until stack of region indices is exhausted
-        # Each loop represents one voxel belonging to current zone. Therefore, count number of loops as regionSize
-        while ind_region:
-          regionSize += 1
+            # get all unprocessed coordinates in the 26-connected region with same gray level
+            region_level = list(set(ind).intersection(set(region_full)))
 
-          # Use pop to remove next node for set of unprocessed region indices
-          ind_node = ind_region.pop()
+            # Remove already processed indices to prevent reprocessing
+            ind = list(set(ind) - set(region_level))
 
-          # get all coordinates in the 26-connected region, 2 voxels per angle
-          region_full = [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles]
-          region_full += [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles * -1]
+            # Add all found neighbours to the total stack of unprocessed neighbours
+            ind_region.extend(region_level)
 
-          # get all unprocessed coordinates in the 26-connected region with same gray level
-          region_level = list(set(ind).intersection(set(region_full)))
-
-          # Remove already processed indices to prevent reprocessing
-          ind = list(set(ind) - set(region_level))
-
-          # Add all found neighbours to the total stack of unprocessed neighbours
-          ind_region.extend(region_level)
-
-        # Update the gray level size zone matrix
-        P_glszm[i - 1, regionSize - 1] += 1
-
-    if self.verbose: bar.close()
+          # Update the gray level size zone matrix
+          P_glszm[i - 1, regionSize - 1] += 1
 
     # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
     # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area
+    self.logger.debug('Cropping calculated matrix to observed gray levels and maximum observed zone size')
     P_glszm_bounds = numpy.argwhere(P_glszm)
     (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1  # noqa: F841
     return P_glszm[xstart:xstop, :ystop]
 
   def _calculateCMatrix(self):
+    self.logger.debug('Calculating GLSZM matrix in C')
+
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
     Ng = self.coefficients['Ng']
     Ns = self.coefficients['Np']
 
     return cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
 
   def _calculateCoefficients(self):
+    self.logger.debug('Calculating GLSZM coefficients')
+
     sumP_glszm = numpy.sum(self.P_glszm, (0, 1))
 
     # set sum to numpy.spacing(1) if sum is 0?
@@ -194,11 +197,11 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       lae = numpy.core.numeric.NaN
     return (lae)
 
-  def getIntensityVariabilityFeatureValue(self):
+  def getGrayLevelNonUniformityFeatureValue(self):
     r"""
-    Calculate and return the Intensity Variability (IV) value.
+    Calculate and return the Gray Level Non-Uniformity (GLN) value.
 
-    :math:`IV = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the variability of gray-level intensity values in the image, with a lower value indicating
     more homogeneity in intensity values.
@@ -209,14 +212,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       iv = numpy.core.numeric.NaN
     return (iv)
 
-  def getIntensityVariabilityNormalizedFeatureValue(self):
+  def getGrayLevelNonUniformityNormalizedFeatureValue(self):
     r"""
-    Calculate and return the Intensity Variability Normalized (IVN) value.
+    Calculate and return the Gray Level Non-Uniformity Normalized (GLNN) value.
 
-    :math:`IVN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
 
     Measures the variability of gray-level intensity values in the image, with a lower value indicating
-    a greater similarity in intensity values. This is the normalized version of the IV formula.
+    a greater similarity in intensity values. This is the normalized version of the GLN formula.
     """
     try:
       ivn = numpy.sum(self.coefficients['pg'] ** 2) / self.coefficients['sumP_glszm'] ** 2
@@ -224,11 +227,11 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       ivn = numpy.core.numeric.NaN
     return (ivn)
 
-  def getSizeZoneVariabilityFeatureValue(self):
+  def getSizeZoneNonUniformityFeatureValue(self):
     r"""
-    Calculate and return the Size-Zone Variability (SZV) value.
+    Calculate and return the Size-Zone Non-Uniformity (SZN) value.
 
-    :math:`SZV = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`SZN = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the variability of size zone volumes in the image, with a lower value indicating
     more homogeneity in size zone volumes.
@@ -239,14 +242,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       szv = numpy.core.numeric.NaN
     return (szv)
 
-  def getSizeZoneVariabilityNormalizedFeatureValue(self):
+  def getSizeZoneNonUniformityNormalizedFeatureValue(self):
     r"""
-    Calculate and return the Size-Zone Variability Normalized (SZVN) value.
+    Calculate and return the Size-Zone Non-Uniformity Normalized (SZNN) value.
 
-    :math:`SZVN = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+    :math:`SZNN = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
 
     Measures the variability of size zone volumes throughout the image, with a lower value indicating
-    more homogeneity among zone size volumes in the image. This is the normalized version of the SZVN formula.
+    more homogeneity among zone size volumes in the image. This is the normalized version of the SZN formula.
     """
     try:
       szvn = numpy.sum(self.coefficients['pr'] ** 2) / self.coefficients['sumP_glszm'] ** 2
@@ -260,10 +263,12 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     :math:`ZP = \sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{N_p}}`
 
-    Measures the homogeneity of the distribution of zone size volumes in an image among the observed gray-levels.
+    Measures the coarseness of the texture by taking the ratio of number of zones and number of voxels in the ROI.
+    Values are in range :math:`\frac{1}{N_p} \leq ZP \leq 1`, with higher values indicating a larger portion of the ROI
+    consists of small zones (indicates a more fine texture).
     """
     try:
-      zp = self.coefficients['sumP_glszm'] / numpy.sum(self.coefficients['pr'] * self.coefficients['jvector'])
+      zp = self.coefficients['sumP_glszm'] / self.coefficients['Np']
     except ZeroDivisionError:
       zp = numpy.core.numeric.NaN
     return (zp)
@@ -307,20 +312,23 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     :math:`ZE = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}`
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
+
+    Measures the uncertainty/randomness in the distribution of zone sizes and gray levels. A higher value indicates more
+    heterogeneneity in the texture patterns.
     """
     eps = numpy.spacing(1)
     sumP_glszm = self.coefficients['sumP_glszm']
     p_glszm = self.P_glszm / sumP_glszm
     return -numpy.sum(p_glszm * numpy.log2(p_glszm + eps))
 
-  def getLowIntensityEmphasisFeatureValue(self):
+  def getLowGrayLevelZoneEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Low Intensity Emphasis (LIE) value.
+    Calculate and return the Low Gray Level Zone Emphasis (LGLZE) value.
 
-    :math:`LIE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`LGLZE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
 
-    Measures the distribution of lower gray-level size zones, with a higher value indicating a greater
-    proportion of lower gray-level values and size zones in the image.
+    Measures the distribution of lower gray-level size zones, with a higher value indicating a greater proportion of
+    lower gray-level values and size zones in the image.
     """
     try:
       lie = numpy.sum((self.coefficients['pg'] / (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_glszm']
@@ -328,14 +336,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       lie = numpy.core.numeric.NaN
     return (lie)
 
-  def getHighIntensityEmphasisFeatureValue(self):
+  def getHighGrayLevelZoneEmphasisFeatureValue(self):
     r"""
-    Calculate and return the High Intensity Emphasis (HIE) value.
+    Calculate and return the High Gray Level Zone Emphasis (HGLZE) value.
 
-    :math:`HIE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`HGLZE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
 
-    Measures the distribution of the higher gray-level values, with a higher value indicating
-    a greater proportion of higher gray-level values and size zones in the image.
+    Measures the distribution of the higher gray-level values, with a higher value indicating a greater proportion of
+    higher gray-level values and size zones in the image.
     """
     try:
       hie = numpy.sum((self.coefficients['pg'] * (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_glszm']
@@ -343,11 +351,11 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       hie = numpy.core.numeric.NaN
     return (hie)
 
-  def getLowIntensitySmallAreaEmphasisFeatureValue(self):
+  def getSmallAreaLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Low Intensity Small Area Emphases (LISAE) value.
+    Calculate and return the Small Area Low Gray Level Emphasis (SALGLE) value.
 
-    :math:`LISAE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`SALGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the proportion in the image of the joint distribution of smaller size zones with lower gray-level values.
     """
@@ -359,11 +367,11 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       lisae = numpy.core.numeric.NaN
     return (lisae)
 
-  def getHighIntensitySmallAreaEmphasisFeatureValue(self):
+  def getSmallAreaHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the High Intensity Small Area Emphases (HISAE) value.
+    Calculate and return the Small Area High Gray Level Emphasis (SAHGLE) value.
 
-    :math:`HISAE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`SAHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the proportion in the image of the joint distribution of smaller size zones with higher gray-level values.
     """
@@ -375,11 +383,11 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       hisae = numpy.core.numeric.NaN
     return (hisae)
 
-  def getLowIntensityLargeAreaEmphasisFeatureValue(self):
+  def getLargeAreaLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the Low Intensity Large Area Emphases (LILAE) value.
+    Calculate and return the Large Area Low Gray Level Emphasis (LALGLE) value.
 
-    :math:`LILAE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`LALGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the proportion in the image of the joint distribution of larger size zones with lower gray-level values.
     """
@@ -391,11 +399,11 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       lilae = numpy.core.numeric.NaN
     return (lilae)
 
-  def getHighIntensityLargeAreaEmphasisFeatureValue(self):
+  def getLargeAreaHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    Calculate and return the High Intensity Large Area Emphases (HILAE) value.
+    Calculate and return the Large Area High Gray Level Emphasis (LAHGLE) value.
 
-    :math:`HILAE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
+    :math:`LAHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}`
 
     Measures the proportion in the image of the joint distribution of larger size zones with higher gray-level values.
     """

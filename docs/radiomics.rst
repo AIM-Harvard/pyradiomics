@@ -1,92 +1,24 @@
-radiomics package
-=================
+================
+Pipeline Modules
+================
 
-.. _radiomics-package-label:
+This section contains the documentation on the various modules used to define the PyRadiomics pipeline and pre-process
+the input data. Feature class modules, which contain the feature definitions are documented in the
+:ref:`radiomics-features-label` section.
 
-Submodules
-----------
+Additionally, this section contains the documentation for the
+:ref:`radiomics.generalinfo module <radiomics-generalinfo-label>`, which provides the additional information about the
+extraction in the output. This additional information is added to enhance reproducibility of the results.
 
-.. _radiomics-base-label:
-
-radiomics.base module
----------------------
-
-.. automodule:: radiomics.base
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
+Finally, this section contains documentation for the :ref:`global functions <radiomics-global-label>`, which are used
+throughout the toolbox (such as logging and the C extensions) and the
+:ref:`radiomics.base module <radiomics-base-label>`, which defines the common interface for the feature classes.
 
 .. _radiomics-featureextractor-label:
 
-radiomics.featureextractor module
----------------------------------
+Feature Extractor
+-----------------
 .. automodule:: radiomics.featureextractor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-.. _radiomics-generalinfo-label:
-
-radiomics.generalinfo module
-----------------------------
-.. automodule:: radiomics.generalinfo
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-.. _radiomics-firstorder-label:
-
-radiomics.firstorder module
----------------------------
-
-.. automodule:: radiomics.firstorder
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-.. _radiomics-glcm-label:
-
-radiomics.glcm module
----------------------
-
-.. automodule:: radiomics.glcm
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-.. _radiomics-glszm-label:
-
-radiomics.glszm module
-----------------------
-
-.. automodule:: radiomics.glszm
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-.. _radiomics-glrlm-label:
-
-radiomics.glrlm module
-----------------------
-
-.. automodule:: radiomics.glrlm
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
-.. _radiomics-shape-label:
-
-radiomics.shape module
-----------------------
-
-.. automodule:: radiomics.shape
     :members:
     :undoc-members:
     :show-inheritance:
@@ -94,8 +26,8 @@ radiomics.shape module
 
 .. _radiomics-imageoperations-label:
 
-radiomics.imageoperations module
---------------------------------
+Image Processing and Filters
+----------------------------
 
 .. automodule:: radiomics.imageoperations
     :members:
@@ -103,8 +35,31 @@ radiomics.imageoperations module
     :show-inheritance:
     :member-order: bysource
 
-Module contents
----------------
+.. _radiomics-generalinfo-label:
+
+General Info Module
+-------------------
+.. automodule:: radiomics.generalinfo
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
+.. _radiomics-base-label:
+
+Feature Class Base
+------------------
+
+.. automodule:: radiomics.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
+.. _radiomics-global-label:
+
+Global Toolbox Functions
+------------------------
 
 .. automodule:: radiomics
     :members:

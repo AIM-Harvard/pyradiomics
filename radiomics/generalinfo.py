@@ -11,6 +11,8 @@ class GeneralInfo():
   def __init__(self, imagePath, maskPath, resampledMask, kwargs, inputImages):
     self.logger = logging.getLogger(self.__module__)
 
+    self.elements = self._getElementNames()
+
     if isinstance(imagePath, six.string_types):
       self.image = sitk.ReadImage(imagePath)
     elif isinstance(imagePath, sitk.Image):
@@ -40,15 +42,18 @@ class GeneralInfo():
     else:
       self.lssif = None
 
+  def _getElementNames(self):
+    return [member[3: -5] for member in dir(self) if member.startswith('get') and member.endswith('Value')]
+
   def execute(self):
     """
-    Calculate and return a dictionary containing all general info items. Format is <info_item>:<value>, where any ',' in
-    <value> are replaced by ';' to prevent column alignment errors in csv formatted output.
+    Return a dictionary containing all general info items. Format is <info_item>:<value>, where the type
+    of the value is preserved. For CSV format, this will result in conversion to string and quotes where necessary, for
+    JSON, the values will be interpreted and stored as JSON strings.
     """
     generalInfo = collections.OrderedDict()
-    for mem in dir(self):
-      if mem.startswith('get') and mem.endswith('Value'):
-        generalInfo[mem[3:-5]] = str(eval('self.%s()' % (mem))).replace(',', ';')
+    for el in self.elements:
+      generalInfo[el] = getattr(self, 'get%sValue' % el)()
     return generalInfo
 
   def getBoundingBoxValue(self):

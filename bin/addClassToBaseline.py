@@ -16,8 +16,7 @@ def main():
 
   testCases = []
 
-  kwargs = {'verbose': False,
-            'binWidth': 25,
+  kwargs = {'binWidth': 25,
             'interpolator': None,
             'resampledPixelSpacing': None,
             'padDistance': 5,
@@ -27,9 +26,8 @@ def main():
             'gldm_a': 0}
 
   extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
-  featureClasses = extractor.getFeatureClassNames()
 
-  for cls in featureClasses:
+  for cls in extractor.getFeatureClassNames():
     if os.path.exists(os.path.join(baselineDir, 'baseline_%s.csv' % (cls))):
       with open(os.path.join(baselineDir, 'baseline_%s.csv' % (cls)), 'rb') as baselineFile:
         csvReader = csv.reader(baselineFile)
@@ -42,7 +40,7 @@ def main():
     print("No baselinefiles containing testcases found, exiting...")
     exit(-1)
 
-  newClasses = [cls for cls in featureClasses if
+  newClasses = [cls for cls in extractor.getFeatureClassNames() if
                 not os.path.exists(os.path.join(baselineDir, 'baseline_%s.csv' % (cls)))]
 
   if len(newClasses) == 0:
@@ -76,7 +74,8 @@ def main():
 
     provenance = extractor.getProvenance(imagePath, maskPath, mask)
 
-    image, mask, bb = imageoperations.cropToTumorMask(image, mask)
+    bb = imageoperations.checkMask(image, mask)
+    image, mask = imageoperations.cropToTumorMask(image, mask, bb)
     for cls in newClasses:
       print("\t\tCalculating class", cls)
       newBaseline[cls][testCase] = collections.OrderedDict()

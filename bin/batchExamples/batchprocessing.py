@@ -5,7 +5,6 @@ import collections
 import csv
 import logging
 import os
-import traceback
 
 import SimpleITK as sitk
 
@@ -20,76 +19,78 @@ def main():
   outputFilepath = outPath + os.path.sep + "radiomics_features.csv"
   progress_filename = outPath + os.path.sep + "pyrad_log.txt"
 
-  # Enable writing out the log using radiomics logger
-  logging.getLogger().setLevel(logging.INFO)  # Prints out log messages in this script
+  # Configure logging
+  rLogger = logging.getLogger('radiomics')
 
-  # Write out all log entries to log file
+  # Set logging level
+  # rLogger.setLevel(logging.INFO)  # Not needed, default log level of logger is INFO
+
+  # Create handler for writing to log file
   handler = logging.FileHandler(filename=progress_filename, mode='w')
-  formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
-  handler.setFormatter(formatter)
-  logging.getLogger().addHandler(handler)
+  handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+  rLogger.addHandler(handler)
 
-  # Package logging
-  # radiomics.debug()  # Switch on radiomics logging from level=DEBUG (default level=WARNING)
-  # Alternative: specify level
-  radiomics.logger.setLevel(logging.INFO)
+  # Initialize logging for batch log messages
+  logger = rLogger.getChild('batch')
 
-  # Prevent radiomics logger from printing out log entries with level < WARNING to the console
-  radiomics.logger.handlers[0].setLevel(logging.WARNING)
+  # Set verbosity level for output to stderr (default level = WARNING)
+  radiomics.setVerbosity(logging.INFO)
 
-  logging.info('Loading CSV')
-  print("Loading CSV")
+  logger.info('Loading CSV')
 
   flists = []
   try:
-    with open(inputCSV, 'rb') as inFile:
-      cr = csv.reader(inFile, lineterminator='\n')
+    with open(inputCSV, 'r') as inFile:
+      cr = csv.DictReader(inFile, lineterminator='\n')
       flists = [row for row in cr]
   except Exception:
-    logging.error('CSV READ FAILED:\n%s', traceback.format_exc())
+    logging.error('CSV READ FAILED', exc_info=True)
 
-  print("Loading Done")
-  print("Patients: " + str(len(flists)))
+  logger.info('Loading Done')
+  logger.info('Patients: %d', len(flists))
 
   kwargs = {}
   kwargs['binWidth'] = 25
   kwargs['resampledPixelSpacing'] = None  # [3,3,3]
   kwargs['interpolator'] = sitk.sitkBSpline
-  kwargs['verbose'] = True
   kwargs['enableCExtensions'] = False
 
-  logging.info('pyradiomics version: %s', radiomics.__version__)
-  logging.info('Extracting features with kwarg settings: %s', str(kwargs))
+  logger.info('pyradiomics version: %s', radiomics.__version__)
+  logger.info('Extracting features with kwarg settings: %s', str(kwargs))
 
   extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
   extractor.enableInputImages(Original={})
   # extractor.enableInputImages(wavelet= {'level': 2})
+
+  headers = None
+
   for idx, entry in enumerate(flists, start=1):
 
-    print("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s" % (idx, len(flists), entry[0], entry[1], entry[2]))
-    logging.info("(%d/%d) Processing Patient: %s, Study: %s, Reader: %s", idx, len(flists), entry[0], entry[1],
-                 entry[2])
+    logger.info("(%d/%d) Processing Patient (Image: %s, Mask: %s)", idx, len(flists), entry['Image'], entry['Mask'])
 
-    imageFilepath = entry[3]
-    maskFilepath = entry[4]
+    imageFilepath = entry['Image']
+    maskFilepath = entry['Mask']
 
     if (imageFilepath is not None) and (maskFilepath is not None):
-      featureVector = collections.OrderedDict()
-      featureVector['PatientID'] = entry[0]
-      featureVector['Study'] = entry[1]
-      featureVector['Reader'] = entry[2]
-      featureVector['image'] = os.path.basename(imageFilepath)
-      featureVector['mask'] = os.path.basename(maskFilepath)
+      featureVector = collections.OrderedDict(entry)
+      featureVector['Image'] = os.path.basename(imageFilepath)
+      featureVector['Mask'] = os.path.basename(maskFilepath)
 
       try:
         featureVector.update(extractor.execute(imageFilepath, maskFilepath))
 
-        with open(outputFilepath, 'ab') as outputFile:
+        with open(outputFilepath, 'a') as outputFile:
           writer = csv.writer(outputFile, lineterminator='\n')
-          if idx == 1: writer.writerow(featureVector.keys())
-          writer.writerow(featureVector.values())
+          if headers is None:
+            headers = list(featureVector.keys())
+            writer.writerow(headers)
+
+          row = []
+          for h in headers:
+            row.append(featureVector.get(h, "N/A"))
+          writer.writerow(row)
       except Exception:
-        logging.error('FEATURE EXTRACTION FAILED:\n%s', traceback.format_exc())
+        logger.error('FEATURE EXTRACTION FAILED', exc_info=True)
 
-
-main()
+if __name__ == '__main__':
+  main()

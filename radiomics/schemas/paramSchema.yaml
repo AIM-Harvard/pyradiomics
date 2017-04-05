@@ -6,10 +6,17 @@ mapping:
   setting: &settings
     type: map
     mapping:
-      verbose:
-        type: bool
       enableCExtensions:
         type: bool
+      minimumROIDimensions:
+        type: int
+        range:
+          min: 1
+          max: 3
+      minimumROISize:
+        type: int
+        range:
+          min-ex: 0
       additionalInfo:
         type: bool
       label:
@@ -40,6 +47,18 @@ mapping:
         type: int
         range:
           min: 0
+      distances:
+        seq:
+          - type: int
+            range:
+              min-ex: 0
+      force2D:
+        type: bool
+      force2Ddimension:
+        type: int
+        range:
+          min: 0
+          max: 2
       sigma:
         seq:
           - type: float

@@ -5,27 +5,33 @@ from radiomics import base, imageoperations
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   r"""
-  First-order statistics describe the distribution of voxel intensities within the image region defined by the mask through commonly used and basic metrics.
+  First-order statistics describe the distribution of voxel intensities within the image region defined by the mask
+  through commonly used and basic metrics.
 
   Let:
 
   :math:`\textbf{X}` denote the three dimensional image matrix with :math:`N` voxels
 
   :math:`\textbf{P}(i)` the first order histogram with :math:`N_l` discrete intensity levels,
-  where :math:`l` is defined by the number of levels is calculated based on the binWidth parameter of the constructor.
+  where :math:`N_l` is defined by the number of levels, calculated based on the ``binWidth`` parameter.
 
   :math:`p(i)` be the normalized first order histogram and equal to :math:`\frac{\textbf{P}(i)}{\sum{\textbf{P}(i)}}`
 
-  Following addiotional settings are possible:
+  Following additional settings are possible:
 
-  - voxelArrayShift [2000]: This amount is added to the gray level intensity in Energy, Total Energy and RMS, this is to prevent negative values from occuring when using CT data.
+  - voxelArrayShift [0]: Integer, This amount is added to the gray level intensity in features Energy, Total Energy and
+    RMS, this is to prevent negative values. __If using CT data, or data normalized with mean 0, consider setting this
+    parameter to a fixed value (e.g. 2000) that ensures non-negative numbers in the image. Bear in mind however, that
+    the larger the value, the larger the volume confounding effect will be.__
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsFirstOrder, self).__init__(inputImage, inputMask, **kwargs)
 
     self.pixelSpacing = inputImage.GetSpacing()
-    self.voxelArrayShift = kwargs.get('voxelArrayShift', 2000)
+    self.voxelArrayShift = kwargs.get('voxelArrayShift', 0)
+
+    self.logger.debug('Feature class initialized')
 
   def _moment(self, a, moment=1, axis=0):
     r"""
@@ -43,26 +49,38 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     r"""
     Calculate the Energy of the image array.
 
-    :math:`energy = \displaystyle\sum^{N}_{i=1}{\textbf{X}(i)^2}`
+    :math:`energy = \displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}`
 
-    Energy is a measure of the magnitude of voxel values in
-    an image. A larger values implies a greater sum of the
-    squares of these values.
+    Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
+    values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to Energy,
+    instead of voxels with gray level intensity closest to 0.
+
+    Energy is a measure of the magnitude of voxel values in an image. A larger values implies a greater sum of the
+    squares of these values. This feature is volume-confounded, a larger value of :math:`c` increases the effect of
+    volume-confounding.
     """
 
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
+
     return (numpy.sum(shiftedParameterArray ** 2))
 
   def getTotalEnergyFeatureValue(self):
     r"""
     Calculate the Total Energy of the image array.
 
-    :math:`total\ energy = V_{voxel}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)^2}`
+    :math:`total\ energy = V_{voxel}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}`
 
-    Total Energy is the value of Energy feature scaled by the volume of the voxel in cubic mm.
+    Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
+    values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to Energy,
+    instead of voxels with gray level intensity closest to 0.
+
+    Total Energy is the value of Energy feature scaled by the volume of the voxel in cubic mm. This feature is
+    volume-confounded, a larger value of :math:`c` increases the effect of volume-confounding.
     """
+
     x, y, z = self.pixelSpacing
     cubicMMPerVoxel = x * y * z
+
     return (cubicMMPerVoxel * self.getEnergyFeatureValue())
 
   def getEntropyFeatureValue(self):
@@ -72,15 +90,14 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     :math:`entropy = -\displaystyle\sum^{N_l}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}`
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
-    Entropy specifies the uncertainty/randomness in the
-    image values. It measures the average amount of
-    information required to encode the image values.
+
+    Entropy specifies the uncertainty/randomness in the image values. It measures the average amount of information
+    required to encode the image values.
     """
 
     eps = numpy.spacing(1)
-
-    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
-
+    binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
+    bins = numpy.histogram(self.targetVoxelArray, binEdges)[0]
     try:
       bins = bins + eps
       bins = bins / float(bins.sum())
@@ -91,6 +108,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   def getMinimumFeatureValue(self):
     r"""
     Calculate the Minimum Value in the image array.
+
+    :math:`minimum = \min(\textbf{X})`
     """
 
     return (numpy.min(self.targetVoxelArray))
@@ -112,6 +131,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   def getMaximumFeatureValue(self):
     r"""
     Calculate the Maximum Value in the image array.
+
+    :math:`maximum = \max(\textbf{X})`
     """
 
     return (numpy.max(self.targetVoxelArray))
@@ -157,8 +178,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`mean\ absolute\ deviation = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}`
 
-    Mean Absolute Deviation is the mean distance of all intensity values
-    from the Mean Value of the image array.
+    Mean Absolute Deviation is the mean distance of all intensity values from the Mean Value of the image array.
     """
 
     return (numpy.mean(numpy.absolute((numpy.mean(self.targetVoxelArray) - self.targetVoxelArray))))
@@ -171,22 +191,28 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     Robust Mean Absolute Deviation is the mean distance of all intensity values
     from the Mean Value calculated on the subset of image array with gray levels in between, or equal
-    to the 10\ :sub:`th` and 90\ :sub:`th` percentile.
+    to the 10\ :sup:`th` and 90\ :sup:`th` percentile.
     """
+
     prcnt10 = self.get10PercentileFeatureValue()
     prcnt90 = self.get90PercentileFeatureValue()
     percentileArray = self.targetVoxelArray[(self.targetVoxelArray >= prcnt10) * (self.targetVoxelArray <= prcnt90)]
+
     return numpy.mean(numpy.absolute(percentileArray - numpy.mean(percentileArray)))
 
   def getRootMeanSquaredFeatureValue(self):
     r"""
     Calculate the Root Mean Squared of the image array.
 
-    :math:`RMS = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{\textbf{X}(i)^2}}`
+    :math:`RMS = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}}`
 
-    RMS is the square-root of the mean of all the squared
-    intensity values. It is another measure of the magnitude
-    of the image values.
+    Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
+    values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to RMS,
+    instead of voxels with gray level intensity closest to 0.
+
+    RMS is the square-root of the mean of all the squared intensity values. It is another measure of the magnitude of
+    the image values. This feature is volume-confounded, a larger value of :math:`c` increases the effect of
+    volume-confounding.
     """
 
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
@@ -198,8 +224,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`standard\ deviation = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}`
 
-    Standard Deviation measures the amount of variation
-    or dispersion from the Mean Value.
+    Standard Deviation measures the amount of variation or dispersion from the Mean Value.
     """
 
     return (numpy.std(self.targetVoxelArray))
@@ -214,9 +239,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     Where :math:`\mu_3` is the 3\ :sup:`rd` central moment.
 
-    Skewness measures the asymmetry of the distribution of values about the Mean value. Depending
-    on where the tail is elongated and the mass of the distribution
-    is concentrated, this value can be positive or negative.
+    Skewness measures the asymmetry of the distribution of values about the Mean value. Depending on where the tail is
+    elongated and the mass of the distribution is concentrated, this value can be positive or negative.
 
     Related links:
 
@@ -240,12 +264,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     Where :math:`\mu_4` is the 4\ :sup:`th` central moment.
 
-    Kurtosis is a measure of the 'peakedness' of the distribution
-    of values in the image ROI. A higher kurtosis implies that the
-    mass of the distribution is concentrated towards the tail(s)
-    rather than towards the mean. A lower kurtosis implies the reverse:
-    that the mass of the distribution is concentrated towards a
-    spike near the Mean value.
+    Kurtosis is a measure of the 'peakedness' of the distribution of values in the image ROI. A higher kurtosis implies
+    that the mass of the distribution is concentrated towards the tail(s) rather than towards the mean. A lower kurtosis
+    implies the reverse: that the mass of the distribution is concentrated towards a spike near the Mean value.
 
     Related links:
 
@@ -265,9 +286,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`variance = \sigma^2 = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}`
 
-    Variance is the the mean of the squared distances of each intensity
-    value from the Mean value. This is a measure of the spread
-    of the distribution about the mean.
+    Variance is the the mean of the squared distances of each intensity value from the Mean value. This is a measure of
+    the spread of the distribution about the mean.
     """
 
     return (numpy.std(self.targetVoxelArray) ** 2)
@@ -278,14 +298,14 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     :math:`uniformity = \displaystyle\sum^{N_l}_{i=1}{p(i)^2}`
 
-    Uniformity is a measure of the sum of the squares of each intensity
-    value. This is a measure of the heterogeneity of the image array,
-    where a greater uniformity implies a greater heterogeneity or a
-    greater range of discrete intensity values.
+    Uniformity is a measure of the sum of the squares of each intensity value. This is a measure of the heterogeneity of
+    the image array, where a greater uniformity implies a greater heterogeneity or a greater range of discrete intensity
+    values.
     """
-    eps = numpy.spacing(1)
 
-    bins = imageoperations.getHistogram(self.binWidth, self.targetVoxelArray)[0]
+    eps = numpy.spacing(1)
+    binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
+    bins = numpy.histogram(self.targetVoxelArray, binEdges)[0]
     try:
       bins = bins / (float(bins.sum() + eps))
       return (numpy.sum(bins ** 2))

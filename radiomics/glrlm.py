@@ -11,7 +11,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
   A Gray Level Run Length Matrix (GLRLM) quantifies gray level runs in an image.
   A gray level run is defined as the length in number of pixels,
   of consecutive pixels that have the same gray level value. In a gray level run length matrix
-  :math:`\textbf{P}(i,j|\theta)`, the :math:`(i,j)`\ :sup:`th` element describes the number of times
+  :math:`\textbf{P}(i,j|\theta)`, the :math:`(i,j)^{\text{th}}` element describes the number of times
   a gray level :math:`i` appears consecutively :math:`j` times in the direction specified by :math:`\theta`.
 
   As a two dimensional example, consider the following 5x5 image, with 5 discrete gray levels:
@@ -63,20 +63,19 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     - 'no_weighting': GLCMs are weighted by factor 1 and summed
     - None: Applies no weighting, mean of values calculated on separate matrices is returned.
 
-    In case of other values, an warning is logged and GLCMs are all weighted by factor 1 and summed.
+    In case of other values, an warning is logged and option 'no_weighting' is used.
 
   References
 
   - Galloway MM. 1975. Texture analysis using gray level run lengths. Computer Graphics and Image Processing,
     4(2):172-179.
-
   - Chu A., Sehgal C.M., Greenleaf J. F. 1990. Use of gray value distribution of run length for texture analysis.
     Pattern Recognition Letters, 11(6):415-419
-
   - Xu D., Kurani A., Furst J., Raicu D. 2004. Run-Length Encoding For Volumetric Texture. International Conference on
     Visualization, Imaging and Image Processing (VIIP), p. 452-458
-
   - Tang X. 1998. Texture information in run-length matrices. IEEE Transactions on Image Processing 7(11):1602-1609.
+  - `Tustison N., Gee J. Run-Length Matrices For Texture Analysis. Insight Journal 2008 January - June.
+    <http://www.insight-journal.org/browse/publication/231>`_
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -88,8 +87,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.P_glrlm = {}
 
     # binning
-    self.matrix, self.histogram = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = self.histogram[1].shape[0] - 1
+    self.matrix, self.binEdges = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
+    self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
 
@@ -100,7 +99,11 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
+    self.logger.debug('Feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
+
   def _calculateMatrix(self):
+    self.logger.debug('Calculating GLRLM matrix in Python')
+
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
 
@@ -110,8 +113,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     matrixDiagonals = []
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
 
+    self.logger.debug('Calculating diagonals')
     for angle in angles:
       staticDims, = numpy.where(angle == 0)  # indices for static dimensions for current angle (z, y, x)
       movingDims, = numpy.where(angle != 0)  # indices for moving dimensions for current angle (z, y, x)
@@ -140,6 +144,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Run-Length Encoding (rle) for the list of diagonals
     # (1 list per direction/angle)
+    self.logger.debug('Calculating run lengths')
     for angle_idx, angle in enumerate(matrixDiagonals):
       P = P_glrlm[:, :, angle_idx]
       # Check whether delineation is 2D for current angle (all diagonals contain 0 or 1 non-pad value)
@@ -161,11 +166,13 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     return P_glrlm
 
   def _calculateCMatrix(self):
+    self.logger.debug('Calculating GLRLM matrix in C')
+
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size)
+    angles = imageoperations.generateAngles(size, **self.kwargs)
 
     P_glrlm = cMatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)
     P_glrlm = self._applyMatrixOptions(P_glrlm, angles)
@@ -178,15 +185,21 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     up to maximum observed run-length. Optionally apply a weighting factor. Finally delete empty angles and store the
     sum of the matrix in ``self.coefficients``.
     """
+    self.logger.debug('Process calculated matrix')
 
     # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
     # Crop run-length axis of GLRLMs up to maximum observed run-length
+    self.logger.debug('Cropping calculated matrix to observed gray levels and maximum observed zone size')
     P_glrlm_bounds = numpy.argwhere(P_glrlm)
     (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1  # noqa: F841
     P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
 
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:
+      self.logger.debug('Applying weighting (%s)', self.weightingNorm)
+      # Correct the number of voxels for the number of times it is used (once per angle), affects run percentage
+      self.coefficients['Np'] *= len(angles)
+
       pixelSpacing = self.inputImage.GetSpacing()[::-1]
       weights = numpy.empty(len(angles))
       for a_idx, a in enumerate(angles):
@@ -208,14 +221,20 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Delete empty angles if no weighting is applied
     if P_glrlm.shape[2] > 1:
-      P_glrlm = numpy.delete(P_glrlm, numpy.where(sumP_glrlm == 0), 2)
-      sumP_glrlm = numpy.delete(sumP_glrlm, numpy.where(sumP_glrlm == 0), 0)
+      emptyAngles = numpy.where(sumP_glrlm == 0)
+      if len(emptyAngles[0]) > 0:  # One or more angles are 'empty'
+        self.logger.debug('Deleting %d empty angles:\n%s', len(emptyAngles[0]), angles[emptyAngles])
+        P_glrlm = numpy.delete(P_glrlm, emptyAngles, 2)
+        sumP_glrlm = numpy.delete(sumP_glrlm, emptyAngles, 0)
+      else:
+        self.logger.debug('No empty angles')
 
     self.coefficients['sumP_glrlm'] = sumP_glrlm
 
     return P_glrlm
 
   def _calculateCoefficients(self):
+    self.logger.debug('Calculating GLRLM coefficients')
 
     pr = numpy.sum(self.P_glrlm, 0)
     pg = numpy.sum(self.P_glrlm, 1)
@@ -344,7 +363,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     :math:`RP = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{N_p}}`
 
-    Measures the homogeneity and distribution of runs of an image.
+    Measures the coarseness of the texture by taking the ratio of number of runs and number of voxels in the ROI.
+    Values are in range :math:`\frac{1}{N_p} \leq RP \leq 1`, with higher values indicating a larger portion of the ROI
+    consists of short runs (indicates a more fine texture).
     """
     Np = self.coefficients['Np']
 

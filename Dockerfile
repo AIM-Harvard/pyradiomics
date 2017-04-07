@@ -1,63 +1,40 @@
-FROM centos:5
-MAINTAINER http://github.com/radiomics
+# Build Pyradiomics inside the Jupyter Datascience Notebook
 
-RUN yum update -y && \
-  yum groupinstall -y "Development Tools" && \
-  yum install -y curl \
-   curl-devel \
-   coreutils \
-   gcc \
-   gcc-c++ \
-   gettext \
-   openssl-devel \
-   perl \
-   wget \
-   zlib-devel
+FROM jupyter/datascience-notebook
 
-WORKDIR /etc/yum.repos.d
-RUN wget http://people.centos.org/tru/devtools-2/devtools-2.repo
-RUN yum install -y devtoolset-2-gcc \
-  devtoolset-2-binutils \
-  devtoolset-2-gcc-gfortran \
-  devtoolset-2-gcc-c++
-ENV CC /opt/rh/devtoolset-2/root/usr/bin/gcc
-ENV CXX /opt/rh/devtoolset-2/root/usr/bin/g++
-ENV FC /opt/rh/devtoolset-2/root/usr/bin/gfortran
+MAINTAINER Radiomics Project (http://github.com/radiomics)
 
-# Build and install git from source.
-#WORKDIR /usr/src
-#ENV GIT_VERSION 2.11.0
-#RUN wget https://github.com/git/git/archive/v${GIT_VERSION}.tar.gz -O git-${GIT_VERSION}.tar.gz && \
-#  tar xvzf git-${GIT_VERSION}.tar.gz && \
-#  cd git-${GIT_VERSION} && \
-#  make prefix=/usr all && \
-#  make prefix=/usr install && \
-#  cd .. && rm -rf git-${GIT_VERSION}*
+USER root
+ADD . /root/pyradiomics
+# Install in Python 3
+RUN /bin/bash -c "source activate root \
+    && cd /root/pyradiomics \
+    && python -m pip install --no-cache-dir -r requirements.txt \
+    && python setup.py install"
+# Python 2
+RUN /bin/bash -c "source activate python2 \
+    && cd /root/pyradiomics \
+    && python -m pip install --no-cache-dir -r requirements.txt \
+    && python setup.py install"
 
-# Build and install Python from source.
-WORKDIR /usr/src
-ENV PYTHON_VERSION 2.7.10
-RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz && \
-  tar xvzf Python-${PYTHON_VERSION}.tgz && \
-  cd Python-${PYTHON_VERSION} && \
-  ./configure && \
-  make -j$(grep -c processor /proc/cpuinfo) && \
-  make install && \
-  cd .. && rm -rf Python-${PYTHON_VERSION}*
+# Install sample data and notebooks
+ADD data/ /home/jovyan/work/example_data/
+ADD bin/Notebooks/RadiomicsExample.ipynb /home/jovyan/work/
+ADD bin/Notebooks/FeatureVisualization.ipynb /home/jovyan/work/
+ADD bin/Notebooks/FilteringEffects.ipynb /home/jovyan/work/
+ADD bin/Params.yaml /home/jovyan/work/
 
-# Install pyradiomics
-WORKDIR /usr/src
-ADD . pyradiomics/
-RUN cd pyradiomics && \
-  python --version && \
-  wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py && \
-  python get-pip.py && \
-  pip install wheel>=0.29.0 && \
-  pip install setuptools>=28.0.0 && \
-  pip install --trusted-host www.itk.org -f https://itk.org/SimpleITKDoxygen/html/PyDownloadPage.html SimpleITK>=0.9.1 && \
-  python -c "import SimpleITK; print('SimpleITK Version:' + SimpleITK.Version_VersionString())" && \
-  pip install -r requirements.txt && \
-  python setup.py install
+# Make a global directory and link it to the work directory
+RUN mkdir /data
+RUN ln -s /data /home/jovyan/work/data
 
-WORKDIR /usr/src
-ENTRYPOINT ["pyradiomics"]
+RUN chown -R jovyan:users /home/jovyan/work
+
+# Trust the notebooks that we've installed
+USER jovyan
+RUN jupyter trust /home/jovyan/work/RadiomicsExample.ipynb
+RUN jupyter trust /home/jovyan/work/FeatureVisualization.ipynb
+RUN jupyter trust /home/jovyan/work/FilteringEffects.ipynb
+
+# The user's data will show up as /data
+VOLUME /data

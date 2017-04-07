@@ -5,7 +5,7 @@
 version: 2
 jobs:
   build:
-    working_directory: /
+    working_directory: /pyradiomics
     docker:
       - image: jupyter/datascience-notebook
         user: root

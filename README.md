@@ -77,9 +77,7 @@ Detailed installation instructions, as well as instructions for installing PyRad
 
 PyRadiomics contains three "flavors" of [Dockers](https://www.docker.com/).  The first is a command line installation of the `pyradiomics` and `pyradiomicsbatch` command lines.  The second is a [Jupyter notebook](http://jupyter.org/) with PyRadiomics pre-installed with example Notebooks.  The third is a Ubuntu 16 based Docker for command line and interactive use. To build the Dockers:
 
-    docker build -t radiomics/cli .
-    docker build -t radiomics/notebook -f Dockerfile.notebook .
-    docker build -t radiomics/cli2 -f Dockerfile.ubuntu .
+    docker build -t radiomics/notebook .
     
 The `radiomics/notebook` Docker has an exposed volume (`/data`) that can be mapped to the host system directory.  For example, to mount the current directory:
 

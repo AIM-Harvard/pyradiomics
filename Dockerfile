@@ -4,6 +4,15 @@ FROM jupyter/datascience-notebook
 
 MAINTAINER Radiomics Project (http://github.com/radiomics)
 
+# Build information
+ARG BUILD_DATE
+ARG GIT_REF
+
+LABEL org.label-schema.build-data=$BUILD_DATE \
+      org.label-schema.vcs-url="https://github.com/radiomics/pyradiomics.git" \
+      org.label-schema.vcs-ref=$GIT_REF \
+      org.label-schema.schema-version="1.0.0-rc1"      
+
 USER root
 ADD . /root/pyradiomics
 # Install in Python 3
@@ -21,6 +30,7 @@ RUN /bin/bash -c "source activate python2 \
 ADD data/ /home/jovyan/work/example_data/
 ADD bin/Notebooks/RadiomicsExample.ipynb /home/jovyan/work/
 ADD bin/Notebooks/FeatureVisualization.ipynb /home/jovyan/work/
+ADD bin/Notebooks/FeatureVisualizationWithClustering.ipynb /home/jovyan/work/
 ADD bin/Notebooks/FilteringEffects.ipynb /home/jovyan/work/
 ADD bin/Params.yaml /home/jovyan/work/
 
@@ -32,9 +42,11 @@ RUN chown -R jovyan:users /home/jovyan/work
 
 # Trust the notebooks that we've installed
 USER jovyan
-RUN jupyter trust /home/jovyan/work/RadiomicsExample.ipynb
-RUN jupyter trust /home/jovyan/work/FeatureVisualization.ipynb
-RUN jupyter trust /home/jovyan/work/FilteringEffects.ipynb
+RUN jupyter trust /home/jovyan/work/*.ipynb
+
+# Run the notebooks
+RUN jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --execute /home/jovyan/work/*.ipynb
+RUN jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --execute /home/jovyan/work/*.ipynb
 
 # The user's data will show up as /data
 VOLUME /data

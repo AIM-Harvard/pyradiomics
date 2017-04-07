@@ -5,18 +5,17 @@
 version: 2
 jobs:
   build:
-    working_directory: /root
     docker:
       - image: jupyter/datascience-notebook
         user: root
     steps:
+      - checkout
       - run:
           # CircleCI says we need SSH and the docker doesn't have it installed
           name: Update
           command: |
             apt-get update
             apt-get install -y openssh-client openssh-server
-      - checkout
       - run:
           name: Install pyradiomics in Python 2 and 3
           command: |

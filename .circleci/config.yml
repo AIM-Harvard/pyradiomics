@@ -1,10 +1,16 @@
 version: 2
 jobs:
   build:
-    working_directory: /home/joyvan/work
+    working_directory: /root
     docker:
       - image: jupyter/datascience-notebook
     steps:
+      - run:
+          name: Update
+          command: apt-get update
+      - run:
+          name: Install ssh
+          command: apt-get install -y openssh-client openssh-server
       - checkout
       - run:
           name: Install Dependencies

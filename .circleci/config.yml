@@ -1,0 +1,54 @@
+# To test:
+# docker pull circleci/picard
+# docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):$(pwd) -v ~/.circleci/:/root/.circleci --workdir $(pwd) circleci/picard circleci build
+
+version: 2
+jobs:
+  build:
+    working_directory: /pyradiomics
+    docker:
+      - image: jupyter/datascience-notebook
+        user: root
+    steps:
+      - checkout
+      - run:
+          # CircleCI says we need SSH and the docker doesn't have it installed
+          name: Update
+          command: |
+            apt-get update
+            apt-get install -y openssh-client openssh-server
+      - run:
+          name: Install pyradiomics in Python 2 and 3
+          command: |
+            source activate python2
+            python -m pip install --no-cache-dir -r requirements.txt
+            python setup.py install
+            source activate root
+            python -m pip install --no-cache-dir -r requirements.txt
+            python setup.py install
+      - run:
+          name: Run tests in Python 2
+          command: |
+            source activate python2
+            nosetests
+      - run:
+          name: Run tests in Python 3
+          command: |
+            source activate root
+            nosetests
+      - run:
+          name: Install test data
+          command: |
+            cp -r data /tmp/example_data
+            cp bin/Params.yaml /tmp
+            cp -r bin/Notebooks/*.ipynb /tmp
+            # helloFeatureClass is not ready for inclusion yet, so isn't being tested
+            rm -f /tmp/hello*.ipynb
+      - run:
+          name: test notebooks in python 2 and 3
+          command: |
+            jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --execute /tmp/*.ipynb
+            jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --execute /tmp/*.ipynb
+
+
+

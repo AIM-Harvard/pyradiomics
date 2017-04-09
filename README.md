@@ -73,6 +73,22 @@ To install this package on unix like systems run the following commands from the
 Detailed installation instructions, as well as instructions for installing PyRadiomics on Windows are available in the 
 [documentation](http://pyradiomics.readthedocs.io/en/latest/installation.html).
 
+### Docker
+
+PyRadiomics contains three "flavors" of [Dockers](https://www.docker.com/).  The first is a command line installation of the `pyradiomics` and `pyradiomicsbatch` command lines.  The second is a [Jupyter notebook](http://jupyter.org/) with PyRadiomics pre-installed with example Notebooks.  The third is a Ubuntu 16 based Docker for command line and interactive use. To build the Dockers:
+
+    docker build -t radiomics/notebook .
+    
+The `radiomics/notebook` Docker has an exposed volume (`/data`) that can be mapped to the host system directory.  For example, to mount the current directory:
+
+    docker run --rm -it --publish 8888:8888 -v `pwd`:/data radiomics/notebook
+
+or for a less secure notebook, skip the randomly generated token
+
+    docker run --rm -it --publish 8888:8888 -v `pwd`:/data radiomics/notebook start-notebook.sh --NotebookApp.token=''
+
+and open the local webpage at http://localhost:8888/ with the current directory at http://localhost:8888/tree/data.
+
 ### Usage
 
 PyRadiomics can be easily used in a Python script through the `featureextractor`

@@ -47,8 +47,9 @@ jobs:
       - run:
           name: test notebooks in python 2 and 3
           command: |
-            jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --execute /tmp/*.ipynb
-            jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --execute /tmp/*.ipynb
+            jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --execute /tmp/RadiomicsExample.ipynb /tmp/FeatureVisualization.ipynb /tmp/FeatureVisualizationWithClustering.ipynb /tmp/FilteringEffects.ipynb
+          
+            jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --execute  /tmp/RadiomicsExample.ipynb /tmp/FeatureVisualization.ipynb /tmp/FeatureVisualizationWithClustering.ipynb /tmp/FilteringEffects.ipynb
 
 
 

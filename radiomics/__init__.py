@@ -164,44 +164,80 @@ def getInputImageTypes():
 
 def getTestCase(testCase, repoDirectory=None):
   """
+  This function provides an image and mask for testing PyRadiomics. One of five test cases can be selected:
 
+   - brain1
+   - brain2
+   - breast1
+   - lung1
+   - lung2
+
+  If the repository is available locally (including all five test cases, the path to the root folder of the repository
+  can be specified in ``repoDirectory``, preventing unnecessary downloads. If the repository is not found, or the
+  repository does not contain the requested test case, PyRadiomics checks if it is run in development mode (directly
+  from the source code in the repository), and if so, if it can find the test case relative to it's own location.
+
+  If the requested test case could not be found in the repository, PyRadiomics downloads the test case from the GitHub
+  repository and stores it in temporary files. If the test case was already downloaded, this is returned instead.
+
+  Returns a tuple of two strings: ``(path/to/image.nrrd, path/to/mask.nrrd)``
   """
   global logger
   if testCase not in ['brain1', 'brain2', 'breast1', 'lung1', 'lung2']:
     logger.error('Testcase "%s" not recognized!', testCase)
     return None, None
 
+  logger.debug('Getting test case %s', testCase)
+
   # Use test cases included in the repository. If PyRadiomics is run from an installed version, the location of the
   # repository needs to be specified
+  logger.debug('Looking for test case in repository')
   if repoDirectory is not None:
     dataDir = os.path.join(repoDirectory, 'data')
     imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
     maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
     if os.path.isfile(imageFile) and os.path.isfile(maskFile):
+      logger.debug('Test case found in repository (repository specified)')
       return imageFile, maskFile
 
   # No repository directory specified, check if running in development mode (code run from repository)
-  dataDir = os.path.join(base.__path__[0], '..', 'data')  # This folder exists if radiomics is run from the repository
+  logger.debug('Repository not specified or test case not found, checking if running in development mode')
+  # This folder exists if radiomics is run from the repository:
+  dataDir = os.path.join(os.path.basename(base.__file__), '..', 'data')
   imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
   maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
   if os.path.isfile(imageFile) and os.path.isfile(maskFile):
+    logger.debug('Test case found in repository (running development mode)')
     return imageFile, maskFile
 
   # Data folder not found (most likely running from installed version). Check if test case has been downloaded.
+  logger.debug('Test case or repository not found, checking temporary data')
   dataDir = os.path.join(tempfile.gettempdir(), 'pyradiomics', 'data')
   imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
   maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
   if os.path.isfile(imageFile) and os.path.isfile(maskFile):
+    logger.debug('Test case already downloaded')
     return imageFile, maskFile
 
+  logger.info("Test case not available locally, downloading test case...")
+
   # Testcase not found in temporary files, download them. First check if the folder is available
+  if not os.path.isdir(os.path.join(tempfile.gettempdir(), 'pyradiomics')):
+    os.mkdir(os.path.join(tempfile.gettempdir(), 'pyradiomics'))
   if not os.path.isdir(dataDir):
+    logger.debug('Creating temporary directory: %s', dataDir)
     os.mkdir(dataDir)
 
   # Download the test case files (image and label)
   url = r'https://github.com/Radiomics/pyradiomics/raw/master/data/%s_%s.nrrd'
-  urllib.urlretrieve(url % (testCase, 'image'), imageFile)
-  urllib.urlretrieve(url % (testCase, 'label'), maskFile)
+  try:
+    urllib.urlretrieve(url % (testCase, 'image'), imageFile)
+    urllib.urlretrieve(url % (testCase, 'label'), maskFile)
+  except Exception:
+    logger.error('Download failed!', exc_info=True)
+    return None, None
+
+  logger.info('Test case %s downloaded', testCase)
 
   return imageFile, maskFile
 

@@ -731,31 +731,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      \textit{sum variance} = \displaystyle\sum^{2N_g}_{k=2}{(k-SE)^2p_{x+y}(k)}
+      \textit{sum variance} = \displaystyle\sum^{2N_g}_{k=2}{(k-SA)^2p_{x+y}(k)}
 
     Sum Variance is a measure of heterogeneity that places higher weights on
     neighboring intensity level pairs that deviate more from the mean.
-    """
-    eps = self.coefficients['eps']
-    pxAddy = self.coefficients['pxAddy']
-    kValuesSum = self.coefficients['kValuesSum']
-    sumentr = (-1) * numpy.sum((pxAddy * numpy.log2(pxAddy + eps)), 0, keepdims=True)
-    sumvar = numpy.sum((pxAddy * ((kValuesSum[:, None] - sumentr) ** 2)), 0)
-    return (sumvar.mean())
-
-  def getSumVariance2FeatureValue(self):
-    r"""
-    **27. Sum Variance 2**
-
-    .. math::
-
-      \textit{sum variance 2} = \displaystyle\sum^{2N_g}_{k=2}{(k-SA)^2p_{x+y}(k)}
-
-    Sum Variance 2 is a measure of heterogeneity that places higher weights on
-    neighboring intensity level pairs that deviate more from the mean.
-
-    This formula differs from SumVariance in that instead of subtracting the SumEntropy from the intensity,
-    it subtracts the SumAvarage, which is the mean of intensities and not its entropy
     """
     pxAddy = self.coefficients['pxAddy']
     kValuesSum = self.coefficients['kValuesSum']

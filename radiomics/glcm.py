@@ -744,7 +744,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumSquaresFeatureValue(self):
     r"""
-    **28. Sum of Squares**
+    **27. Sum of Squares**
 
     .. math::
 

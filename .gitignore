@@ -63,3 +63,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# scikit-build
+_skbuild
+MANIFEST

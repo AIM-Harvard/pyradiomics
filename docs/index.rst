@@ -105,8 +105,8 @@ PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3
 * Install on your system (Linux, Mac OSX), with prerequisites:
 
   * ``cd pyradiomics``
-  * ``sudo python -m pip install -r requirements.txt``
-  * ``sudo python setup.py install``
+  * ``python -m pip install -r requirements.txt``
+  * ``python setup.py install``
 
 * For more detailed installation instructions and installation on Windows see
   :ref:`Installation Details<installation-label>`

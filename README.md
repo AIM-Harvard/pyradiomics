@@ -63,8 +63,8 @@ Furthermore, an instruction video is available [here](http://radiomics.io/pyradi
 PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4.
 To install this package on unix like systems run the following commands from the root directory:
 
-    sudo python -m pip install -r requirements.txt
-    sudo python setup.py install
+    python -m pip install -r requirements.txt
+    python setup.py install
 
 Detailed installation instructions, as well as instructions for installing PyRadiomics on Windows are available in the 
 [documentation](http://pyradiomics.readthedocs.io/en/latest/installation.html).

@@ -12,7 +12,6 @@ recursive-include data *
 exclude data/PyradiomicsFeatures.csv data/Baseline2PyradiomicsFeaturesDiff.csv
 
 recursive-include tests *
-recursive-include docs *.rst conf.py Makefile make.bat
 
 recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
+recursive-exclude * *.py[cod]

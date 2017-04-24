@@ -7,21 +7,22 @@ import numpy
 import SimpleITK as sitk
 import six
 
-from radiomics import firstorder, glcm, glrlm, glszm, imageoperations, shape
+from radiomics import firstorder, getTestCase, glcm, glrlm, glszm, imageoperations, shape
 
 # testBinWidth = 25 this is the default bin size
 # testResampledPixelSpacing = [3,3,3] no resampling for now.
 
-testCase = 'brain1'
-dataDir = os.path.join(os.path.abspath(""), "..", "data")
-imageName = os.path.join(dataDir, testCase + '_image.nrrd')
-maskName = os.path.join(dataDir, testCase + '_label.nrrd')
+# Get some test data
 
-if not os.path.exists(imageName):
-  print('Error: problem finding input image', imageName)
-  exit()
-if not os.path.exists(maskName):
-  print('Error: problem finding input image', maskName)
+# repositoryRoot points to the root of the repository. The following line gets that location if this script is run
+# from it's default location in \pyradiomics\bin. Otherwise, it will point to some (invalid) folder, causing the
+# getTestCase function to fail to find the test case in the repository. In that case, a test case will be downloaded to
+# temporary files and it's location is returned.
+repositoryRoot = os.path.abspath(os.path.join(os.getcwd(), ".."))
+imageName, maskName = getTestCase('brain1', repositoryRoot)
+
+if imageName is None or maskName is None:  # Something went wrong, in this case PyRadiomics will also log an error
+  print('Error getting testcase!')
   exit()
 
 image = sitk.ReadImage(imageName)

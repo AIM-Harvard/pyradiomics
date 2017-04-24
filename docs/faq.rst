@@ -10,6 +10,18 @@ Installation
 This can occur when no compiler is available for python. If you're installing on Windows, you can find free compilers
 for python `here <https://wiki.python.org/moin/WindowsCompilers>`_.
 
+**I installed PyRadiomics successfully from the repository, but when I run the notebook, I get** ``Error loading C
+extensions, switching to python calculation``
+
+When PyRadiomics is installed, the C extensions are compiled and copied to the installation folder, by default the
+``site-packages`` folder. However, when the notebook is run form the repository, it is possible that PyRadiomics uses
+the source code directly (i.e. runs in development mode). You can check this by checking the ``radiomics.__path__``
+field, which will be something like ``['radiomics']`` when it is running in development mode and
+``['path/to/python/Lib/site-packages']`` when running from the installed folder. If running in development mode, the C
+extensions are not available by default. To make them available in development mode, run ``python setup.py develop``
+from the commandline, which is similar to the ``install`` command, but installs pyradiomics to the source folder
+instead (i.e. does nothing to the python files, but compiles the C extensions and copies them to the source folder).
+
 **Which python versions is PyRadiomics compatible with?**
 
 PyRadiomics is compatible with both python 2 and python 3. The automated testing uses python versions 2.7, 3.4 and 3.5

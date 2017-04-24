@@ -70,9 +70,11 @@ def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates):
   \mod W = 0`, the maximum intensity will be encoded as numBins + 1, therefore the maximum number of gray
   level intensities in the ROI after binning is number of bins + 1.
 
-  **N.B. This is different from the assignment of voxels to the bins by** ``numpy.histogram`` **, which has half-open
-  bins, with the exception of the rightmost bin, which means this maximum values are assigned to the topmost bin.**
-  ``numpy.digitize`` **uses half-open bins, including the rightmost bin.**
+  .. warning::
+
+    This is different from the assignment of voxels to the bins by ``numpy.histogram`` , which has half-open bins, with
+    the exception of the rightmost bin, which means this maximum values are assigned to the topmost bin.
+    ``numpy.digitize`` uses half-open bins, including the rightmost bin.
   """
   global logger
   logger.debug('Discretizing gray levels inside ROI')
@@ -86,16 +88,17 @@ def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates):
 
 def generateAngles(size, **kwargs):
   r"""
-  Generate all possible angles from distance 1 until the maximum distance in ``distances`` in 3D.
-  E.g. for d = 1, 13 angles are generated (representing the 26-connected region).
-  For d = 2, 13 + 49 = 62 angles are generated (representing the 26 connected region for distance 1, and the 98
-  connected region for distance 2)
+  Generate all possible angles for specified distances in ``distances`` in 3D. E.g. for d = 1, 13 angles are generated
+  and for d = 2, 49 angles are generated (representing the 26 connected region for distance 1, and the 98 connected
+  region for distance 2). Angles are generated with the following steps:
 
-  First, only generated angles are retained, for which the maximum step size in any dimension (i.e. the infinity norm
-  distance from the center voxel) is present in ``distances``. Next, impossible angles (where 'neighbouring' voxels will
-  always be outside delineation) are deleted. Finally, if ``force2Dextraction`` is enabled, all angles
-  defining a step in the ``force2Ddimension`` are removed (e.g. if this dimension is 0, all angles that have a non-zero
-  step size at index 0 (z dimension) are removed, resulting in angles that only move in the x and/or y dimension).
+  1. All angles for distance = 1 to the maximum distance specified in ``distances`` are generated.
+  2. Only angles are retained, for which the maximum step size in any dimension (i.e. the infinity norm distance from
+     the center voxel) is present in ``distances``.
+  3. "Impossible" angles (where 'neighbouring' voxels will always be outside delineation) are deleted.
+  4. If ``force2Dextraction`` is enabled, all angles defining a step in the ``force2Ddimension`` are removed
+     (e.g. if this dimension is 0, all angles that have a non-zero step size at index 0 (z dimension) are removed,
+     resulting in angles that only move in the x and/or y dimension).
 
   :param size: dimensions (z, x, y) of the bounding box of the tumor mask.
   :param kwargs: The following additional parameters can be specified here (default values in brackets):

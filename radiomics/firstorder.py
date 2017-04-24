@@ -10,19 +10,18 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   Let:
 
-  :math:`\textbf{X}` denote the three dimensional image matrix with :math:`N` voxels
-
-  :math:`\textbf{P}(i)` the first order histogram with :math:`N_l` discrete intensity levels,
-  where :math:`N_l` is defined by the number of levels, calculated based on the ``binWidth`` parameter.
-
-  :math:`p(i)` be the normalized first order histogram and equal to :math:`\frac{\textbf{P}(i)}{\sum{\textbf{P}(i)}}`
+  - :math:`\textbf{X}` be a set of :math:`N` voxels included in the ROI
+  - :math:`\textbf{P}(i)` be the first order histogram with :math:`N_l` discrete intensity levels,
+    where :math:`N_l` is the number of non-zero bins, equally spaced from 0 with a width defined in the ``binWidth``
+    parameter.
+  - :math:`p(i)` be the normalized first order histogram and equal to :math:`\frac{\textbf{P}(i)}{\sum{\textbf{P}(i)}}`
 
   Following additional settings are possible:
 
   - voxelArrayShift [0]: Integer, This amount is added to the gray level intensity in features Energy, Total Energy and
-    RMS, this is to prevent negative values. __If using CT data, or data normalized with mean 0, consider setting this
+    RMS, this is to prevent negative values. *If using CT data, or data normalized with mean 0, consider setting this
     parameter to a fixed value (e.g. 2000) that ensures non-negative numbers in the image. Bear in mind however, that
-    the larger the value, the larger the volume confounding effect will be.__
+    the larger the value, the larger the volume confounding effect will be.*
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -47,17 +46,22 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getEnergyFeatureValue(self):
     r"""
-    Calculate the Energy of the image array.
+    **1. Energy**
 
-    :math:`energy = \displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}`
+    .. math::
+
+      \textit{energy} = \displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
     values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to Energy,
     instead of voxels with gray level intensity closest to 0.
 
     Energy is a measure of the magnitude of voxel values in an image. A larger values implies a greater sum of the
-    squares of these values. This feature is volume-confounded, a larger value of :math:`c` increases the effect of
-    volume-confounding.
+    squares of these values.
+
+    .. note::
+
+      This feature is volume-confounded, a larger value of :math:`c` increases the effect of volume-confounding.
     """
 
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
@@ -66,16 +70,21 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getTotalEnergyFeatureValue(self):
     r"""
-    Calculate the Total Energy of the image array.
+    **2. Total Energy**
 
-    :math:`total\ energy = V_{voxel}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}`
+    .. math::
+
+      \textit{total energy} = V_{voxel}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
     values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to Energy,
     instead of voxels with gray level intensity closest to 0.
 
-    Total Energy is the value of Energy feature scaled by the volume of the voxel in cubic mm. This feature is
-    volume-confounded, a larger value of :math:`c` increases the effect of volume-confounding.
+    Total Energy is the value of Energy feature scaled by the volume of the voxel in cubic mm.
+
+    .. note::
+
+      This feature is volume-confounded, a larger value of :math:`c` increases the effect of volume-confounding.
     """
 
     x, y, z = self.pixelSpacing
@@ -85,9 +94,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getEntropyFeatureValue(self):
     r"""
-    Calculate the Entropy of the image array.
+    **3. Entropy**
 
-    :math:`entropy = -\displaystyle\sum^{N_l}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}`
+    .. math::
+
+      \textit{entropy} = -\displaystyle\sum^{N_l}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
 
@@ -107,76 +118,102 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getMinimumFeatureValue(self):
     r"""
-    Calculate the Minimum Value in the image array.
+    **4. Minimum**
 
-    :math:`minimum = \min(\textbf{X})`
+    .. math::
+
+      \textit{minimum} = \min(\textbf{X})
     """
 
     return (numpy.min(self.targetVoxelArray))
 
   def get10PercentileFeatureValue(self):
     r"""
-    Calculate the 10\ :sup:`th` percentile in the image array.
+    **5. 10th percentile**
+
+    The 10\ :sup:`th` percentile of :math:`\textbf{X}`
     """
 
     return (numpy.percentile(self.targetVoxelArray, 10))
 
   def get90PercentileFeatureValue(self):
     r"""
-    Calculate the 90\ :sup:`th` percentile in the image array.
+    **6. 90th percentile**
+
+    The 90\ :sup:`th` percentile of :math:`\textbf{X}`
     """
 
     return (numpy.percentile(self.targetVoxelArray, 90))
 
   def getMaximumFeatureValue(self):
     r"""
-    Calculate the Maximum Value in the image array.
+    **7. Maximum**
 
-    :math:`maximum = \max(\textbf{X})`
+    .. math::
+
+      \textit{maximum} = \max(\textbf{X})
+
+    The maximum gray level intensity within the ROI.
     """
 
     return (numpy.max(self.targetVoxelArray))
 
   def getMeanFeatureValue(self):
     r"""
-    Calculate the Mean Value for the image array.
+    **8. Mean**
 
-    :math:`mean = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)}`
+    .. math::
+
+      \textit{mean} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)}
+
+    The average gray level intensity within the ROI.
     """
 
     return (numpy.mean(self.targetVoxelArray))
 
   def getMedianFeatureValue(self):
     r"""
-    Calculate the Median Value for the image array.
+    **9. Median**
+
+    The median gray level intensity within the ROI.
     """
 
     return (numpy.median(self.targetVoxelArray))
 
   def getInterquartileRangeFeatureValue(self):
     r"""
-    Calculate the interquartile range of the image array.
+    **10. Interquartile Range**
 
-    :math:`interquartile\ range = \textbf{P}_{75} - \textbf{P}_{25}`, where :math:`\textbf{P}_{25}` and
-    :math:`\textbf{P}_{75}` are the 25\ :sup:`th` and 75\ :sup:`th` percentile of the image array, respectively.
+    .. math::
+
+      \textit{interquartile range} = \textbf{P}_{75} - \textbf{P}_{25}
+
+    Here :math:`\textbf{P}_{25}` and :math:`\textbf{P}_{75}` are the 25\ :sup:`th` and 75\ :sup:`th` percentile of the
+    image array, respectively.
     """
 
     return numpy.percentile(self.targetVoxelArray, 75) - numpy.percentile(self.targetVoxelArray, 25)
 
   def getRangeFeatureValue(self):
     r"""
-    Calculate the Range of Values in the image array.
+    **11. Range**
 
-    :math:`range = \max(\textbf{X}) - \min(\textbf{X})`
+    .. math::
+
+      \textit{range} = \max(\textbf{X}) - \min(\textbf{X})
+
+    The range of gray values in the ROI.
     """
 
     return (numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))
 
   def getMeanAbsoluteDeviationFeatureValue(self):
     r"""
-    Calculate the Mean Absolute Deviation for the image array.
+    **12. Mean Absolute Deviation (MAD)**
 
-    :math:`mean\ absolute\ deviation = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}`
+    .. math::
+
+      \textit{MAD} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}
 
     Mean Absolute Deviation is the mean distance of all intensity values from the Mean Value of the image array.
     """
@@ -185,9 +222,12 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getRobustMeanAbsoluteDeviationFeatureValue(self):
     r"""
-    Calculate the Robust Mean Absolute Deviation for the image array.
+    **13. Robust Mean Absolute Deviation (rMAD)**
 
-    :math:`robust\ mean\ absolute\ deviation = \frac{1}{N_{10-90}}\displaystyle\sum^{N_{10-90}}_{i=1}{|\textbf{X}_{10-90}(i)-\bar{X}_{10-90}|}`
+    .. math::
+
+      \textit{rMAD} = \frac{1}{N_{10-90}}\displaystyle\sum^{N_{10-90}}_{i=1}
+      {|\textbf{X}_{10-90}(i)-\bar{X}_{10-90}|}
 
     Robust Mean Absolute Deviation is the mean distance of all intensity values
     from the Mean Value calculated on the subset of image array with gray levels in between, or equal
@@ -202,9 +242,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getRootMeanSquaredFeatureValue(self):
     r"""
-    Calculate the Root Mean Squared of the image array.
+    **14. Root Mean Squared (RMS)**
 
-    :math:`RMS = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}}`
+    .. math::
+
+      \textit{RMS} = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
     values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to RMS,
@@ -220,22 +262,27 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getStandardDeviationFeatureValue(self):
     r"""
-    Calculate the Standard Deviation of the image array.
+    **15. Standard Deviation**
 
-    :math:`standard\ deviation = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}`
+    .. math::
 
-    Standard Deviation measures the amount of variation or dispersion from the Mean Value.
+      \textit{standard deviation} = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}
+
+    Standard Deviation measures the amount of variation or dispersion from the Mean Value. By definition,
+    :math:\textit{standard deviation} = \sqrt{\textit{variance}}
     """
 
     return (numpy.std(self.targetVoxelArray))
 
   def getSkewnessFeatureValue(self, axis=0):
     r"""
-    Calculate the Skewness of the image array.
+    **16. Skewness**
 
-    :math:`skewness = \displaystyle\frac{\mu_3}{\sigma^3}
-    = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^3}}
-    {\left(\sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}\right)^3}`
+    .. math::
+
+      \textit{skewness} = \displaystyle\frac{\mu_3}{\sigma^3} =
+      \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^3}}
+      {\left(\sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}\right)^3}
 
     Where :math:`\mu_3` is the 3\ :sup:`rd` central moment.
 
@@ -256,11 +303,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getKurtosisFeatureValue(self, axis=0):
     r"""
-    Calculate the Kurtosis of the image array.
+    **17. Kurtosis**
 
-    :math:`kurtosis = \displaystyle\frac{\mu_4}{\sigma^4}
-    = \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^4}}
-    {\left(\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2\right)^2}`
+    .. math::
+
+      \textit{kurtosis} = \displaystyle\frac{\mu_4}{\sigma^4} =
+      \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^4}}
+      {\left(\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2\right)^2}
 
     Where :math:`\mu_4` is the 4\ :sup:`th` central moment.
 
@@ -282,21 +331,25 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def getVarianceFeatureValue(self):
     r"""
-    Calculate the Variance in the image array.
+    **18. Variance**
 
-    :math:`variance = \sigma^2 = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}`
+    .. math::
+
+      \textit{variance} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}
 
     Variance is the the mean of the squared distances of each intensity value from the Mean value. This is a measure of
-    the spread of the distribution about the mean.
+    the spread of the distribution about the mean. By definition, :math:`\textit{variance} = \sigma^2`
     """
 
     return (numpy.std(self.targetVoxelArray) ** 2)
 
   def getUniformityFeatureValue(self):
     r"""
-    Calculate the Uniformity of the image array.
+    **19. Uniformity**
 
-    :math:`uniformity = \displaystyle\sum^{N_l}_{i=1}{p(i)^2}`
+    .. math::
+
+      \textit{uniformity} = \displaystyle\sum^{N_l}_{i=1}{p(i)^2}
 
     Uniformity is a measure of the sum of the squares of each intensity value. This is a measure of the heterogeneity of
     the image array, where a greater uniformity implies a greater heterogeneity or a greater range of discrete intensity

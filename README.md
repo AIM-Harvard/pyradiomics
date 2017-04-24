@@ -9,17 +9,13 @@
 
 ## Radiomics feature extraction in Python
 
-This is an open-source python package for the extraction of Radiomics features from 2D and 3D images and 
-segmentations.
+This is an open-source python package for the extraction of Radiomics features from medical imaging.
 
-Image loading and preprocessing (e.g. resampling and cropping) are first done using `SimpleITK`. 
-Then, loaded data are converted into numpy arrays for further calculation using feature classes
-outlined below.
+With this package we aim to establish a reference standard for Radiomic Analysis, and provide a tested and maintained
+open-source platform for easy and reproducible Radiomic Feature extraction. By doing so, we hope to increase awareness
+of radiomic capabilities and expand the community.
 
-With this package we aim to establish a reference standard for Radiomic Analysis, and provide a tested and mantained
-open-source platform for easy and reproducible Radiomic Feature extraction.
-
-By doing so, we hope to increase awareness of radiomic capabilities and expand the community.
+The platform supports both the feature extraction in 2D and 3D.
 
 **If you publish any work which uses this package, please cite the following publication:**\
 *Joost JM van Griethuysen, Andriy Fedorov, Chintan Parmar, Ahmed Hosny, Nicole Aucoin, Vivek Narayan, Regina GH 
@@ -67,8 +63,8 @@ Furthermore, an instruction video is available [here](http://radiomics.io/pyradi
 PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4.
 To install this package on unix like systems run the following commands from the root directory:
 
-    sudo python -m pip install -r requirements.txt
-    sudo python setup.py install
+    python -m pip install -r requirements.txt
+    python setup.py install
 
 Detailed installation instructions, as well as instructions for installing PyRadiomics on Windows are available in the 
 [documentation](http://pyradiomics.readthedocs.io/en/latest/installation.html).
@@ -99,8 +95,8 @@ extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRad
 
 ### 3rd-party packages used in pyradiomics:
 
- - SimpleITK
- - numpy
+ - SimpleITK (Image loading and preprocessing)
+ - numpy (Feature calculation)
  - PyWavelets (Wavelet filter)
  - pykwalify (Enabling yaml parameters file checking)
  - tqdm (Progressbar)

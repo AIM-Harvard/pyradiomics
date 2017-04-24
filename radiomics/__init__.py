@@ -294,23 +294,21 @@ def _getProgressReporter(*args, **kwargs):
 
 progressReporter = None
 
+# 1. Set up logging
 debugging = True
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # 'radiomics'
 logger.setLevel(logging.INFO)  # Set default level of logger to INFO to reflect most common setting for a log file
 
+# Set up a handler to print out to stderr (controlled by setVerbosity())
 handler = logging.StreamHandler()
-# formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M")
+# formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", "%Y-%m-%d %H:%M")  # Alternative format
 formatter = logging.Formatter("%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 debug(False)  # force level=WARNING for stderr handler, in case logging default is set differently (issue 102)
 
-_featureClasses = None
-_inputImages = None
-
-# Indicates status of C extensions: 0 = not loaded, 1 = loaded but not enabled, 2 = enabled
-_cMatsState = 0
-
+# 2. Attempt to load and enable the C extensions. If this fails, revert to full-python mode
+_cMatsState = 0  # Indicates status of C extensions: 0 = not loaded, 1 = loaded but not enabled, 2 = enabled
 try:
   from radiomics import _cmatrices as cMatrices
   from radiomics import _cshape as cShape
@@ -321,10 +319,14 @@ except Exception:
   cMatrices = None  # set cMatrices to None to prevent an import error in the feature classes.
   cShape = None
 
+# 3. Enumerate implemented feature classes and input image types available in PyRadiomics
+_featureClasses = None
+_inputImages = None
+getFeatureClasses()
+getInputImageTypes()
+
+# 4. Set the version using the versioneer scripts
 from ._version import get_versions
 
 __version__ = get_versions()['version']
 del get_versions
-
-getFeatureClasses()
-getInputImageTypes()

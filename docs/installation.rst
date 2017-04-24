@@ -25,6 +25,9 @@ Installation on your system
   * ``cd pyradiomics``
   * ``sudo python -m pip install -r requirements.txt``
   * ``sudo python setup.py install``
+  
+  To use your build for interactive use and development:
+  * ``sudo python setup.py develop``
 
   * If you don't have sudo/admin rights on your machine, you need to locally install numpy, nose, tqdm, PyWavelets, SimpleITK (specified in requirements.txt). In a bash shell::
 

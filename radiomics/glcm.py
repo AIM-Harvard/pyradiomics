@@ -306,7 +306,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     ac = numpy.sum(self.P_glcm * (i * j)[:, :, None], (0, 1))
-    return (ac.mean())
+    return ac.mean()
 
   def getAverageIntensityFeatureValue(self):
     r"""
@@ -344,7 +344,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
     cp = numpy.sum((self.P_glcm * (((i + j)[:, :, None] - ux - uy) ** 4)), (0, 1))
-    return (cp.mean())
+    return cp.mean()
 
   def getClusterShadeFeatureValue(self):
     r"""
@@ -363,7 +363,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
     cs = numpy.sum((self.P_glcm * (((i + j)[:, :, None] - ux - uy) ** 3)), (0, 1))
-    return (cs.mean())
+    return cs.mean()
 
   def getClusterTendencyFeatureValue(self):
     r"""
@@ -381,7 +381,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
     ct = numpy.sum((self.P_glcm * (((i + j)[:, :, None] - ux - uy) ** 2)), (0, 1))
-    return (ct.mean())
+    return ct.mean()
 
   def getContrastFeatureValue(self):
     r"""
@@ -397,7 +397,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     cont = numpy.sum((self.P_glcm * ((numpy.abs(i - j))[:, :, None] ** 2)), (0, 1))
-    return (cont.mean())
+    return cont.mean()
 
   def getCorrelationFeatureValue(self):
     r"""
@@ -413,8 +413,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. note::
 
       When there is only 1 discreet gray value in the ROI (flat region), :math:`\sigma_x` and :math:`\sigma_y` will be
-      0. In this case, the value of correlation will be a NaN.
+      0. In this case, an arbitrary value of 1 is returned instead. This is assessed on a per-angle basis.
     """
+    eps = self.coefficients['eps']
     i = self.coefficients['i']
     j = self.coefficients['j']
     ux = self.coefficients['ux']
@@ -422,12 +423,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     sigx = self.coefficients['sigx']
     sigy = self.coefficients['sigy']
 
-    try:
-      corm = numpy.sum(self.P_glcm * (i[:, :, None] - ux) * (j[:, :, None] - uy), (0, 1), keepdims=True)
-      corr = corm / (sigx * sigy)
-      return (corr.mean())
-    except ZeroDivisionError:
-      return numpy.core.nan
+    corm = numpy.sum(self.P_glcm * (i[:, :, None] - ux) * (j[:, :, None] - uy), (0, 1), keepdims=True)
+    corr = corm / (sigx * sigy + eps)
+    corr[sigx * sigy == 0] = 1  # Set elements that would be divided by 0 to 1.
+    return corr.mean()
 
   def getDifferenceAverageFeatureValue(self):
     r"""
@@ -444,7 +443,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = self.coefficients['pxSuby']
     kValuesDiff = self.coefficients['kValuesDiff']
     diffavg = numpy.sum((kValuesDiff[:, None] * pxSuby), 0)
-    return (diffavg.mean())
+    return diffavg.mean()
 
   def getDifferenceEntropyFeatureValue(self):
     r"""
@@ -460,7 +459,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = self.coefficients['pxSuby']
     eps = self.coefficients['eps']
     difent = (-1) * numpy.sum((pxSuby * numpy.log2(pxSuby + eps)), 0)
-    return (difent.mean())
+    return difent.mean()
 
   def getDifferenceVarianceFeatureValue(self):
     r"""
@@ -477,7 +476,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     kValuesDiff = self.coefficients['kValuesDiff']
     diffavg = numpy.sum((kValuesDiff[:, None] * pxSuby), 0, keepdims=True)
     diffvar = numpy.sum((pxSuby * ((kValuesDiff[:, None] - diffavg) ** 2)), 0)
-    return (diffvar.mean())
+    return diffvar.mean()
 
   def getDissimilarityFeatureValue(self):
     r"""
@@ -494,7 +493,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     dis = numpy.sum((self.P_glcm * (numpy.abs(i - j))[:, :, None]), (0, 1))
-    return (dis.mean())
+    return dis.mean()
 
   def getEnergyFeatureValue(self):
     r"""
@@ -510,7 +509,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     higher frequencies.
     """
     ene = numpy.sum((self.P_glcm ** 2), (0, 1))
-    return (ene.mean())
+    return ene.mean()
 
   def getEntropyFeatureValue(self):
     r"""
@@ -524,7 +523,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Entropy is a measure of the randomness/variability in neighborhood intensity values.
     """
     ent = self.coefficients['HXY']
-    return (ent.mean())
+    return ent.mean()
 
   def getHomogeneity1FeatureValue(self):
     r"""
@@ -541,7 +540,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     homo1 = numpy.sum((self.P_glcm / (1 + (numpy.abs(i - j))[:, :, None])), (0, 1))
-    return (homo1.mean())
+    return homo1.mean()
 
   def getHomogeneity2FeatureValue(self):
     r"""
@@ -557,7 +556,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     homo2 = numpy.sum((self.P_glcm / (1 + (numpy.abs(i - j))[:, :, None] ** 2)), (0, 1))
-    return (homo2.mean())
+    return homo2.mean()
 
   def getImc1FeatureValue(self):
     r"""
@@ -566,13 +565,24 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. math::
 
       \textit{IMC 1} = \frac{HXY-HXY1}{\max\{HX,HY\}}
+
+    .. note::
+
+      In the case where both HX and HY are 0 (as is the case in a flat region), an arbitrary value of 0 is returned to
+      prevent a division by 0. This is done on a per-angle basis
     """
+    eps = self.coefficients['eps']
     HX = self.coefficients['HX']
     HY = self.coefficients['HY']
     HXY = self.coefficients['HXY']
     HXY1 = self.coefficients['HXY1']
-    imc1 = (HXY - HXY1) / numpy.max(([HX, HY]), 0)
-    return (imc1.mean())
+
+    div = numpy.max(([HX, HY]), 0)
+
+    imc1 = (HXY - HXY1) / (div + eps)
+    imc1[div == 0] = 0  # Set elements that would be divided by 0 to 0
+
+    return imc1.mean()
 
   def getImc2FeatureValue(self):
     r"""
@@ -581,13 +591,19 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. math::
 
       \textit{IMC 2} = \sqrt{1-e^{-2(HXY2-HXY)}}
+
+    .. note::
+
+      In the case where HXY = HXY2, an arbitrary value of 0 is returned to prevent returning complex numbers. This is
+      done on a per-angle basis.
     """
     HXY = self.coefficients['HXY']
     HXY2 = self.coefficients['HXY2']
 
-    imc2 = (1 - numpy.e ** (-2 * (HXY2 - HXY))) ** (0.5)  # matlab:(1-exp(-2*(hxy2-hxy)))^0.5;
+    imc2 = (1 - numpy.e ** (-2 * (HXY2 - HXY))) ** 0.5
+    imc2[HXY2 == HXY] = 0
 
-    return (imc2.mean())
+    return imc2.mean()
 
   def getIdmFeatureValue(self):
     r"""
@@ -603,8 +619,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
-    idm = numpy.sum((self.P_glcm / (1 + (((numpy.abs(i - j))[:, :, None] ** 2)))), (0, 1))
-    return (idm.mean())
+    idm = numpy.sum((self.P_glcm / (1 + ((numpy.abs(i - j))[:, :, None] ** 2))), (0, 1))
+    return idm.mean()
 
   def getIdmnFeatureValue(self):
     r"""
@@ -626,7 +642,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     j = self.coefficients['j']
     Ng = self.coefficients['Ng']
     idmn = numpy.sum((self.P_glcm / (1 + (((numpy.abs(i - j))[:, :, None] ** 2) / (Ng ** 2)))), (0, 1))
-    return (idmn.mean())
+    return idmn.mean()
 
   def getIdFeatureValue(self):
     r"""
@@ -641,8 +657,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
-    id = numpy.sum((self.P_glcm / (1 + ((numpy.abs(i - j))[:, :, None]))), (0, 1))
-    return (id.mean())
+    invDiff = numpy.sum((self.P_glcm / (1 + ((numpy.abs(i - j))[:, :, None]))), (0, 1))
+    return invDiff.mean()
 
   def getIdnFeatureValue(self):
     r"""
@@ -662,7 +678,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     j = self.coefficients['j']
     Ng = self.coefficients['Ng']
     idn = numpy.sum((self.P_glcm / (1 + ((numpy.abs(i - j))[:, :, None] / Ng))), (0, 1))
-    return (idn.mean())
+    return idn.mean()
 
   def getInverseVarianceFeatureValue(self):
     r"""
@@ -677,7 +693,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     j = self.coefficients['j']
     maskDiags = numpy.abs(i - j) > 0
     inv = numpy.sum((self.P_glcm[maskDiags] / ((numpy.abs(i - j))[:, :, None] ** 2)[maskDiags]), 0)
-    return (inv.mean())
+    return inv.mean()
 
   def getMaximumProbabilityFeatureValue(self):
     r"""
@@ -691,7 +707,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     neighboring intensity values.
     """
     maxprob = self.P_glcm.max((0, 1))
-    return (maxprob.mean())
+    return maxprob.mean()
 
   def getSumAverageFeatureValue(self):
     r"""
@@ -708,7 +724,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxAddy = self.coefficients['pxAddy']
     kValuesSum = self.coefficients['kValuesSum']
     sumavg = numpy.sum((kValuesSum[:, None] * pxAddy), 0)
-    return (sumavg.mean())
+    return sumavg.mean()
 
   def getSumEntropyFeatureValue(self):
     r"""
@@ -723,7 +739,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxAddy = self.coefficients['pxAddy']
     eps = self.coefficients['eps']
     sumentr = (-1) * numpy.sum((pxAddy * numpy.log2(pxAddy + eps)), 0)
-    return (sumentr.mean())
+    return sumentr.mean()
 
   def getSumVarianceFeatureValue(self):
     r"""
@@ -740,7 +756,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     kValuesSum = self.coefficients['kValuesSum']
     sumavg = numpy.sum((kValuesSum[:, None] * pxAddy), 0, keepdims=True)
     sumvar = numpy.sum((pxAddy * ((kValuesSum[:, None] - sumavg) ** 2)), 0)
-    return (sumvar.mean())
+    return sumvar.mean()
 
   def getSumSquaresFeatureValue(self):
     r"""
@@ -763,4 +779,4 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = self.coefficients['ux']
     # Also known as Variance
     ss = numpy.sum((self.P_glcm * ((i[:, :, None] - ux) ** 2)), (0, 1))
-    return (ss.mean())
+    return ss.mean()

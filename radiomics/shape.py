@@ -202,7 +202,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     - Lorensen WE, Cline HE. Marching cubes: A high resolution 3D surface construction algorithm. ACM SIGGRAPH Comput
       Graph `Internet <http://portal.acm.org/citation.cfm?doid=37402.37422>`_. 1987;21:163-9.
     """
-    return (self.SurfaceArea)
+    return self.SurfaceArea
 
   def getSurfaceVolumeRatioFeatureValue(self):
     r"""
@@ -215,7 +215,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Here, a lower value indicates a more compact (sphere-like) shape. This feature is not dimensionless, and is
     therefore (partly) dependent on the volume of the ROI.
     """
-    return (self.SurfaceArea / self.Volume)
+    return self.SurfaceArea / self.Volume
 
   def getSphericityFeatureValue(self):
     r"""
@@ -260,7 +260,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
       are therefore disabled.
     """
-    return ((self.Volume) / ((self.SurfaceArea) ** (3.0 / 2.0) * numpy.sqrt(numpy.pi)))
+    return self.Volume / (self.SurfaceArea ** (3.0 / 2.0) * numpy.sqrt(numpy.pi))
 
   def getCompactness2FeatureValue(self):
     r"""
@@ -282,7 +282,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
       are therefore disabled.
     """
-    return ((36.0 * numpy.pi) * ((self.Volume) ** 2.0) / ((self.SurfaceArea) ** 3.0))
+    return (36.0 * numpy.pi) * (self.Volume ** 2.0) / (self.SurfaceArea ** 3.0)
 
   def getSphericalDisproportionFeatureValue(self):
     r"""

@@ -190,7 +190,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       sae = numpy.sum(self.coefficients['pr'] / (self.coefficients['jvector'] ** 2)) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       sae = numpy.core.numeric.NaN
-    return (sae)
+    return sae
 
   def getLargeAreaEmphasisFeatureValue(self):
     r"""
@@ -208,7 +208,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       lae = numpy.sum(self.coefficients['pr'] * (self.coefficients['jvector'] ** 2)) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       lae = numpy.core.numeric.NaN
-    return (lae)
+    return lae
 
   def getGrayLevelNonUniformityFeatureValue(self):
     r"""
@@ -226,7 +226,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       iv = numpy.sum(self.coefficients['pg'] ** 2) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       iv = numpy.core.numeric.NaN
-    return (iv)
+    return iv
 
   def getGrayLevelNonUniformityNormalizedFeatureValue(self):
     r"""
@@ -244,7 +244,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       ivn = numpy.sum(self.coefficients['pg'] ** 2) / self.coefficients['sumP_glszm'] ** 2
     except ZeroDivisionError:
       ivn = numpy.core.numeric.NaN
-    return (ivn)
+    return ivn
 
   def getSizeZoneNonUniformityFeatureValue(self):
     r"""
@@ -262,7 +262,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       szv = numpy.sum(self.coefficients['pr'] ** 2) / self.coefficients['sumP_glszm']
     except ZeroDivisionError:
       szv = numpy.core.numeric.NaN
-    return (szv)
+    return szv
 
   def getSizeZoneNonUniformityNormalizedFeatureValue(self):
     r"""
@@ -280,7 +280,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       szvn = numpy.sum(self.coefficients['pr'] ** 2) / self.coefficients['sumP_glszm'] ** 2
     except ZeroDivisionError:
       szvn = numpy.core.numeric.NaN
-    return (szvn)
+    return szvn
 
   def getZonePercentageFeatureValue(self):
     r"""
@@ -299,7 +299,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       zp = self.coefficients['sumP_glszm'] / self.coefficients['Np']
     except ZeroDivisionError:
       zp = numpy.core.numeric.NaN
-    return (zp)
+    return zp
 
   def getGrayLevelVarianceFeatureValue(self):
     r"""
@@ -367,11 +367,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     LGLZE measures the distribution of lower gray-level size zones, with a higher value indicating a greater proportion
     of lower gray-level values and size zones in the image.
     """
-    try:
-      lie = numpy.sum((self.coefficients['pg'] / (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_glszm']
-    except ZeroDivisionError:
-      lie = numpy.core.numeric.NaN
-    return (lie)
+    lie = numpy.sum((self.coefficients['pg'] / (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_glszm']
+    return lie
 
   def getHighGrayLevelZoneEmphasisFeatureValue(self):
     r"""
@@ -385,11 +382,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     HGLZE measures the distribution of the higher gray-level values, with a higher value indicating a greater proportion
     of higher gray-level values and size zones in the image.
     """
-    try:
-      hie = numpy.sum((self.coefficients['pg'] * (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_glszm']
-    except ZeroDivisionError:
-      hie = numpy.core.numeric.NaN
-    return (hie)
+    hie = numpy.sum((self.coefficients['pg'] * (self.coefficients['ivector'] ** 2))) / self.coefficients['sumP_glszm']
+    return hie
 
   def getSmallAreaLowGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -403,13 +397,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     SALGLE measures the proportion in the image of the joint distribution of smaller size zones with lower gray-level
     values.
     """
-    try:
-      lisae = numpy.sum(
-        (self.P_glszm / ((self.coefficients['ivector'][:, None] ** 2) * (self.coefficients['jvector'][None, :] ** 2))),
-        (0, 1)) / self.coefficients['sumP_glszm']
-    except ZeroDivisionError:
-      lisae = numpy.core.numeric.NaN
-    return (lisae)
+    lisae = numpy.sum(
+      (self.P_glszm / ((self.coefficients['ivector'][:, None] ** 2) * (self.coefficients['jvector'][None, :] ** 2))),
+      (0, 1)) / self.coefficients['sumP_glszm']
+    return lisae
 
   def getSmallAreaHighGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -423,13 +414,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     SAHGLE measures the proportion in the image of the joint distribution of smaller size zones with higher gray-level
     values.
     """
-    try:
-      hisae = numpy.sum(
-        (self.P_glszm * (self.coefficients['ivector'][:, None] ** 2) / (self.coefficients['jvector'][None, :] ** 2)),
-        (0, 1)) / self.coefficients['sumP_glszm']
-    except ZeroDivisionError:
-      hisae = numpy.core.numeric.NaN
-    return (hisae)
+    hisae = numpy.sum(
+      (self.P_glszm * (self.coefficients['ivector'][:, None] ** 2) / (self.coefficients['jvector'][None, :] ** 2)),
+      (0, 1)) / self.coefficients['sumP_glszm']
+    return hisae
 
   def getLargeAreaLowGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -443,13 +431,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     LALGLE measures the proportion in the image of the joint distribution of larger size zones with lower gray-level
     values.
     """
-    try:
-      lilae = numpy.sum(
-        (self.P_glszm * (self.coefficients['jvector'][None, :] ** 2) / (self.coefficients['ivector'][:, None] ** 2)),
-        (0, 1)) / self.coefficients['sumP_glszm']
-    except ZeroDivisionError:
-      lilae = numpy.core.numeric.NaN
-    return (lilae)
+    lilae = numpy.sum(
+      (self.P_glszm * (self.coefficients['jvector'][None, :] ** 2) / (self.coefficients['ivector'][:, None] ** 2)),
+      (0, 1)) / self.coefficients['sumP_glszm']
+    return lilae
 
   def getLargeAreaHighGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -463,10 +448,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     LAHGLE measures the proportion in the image of the joint distribution of larger size zones with higher gray-level
     values.
     """
-    try:
-      hilae = numpy.sum(
-        (self.P_glszm * ((self.coefficients['jvector'][None, :] ** 2) * (self.coefficients['ivector'][:, None] ** 2))),
-        (0, 1)) / self.coefficients['sumP_glszm']
-    except ZeroDivisionError:
-      hilae = numpy.core.numeric.NaN
-    return (hilae)
+    hilae = numpy.sum(
+      (self.P_glszm * ((self.coefficients['jvector'][None, :] ** 2) * (self.coefficients['ivector'][:, None] ** 2))),
+      (0, 1)) / self.coefficients['sumP_glszm']
+    return hilae

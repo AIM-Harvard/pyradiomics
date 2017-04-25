@@ -266,7 +266,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     try:
       sre = numpy.sum((pr / (jvector[:, None] ** 2)), 0) / sumP_glrlm
-      return (sre.mean())
+      return sre.mean()
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -288,7 +288,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     try:
       lre = numpy.sum((pr * (jvector[:, None] ** 2)), 0) / sumP_glrlm
-      return (lre.mean())
+      return lre.mean()
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -309,7 +309,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     try:
       gln = numpy.sum((pg ** 2), 0) / sumP_glrlm
-      return (gln.mean())
+      return gln.mean()
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -351,7 +351,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     try:
       rln = numpy.sum((pr ** 2), 0) / sumP_glrlm
-      return (rln.mean())
+      return rln.mean()
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -372,7 +372,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     try:
       rlnn = numpy.sum((pr ** 2), 0) / sumP_glrlm ** 2
-      return (rlnn.mean())
+      return rlnn.mean()
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -392,8 +392,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Np = self.coefficients['Np']
 
     try:
-      rp = numpy.sum((self.P_glrlm / (Np)), (0, 1))
-      return (rp.mean())
+      rp = numpy.sum((self.P_glrlm / Np), (0, 1))
+      return rp.mean()
     except ZeroDivisionError:
       return numpy.core.nan
 
@@ -468,11 +468,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     ivector = self.coefficients['ivector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
-    try:
-      lglre = numpy.sum((pg / (ivector[:, None] ** 2)), 0) / sumP_glrlm
-      return (lglre.mean())
-    except ZeroDivisionError:
-      return numpy.core.nan
+    lglre = numpy.sum((pg / (ivector[:, None] ** 2)), 0) / sumP_glrlm
+    return lglre.mean()
 
   def getHighGrayLevelRunEmphasisFeatureValue(self):
     r"""
@@ -490,11 +487,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     ivector = self.coefficients['ivector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
-    try:
-      hglre = numpy.sum((pg * (ivector[:, None] ** 2)), 0) / sumP_glrlm
-      return (hglre.mean())
-    except ZeroDivisionError:
-      return numpy.core.nan
+    hglre = numpy.sum((pg * (ivector[:, None] ** 2)), 0) / sumP_glrlm
+    return hglre.mean()
 
   def getShortRunLowGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -511,12 +505,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
-    try:
-      srlgle = numpy.sum((self.P_glrlm / ((ivector[:, None, None] ** 2) * (jvector[None, :, None] ** 2))),
-                         (0, 1)) / sumP_glrlm
-      return (srlgle.mean())
-    except ZeroDivisionError:
-      return numpy.core.nan
+    srlgle = numpy.sum((self.P_glrlm / ((ivector[:, None, None] ** 2) * (jvector[None, :, None] ** 2))),
+                       (0, 1)) / sumP_glrlm
+    return srlgle.mean()
 
   def getShortRunHighGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -533,12 +524,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
-    try:
-      srhgle = numpy.sum((self.P_glrlm * (ivector[:, None, None] ** 2) / (jvector[None, :, None] ** 2)),
-                         (0, 1)) / sumP_glrlm
-      return (srhgle.mean())
-    except ZeroDivisionError:
-      return numpy.core.nan
+    srhgle = numpy.sum((self.P_glrlm * (ivector[:, None, None] ** 2) / (jvector[None, :, None] ** 2)),
+                       (0, 1)) / sumP_glrlm
+    return srhgle.mean()
 
   def getLongRunLowGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -555,12 +543,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
-    try:
-      lrlgle = numpy.sum((self.P_glrlm * (jvector[None, :, None] ** 2) / (ivector[:, None, None] ** 2)),
-                         (0, 1)) / sumP_glrlm
-      return (lrlgle.mean())
-    except ZeroDivisionError:
-      return numpy.core.nan
+    lrlgle = numpy.sum((self.P_glrlm * (jvector[None, :, None] ** 2) / (ivector[:, None, None] ** 2)),
+                       (0, 1)) / sumP_glrlm
+    return lrlgle.mean()
 
   def getLongRunHighGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -577,9 +562,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     sumP_glrlm = self.coefficients['sumP_glrlm']
 
-    try:
-      lrhgle = numpy.sum((self.P_glrlm * ((jvector[None, :, None] ** 2) * (ivector[:, None, None] ** 2))),
-                         (0, 1)) / sumP_glrlm
-      return (lrhgle.mean())
-    except ZeroDivisionError:
-      return numpy.core.nan
+    lrhgle = numpy.sum((self.P_glrlm * ((jvector[None, :, None] ** 2) * (ivector[:, None, None] ** 2))),
+                       (0, 1)) / sumP_glrlm
+    return lrhgle.mean()

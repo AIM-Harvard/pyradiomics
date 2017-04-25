@@ -7,9 +7,9 @@ from DatasetHierarchyReader import DatasetHierarchyReader
 
 
 def main():
-  DATA_ROOT_PATH = r''
-  inputDirectory = DATA_ROOT_PATH + r''
-  outputFile = DATA_ROOT_PATH + r'/FileList.csv'
+  DATA_ROOT_PATH = r'R:\TEMP'
+  inputDirectory = DATA_ROOT_PATH + r'\TEST'
+  outputFile = DATA_ROOT_PATH + r'/FileListNEW.csv'
   filetype = '.nrrd'
 
   keywordSettings = {}
@@ -28,6 +28,7 @@ def main():
   try:
     with open(outputFile, 'wb') as outFile:
       cw = csv.writer(outFile, lineterminator='\n')
+      cw.writerow(['Patient', 'StudyDate', 'Image', 'Mask'])
 
       for patientIndex, patientDirectory in enumerate(datasetHierarchyDict):
         patientID = os.path.basename(patientDirectory)
@@ -43,7 +44,7 @@ def main():
 
           if (imageFilepath is not None) and (maskFilepath is not None):
             # ReaderName is not extracted using DatasetHierarchyReader, set it to 'N/A'
-            cw.writerow([patientID, studyDate, 'N/A', imageFilepath, maskFilepath])
+            cw.writerow([patientID, studyDate, imageFilepath, maskFilepath])
 
   except Exception as exc:
     print(exc)

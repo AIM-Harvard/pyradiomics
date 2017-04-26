@@ -45,6 +45,7 @@ def main():
   try:
     with open(outputFile, 'wb') as outFile:
       cw = csv.writer(outFile, lineterminator='\n')
+      cw.writerow(['Patient', 'Sequence', 'Reader', 'Image', 'Mask'])
 
       for patient, Studies in sorted(six.iteritems(datasetHierarchyDict), key=lambda t: t[0]):
         for Study, im_fileList in sorted(six.iteritems(Studies['reconstructions']), key=lambda t: t[0]):

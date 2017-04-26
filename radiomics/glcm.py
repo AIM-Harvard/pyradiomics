@@ -310,7 +310,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getAverageIntensityFeatureValue(self):
     r"""
-    **2. Joint Averager**
+    **2. Joint Average**
 
     .. math::
 

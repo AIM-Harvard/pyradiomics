@@ -28,13 +28,14 @@ the module a class should be defined that fits the following signature::
         """
 
         def __init__(self, inputImage, inputMask, **kwargs):
-            super(RadiomicsGLCM, self).__init__(inputImage, inputMask, **kwargs)
+            super(Radiomics[Name], self).__init__(inputImage, inputMask, **kwargs)
+            # Feature class specific init
 
         def get[Feature]FeatureValue(self):
             """
             Feature docstring
             """
-
+            # value = feature calculation using member variables of RadiomicsFeatureBase and this class.
             return [value]
 
 * At the top should be the import statements for packages required by the feature class. Unused import statements should

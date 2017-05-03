@@ -198,7 +198,15 @@ def checkMask(imageNode, maskNode, **kwargs):
   logger.debug('Calculating bounding box')
   # Determine bounds
   lsif = sitk.LabelStatisticsImageFilter()
-  lsif.Execute(imageNode, maskNode)
+  try:
+    lsif.Execute(imageNode, maskNode)
+  except RuntimeError as e:
+    if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.message:
+      logger.error('Image/Mask datatype or size mismatch. Potential solution: enable resampling')
+    elif "Inputs do not occupy the same physical space!" in e.message:
+      logger.error('Image/Mask geometry mismatch. Potential solution: increase tolerance in SimpleITK.ProcessObject')
+    return None
+
   # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
   boundingBox = numpy.array(lsif.GetBoundingBox(label))
 

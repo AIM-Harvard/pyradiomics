@@ -248,7 +248,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      \textit{SRE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{i^2}}}
+      \textit{SRE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
     SRE is a measure of the distribution of short run lengths, with a greater value indicative of shorter run lengths

@@ -46,15 +46,15 @@ Example
 
 * The sample sample data is provided in ``pyradiomics/data``
 
-* Use `jupyter <http://jupyter.org/>`_ to run the helloRadiomics example, located in ``pyradiomics/bin/Notebooks``
+* Use `jupyter <http://jupyter.org/>`_ to run the helloRadiomics example, located in ``pyradiomics/examples/Notebooks``
 
 * Jupyter can also be used to run the example notebook as shown in the instruction video
 
-  * The example notebook can be found in ``pyradiomics/bin/Notebooks``
+  * The example notebook can be found in ``pyradiomics/examples/Notebooks``
 
-  * The parameter file used in the instruction video is available in ``pyradiomics/bin``
+  * The parameter file used in the instruction video is available in ``pyradiomics/examples/exampleSettings``
 
-* If jupyter is not installed, run the python script alternative (``pyradiomics/bin/helloRadiomics.py``):
+* If jupyter is not installed, run the python script alternative (``pyradiomics/examples/helloRadiomics.py``):
 
   * ``python helloRadiomics.py``
 
@@ -105,7 +105,7 @@ Interactive Use
 
 * Import the necessary classes::
 
-     from radiomics import featureextractor
+     from radiomics import featureextractor, getTestCase
      import six
      import sys, os
 
@@ -117,12 +117,11 @@ Interactive Use
 
 * Store the path of your image and mask in two variables::
 
-    imageName = os.path.join(dataDir, "data", 'brain1_image.nrrd')
-    maskName = os.path.join(dataDir, "data",  'brain1_label.nrrd')
+    imageName, maskName = getTestCase('brain1', dataDir)
 
 * Also store the path to the file containing the extraction settings::
 
-    params = os.path.join(dataDir, "bin", "Params.yaml")
+    params = os.path.join(dataDir, "examples", "exampleSettings", "Params.yaml")
 
 * Instantiate the feature extractor class with the parameter file::
 
@@ -160,7 +159,7 @@ Using feature classes directly
 
 * Import the necessary classes::
 
-     from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm
+     from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm, getTestCase
      import SimpleITK as sitk
      import six
      import sys, os
@@ -173,8 +172,7 @@ Using feature classes directly
 
 * Use SimpleITK to read a the brain image and mask::
 
-     imageName = str(dataDir + os.path.sep + 'brain1_image.nrrd')
-     maskName = str(dataDir + os.path.sep + 'brain1_label.nrrd')
+     imageName, maskName = getTestCase('brain1', dataDir)
      image = sitk.ReadImage(imageName)
      mask = sitk.ReadImage(maskName)
 

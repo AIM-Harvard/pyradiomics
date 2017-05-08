@@ -42,8 +42,8 @@ jobs:
           name: Install test data
           command: |
             cp -r data /tmp/example_data
-            cp bin/Params.yaml /tmp
-            cp -r bin/Notebooks/*.ipynb /tmp
+            cp examples/exampleSettings/Params.yaml /tmp
+            cp -r examples/Notebooks/*.ipynb /tmp
             # helloFeatureClass is not ready for inclusion yet, so isn't being tested
             rm -f /tmp/hello*.ipynb
       - run:

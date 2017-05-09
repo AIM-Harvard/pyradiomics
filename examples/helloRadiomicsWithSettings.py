@@ -5,7 +5,7 @@ from __future__ import print_function
 import logging
 import os
 
-import SimpleITK as sitk
+import six
 
 import radiomics
 from radiomics import featureextractor
@@ -75,14 +75,14 @@ def clickProgressbar():
 repositoryRoot = os.path.abspath(os.path.join(os.getcwd(), ".."))
 imageName, maskName = radiomics.getTestCase('brain1', repositoryRoot)
 
+# Get the location of the example settings file
+paramsFile = os.path.abspath(r'exampleSettings\Params.yaml')
+
 if imageName is None or maskName is None:  # Something went wrong, in this case PyRadiomics will also log an error
   print('Error getting testcase!')
   exit()
 
-# Uncomment line below to output debug and info log messaging to stderr
-# radiomics.debug()  # Switch on radiomics logging to stderr output from level=DEBUG (default level=WARNING)
-
-# Alternative: regulate verbosity with radiomics.verbosity
+# Regulate verbosity with radiomics.verbosity
 # radiomics.setVerbosity(logging.INFO)
 
 # Get the PyRadiomics logger (default log-level = INFO
@@ -95,33 +95,22 @@ formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# Define settings for signature calculation
-# These are currently set equal to the respective default values
-settings = {}
-settings['binWidth'] = 25
-settings['resampledPixelSpacing'] = None  # [3,3,3] is an example for defining resampling (voxels with size 3x3x3mm)
-settings['interpolator'] = sitk.sitkBSpline
-
-# Initialize feature extractor
-extractor = featureextractor.RadiomicsFeaturesExtractor(**settings)
-
-# By default, only original is enabled. Optionally enable some filters:
-# extractor.enableInputImages(Original={}, LoG={}, Wavelet={})
-
-# Disable all classes except firstorder
-extractor.disableAllFeatures()
-
-# Enable all features in firstorder
-# extractor.enableFeatureClassByName('firstorder')
-
-# Only enable mean and skewness in firstorder
-extractor.enableFeaturesByName(firstorder=['Mean', 'Skewness'])
+# Initialize feature extractor using the settings file
+extractor = featureextractor.RadiomicsFeaturesExtractor(paramsFile)
 
 # Uncomment one of these functions to show how PyRadiomics can use the 'tqdm' or 'click' package to report progress when
 # running in full python mode. Assumes the respective package is installed (not included in the requirements)
 
 # tqdmProgressbar()
 # clickProgressbar()
+
+print("Active features:")
+for cls, features in six.iteritems(extractor.enabledFeatures):
+  if len(features) == 0:
+    features = extractor.getFeatureNames(cls)
+  for f in features:
+    print(f)
+    print(getattr(extractor.featureClasses[cls], 'get%sFeatureValue' % f).__doc__)
 
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)

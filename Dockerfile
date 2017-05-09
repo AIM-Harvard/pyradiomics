@@ -28,11 +28,11 @@ RUN /bin/bash -c "source activate python2 \
 
 # Install sample data and notebooks
 ADD data/ /home/jovyan/work/example_data/
-ADD bin/Notebooks/RadiomicsExample.ipynb /home/jovyan/work/
-ADD bin/Notebooks/FeatureVisualization.ipynb /home/jovyan/work/
-ADD bin/Notebooks/FeatureVisualizationWithClustering.ipynb /home/jovyan/work/
-ADD bin/Notebooks/FilteringEffects.ipynb /home/jovyan/work/
-ADD bin/Params.yaml /home/jovyan/work/
+ADD notebooks/RadiomicsExample.ipynb /home/jovyan/work/
+ADD notebooks/FeatureVisualization.ipynb /home/jovyan/work/
+ADD notebooks/FeatureVisualizationWithClustering.ipynb /home/jovyan/work/
+ADD notebooks/FilteringEffects.ipynb /home/jovyan/work/
+ADD examples/exampleSettings/Params.yaml /home/jovyan/work/
 
 # Make a global directory and link it to the work directory
 RUN mkdir /data

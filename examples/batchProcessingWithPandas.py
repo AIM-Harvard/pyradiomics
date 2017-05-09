@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 from __future__ import print_function
 
@@ -12,11 +13,12 @@ from radiomics import featureextractor
 
 
 def main():
-  outPath = r'E:\Git-Repos\PyRadiomicsNKI\pyradiomics-API'
+  outPath = r''
 
-  inputCSV = outPath + os.path.sep + "TestCases.csv"
-  outputFilepath = outPath + os.path.sep + "radiomics_features.csv"
-  progress_filename = outPath + os.path.sep + "pyrad_log.txt"
+  inputCSV = os.path.join(outPath, 'testCases.csv')
+  outputFilepath = os.path.join(outPath, 'radiomics_features.csv')
+  progress_filename = os.path.join(outPath, 'pyrad_log.txt')
+  params = os.path.join(outPath, 'exampleSettings', 'Params.yaml')
 
   # Configure logging
   rLogger = logging.getLogger('radiomics')
@@ -26,7 +28,7 @@ def main():
 
   # Create handler for writing to log file
   handler = logging.FileHandler(filename=progress_filename, mode='w')
-  handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+  handler.setFormatter(logging.Formatter('%(levelname)s:%(name)s: %(message)s'))
   rLogger.addHandler(handler)
 
   # Initialize logging for batch log messages
@@ -35,6 +37,7 @@ def main():
   # Set verbosity level for output to stderr (default level = WARNING)
   radiomics.setVerbosity(logging.INFO)
 
+  logger.info('pyradiomics version: %s', radiomics.__version__)
   logger.info('Loading CSV')
 
   # ####### Up to this point, this script is equal to the 'regular' batchprocessing script ########
@@ -45,24 +48,27 @@ def main():
     # the input cases
     flists = pandas.read_csv(inputCSV).T
   except Exception:
-    logging.error('CSV READ FAILED', exc_info=True)
+    logger.error('CSV READ FAILED', exc_info=True)
     exit(-1)
 
-  logging.info('Loading Done')
-  logging.info('Patients: %d', len(flists))
+  logger.info('Loading Done')
+  logger.info('Patients: %d', len(flists.columns))
 
-  kwargs = {}
-  kwargs['binWidth'] = 25
-  kwargs['resampledPixelSpacing'] = None  # [3,3,3]
-  kwargs['interpolator'] = sitk.sitkBSpline
-  kwargs['enableCExtensions'] = True
+  if os.path.isfile(params):
+    extractor = featureextractor.RadiomicsFeaturesExtractor(params)
+  else:  # Parameter file not found, use hardcoded settings instead
+    settings = {}
+    settings['binWidth'] = 25
+    settings['resampledPixelSpacing'] = None  # [3,3,3]
+    settings['interpolator'] = sitk.sitkBSpline
+    settings['enableCExtensions'] = True
 
-  logger.info('pyradiomics version: %s', radiomics.__version__)
-  logger.info('Extracting features with kwarg settings: %s', str(kwargs))
+    extractor = featureextractor.RadiomicsFeaturesExtractor(**settings)
+    # extractor.enableInputImages(wavelet= {'level': 2})
 
-  extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
-  # extractor.enableInputImages(Original={}) # Original enabled by default
-  # extractor.enableInputImages(wavelet= {'level': 2})
+  logger.info('Enabled input images types: %s', extractor.inputImages)
+  logger.info('Enabled features: %s', extractor.enabledFeatures)
+  logger.info('Current settings: %s', extractor.kwargs)
 
   # Instantiate a pandas data frame to hold the results of all patients
   results = pandas.DataFrame()

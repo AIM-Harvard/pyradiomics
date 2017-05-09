@@ -158,9 +158,14 @@ def checkMask(imageNode, maskNode, **kwargs):
   settings. The following checks are performed.
 
   1. Check whether the mask corresponds to the image (i.e. has a similar size, spacing, direction and origin). **N.B.
-     This check is performed by SimpleITK, if it fails, an error is thrown.** Global tolerance for direction and origin
-     can be set in SimpleITK.ProcessObject (SetGlobalDefaultDirectionTolerance and SetGlobalDefaultCoordinateTolerance,
-     respectively). Tolerance is 1e-6 by default.
+     This check is performed by SimpleITK, if it fails, an error is logged, with additional error information from
+     SimpleITK logged with level DEBUG (i.e. logging-level has to be set to debug to store this information in the log
+     file).** To set the tolerance, include this at the top of your script::
+
+       import SimpleITK
+       SimpleITK.ProcessObject.SetGlobalDefaultCoordinateTolerance(value)  # value is of type double, default 1e-16
+       SimpleITK.ProcessObject.SetGlobalDefaultDirectionTolerance(value)  # value is of type double, default 1e-16
+
   2. Check if the label is present in the mask
   3. Count the number of dimensions in which the size of the ROI > 1 (i.e. does the ROI represent a single voxel (0), a
      line (1), a surface (2) or a volume (3)) and compare this to the minimum number of dimension required (specified in
@@ -185,8 +190,23 @@ def checkMask(imageNode, maskNode, **kwargs):
     this parameter is set to None.
 
   .. note::
-    If resampling is enabled and ROI is within image physical space, the resampling forces the mask and image to the
-    same physical space. This also ensures check 1. passes.
+
+    If the first check fails there are generally 2 possible causes:
+
+     - 1. The image and mask are matched, but there is a slight difference in origin, direction or spacing. The exact
+       cause, difference and used tolerance are stored with level DEBUG in a log (if enabled). For more information on
+       setting up logging, see the :ref:`<radiomics-logging-label>` and the helloRadiomics examples (located in the
+       ``pyradiomics/examples`` folder). This problem can be fixed by changing the global tolerance in SimpleITK (see
+       also `here <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1ProcessObject.html>`_) or by enabling
+       resampling (:py:func:`resampleImage`), which forces image and mask to identical geometry if ROI is contained
+       within the image.
+     - 2. The image and mask do not match, but the ROI contained within the mask does represent a physical volume
+       contained within the image. If this is the case, resampling is needed to ensure matching geometry between image
+       and mask before features can be extracted. This can be achieved by enabling resampling
+       (:py:func:`resampleImage`), which resamples both image and mask. If the image should not be resampled, a python
+       script (``pyradiomics/bin/resampleMask.py``) is included in the PyRadiomics repository showing how to use
+       resampling to convert the mask to the image geometry. This script can be used from the command line with 3
+       arguments: path to the image file, path to the mask file and path and filename for the resampled output mask.
   """
   global logger
 
@@ -202,9 +222,13 @@ def checkMask(imageNode, maskNode, **kwargs):
     lsif.Execute(imageNode, maskNode)
   except RuntimeError as e:
     if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.message:
-      logger.error('Image/Mask datatype or size mismatch. Potential solution: enable resampling')
+      logger.error('Image/Mask datatype or size mismatch. Potential solution: enable resampling, see '
+                   'Documentation:Pipeline Modules:Image Processing and Filters:resampleImage for more information')
+      logger.debug('Additional information on error.', exc_info=True)
     elif "Inputs do not occupy the same physical space!" in e.message:
-      logger.error('Image/Mask geometry mismatch. Potential solution: increase tolerance in SimpleITK.ProcessObject')
+      logger.error('Image/Mask geometry mismatch. Potential solution: increase tolerance in SimpleITK.ProcessObject, '
+                   'see Documentation:Pipeline Modules:Image Processing and Filters:checkMask for more information')
+      logger.debug('Additional information on error.', exc_info=True)
     return None
 
   # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
@@ -273,6 +297,10 @@ def cropToTumorMask(imageNode, maskNode, boundingBox, label=1):
 def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.sitkBSpline, label=1, padDistance=5):
   """
   Resamples image and mask to the specified pixel spacing (The default interpolator is Bspline).
+
+  Resampling can be enabled using the settings 'interpolator' and 'resampledPixelSpacing' in the parameter file or as
+  part of the settings passed to the feature extractor. See also
+  :ref:`feature extractor <radiomics-featureextractor-label>`.
 
   'imageNode' and 'maskNode' are SimpleITK Objects, and 'resampledPixelSpacing' is the output pixel spacing (sequence of
   3 elements).

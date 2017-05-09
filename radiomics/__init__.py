@@ -17,46 +17,12 @@ from . import base, imageoperations
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
 
-
-def debug(debug_on=True):
-  """
-  Control level of logger and stderr output of the toolbox. By default, this output reflects module hierarchy, as child
-  loggers are created by module. This is achieved by the following line in base.py:
-  ``self.logger = logging.getLogger(self.__module__)``. To use same instance in each module, set
-  ``self.logger=logging.getLogger('radiomics')``.
-
-  At command line, turn on debugging output to stderr for all pyradiomics functions with:
-
-  ``import radiomics``\n
-  ``radiomics.debug()``
-
-  This set the level of both the logger and the handler for output to stderr to level = DEBUG. If level of logger is
-  already at level "DEBUG" or "NOTSET", level of logger is not changed.
-
-  Turn off debugging with (only changes the level of the handler for output to stderr):
-
-  ``radiomics.debug(False)``
-
-  By default, the radiomics logger is set to level "INFO" and the stderr handler to level "WARNING". Therefore a log
-  storing the extraction log messages from level "INFO" and up can be easily set up by adding an appropriate handler to
-  the radiomics logger.
-  """
-  global logger, debugging
-  if debug_on:
-    setVerbosity(logging.DEBUG)  # set the output to stderr to DEBUG
-    debugging = True
-  else:
-    setVerbosity(logging.WARNING)  # set the output to stderr to WARNING
-    debugging = False
-
-
 def setVerbosity(level):
   """
-  Assumes the handler added to the radiomics logger at initialization of the toolbox is not removed from the logger
-  handlers.
+  Change the amount of information PyRadiomics should print out during extraction. The lower the level, the more
+  information is printed to the output (stderr).
 
-  Using the ``level`` (Python defined logging levels) argument, determine how much PyRadiomics should print out to the
-  stderr, the following levels are possible:
+  Using the ``level`` (Python defined logging levels) argument, the following levels are possible:
 
   - 60: Quiet mode, no messages are printed to the stderr
   - 50: Only log messages of level "CRITICAL" are printed
@@ -65,9 +31,21 @@ def setVerbosity(level):
   - 20: Log messages of level "INFO" and up are printed
   - 10: Log messages of level "DEBUG" and up are printed (i.e. all log messages)
 
-  **N.B. This does not affect the level of the logger itself (e.g. if verbosity level = 3, log messages with DEBUG level
-  can still be stored in a log file if an appropriate handler is added to the logger and the logging level of the logger
-  has been set to the correct level**
+  By default, the radiomics logger is set to level "INFO" and the stderr handler to level "WARNING". Therefore a log
+  storing the extraction log messages from level "INFO" and up can be easily set up by adding an appropriate handler to
+  the radiomics logger, while the output to stderr will still only contain warnings and errors.
+
+  .. note::
+
+    This function assumes the handler added to the radiomics logger at initialization of the toolbox is not removed from
+    the logger handlers and therefore remains the first handler.
+
+  .. note::
+
+    This does not affect the level of the logger itself (e.g. if verbosity level = 3, log messages with DEBUG level can
+    still be stored in a log file if an appropriate handler is added to the logger and the logging level of the logger
+    has been set to the correct level. *Exception: In case the verbosity is set to DEBUG, the level of the logger is
+    also lowered to DEBUG. If the verbosity level is then raised again, the logger level will remain DEBUG.*
   """
   global logger, handler
   if level < 10:  # Lowest level: DEBUG
@@ -305,7 +283,8 @@ handler = logging.StreamHandler()
 formatter = logging.Formatter("%(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-debug(False)  # force level=WARNING for stderr handler, in case logging default is set differently (issue 102)
+# force level=WARNING for stderr handler, in case logging default is set differently (issue 102)
+setVerbosity(logging.WARNING)
 
 # 2. Attempt to load and enable the C extensions. If this fails, revert to full-python mode
 _cMatsState = 0  # Indicates status of C extensions: 0 = not loaded, 1 = loaded but not enabled, 2 = enabled

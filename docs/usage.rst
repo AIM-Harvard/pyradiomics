@@ -184,3 +184,35 @@ Using feature classes directly
        print("\t%s: %s" % (key, val))
 
 * See the :ref:`radiomics-features-label` section for more features that you can calculate.
+
+.. _radiomics-logging-label:
+
+------------------
+Setting Up Logging
+------------------
+
+PyRadiomics features extensive logging to help track down any issues with the extraction of features.
+By default PyRadiomics logging reports messages of level INFO and up (giving some information on progress during
+extraction and any warnings or errors that occur), and prints this to the output (stderr). By default, PyRadiomics does
+not create a log file.
+
+To change the amount of information that is printed to the output, use :py:func:`~radiomics.setVerbosity` in interactive
+use and the optional ``--verbosity`` argument in commandline use.
+
+When using PyRadiomics in interactive mode, enable storing the PyRadiomics logging in a file by adding an appropriate
+handler to the pyradiomics logger::
+
+    import radiomics
+
+    log_file = 'path/to/log_file.txt'
+    handler = logging.FileHandler(filename=log_file, mode='w')  # overwrites log_files from previous runs. Change mode to 'a' to append.
+    formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")  # format string for log messages
+    handler.setFormatter(formatter)
+    radiomics.logger.addHandler(handler)
+
+    # Control the amount of logging stored by setting the level of the logger. N.B. if the level is higher than the
+    # Verbositiy level, the logger level will also determine the amount of information printed to the output
+    radiomics.logger.setLevel(logging.DEBUG)
+
+To store a log file when running pyradiomics from the commandline, specify a file location in the optional
+``--log-file`` argument. The amount of logging that is stored is controlled by the ``--log-level`` argument.

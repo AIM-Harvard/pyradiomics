@@ -79,17 +79,14 @@ if imageName is None or maskName is None:  # Something went wrong, in this case 
   print('Error getting testcase!')
   exit()
 
-# Uncomment line below to output debug and info log messaging to stderr
-# radiomics.debug()  # Switch on radiomics logging to stderr output from level=DEBUG (default level=WARNING)
-
-# Alternative: regulate verbosity with radiomics.verbosity
+# Regulate verbosity with radiomics.verbosity (default verbosity level = WARNING)
 # radiomics.setVerbosity(logging.INFO)
 
-# Get the PyRadiomics logger (default log-level = INFO
+# Get the PyRadiomics logger (default log-level = INFO)
 logger = radiomics.logger
 logger.setLevel(logging.DEBUG)  # set level to DEBUG to include debug log messages in log file
 
-# Write out all log entries to a file
+# Set up the handler to write out all log entries to a file
 handler = logging.FileHandler(filename='testLog.txt', mode='w')
 formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
 handler.setFormatter(formatter)

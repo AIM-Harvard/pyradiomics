@@ -50,7 +50,7 @@ class TestFeatures:
     testMask = testUtils.getMask()
     if featureClass is None or testCaseOrClassChanged:
       logging.debug('Init %s' % (featureClassName))
-      featureClass = extractor.featureClasses[featureClassName](testImage, testMask, **testUtils.getKwargs())
+      featureClass = extractor.featureClasses[featureClassName](testImage, testMask, **testUtils.getSettings())
 
     assert (featureClass is not None)
 

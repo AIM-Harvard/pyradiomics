@@ -71,7 +71,7 @@ def main():
     else:
       extractor = featureextractor.RadiomicsFeaturesExtractor()
     logger.info('Extracting features with kwarg settings: %s\n\tImage: %s\n\tMask: %s',
-                str(extractor.kwargs), os.path.abspath(args.image), os.path.abspath(args.mask))
+                str(extractor.settings), os.path.abspath(args.image), os.path.abspath(args.mask))
     featureVector = collections.OrderedDict()
     if args.shorten:
       featureVector['Image'] = os.path.basename(args.image)

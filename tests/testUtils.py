@@ -155,7 +155,7 @@ class RadiomicsTestUtils:
   def getMask(self):
     return self._mask
 
-  def getKwargs(self):
+  def getSettings(self):
     return self._kwargs
 
   def getTestCases(self):

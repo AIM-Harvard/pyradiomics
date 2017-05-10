@@ -90,7 +90,7 @@ def main():
     exit(-1)
 
   # Extract features
-  logger.info('Extracting features with kwarg settings: %s', str(extractor.kwargs))
+  logger.info('Extracting features with kwarg settings: %s', str(extractor.settings))
 
   headers = None
   for idx, entry in enumerate(flists, start=1):

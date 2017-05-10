@@ -193,20 +193,20 @@ def checkMask(imageNode, maskNode, **kwargs):
 
     If the first check fails there are generally 2 possible causes:
 
-     - 1. The image and mask are matched, but there is a slight difference in origin, direction or spacing. The exact
-       cause, difference and used tolerance are stored with level DEBUG in a log (if enabled). For more information on
-       setting up logging, see the :ref:`<radiomics-logging-label>` and the helloRadiomics examples (located in the
-       ``pyradiomics/examples`` folder). This problem can be fixed by changing the global tolerance in SimpleITK (see
-       also `here <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1ProcessObject.html>`_) or by enabling
-       resampling (:py:func:`resampleImage`), which forces image and mask to identical geometry if ROI is contained
-       within the image.
-     - 2. The image and mask do not match, but the ROI contained within the mask does represent a physical volume
-       contained within the image. If this is the case, resampling is needed to ensure matching geometry between image
-       and mask before features can be extracted. This can be achieved by enabling resampling
-       (:py:func:`resampleImage`), which resamples both image and mask. If the image should not be resampled, a python
-       script (``pyradiomics/bin/resampleMask.py``) is included in the PyRadiomics repository showing how to use
-       resampling to convert the mask to the image geometry. This script can be used from the command line with 3
-       arguments: path to the image file, path to the mask file and path and filename for the resampled output mask.
+     1. The image and mask are matched, but there is a slight difference in origin, direction or spacing. The exact
+        cause, difference and used tolerance are stored with level DEBUG in a log (if enabled). For more information on
+        setting up logging, see ":ref:`setting up logging <radiomics-logging-label>`" and the helloRadiomics examples
+        (located in the ``pyradiomics/examples`` folder). This problem can be fixed by changing the global tolerance in
+        SimpleITK (see also `here <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1ProcessObject.html>`_) or
+        by enabling resampling (:py:func:`resampleImage`), which forces image and mask to identical geometry if ROI is
+        contained within the image.
+     2. The image and mask do not match, but the ROI contained within the mask does represent a physical volume
+        contained within the image. If this is the case, resampling is needed to ensure matching geometry between image
+        and mask before features can be extracted. This can be achieved by enabling resampling
+        (:py:func:`resampleImage`), which resamples both image and mask. If the image should not be resampled, a python
+        script (``pyradiomics/bin/resampleMask.py``) is included in the PyRadiomics repository showing how to use
+        resampling to convert the mask to the image geometry. This script can be used from the command line with 3
+        arguments: path to the image file, path to the mask file and path and filename for the resampled output mask.
   """
   global logger
 
@@ -541,7 +541,7 @@ def getLoGImage(inputImage, **kwargs):
     logger.warning('Image too small to apply LoG filter, size: %s', size)
     return
 
-  sigmaValues = kwargs.get('sigma', numpy.arange(5., 0., -.5))
+  sigmaValues = kwargs.get('sigma', [])
 
   for sigma in sigmaValues:
     logger.info('Computing LoG with sigma %g', sigma)

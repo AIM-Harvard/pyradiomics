@@ -65,6 +65,8 @@ class RadiomicsFeaturesExtractor:
       for featureClassName in self.getFeatureClassNames():
         self.enabledFeatures[featureClassName] = []
 
+    self._setTolerance()
+
   @classmethod
   def _getDefaultSettings(cls):
     """
@@ -87,6 +89,12 @@ class RadiomicsFeaturesExtractor:
             'label': 1,
             'enableCExtensions': True,
             'additionalInfo': True}
+
+  def _setTolerance(self):
+    self.geometryTolerance = self.settings.get('geometryTolerance')
+    if self.geometryTolerance is not None:
+      sitk.ProcessObject.SetGlobalDefaultCoordinateTolerance(self.geometryTolerance)
+      sitk.ProcessObject.SetGlobalDefaultDirectionTolerance(self.geometryTolerance)
 
   def addProvenance(self, provenance_on=True):
     """
@@ -221,7 +229,8 @@ class RadiomicsFeaturesExtractor:
     To disable input images, use :py:func:`enableInputImageByName` or :py:func:`disableAllInputImages`
     instead.
 
-    :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings (dictionary)
+    :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings
+      (dictionary)
     """
     self.logger.debug('Updating enabled input images types with %s', inputImages)
     self.inputImages.update(inputImages)
@@ -294,9 +303,11 @@ class RadiomicsFeaturesExtractor:
     # Enable or disable C extensions for high performance matrix calculation. Only logs a message (INFO) when setting is
     # successfully changed. If an error occurs, full-python mode is forced and a warning is logged.
     radiomics.enableCExtensions(self.settings['enableCExtensions'])
+    if self.geometryTolerance != self.settings.get('geometryTolerance'):
+      self._setTolerance()
 
     if label is not None:
-      self.settings.update({'label': label})
+      self.settings['label'] = label
 
     self.logger.info('Calculating features with label: %d', self.settings['label'])
     self.logger.debug('Enabled input images types: %s', self.inputImages)
@@ -326,7 +337,7 @@ class RadiomicsFeaturesExtractor:
 
     # 4. If shape descriptors should be calculated, handle it separately here
     if 'shape' in self.enabledFeatures.keys():
-      croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox, self.settings['label'])
+      croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox)
       enabledFeatures = self.enabledFeatures['shape']
 
       self.logger.info('Computing shape')
@@ -339,7 +350,7 @@ class RadiomicsFeaturesExtractor:
 
       shapeClass.calculateFeatures()
       for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
-        newFeatureName = 'original_shape_%s' % (featureName)
+        newFeatureName = 'original_shape_%s' % featureName
         featureVector[newFeatureName] = featureValue
 
     # 5. Calculate other enabled feature classes using enabled input image types
@@ -356,7 +367,7 @@ class RadiomicsFeaturesExtractor:
     # Calculate features for all (filtered) images in the generator
     for inputImage, inputImageName, inputKwargs in imageGenerators:
       self.logger.info('Calculating features for %s image', inputImageName)
-      inputImage, inputMask = imageoperations.cropToTumorMask(inputImage, mask, boundingBox, self.settings['label'])
+      inputImage, inputMask = imageoperations.cropToTumorMask(inputImage, mask, boundingBox)
       featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
 
     self.logger.debug('Features extracted')
@@ -417,7 +428,7 @@ class RadiomicsFeaturesExtractor:
     provenanceVector = collections.OrderedDict()
     generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.settings, self.inputImages)
     for k, v in six.iteritems(generalinfoClass.execute()):
-      provenanceVector['general_info_%s' % (k)] = v
+      provenanceVector['general_info_%s' % k] = v
     return provenanceVector
 
   def computeFeatures(self, image, mask, inputImageName, **kwargs):

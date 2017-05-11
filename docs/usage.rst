@@ -263,6 +263,8 @@ features specified.
 
 By default, all feature classes and all features are enabled.
 
+.. _radiomics-settings-label:
+
 Settings
 ########
 
@@ -332,6 +334,12 @@ Feature Extractor Level
   Single-voxel segmentations are always excluded.
 - minimumROISize [None]: Integer, > 0, specifies the minimum number of voxels required. Test is skipped
   if this parameter is omitted (specifying it as None in the parameter file will throw an error).
+- geometryTolerance [None]: Float, determines the tolarance used by SimpleITK to compare origin, direction and spacing
+  between image and mask. Affects the fist step in :py:func:`~radiomics.imageoperations.checkMask`. If set to ``None``,
+  PyRadiomics will use SimpleITK default (1e-16).
+- correctMask [False]: Boolean, if set to true, PyRadiomics will attempt to resample the mask to the image geometry when
+  the first step in :py:func:`~radiomics.imageoperations.checkMask` fails. This uses a nearest neighbor interpolator.
+  Mask check will still fail if the ROI defined in the mask includes areas outside of the image physical space.
 
 *Miscellaneous*
 

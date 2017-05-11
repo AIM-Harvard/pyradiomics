@@ -160,11 +160,9 @@ def checkMask(imageNode, maskNode, **kwargs):
   1. Check whether the mask corresponds to the image (i.e. has a similar size, spacing, direction and origin). **N.B.
      This check is performed by SimpleITK, if it fails, an error is logged, with additional error information from
      SimpleITK logged with level DEBUG (i.e. logging-level has to be set to debug to store this information in the log
-     file).** To set the tolerance, include this at the top of your script::
-
-       import SimpleITK
-       SimpleITK.ProcessObject.SetGlobalDefaultCoordinateTolerance(value)  # value is of type double, default 1e-16
-       SimpleITK.ProcessObject.SetGlobalDefaultDirectionTolerance(value)  # value is of type double, default 1e-16
+     file).** The tolerance can be increased using the ``geometryTolerance`` parameter. Alternatively, if the
+     ``correctMask`` parameter is ``True``, PyRadiomics will check if the mask contains a valid ROI (inside image
+     physical area) and if so, resample the mask to image geometry. See :ref:`radiomics-settings-label` for more info.
 
   2. Check if the label is present in the mask
   3. Count the number of dimensions in which the size of the ROI > 1 (i.e. does the ROI represent a single voxel (0), a
@@ -196,17 +194,12 @@ def checkMask(imageNode, maskNode, **kwargs):
      1. The image and mask are matched, but there is a slight difference in origin, direction or spacing. The exact
         cause, difference and used tolerance are stored with level DEBUG in a log (if enabled). For more information on
         setting up logging, see ":ref:`setting up logging <radiomics-logging-label>`" and the helloRadiomics examples
-        (located in the ``pyradiomics/examples`` folder). This problem can be fixed by changing the global tolerance in
-        SimpleITK (see also `here <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1ProcessObject.html>`_) or
-        by enabling resampling (:py:func:`resampleImage`), which forces image and mask to identical geometry if ROI is
-        contained within the image.
+        (located in the ``pyradiomics/examples`` folder). This problem can be fixed by changing the global tolerance
+        (``geometryTolerance`` parameter) or enabling mask correction (``correctMask`` parameter).
      2. The image and mask do not match, but the ROI contained within the mask does represent a physical volume
         contained within the image. If this is the case, resampling is needed to ensure matching geometry between image
-        and mask before features can be extracted. This can be achieved by enabling resampling
-        (:py:func:`resampleImage`), which resamples both image and mask. If the image should not be resampled, a python
-        script (``pyradiomics/bin/resampleMask.py``) is included in the PyRadiomics repository showing how to use
-        resampling to convert the mask to the image geometry. This script can be used from the command line with 3
-        arguments: path to the image file, path to the mask file and path and filename for the resampled output mask.
+        and mask before features can be extracted. This can be achieved by enabling mask correction using the
+        ``correctMask`` parameter.
   """
   global logger
 
@@ -220,23 +213,43 @@ def checkMask(imageNode, maskNode, **kwargs):
   lsif = sitk.LabelStatisticsImageFilter()
   try:
     lsif.Execute(imageNode, maskNode)
+
+    # If lsif fails, and mask is corrected, it includes a check whether the label is present. Therefore, perform
+    # this test here only if lsif does not fail on the first attempt.
+    if label not in lsif.GetLabels():
+      logger.error('Label (%g) not present in mask', label)
+      return None
   except RuntimeError as e:
-    if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.message:
-      logger.error('Image/Mask datatype or size mismatch. Potential solution: enable resampling, see '
-                   'Documentation:Pipeline Modules:Image Processing and Filters:resampleImage for more information')
-      logger.debug('Additional information on error.', exc_info=True)
-    elif "Inputs do not occupy the same physical space!" in e.message:
-      logger.error('Image/Mask geometry mismatch. Potential solution: increase tolerance in SimpleITK.ProcessObject, '
-                   'see Documentation:Pipeline Modules:Image Processing and Filters:checkMask for more information')
-      logger.debug('Additional information on error.', exc_info=True)
-    return None
+    # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
+    if not kwargs.get('correctMask', False):
+      if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.message:
+        logger.error('Image/Mask datatype or size mismatch. Potential solution: enable correctMask, see '
+                     'Documentation:Usage:Customizing the Extraction:Settings:correctMask for more information')
+        logger.debug('Additional information on error.', exc_info=True)
+      elif "Inputs do not occupy the same physical space!" in e.message:
+        logger.error('Image/Mask geometry mismatch. Potential solution: increase tolerance using geometryTolerance, '
+                     'see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more '
+                     'information')
+        logger.debug('Additional information on error.', exc_info=True)
+      return None
+
+    logger.warning('Image/Mask geometry mismatch, attempting to correct Mask')
+
+    maskNode = _correctMask(imageNode, maskNode, label)
+    if maskNode is None:  # Resampling failed (ROI outside image physical space
+      logger.error('Image/Mask correction failed, ROI invalid (not found or outside of physical image bounds)')
+      return None
+
+    # Resampling succesful, try to calculate boundingbox
+    try:
+      lsif.Execute(imageNode, maskNode)
+    except RuntimeError:
+      logger.error('Calculation of bounding box failed, for more information run with DEBUG logging and check log')
+      logger.debug('Bounding box calculation with resampled mask failed', exc_info=True)
+      return None
 
   # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
   boundingBox = numpy.array(lsif.GetBoundingBox(label))
-
-  if label not in lsif.GetLabels():
-    logger.error('Label (%g) not present in mask', label)
-    return None
 
   logger.debug('Checking minimum number of dimensions requirements (%d)', minDims)
   ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
@@ -254,7 +267,90 @@ def checkMask(imageNode, maskNode, **kwargs):
   return boundingBox
 
 
-def cropToTumorMask(imageNode, maskNode, boundingBox, label=1):
+def _correctMask(imageNode, maskNode, label):
+  """
+  If the mask geometry does not match the image geometry, this function can be used to resample the mask to the image
+  physical space.
+
+  First, the mask is checked for a valid ROI (i.e. maskNode contains an ROI with the given label value, which does not
+  include areas outside of the physical image bounds).
+
+  If the ROI is valid, the maskNode is resampled using the imageNode as a reference image and a nearest neighbor
+  interpolation.
+
+  If the ROI is valid, the resampled mask is returned, otherwise ``None`` is returned.
+  """
+  global logger
+  logger.debug('Resampling mask to image geometry')
+
+  if _checkROI(imageNode, maskNode, label) is None:  # ROI invalid
+    return None
+
+  rif = sitk.ResampleImageFilter()
+  rif.SetReferenceImage(imageNode)
+  rif.SetInterpolator(sitk.sitkNearestNeighbor)
+
+  logger.debug('Resampling...')
+
+  return rif.Execute(maskNode)
+
+
+def _checkROI(imageNode, maskNode, label):
+  """
+  Check whether maskNode contains a valid ROI defined by label:
+
+  1. Check whether the label value is present in the maskNode.
+  2. Check whether the ROI defined by the label does not include an area outside the physical area of the image.
+
+  For the second check, a tolerance of 1e-3 is allowed.
+
+  If the ROI is valid, the bounding box (lower bounds and size in 3 directions: L_X, L_Y, L_Z, S_X, S_Y, S_Z) is
+  returned. Otherwise, ``None`` is returned.
+  """
+  global logger
+  logger.debug('Checking ROI validity')
+
+  # Determine bounds of cropped volume in terms of original Index coordinate space
+  lssif = sitk.LabelShapeStatisticsImageFilter()
+  lssif.Execute(maskNode)
+
+  logger.debug('Checking if label %d is persent in the mask', label)
+  if label not in lssif.GetLabels():
+    logger.error('Label (%d) not present in mask', label)
+    return None
+
+  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
+  bb = numpy.array(lssif.GetBoundingBox(label))
+
+  # Determine if the ROI is within the physical space of the image
+
+  logger.debug('Comparing physical space of bounding box to physical space of image')
+  # Step 1: Get the origin and UBound corners of the bounding box in physical space
+  # The additional 0.5 represents the difference between the voxel center and the voxel corner
+  # Upper bound index of ROI = bb[:3] + bb[3:] - 1 (LBound + Size - 1), .5 is added to get corner
+  ROIBounds = (maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] - .5),  # Origin
+               maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] + bb[3:] - 0.5))  # UBound
+  # Step 2: Translate the ROI physical bounds to the image coordinate space
+  ROIBounds = (imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[0]),  # Origin
+               imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[1]))
+
+  logger.debug('ROI bounds (image coordinate space): %s', ROIBounds)
+
+  # Check if any of the ROI bounds are outside the image indices (i.e. -0.5 < ROI < Im.Size -0.5)
+  # The additional 0.5 is to allow for different spacings (defines the edges, not the centers of the edge-voxels
+  tolerance = 1e-3  # Define a tolerance to correct for machine precision errors
+  if numpy.any(numpy.min(ROIBounds, axis=0) < (- .5 - tolerance)) or \
+    numpy.any(numpy.max(ROIBounds, axis=0) > (numpy.array(imageNode.GetSize()) - .5 + tolerance)):
+    logger.error('Bounding box of ROI is larger than image space:\n\t'
+                 'ROI bounds (image coordinate space) %s\n\tImage Size %s', ROIBounds, imageNode.GetSize())
+    return None
+
+  logger.debug('ROI valid, calculating resampling grid')
+
+  return bb
+
+
+def cropToTumorMask(imageNode, maskNode, boundingBox):
   """
   Create a sitkImage of the segmented region of the image based on the input label.
 
@@ -343,42 +439,13 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
     logger.info('New spacing equal to old, no resampling required')
     return imageNode, maskNode
 
-  # Determine bounds of cropped volume in terms of original Index coordinate space
-  lssif = sitk.LabelShapeStatisticsImageFilter()
-  lssif.Execute(maskNode)
+  # Check if the maskNode contains a valid ROI. If ROI is valid, the bounding box needed to calculate the resampling
+  # grid is returned.
+  bb = _checkROI(imageNode, maskNode, label)
 
-  logger.debug('Checking if label %d is persent in the mask', label)
-  if label not in lssif.GetLabels():
-    logger.error('Label (%d) not present in mask', label)
-    return None, None  # this function is expected to always return a tuple of 2 elements
-
-  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
-  bb = numpy.array(lssif.GetBoundingBox(label))
-
-  # Determine if the ROI is within the physical space of the image
-
-  logger.debug('Comparing physical space of bounding box to physical space of image')
-  # Step 1: Get the origin and UBound corners of the bounding box in physical space
-  # The additional 0.5 represents the difference between the voxel center and the voxel corner
-  # Upper bound index of ROI = bb[:3] + bb[3:] - 1 (LBound + Size - 1), .5 is added to get corner
-  ROIBounds = (maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] - .5),  # Origin
-               maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] + bb[3:] - 0.5))  # UBound
-  # Step 2: Translate the ROI physical bounds to the image coordinate space
-  ROIBounds = (imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[0]),  # Origin
-               imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[1]))
-
-  logger.debug('ROI bounds (image coordinate space): %s', ROIBounds)
-
-  # Check if any of the ROI bounds are outside the image indices (i.e. -0.5 < ROI < Im.Size -0.5)
-  # The additional 0.5 is to allow for different spacings (defines the edges, not the centers of the edge-voxels
-  tolerance = 1e-3  # Define a tolerance to correct for machine precision errors
-  if numpy.any(numpy.min(ROIBounds, axis=0) < (- .5 - tolerance)) or \
-     numpy.any(numpy.max(ROIBounds, axis=0) > (numpy.array(imageNode.GetSize()) - .5 + tolerance)):
-    logger.error('Bounding box of ROI is larger than image space:\n\t'
-                 'ROI bounds (image coordinate space) %s\n\tImage Size %s', ROIBounds, imageNode.GetSize())
+  if bb is None:  # ROI invalid
     return None, None
 
-  logger.debug('ROI valid, calculating resampling grid')
   # Do not resample in those directions where labelmap spans only one slice.
   maskSize = numpy.array(maskNode.GetSize())
   resampledPixelSpacing = numpy.where(bb[3:] != 1, resampledPixelSpacing, maskSpacing)

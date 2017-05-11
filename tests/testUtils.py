@@ -134,8 +134,7 @@ class RadiomicsTestUtils:
                                                                 self._kwargs.get('label', 1),
                                                                 self._kwargs.get('padDistance', 5))
       bb = imageoperations.checkMask(self._image, self._mask)
-      self._image, self._mask = imageoperations.cropToTumorMask(self._image, self._mask, bb,
-                                                                self._kwargs.get('label', 1))
+      self._image, self._mask = imageoperations.cropToTumorMask(self._image, self._mask, bb)
       self._testCase = testCase
 
     return True

@@ -17,6 +17,12 @@ mapping:
         type: int
         range:
           min-ex: 0
+      geometryTolerance:
+        type: float
+        range:
+          min-ex: 0
+      correctMask:
+        type: bool
       additionalInfo:
         type: bool
       label:

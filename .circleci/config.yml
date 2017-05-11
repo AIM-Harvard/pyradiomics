@@ -41,9 +41,9 @@ jobs:
       - run:
           name: test notebooks in python 2 and 3
           command: |
-            jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute notebooks/HelloRadiomics.ipynb notebooks/HelloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
+            jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
-            jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/HelloRadiomics.ipynb notebooks/HelloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
+            jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
 
 

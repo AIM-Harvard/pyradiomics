@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 from __future__ import print_function
 
@@ -5,7 +6,6 @@ import logging
 import os
 
 import SimpleITK as sitk
-import six
 
 import radiomics
 from radiomics import featureextractor
@@ -97,13 +97,13 @@ logger.addHandler(handler)
 
 # Define settings for signature calculation
 # These are currently set equal to the respective default values
-kwargs = {}
-kwargs['binWidth'] = 25
-kwargs['resampledPixelSpacing'] = None  # [3,3,3] is an example for defining resampling (voxels with size 3x3x3mm)
-kwargs['interpolator'] = sitk.sitkBSpline
+settings = {}
+settings['binWidth'] = 25
+settings['resampledPixelSpacing'] = None  # [3,3,3] is an example for defining resampling (voxels with size 3x3x3mm)
+settings['interpolator'] = sitk.sitkBSpline
 
-# Initialize wrapperClass to generate signature
-extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
+# Initialize feature extractor
+extractor = featureextractor.RadiomicsFeaturesExtractor(**settings)
 
 # By default, only original is enabled. Optionally enable some filters:
 # extractor.enableInputImages(Original={}, LoG={}, Wavelet={})
@@ -117,19 +117,11 @@ extractor.disableAllFeatures()
 # Only enable mean and skewness in firstorder
 extractor.enableFeaturesByName(firstorder=['Mean', 'Skewness'])
 
-# Uncomment on of these functions to show how PyRadiomics can use the 'tqdm' or 'click' package to report progress when
+# Uncomment one of these functions to show how PyRadiomics can use the 'tqdm' or 'click' package to report progress when
 # running in full python mode. Assumes the respective package is installed (not included in the requirements)
 
 # tqdmProgressbar()
 # clickProgressbar()
-
-print("Active features:")
-for cls, features in six.iteritems(extractor.enabledFeatures):
-  if len(features) == 0:
-    features = extractor.getFeatureNames(cls)
-  for f in features:
-    print(f)
-    print(getattr(extractor.featureClasses[cls], 'get%sFeatureValue' % f).__doc__)
 
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)

@@ -39,19 +39,11 @@ jobs:
             source activate root
             nosetests
       - run:
-          name: Install test data
-          command: |
-            cp -r data /tmp/example_data
-            cp bin/Params.yaml /tmp
-            cp -r bin/Notebooks/*.ipynb /tmp
-            # helloFeatureClass is not ready for inclusion yet, so isn't being tested
-            rm -f /tmp/hello*.ipynb
-      - run:
           name: test notebooks in python 2 and 3
           command: |
-            jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --execute /tmp/RadiomicsExample.ipynb /tmp/FeatureVisualization.ipynb /tmp/FeatureVisualizationWithClustering.ipynb /tmp/FilteringEffects.ipynb
+            jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute notebooks/HelloRadiomics.ipynb notebooks/HelloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
-            jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --execute  /tmp/RadiomicsExample.ipynb /tmp/FeatureVisualization.ipynb /tmp/FeatureVisualizationWithClustering.ipynb /tmp/FilteringEffects.ipynb
+            jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/HelloRadiomics.ipynb notebooks/HelloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
 
 

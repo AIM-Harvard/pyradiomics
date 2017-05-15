@@ -58,9 +58,10 @@ For various reasons, both image and mask must have the same geometry (i.e. same 
 when passed the feature classes. To this end PyRadiomics includes checks in the pipeline to ensure this is the case.
 If resampling is enabled, the mask is allowed to be of a different geometry, so long as the bounding box of the Region
 of Interest (ROI) represents a physical space that is within the image. If resampling is disabled, mask and image are
-required to be of the same geometry. For more information on resampling, see :py:func:`~imageoperations.resampleImage`.
-For more information on the mask checks, see :py:func:`~imageoperations.checkMask`. Alternatively, you could also
-resample the mask to image space. An example of this is provided in ``bin\resampleMask.py``.
+required to be of the same geometry. For more information on resampling, see
+:py:func:`~radiomics.imageoperations.resampleImage`. For more information on the mask checks, see
+:py:func:`~radiomics.imageoperations.checkMask`. Alternatively, you could also resample the mask to image space. An
+example of this is provided in ``bin/resampleMask.py``.
 
 **What modalities does PyRadiomics support?**
 

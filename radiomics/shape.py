@@ -233,8 +233,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     .. note::
 
       This feature is correlated to Compactness 1, Compactness 2 and Spherical Disproportion. In the default
-      parameter file provided in the ``pyradiomics\bin`` folder, Compactness 1 and Compactness 2 are therefore
-      disabled.
+      parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
+      are therefore disabled.
     """
     return (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0) / self.SurfaceArea
 
@@ -257,8 +257,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     .. note::
 
       This feature is correlated to Compactness 2, Sphericity and Spherical Disproportion. In the default
-      parameter file provided in the ``pyradiomics\bin`` folder, Compactness 1 and Compactness 2 are therefore
-      disabled.
+      parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
+      are therefore disabled.
     """
     return ((self.Volume) / ((self.SurfaceArea) ** (3.0 / 2.0) * numpy.sqrt(numpy.pi)))
 
@@ -279,8 +279,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     .. note::
 
       This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
-      parameter file provided in the ``pyradiomics\bin`` folder, Compactness 1 and Compactness 2 are therefore
-      disabled.
+      parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
+      are therefore disabled.
     """
     return ((36.0 * numpy.pi) * ((self.Volume) ** 2.0) / ((self.SurfaceArea) ** 3.0))
 
@@ -301,9 +301,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     .. note::
 
-      This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
-      parameter file provided in the ``pyradiomics\bin`` folder, Compactness 1 and Compactness 2 are therefore
-      disabled.
+      This feature is correlated to Compactness 1, Compactness 2 and Sphericity. In the default
+      parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
+      are therefore disabled.
     """
     return self.SurfaceArea / (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0)
 

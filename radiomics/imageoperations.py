@@ -340,7 +340,7 @@ def _checkROI(imageNode, maskNode, label):
   # The additional 0.5 is to allow for different spacings (defines the edges, not the centers of the edge-voxels
   tolerance = 1e-3  # Define a tolerance to correct for machine precision errors
   if numpy.any(numpy.min(ROIBounds, axis=0) < (- .5 - tolerance)) or \
-    numpy.any(numpy.max(ROIBounds, axis=0) > (numpy.array(imageNode.GetSize()) - .5 + tolerance)):
+     numpy.any(numpy.max(ROIBounds, axis=0) > (numpy.array(imageNode.GetSize()) - .5 + tolerance)):
     logger.error('Bounding box of ROI is larger than image space:\n\t'
                  'ROI bounds (image coordinate space) %s\n\tImage Size %s', ROIBounds, imageNode.GetSize())
     return None

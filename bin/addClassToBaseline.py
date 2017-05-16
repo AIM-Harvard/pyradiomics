@@ -81,7 +81,7 @@ def main():
       newBaseline[cls][testCase] = collections.OrderedDict()
       newBaseline[cls][testCase]["Patient ID"] = testCase
       newBaseline[cls][testCase].update(provenance)
-      featureClass = extractor.featureClasses[cls](image, mask, **extractor.kwargs)
+      featureClass = extractor.featureClasses[cls](image, mask, **extractor.settings)
       featureClass.enableAllFeatures()
       featureClass.calculateFeatures()
       newBaseline[cls][testCase].update(featureClass.featureValues)

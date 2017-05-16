@@ -108,7 +108,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     matrixDiagonals = []
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size, **self.kwargs)
+    # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
+    angles = imageoperations.generateAngles(size,
+                                            force2Dextraction=self.kwargs.get('force2D', False),
+                                            force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
     self.logger.debug('Calculating diagonals')
     for angle in angles:
@@ -167,7 +170,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Nr = self.coefficients['Nr']
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size, **self.kwargs)
+    # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
+    angles = imageoperations.generateAngles(size,
+                                            force2Dextraction=self.kwargs.get('force2D', False),
+                                            force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
     P_glrlm = cMatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)
     P_glrlm = self._applyMatrixOptions(P_glrlm, angles)

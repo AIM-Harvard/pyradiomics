@@ -47,7 +47,7 @@ class TestFeatures:
     testImage = testUtils.getImage()
     testMask = testUtils.getMask()
 
-    featureClass = featureClasses[featureClassName](testImage, testMask, **testUtils.getKwargs())
+    featureClass = featureClasses[featureClassName](testImage, testMask, **testUtils.getSettings())
 
     if featureClassName == 'shape':
       cSA = getattr(featureClass, 'SurfaceArea')  # pre-calculated value by C extension

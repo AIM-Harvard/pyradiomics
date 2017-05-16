@@ -136,8 +136,8 @@ comparing the range of gray values in the ROI (a First Order feature) with the v
 More bins capture smaller differences in gray values, but too many bins (compared to number of voxels) will yield low
 probabilities in the texture matrices, resulting in non-informative features. There is no definitive answer for the
 ideal number of discretized gray values, and this may differ between modalities.
-One study [1]_ assessed the number of bins in PET and found that in the range of 16 - 128 bins, texture features did not differ
-significantly.
+One study [1]_ assessed the number of bins in PET and found that in the range of 16 - 128 bins, texture features did not
+differ significantly.
 
 Does PyRadiomics support voxel-wise feature extraction?
 #######################################################

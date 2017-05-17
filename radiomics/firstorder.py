@@ -66,7 +66,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
 
-    return (numpy.sum(shiftedParameterArray ** 2))
+    return numpy.sum(shiftedParameterArray ** 2)
 
   def getTotalEnergyFeatureValue(self):
     r"""
@@ -90,7 +90,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     x, y, z = self.pixelSpacing
     cubicMMPerVoxel = x * y * z
 
-    return (cubicMMPerVoxel * self.getEnergyFeatureValue())
+    return cubicMMPerVoxel * self.getEnergyFeatureValue()
 
   def getEntropyFeatureValue(self):
     r"""
@@ -109,12 +109,14 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     eps = numpy.spacing(1)
     binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
     bins = numpy.histogram(self.targetVoxelArray, binEdges)[0]
-    try:
-      bins = bins + eps
-      bins = bins / float(bins.sum())
-      return (-1.0 * numpy.sum(bins * numpy.log2(bins)))
-    except ZeroDivisionError:
-      return numpy.core.nan
+
+    sumBins = bins.sum()
+    if sumBins == 0:  # No segmented voxels
+      return 0
+
+    bins = bins + eps
+    bins = bins / float(sumBins)
+    return -1.0 * numpy.sum(bins * numpy.log2(bins))
 
   def getMinimumFeatureValue(self):
     r"""
@@ -125,7 +127,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       \textit{minimum} = \min(\textbf{X})
     """
 
-    return (numpy.min(self.targetVoxelArray))
+    return numpy.min(self.targetVoxelArray)
 
   def get10PercentileFeatureValue(self):
     r"""
@@ -134,7 +136,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The 10\ :sup:`th` percentile of :math:`\textbf{X}`
     """
 
-    return (numpy.percentile(self.targetVoxelArray, 10))
+    return numpy.percentile(self.targetVoxelArray, 10)
 
   def get90PercentileFeatureValue(self):
     r"""
@@ -143,7 +145,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The 90\ :sup:`th` percentile of :math:`\textbf{X}`
     """
 
-    return (numpy.percentile(self.targetVoxelArray, 90))
+    return numpy.percentile(self.targetVoxelArray, 90)
 
   def getMaximumFeatureValue(self):
     r"""
@@ -156,7 +158,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The maximum gray level intensity within the ROI.
     """
 
-    return (numpy.max(self.targetVoxelArray))
+    return numpy.max(self.targetVoxelArray)
 
   def getMeanFeatureValue(self):
     r"""
@@ -169,7 +171,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The average gray level intensity within the ROI.
     """
 
-    return (numpy.mean(self.targetVoxelArray))
+    return numpy.mean(self.targetVoxelArray)
 
   def getMedianFeatureValue(self):
     r"""
@@ -178,7 +180,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The median gray level intensity within the ROI.
     """
 
-    return (numpy.median(self.targetVoxelArray))
+    return numpy.median(self.targetVoxelArray)
 
   def getInterquartileRangeFeatureValue(self):
     r"""
@@ -205,7 +207,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The range of gray values in the ROI.
     """
 
-    return (numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray))
+    return numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray)
 
   def getMeanAbsoluteDeviationFeatureValue(self):
     r"""
@@ -218,7 +220,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Mean Absolute Deviation is the mean distance of all intensity values from the Mean Value of the image array.
     """
 
-    return (numpy.mean(numpy.absolute((numpy.mean(self.targetVoxelArray) - self.targetVoxelArray))))
+    return numpy.mean(numpy.absolute((numpy.mean(self.targetVoxelArray) - self.targetVoxelArray)))
 
   def getRobustMeanAbsoluteDeviationFeatureValue(self):
     r"""
@@ -257,8 +259,12 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     volume-confounding.
     """
 
+    # If no voxels are segmented, prevent division by 0 and return 0
+    if self.targetVoxelArray.size == 0:
+      return 0
+
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
-    return (numpy.sqrt((numpy.sum(shiftedParameterArray ** 2)) / float(shiftedParameterArray.size)))
+    return numpy.sqrt((numpy.sum(shiftedParameterArray ** 2)) / float(shiftedParameterArray.size))
 
   def getStandardDeviationFeatureValue(self):
     r"""
@@ -272,7 +278,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     :math:\textit{standard deviation} = \sqrt{\textit{variance}}
     """
 
-    return (numpy.std(self.targetVoxelArray))
+    return numpy.std(self.targetVoxelArray)
 
   def getSkewnessFeatureValue(self, axis=0):
     r"""
@@ -292,12 +298,18 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Related links:
 
     https://en.wikipedia.org/wiki/Skewness
+
+    .. note::
+
+      In case of a flat region, the standard deviation and 4\ :sup:`rd` central moment will be both 0. In this case, a
+      value of 0 is returned.
     """
 
     m2 = self._moment(self.targetVoxelArray, 2, axis)
     m3 = self._moment(self.targetVoxelArray, 3, axis)
 
-    if (m2 == 0): return numpy.core.nan
+    if m2 == 0:  # Flat Region
+      return 0
 
     return m3 / m2 ** 1.5
 
@@ -320,12 +332,18 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Related links:
 
     https://en.wikipedia.org/wiki/Kurtosis
+
+    .. note::
+
+      In case of a flat region, the standard deviation and 4\ :sup:`rd` central moment will be both 0. In this case, a
+      value of 0 is returned.
     """
 
     m2 = self._moment(self.targetVoxelArray, 2, axis)
     m4 = self._moment(self.targetVoxelArray, 4, axis)
 
-    if (m2 == 0): return numpy.core.nan
+    if m2 == 0:  # Flat Region
+      return 0
 
     return m4 / m2 ** 2.0
 
@@ -341,7 +359,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     the spread of the distribution about the mean. By definition, :math:`\textit{variance} = \sigma^2`
     """
 
-    return (numpy.std(self.targetVoxelArray) ** 2)
+    return numpy.std(self.targetVoxelArray) ** 2
 
   def getUniformityFeatureValue(self):
     r"""
@@ -359,8 +377,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     eps = numpy.spacing(1)
     binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
     bins = numpy.histogram(self.targetVoxelArray, binEdges)[0]
-    try:
-      bins = bins / (float(bins.sum() + eps))
-      return (numpy.sum(bins ** 2))
-    except ZeroDivisionError:
-      return numpy.core.nan
+    sumBins = bins.sum()
+
+    if sumBins == 0:  # No segmented voxels
+      return 0
+
+    bins = bins / (float(sumBins + eps))
+    return numpy.sum(bins ** 2)

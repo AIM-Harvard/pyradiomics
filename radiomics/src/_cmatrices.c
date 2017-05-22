@@ -181,7 +181,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   PyArrayObject *image_arr, *mask_arr, *angles_arr;
   int Sx, Sy, Sz, Na;
   int *image;
-  signed char *mask;
+  char *mask;
   int *angles;
   int *tempData;
   int maxRegion;
@@ -248,7 +248,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 
   // Get arrays in Ctype
   image = (int *)PyArray_DATA(image_arr);
-  mask = (signed char *)PyArray_DATA(mask_arr);
+  mask = (char *)PyArray_DATA(mask_arr);
   angles = (int *)PyArray_DATA(angles_arr);
 
   //Calculate GLSZM

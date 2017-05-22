@@ -66,7 +66,7 @@ def main():
 
   logger.info('Enabled input images types: %s', extractor.inputImages)
   logger.info('Enabled features: %s', extractor.enabledFeatures)
-  logger.info('Current settings: %s', extractor.kwargs)
+  logger.info('Current settings: %s', extractor.settings)
 
   headers = None
 

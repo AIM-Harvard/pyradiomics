@@ -2,7 +2,7 @@ import numpy
 import SimpleITK as sitk
 from six.moves import range
 
-from radiomics import base, cMatsEnabled, cShape
+from radiomics import base, cMatsEnabled, cShape, imageoperations
 
 
 class RadiomicsShape(base.RadiomicsFeaturesBase):
@@ -26,7 +26,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.logger.debug('Extracting simple ITK shape features')
 
     self.lssif = sitk.LabelShapeStatisticsImageFilter()
-    self.lssif.SetComputeFeretDiameter(True)
     self.lssif.Execute(inputMask)
 
     # Pad inputMask to prevent index-out-of-range errors
@@ -57,6 +56,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       self.SurfaceArea = self._calculateCSurfaceArea()
     else:
       self.SurfaceArea = self._calculateSurfaceArea()
+
+    self.diameters = None  # Do not precompute diameters
 
     self.logger.debug('Feature class initialized')
 
@@ -138,38 +139,20 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     return cShape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
 
-  def _getMaximum2Ddiameter(self, dim):
-    otherDims = tuple(set([0, 1, 2]) - set([dim]))
+  def _calculateCDiameters(self):
+    """
+    Calculate maximum diameters in 2D and 3D using C extension. Function returns a tuple with 4 elements:
 
-    a = numpy.array(list(zip(*self.matrixCoordinates)))
-
-    maxDiameter = 0
-    # Check maximum diameter in every slice, retain the overall maximum
-    for i in numpy.unique(a[:, dim]):
-      # Retrieve all indices of mask in current slice
-      plane = a[numpy.where(a[:, dim] == i)]
-
-      minBounds = numpy.min(plane, 0)
-      maxBounds = numpy.max(plane, 0)
-
-      # Generate 2 sets of indices: one set of indices in zSlice where at least the x or y component of the index is equal to the
-      # minimum indices in the current slice, and one set of indices where at least one element it is equal to the maximum
-      edgeVoxelsMinCoords = numpy.vstack(
-        [plane[plane[:, otherDims[0]] == minBounds[otherDims[0]]],
-         plane[plane[:, otherDims[1]] == minBounds[otherDims[1]]]]) * self.pixelSpacing
-      edgeVoxelsMaxCoords = numpy.vstack(
-        [plane[plane[:, otherDims[0]] == maxBounds[otherDims[0]]],
-         plane[plane[:, otherDims[1]] == maxBounds[otherDims[1]]]]) * self.pixelSpacing
-
-      # generate a matrix of distances for every combination of an index in edgeVoxelsMinCoords and edgeVoxelsMaxCoords
-      # By subtraction the distance between the x, y and z components are obtained. The euclidean distance is then calculated:
-      # Sum the squares of dx, dy and dz components and then take the square root; Sqrt( Sum( dx^2 + dy^2 + dz^2 ) )
-      distances = numpy.sqrt(numpy.sum((edgeVoxelsMaxCoords[:, None] - edgeVoxelsMinCoords[None, :]) ** 2, 2))
-      tempMax = numpy.max(distances)
-      if tempMax > maxDiameter:
-        maxDiameter = tempMax
-
-    return maxDiameter
+    0. Maximum 2D diameter Slice (XY Plane, Axial)
+    1. Maximum 2D diameter Column (ZX Plane, Coronal)
+    2. Maximum 2D diameter Row (ZY Plane, Sagittal)
+    3. Maximum 3D diameter
+    """
+    self.logger.debug('Calculating Maximum 3D diameter in C')
+    Ns = self.targetVoxelArray.size
+    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    angles = imageoperations.generateAngles(size)
+    return cShape.calculate_diameter(self.maskArray, self.pixelSpacing, angles, Ns)
 
   def getVolumeFeatureValue(self):
     r"""
@@ -315,7 +298,15 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     Also known as Feret Diameter.
     """
-    return self.lssif.GetFeretDiameter(self.label)
+
+    if cMatsEnabled():
+      if self.diameters is None:
+        self.diameters = self._calculateCDiameters()
+      return self.diameters[3]
+    else:
+      self.logger.warning('For computational reasons, this feature is only implemented in C. Enable C extensions to '
+                          'calculate this feature.')
+      return numpy.nan
 
   def getMaximum2DDiameterSliceFeatureValue(self):
     r"""
@@ -324,8 +315,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Maximum 2D diameter (Slice) is defined as the largest pairwise Euclidean distance between tumor surface voxels in
     the row-column (generally the axial) plane.
     """
-
-    return self._getMaximum2Ddiameter(0)
+    if cMatsEnabled():
+      if self.diameters is None:
+        self.diameters = self._calculateCDiameters()
+      return self.diameters[0]
+    else:
+      self.logger.warning('For computational reasons, this feature is only implemented in C. Enable C extensions to '
+                          'calculate this feature.')
+      return numpy.nan
 
   def getMaximum2DDiameterColumnFeatureValue(self):
     r"""
@@ -334,8 +331,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Maximum 2D diameter (Column) is defined as the largest pairwise Euclidean distance between tumor surface voxels in
     the row-slice (usually the coronal) plane.
     """
-
-    return self._getMaximum2Ddiameter(1)
+    if cMatsEnabled():
+      if self.diameters is None:
+        self.diameters = self._calculateCDiameters()
+      return self.diameters[1]
+    else:
+      self.logger.warning('For computational reasons, this feature is only implemented in C. Enable C extensions to '
+                          'calculate this feature.')
+      return numpy.nan
 
   def getMaximum2DDiameterRowFeatureValue(self):
     r"""
@@ -344,8 +347,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Maximum 2D diameter (Row) is defined as the largest pairwise Euclidean distance between tumor surface voxels in the
     column-slice (usually the sagittal) plane.
     """
-
-    return self._getMaximum2Ddiameter(2)
+    if cMatsEnabled():
+      if self.diameters is None:
+        self.diameters = self._calculateCDiameters()
+      return self.diameters[2]
+    else:
+      self.logger.warning('For computational reasons, this feature is only implemented in C. Enable C extensions to '
+                          'calculate this feature.')
+      return numpy.nan
 
   def getMajorAxisFeatureValue(self):
     r"""

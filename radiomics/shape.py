@@ -297,6 +297,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Maximum 3D diameter is defined as the largest pairwise Euclidean distance between surface voxels in the ROI.
 
     Also known as Feret Diameter.
+
+    .. warning::
+
+      This feature is only available when C Extensions are enabled
     """
 
     if cMatsEnabled():
@@ -314,6 +318,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     Maximum 2D diameter (Slice) is defined as the largest pairwise Euclidean distance between tumor surface voxels in
     the row-column (generally the axial) plane.
+
+    .. warning::
+
+      This feature is only available when C Extensions are enabled
     """
     if cMatsEnabled():
       if self.diameters is None:
@@ -330,6 +338,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     Maximum 2D diameter (Column) is defined as the largest pairwise Euclidean distance between tumor surface voxels in
     the row-slice (usually the coronal) plane.
+
+    .. warning::
+
+      This feature is only available when C Extensions are enabled
     """
     if cMatsEnabled():
       if self.diameters is None:
@@ -346,6 +358,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     Maximum 2D diameter (Row) is defined as the largest pairwise Euclidean distance between tumor surface voxels in the
     column-slice (usually the sagittal) plane.
+
+    .. warning::
+
+      This feature is only available when C Extensions are enabled
     """
     if cMatsEnabled():
       if self.diameters is None:

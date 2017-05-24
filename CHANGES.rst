@@ -16,6 +16,9 @@ Feature Calculation Changes
   (`#233 <https://github.com/Radiomics/pyradiomics/pull/233>`_)
 - Redefine features *Elongation* and *Flatness* as the inverse of the original definition. This prevents a returned
   value of NaN when the shape is completely flat. (`#234 <https://github.com/Radiomics/pyradiomics/pull/234>`_)
+- In certain edge cases, the calculated maximum diameters may be too small when calculating using the python
+  implementation. This is corrected by the C extension and a warning is now logged when calculating these features in
+  python. (`#255 <https://github.com/Radiomics/pyradiomics/pull/255>`_)
 
 New Features
 ############
@@ -64,6 +67,12 @@ Internal API
 ############
 
 - Add function to get or download test case (`#235 <https://github.com/Radiomics/pyradiomics/pull/235>`_)
+- Rewrite C Extension algorithm for GSLZM. Instead of searching over the image for the next voxel when
+  growing a region, store all unprocessed voxels in a stack. This yields a significant increase in performance,
+  especially in large ROIs. Requires slightly more memory (1 array, type integer, size equal to number of voxels in
+  the ROI) (`#255 <https://github.com/Radiomics/pyradiomics/pull/255>`_)
+- Implement C extension for calculation of maximum diameters.
+  (`#255 <https://github.com/Radiomics/pyradiomics/pull/255>`_)
 
 Cleanups
 ########

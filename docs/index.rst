@@ -38,6 +38,7 @@ Table of Contents
    features
    developers
    FAQs <faq>
+   changes
 
 Feature Classes
 ---------------

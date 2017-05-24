@@ -43,10 +43,16 @@ comments posted by the reviewers, you may have to revisit your patches.
 Getting your contributions integrated is relatively straightforward, here
 is the checklist:
 
+* Your changes include an update of the documentation if necessary
+  * Documentation on modules, classes and functions is contained in the respective docstrings
+  * More global documentation is contained in the `docs` folder.
+  * New modules need to be added to the auto-generated documentation. See 
+    [here](http://pyradiomics.readthedocs.io/en/latest/developers.html#documentation) for more
+    information on adding new modules to the documentation.
+* Your changes are added in the [changelog](CHANGES.rst) in the _Next Release_  section.
 * All tests pass
-* Consensus is reached. This usually means that at least one reviewer added a `LGTM` comment
-and a reasonable amount of time passed without anyone objecting. `LGTM` is an
-acronym for _Looks Good to Me_.
+* Consensus is reached. This usually means that at least one reviewer reviewed and approved your
+  changes or added a `LGTM` comment, which is an acronym for _Looks Good to Me_.
 
 Next, there are two scenarios:
 * You do NOT have push access: A pyradiomics core developer will integrate your PR.
@@ -56,20 +62,16 @@ Then, click on the "Delete branch" button that appears afterward.
 
 #### Automatic testing of pull requests
 
-Every pull request is tested automatically using CircleCI each time you push a
-commit to it. The Github UI will restrict users from merging pull requests until
-the CI build has returned with a successful result indicating that all tests have
-passed and there were no problems detected by the linter.
-
-#### Sphinx documentation updates
-
-If you contribute a change that will add a new module/function to pyradiomics, the
-package index used by sphinx for auto-generating documentation needs to be updated.
-To do that, follow the instructions on this page to set up sphinx on your system
-
- https://github.com/Radiomics/pyradiomics/wiki/Documentation-infrastructure
-
-and update the package index file radiomics-api.rst by issuing the following command
-from the docs folder (make sure you include the updated file in your PR!)
-
- sphinx-apidoc -f -o . ../radiomics
+Every pull request is tested automatically using CircleCI, TravisCI and AppVeyor each time you push
+a commit to it. The Github UI will restrict users from merging pull requests until
+the builds have returned with a successful result indicating that all tests have
+passed and there were no problems detected by the linter. These tests include the following
+* flake8 to check adherence to the code style. See `.flake8` and `.editorconfig` for styles,
+  exceptions to the PEP8 style, etc.
+* If a feature class has a function `_calculateCMatrix`, identifying it as a C enhanced class,
+  output from the C extension is compared to the output from full python calculation. A absolute
+  difference of 1e-3 is allowed to account for machine precision errors.
+* All implemented features and feature classes have docstrings at the class level and feature
+  definition level.
+* A baseline is available for all features extracted from the 5 included test cases and
+  calculated features match this baseline to within 3% (allowing for machine precision errors)

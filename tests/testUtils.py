@@ -133,7 +133,9 @@ class RadiomicsTestUtils:
                                                                 interpolator,
                                                                 self._kwargs.get('label', 1),
                                                                 self._kwargs.get('padDistance', 5))
-      bb = imageoperations.checkMask(self._image, self._mask)
+      (bb,correctedMask) = imageoperations.checkMask(self._image, self._mask)
+      if correctedMask is not None:
+        self._mask = correctedMask
       self._image, self._mask = imageoperations.cropToTumorMask(self._image, self._mask, bb)
       self._testCase = testCase
 

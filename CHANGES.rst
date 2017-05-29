@@ -35,6 +35,8 @@ Bug fixes
 - Correct ``Np`` when weighting is applied in GLRLM (`#229 <https://github.com/Radiomics/pyradiomics/pull/229>`_)
 - Update CSV generators to reflect variable number of columns for input CSV in batch processing.
   (`#246 <https://github.com/Radiomics/pyradiomics/pull/246>`_)
+- Return corrected mask when it had to be resampled due to geometry mismatch errors
+  (`#260 <https://github.com/Radiomics/pyradiomics/pull/260>`_)
 
 Requirements
 ############

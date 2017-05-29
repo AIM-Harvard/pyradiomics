@@ -74,7 +74,9 @@ def main():
 
     provenance = extractor.getProvenance(imagePath, maskPath, mask)
 
-    bb = imageoperations.checkMask(image, mask)
+    bb, correctedMask = imageoperations.checkMask(image, mask)
+    if correctedMask is not None:
+      mask = correctedMask
     image, mask = imageoperations.cropToTumorMask(image, mask, bb)
     for cls in newClasses:
       print("\t\tCalculating class", cls)

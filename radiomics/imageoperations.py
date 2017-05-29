@@ -171,9 +171,14 @@ def checkMask(imageNode, maskNode, **kwargs):
   4. Optional. Check if there are at least N voxels in the ROI. N is defined in ``minimumROISize``, this test is skipped
      if ``minimumROISize = None``.
 
-  If a check fails, an error is logged and a None value is returned. No features will be extracted for this mask.
+  This function returns a tuple of two items. The first item (if not None) is the bounding box of the mask. The second
+  item is the mask that has been corrected by resampling to the input image geometry (if that resampling was successful).
+
+  If a check fails, an error is logged and a (None,None) tuple is returned. No features will be extracted for this mask.
   If the mask passes all tests, this function returns the bounding box, which is used in the :py:func:`cropToTumorMask`
-  function. The bounding box is calculated during (1.) and used for the subsequent checks. The bounding box is
+  function.
+
+  The bounding box is calculated during (1.) and used for the subsequent checks. The bounding box is
   calculated by SimpleITK.LabelStatisticsImageFilter() and returned as a tuple of indices: (L_x, U_x, L_y, U_y, L_z,
   U_z), where 'L' and 'U' are lower and upper bound, respectively, and 'x', 'y' and 'z' the three image dimensions.
 
@@ -203,6 +208,9 @@ def checkMask(imageNode, maskNode, **kwargs):
   """
   global logger
 
+  boundingBox = None
+  correctedMask = None
+
   label = kwargs.get('label', 1)
   minDims = kwargs.get('minimumROIDimensions', 1)
   minSize = kwargs.get('minimumROISize', None)
@@ -218,7 +226,7 @@ def checkMask(imageNode, maskNode, **kwargs):
     # this test here only if lsif does not fail on the first attempt.
     if label not in lsif.GetLabels():
       logger.error('Label (%g) not present in mask', label)
-      return None
+      return (boundingBox, correctedMask)
   except RuntimeError as e:
     # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
     if not kwargs.get('correctMask', False):
@@ -231,22 +239,22 @@ def checkMask(imageNode, maskNode, **kwargs):
                      'see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more '
                      'information')
         logger.debug('Additional information on error.', exc_info=True)
-      return None
+      return (boundingBox, correctedMask)
 
     logger.warning('Image/Mask geometry mismatch, attempting to correct Mask')
 
-    maskNode = _correctMask(imageNode, maskNode, label)
-    if maskNode is None:  # Resampling failed (ROI outside image physical space
+    correctedMask = _correctMask(imageNode, maskNode, label)
+    if correctedMask is None:  # Resampling failed (ROI outside image physical space
       logger.error('Image/Mask correction failed, ROI invalid (not found or outside of physical image bounds)')
-      return None
+      return (boundingBox, correctedMask)
 
     # Resampling succesful, try to calculate boundingbox
     try:
-      lsif.Execute(imageNode, maskNode)
+      lsif.Execute(imageNode, correctedMask)
     except RuntimeError:
       logger.error('Calculation of bounding box failed, for more information run with DEBUG logging and check log')
       logger.debug('Bounding box calculation with resampled mask failed', exc_info=True)
-      return None
+      return (boundingBox, correctedMask)
 
   # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
   boundingBox = numpy.array(lsif.GetBoundingBox(label))
@@ -255,16 +263,16 @@ def checkMask(imageNode, maskNode, **kwargs):
   ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
   if ndims <= minDims:
     logger.error('mask has too few dimensions (number of dimensions %d, minimum required %d)', ndims, minDims)
-    return None
+    return (boundingBox, correctedMask)
 
   if minSize is not None:
     logger.debug('Checking minimum size requirements (minimum size: %d)', minSize)
     roiSize = lsif.GetCount(label)
     if roiSize <= minSize:
       logger.error('Size of the ROI is too small (minimum size: %g, ROI size: %g', minSize, roiSize)
-      return None
+      return (boundingBox, correctedMask)
 
-  return boundingBox
+  return (boundingBox, correctedMask)
 
 
 def _correctMask(imageNode, maskNode, label):

@@ -1,5 +1,6 @@
 #include "cshape.h"
 #include <math.h>
+#include <stdlib.h>
 
 // Declare the look-up tables, these are filled at the bottom of this code file.
 static const int gridAngles[8][3];
@@ -94,6 +95,110 @@ void interpolate(double *vertEntry, int a1, int a2, double *spacing)
     else if (gridAngles[a1][d] != gridAngles[a2][d] ) vertEntry[d] = 0.5 * spacing[d];
     else vertEntry[d] = 0;
   }
+}
+
+int calculate_diameter(char *mask, int *size, double *spacing, int *angles, int Na, int Ns, double *diameters)
+{
+  int iz, iy, ix, i, j;
+  int a, d;
+
+  int *stack;
+  int stack_top = 0;
+  char isborder;
+
+  int idx, jz, jy, jx;
+  double dz, dy, dx;
+  double distance;
+
+  stack = calloc(Ns, sizeof(int));
+
+  // First, get all the voxels on the border
+  i = 0;
+  for (iz = 0; iz < size[0]; iz++) // Iterate over all voxels in a row - column - slice order
+  {
+    for (iy = 0; iy < size[1]; iy++)
+    {
+      for (ix = 0; ix < size[2]; ix++)
+      {
+        if (mask[i])
+        {
+          isborder = 0;
+          for (d = 1; d >= -1; d -= 2)
+          {
+            for (a = 0; a < Na; a++)
+            {
+              if (iz + d * angles[a * 3] < 0 || iz + d * angles[a * 3] >= size[0] ||
+                iy + d * angles[a * 3 + 1] < 0 || iy + d * angles[a * 3 + 1] >= size[1] ||
+                ix + d * angles[a * 3 + 2] < 0 || ix + d * angles[a * 3 + 2] >= size[2])
+              {
+                // 'i' is on the edge of the ROI, therefore a border voxel
+                isborder = 1;
+                stack[stack_top++] = i;
+                break;
+              }
+              j = i + d * angles[a * 3 + 2] +
+                d * angles[a * 3 + 1] * size[2] +
+                d * angles[a * 3] * size[1] * size[2];
+              if (mask[j] == 0)
+              {
+                // neighbour not part of ROI, i.e. 'i' is border voxel
+                isborder = 1;
+                if (stack_top >= Ns) return 0;  // index out of bounds
+                stack[stack_top++] = i;
+                break;
+              }
+            }
+            if (isborder) break;
+          }
+        }
+        i++;
+      }
+    }
+	}
+
+  diameters[0] = 0;
+  diameters[1] = 0;
+  diameters[2] = 0;
+  diameters[3] = 0;
+
+  while (stack_top > 0)
+  {
+    // pop the last item from the stack, this prevents double processing and comparing the same voxels
+	stack_top--;
+	i = stack[stack_top];
+    iz = (i / (size[1] * size[2]));
+    iy = (i % (size[1] * size[2])) / size[2];
+    ix = (i % (size[1] * size[2])) % size[2];
+    for (idx = 0; idx < stack_top; idx++)  // calculate distance to all other voxels
+    {
+      j = stack[idx];
+	    jz = (j / (size[1] * size[2]));
+      jy = (j % (size[1] * size[2])) / size[2];
+      jx = (j % (size[1] * size[2])) % size[2];
+
+      dz = (double)(iz - jz) * spacing[0];
+      dy = (double)(iy - jy) * spacing[1];
+      dx = (double)(ix - jx) * spacing[2];
+
+      dz *= dz;
+      dy *= dy;
+      dx *= dx;
+
+      distance = dz + dy + dx;
+      if (iz == jz && distance > diameters[0]) diameters[0] = distance;
+      if (iy == jy && distance > diameters[1]) diameters[1] = distance;
+      if (ix == jx && distance > diameters[2]) diameters[2] = distance;
+      if (distance > diameters[3]) diameters[3] = distance;
+    }
+  }
+  free(stack);
+
+  diameters[0] = sqrt(diameters[0]);
+  diameters[1] = sqrt(diameters[1]);
+  diameters[2] = sqrt(diameters[2]);
+  diameters[3] = sqrt(diameters[3]);
+
+  return 1;
 }
 
 static const int gridAngles[8][3] = { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, {0, 1, 0}, { 1, 0, 0 }, {1, 0, 1 }, { 1, 1, 1 }, { 1, 1, 0 }};

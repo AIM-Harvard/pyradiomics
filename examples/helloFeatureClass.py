@@ -46,7 +46,9 @@ kwargs = {'binWidth': 25,
 if kwargs['interpolator'] is not None and kwargs['resampledPixelSpacing'] is not None:
   image, mask = imageoperations.resampleImage(image, mask, kwargs['resampledPixelSpacing'], kwargs['interpolator'])
 else:
-  bb = imageoperations.checkMask(image, mask)
+  bb, correctedMask = imageoperations.checkMask(image, mask)
+  if correctedMask is not None:
+    mask = correctedMask
   image, mask = imageoperations.cropToTumorMask(image, mask, bb)
 
 #

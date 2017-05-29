@@ -323,7 +323,7 @@ class RadiomicsFeaturesExtractor:
       return featureVector
 
     # 2. Check whether loaded mask contains a valid ROI for feature extraction and get bounding box
-    (boundingBox,correctedMask) = imageoperations.checkMask(image, mask, **self.settings)
+    boundingBox, correctedMask = imageoperations.checkMask(image, mask, **self.settings)
 
     # Update the mask if it had to be resampled
     if correctedMask is not None:

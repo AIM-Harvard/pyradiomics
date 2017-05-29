@@ -176,8 +176,8 @@ def checkMask(imageNode, maskNode, **kwargs):
 
   If a check fails, an error is logged and a (None,None) tuple is returned. No features will be extracted for this mask.
   If the mask passes all tests, this function returns the bounding box, which is used in the :py:func:`cropToTumorMask`
-  function. 
-  
+  function.
+
   The bounding box is calculated during (1.) and used for the subsequent checks. The bounding box is
   calculated by SimpleITK.LabelStatisticsImageFilter() and returned as a tuple of indices: (L_x, U_x, L_y, U_y, L_z,
   U_z), where 'L' and 'U' are lower and upper bound, respectively, and 'x', 'y' and 'z' the three image dimensions.

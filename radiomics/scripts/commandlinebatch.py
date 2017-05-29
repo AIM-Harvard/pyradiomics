@@ -107,7 +107,13 @@ def main():
         featureVector['Mask'] = os.path.basename(maskFilepath)
 
       try:
-        featureVector.update(extractor.execute(imageFilepath, maskFilepath, args.label))
+        entryLabel = entry.get('Label', None)
+        if str(entryLabel).isdigit():
+          label = int(entryLabel)
+        else:
+          label = args.label
+
+        featureVector.update(extractor.execute(imageFilepath, maskFilepath, label))
 
         if args.format == 'csv':
           writer = csv.writer(args.outFile, lineterminator='\n')

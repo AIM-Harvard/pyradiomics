@@ -76,6 +76,12 @@ def main():
 
     imageFilepath = entry['Image']
     maskFilepath = entry['Mask']
+    label = entry.get('Label', None)
+
+    if str(label).isdigit():
+      label = int(label)
+    else:
+      label = None
 
     if (imageFilepath is not None) and (maskFilepath is not None):
       featureVector = collections.OrderedDict(entry)
@@ -83,7 +89,7 @@ def main():
       featureVector['Mask'] = os.path.basename(maskFilepath)
 
       try:
-        featureVector.update(extractor.execute(imageFilepath, maskFilepath))
+        featureVector.update(extractor.execute(imageFilepath, maskFilepath, label))
 
         with open(outputFilepath, 'a') as outputFile:
           writer = csv.writer(outputFile, lineterminator='\n')

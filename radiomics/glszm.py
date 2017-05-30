@@ -64,6 +64,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.matrix, self.binEdges = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
     self.coefficients['Np'] = self.targetVoxelArray.size
+    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.matrixCoordinates])
 
     if cMatsEnabled():
       self.P_glszm = self._calculateCMatrix()
@@ -83,7 +84,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     """
     self.logger.debug('Calculating GLSZM matrix in Python')
 
-    Ng = self.coefficients['Ng']
     Np = self.coefficients['Np']
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
@@ -91,14 +91,17 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
+    grayLevels = self.coefficients['grayLevels']
+
     # Empty GLSZ matrix
-    P_glszm = numpy.zeros((Ng, Np))
+    P_glszm = numpy.zeros((len(grayLevels), Np))
+    maxRegion = 0
 
     # If verbosity > INFO, or no progress reporter is set in radiomics.progressReporter, _dummyProgressReporter is used,
     # which just iterates over the iterator without reporting progress
-    with self.progressReporter(range(1, Ng + 1), desc='calculate GLSZM') as bar:
+    with self.progressReporter(grayLevels, desc='calculate GLSZM') as bar:
       # Iterate over all gray levels in the image
-      for i in bar:
+      for i_idx, i in enumerate(bar):
         ind = zip(*numpy.where(self.matrix == i))
         ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
 
@@ -131,14 +134,11 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
             ind_region.extend(region_level)
 
           # Update the gray level size zone matrix
-          P_glszm[i - 1, regionSize - 1] += 1
+          P_glszm[i_idx, regionSize - 1] += 1
+          if maxRegion < regionSize:
+            maxRegion = regionSize
 
-    # Crop gray-level axis of GLSZM matrix to between minimum and maximum observed gray-levels
-    # Crop size-zone area axis of GLSZM matrix up to maximum observed size-zone area
-    self.logger.debug('Cropping calculated matrix to observed gray levels and maximum observed zone size')
-    P_glszm_bounds = numpy.argwhere(P_glszm)
-    (xstart, ystart), (xstop, ystop) = P_glszm_bounds.min(0), P_glszm_bounds.max(0) + 1  # noqa: F841
-    return P_glszm[xstart:xstop, :ystop]
+    return P_glszm[:, 0:maxRegion]
 
   def _calculateCMatrix(self):
     self.logger.debug('Calculating GLSZM matrix in C')
@@ -151,7 +151,17 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
     Ns = self.coefficients['Np']
 
-    return cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
+    P_glszm = cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
+
+    # Delete rows that specify gray levels not present in the ROI
+    Ng = self.coefficients['Ng']
+    NgVector = range(1, Ng + 1)  # All possible gray values
+    GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
+    emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
+
+    P_glszm = numpy.delete(P_glszm, emptyGrayLevels - 1, 0)
+
+    return P_glszm
 
   def _calculateCoefficients(self):
     self.logger.debug('Calculating GLSZM coefficients')
@@ -165,8 +175,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     pr = numpy.sum(self.P_glszm, 0)
     pg = numpy.sum(self.P_glszm, 1)
 
-    ivector = numpy.arange(1, self.P_glszm.shape[0] + 1, dtype=numpy.float64)
+    ivector = self.coefficients['grayLevels']
     jvector = numpy.arange(1, self.P_glszm.shape[1] + 1, dtype=numpy.float64)
+
+    # Delete columns that specify zone sizes not present in the ROI
+    emptyZoneSizes = numpy.where(pr == 0)
+    self.P_glszm = numpy.delete(self.P_glszm, emptyZoneSizes, 1)
+    jvector = numpy.delete(jvector, emptyZoneSizes)
+    pr = numpy.delete(pr, emptyZoneSizes)
 
     self.coefficients['sumP_glszm'] = sumP_glszm
     self.coefficients['pr'] = pr

@@ -6,6 +6,10 @@ Release Notes
 Next Release
 ------------
 
+-----------------
+PyRadiomics 1.2.0
+-----------------
+
 Feature Calculation Changes
 ###########################
 
@@ -18,7 +22,11 @@ Feature Calculation Changes
   value of NaN when the shape is completely flat. (`#234 <https://github.com/Radiomics/pyradiomics/pull/234>`_)
 - In certain edge cases, the calculated maximum diameters may be too small when calculating using the python
   implementation. This is corrected by the C extension and a warning is now logged when calculating these features in
-  python. (`#255 <https://github.com/Radiomics/pyradiomics/pull/255>`_)
+  python. **N.B. As of this change, maximum diameter is not available for calculation in full-python mode**
+  (`#257 <https://github.com/Radiomics/pyradiomics/pull/257>`_)
+- For certain formulas, a NaN value is returned in some edge cases. Catch this and return a predefined value instead.
+  Document this behaviour in the docstrings of the features affected.
+  (`#248 <https://github.com/Radiomics/pyradiomics/pull/248>`_)
 
 New Features
 ############
@@ -33,7 +41,7 @@ Bug fixes
 
 - Instantiate output with input in ``commandlinebatch``
 - Correct ``Np`` when weighting is applied in GLRLM (`#229 <https://github.com/Radiomics/pyradiomics/pull/229>`_)
-- Update CSV generators to reflect variable number of columns for input CSV in batch processing.
+- Update CSV generators to reflect variable number of columns for input CSV in batch processing
   (`#246 <https://github.com/Radiomics/pyradiomics/pull/246>`_)
 - Return corrected mask when it had to be resampled due to geometry mismatch errors
   (`#260 <https://github.com/Radiomics/pyradiomics/pull/260>`_)
@@ -48,16 +56,20 @@ Requirements
 Documentation
 #############
 
+`version 1.2.0 docs <http://pyradiomics.readthedocs.io/en/1.2.0>`_
+
 - Update feature docstrings, making them more easily adaptable for article supplements
   (`#233 <https://github.com/Radiomics/pyradiomics/pull/233>`_)
 - Add FAQ concerning the cmatrices lib path (`#233 <https://github.com/Radiomics/pyradiomics/pull/233>`_)
 - Add developer install step to documentation (`#245 <https://github.com/Radiomics/pyradiomics/pull/245>`_)
 - Remove use of ``sudo`` (`#233 <https://github.com/Radiomics/pyradiomics/pull/233>`_)
 - Fix subclass name in feature class signature (section "Developers")
-- Add subsection on customizing the extraction to the "Usage" section.
+- Add subsection on customizing the extraction to the "Usage" section
   (`#252 <https://github.com/Radiomics/pyradiomics/pull/252>`_)
 - Remove SimpleITK installation workaround, this is no longer needed
   (`#249 <https://github.com/Radiomics/pyradiomics/pull/249>`_)
+- Add a changelog to keep track of changes and integrate this into the auto generated documentation
+  (`#255 <https://github.com/Radiomics/pyradiomics/pull/255>`_)
 
 Examples
 ########

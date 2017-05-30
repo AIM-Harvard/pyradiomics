@@ -84,9 +84,9 @@ Internal API
 - Rewrite C Extension algorithm for GSLZM. Instead of searching over the image for the next voxel when
   growing a region, store all unprocessed voxels in a stack. This yields a significant increase in performance,
   especially in large ROIs. Requires slightly more memory (1 array, type integer, size equal to number of voxels in
-  the ROI) (`#255 <https://github.com/Radiomics/pyradiomics/pull/255>`_)
+  the ROI) (`#257 <https://github.com/Radiomics/pyradiomics/pull/257>`_)
 - Implement C extension for calculation of maximum diameters.
-  (`#255 <https://github.com/Radiomics/pyradiomics/pull/255>`_)
+  (`#257 <https://github.com/Radiomics/pyradiomics/pull/257>`_)
 
 Cleanups
 ########

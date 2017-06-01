@@ -6,6 +6,14 @@ Release Notes
 Next Release
 ------------
 
+Bug fixes
+#########
+
+- In GLCM, the matrix is made symmetrical by adding the transposed matrix. However, ``numpy.transpose`` returns a view
+  and not a copy of the array, causing erroneous results when adding it to the original array. use
+  ``numpy.ndarray.copy`` to prevent this bug. **N.B. This affects the feature values calculated by GLCM when symmetrical
+  matrix is enabled (as is the default setting).**
+
 -----------------
 PyRadiomics 1.2.0
 -----------------

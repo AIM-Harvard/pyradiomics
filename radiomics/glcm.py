@@ -186,7 +186,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     # Optionally make GLCMs symmetrical for each angle
     if self.symmetricalGLCM:
       self.logger.debug('Create symmetrical matrix')
-      P_glcm += numpy.transpose(P_glcm, (1, 0, 2))
+      # Transpose and copy GLCM and add it to P_glcm. Numpy.transpose returns a view if possible, use .copy() to ensure
+      # a copy of the array is used and not just a view (otherwise erroneous additions can occur)
+      P_glcm += numpy.transpose(P_glcm, (1, 0, 2)).copy()
 
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:

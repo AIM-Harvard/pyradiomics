@@ -57,14 +57,16 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLSZM, self).__init__(inputImage, inputMask, **kwargs)
 
-    self.coefficients = {}
-    self.P_glszm = {}
+    self.P_glszm = None
 
-    # binning
-    self.matrix, self.binEdges = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
-    self.coefficients['Np'] = self.targetVoxelArray.size
-    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.matrixCoordinates])
+    self._initLesionWiseCalculation()
+
+  def _initLesionWiseCalculation(self):
+    super(RadiomicsGLSZM, self)._initLesionWiseCalculation()
+
+    self._applyBinning()
+
+    self.coefficients['Np'] = len(self.ROICoordinates[0])
 
     if cMatsEnabled():
       self.P_glszm = self._calculateCMatrix()
@@ -85,9 +87,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.logger.debug('Calculating GLSZM matrix in Python')
 
     Np = self.coefficients['Np']
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(size,
+    angles = imageoperations.generateAngles(self.size,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
@@ -103,7 +104,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       # Iterate over all gray levels in the image
       for i_idx, i in enumerate(bar):
         ind = zip(*numpy.where(self.matrix == i))
-        ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
+        ind = list(set(ind).intersection(set(zip(*self.ROICoordinates))))
 
         while ind:  # check if ind is not empty: unprocessed regions for current gray level
           # Pop first coordinate of an unprocessed zone, start new stack
@@ -143,9 +144,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   def _calculateCMatrix(self):
     self.logger.debug('Calculating GLSZM matrix in C')
 
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(size,
+    angles = imageoperations.generateAngles(self.size,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
     Ng = self.coefficients['Ng']
@@ -154,7 +154,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     P_glszm = cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
 
     # Delete rows that specify gray levels not present in the ROI
-    Ng = self.coefficients['Ng']
     NgVector = range(1, Ng + 1)  # All possible gray values
     GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
     emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
@@ -271,8 +270,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       \textit{SZN} = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
-    SZN measures the variability of size zone volumes in the image, with a lower value indicating more homogeneity in size
-    zone volumes.
+    SZN measures the variability of size zone volumes in the image, with a lower value indicating more homogeneity in
+    size zone volumes.
     """
     try:
       szv = numpy.sum(self.coefficients['pr'] ** 2) / self.coefficients['sumP_glszm']

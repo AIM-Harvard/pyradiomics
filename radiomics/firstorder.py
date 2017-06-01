@@ -30,6 +30,12 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     self.pixelSpacing = inputImage.GetSpacing()
     self.voxelArrayShift = kwargs.get('voxelArrayShift', 0)
 
+    self._initLesionWiseCalculation()
+
+  def _initLesionWiseCalculation(self):
+    super(RadiomicsFirstOrder, self)._initLesionWiseCalculation()
+    self.targetVoxelArray = self.imageArray[self.ROICoordinates].astype('float')
+
     self.logger.debug('Feature class initialized')
 
   def _moment(self, a, moment=1, axis=0):

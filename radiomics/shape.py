@@ -20,7 +20,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsShape, self).__init__(inputImage, inputMask, **kwargs)
 
-    self.pixelSpacing = numpy.array(inputImage.GetSpacing()[::-1])
+    self._initLesionWiseCalculation()
+
+  def _initLesionWiseCalculation(self):
+
+    self.pixelSpacing = numpy.array(self.inputImage.GetSpacing()[::-1])
 
     # Pad inputMask to prevent index-out-of-range errors
     self.logger.debug('Padding the mask with 0s')
@@ -40,14 +44,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     # Reassign self.maskArray using the now-padded self.inputMask and make it binary
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
-    self.matrixCoordinates = numpy.where(self.maskArray != 0)
+    self.ROICoordinates = numpy.where(self.maskArray != 0)
 
     self.logger.debug('Pre-calculate Volume, Surface Area and Eigenvalues')
 
     # Volume, Surface Area and eigenvalues are pre-calculated
     # Compute volume
     z, x, y = self.pixelSpacing
-    Np = len(self.matrixCoordinates[0])
+    Np = len(self.ROICoordinates[0])
     self.Volume = Np * (z * x * y)
 
     # Compute Surface Area
@@ -57,7 +61,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       self.SurfaceArea = self._calculateSurfaceArea()
 
     # Compute eigenvalues and -vectors
-    coordinates = numpy.array(self.matrixCoordinates, dtype='int').transpose((1, 0))  # Transpose equivalent to zip(*a)
+    coordinates = numpy.array(self.ROICoordinates, dtype='int').transpose((1, 0))  # Transpose equivalent to zip(*a)
     physicalCoordinates = [self.inputMask.TransformIndexToPhysicalPoint((idx.tolist())[::-1]) for idx in coordinates]
     physicalCoordinates -= numpy.mean(physicalCoordinates, axis=0)  # Centered at 0
     physicalCoordinates /= numpy.sqrt(Np)
@@ -79,10 +83,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     # instantiate lookup tables
     edgeTable, triTable = self._getMarchingTables()
 
-    minBounds = numpy.array([numpy.min(self.matrixCoordinates[0]), numpy.min(self.matrixCoordinates[1]),
-                             numpy.min(self.matrixCoordinates[2])])
-    maxBounds = numpy.array([numpy.max(self.matrixCoordinates[0]), numpy.max(self.matrixCoordinates[1]),
-                             numpy.max(self.matrixCoordinates[2])])
+    minBounds = numpy.array([numpy.min(self.ROICoordinates[0]), numpy.min(self.ROICoordinates[1]),
+                             numpy.min(self.ROICoordinates[2])])
+    maxBounds = numpy.array([numpy.max(self.ROICoordinates[0]), numpy.max(self.ROICoordinates[1]),
+                             numpy.max(self.ROICoordinates[2])])
     minBounds = numpy.where(minBounds < 1, 1, minBounds)
     maxBounds = numpy.where(maxBounds > self.maskArray.shape, self.maskArray.shape, maxBounds)
 
@@ -158,8 +162,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     3. Maximum 3D diameter
     """
     self.logger.debug('Calculating Maximum 3D diameter in C')
-    Ns = self.targetVoxelArray.size
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
+    Ns = len(self.ROICoordinates[0])
+    size = numpy.max(self.ROICoordinates, 1) - numpy.min(self.ROICoordinates, 1) + 1
     angles = imageoperations.generateAngles(size)
     return cShape.calculate_diameter(self.maskArray, self.pixelSpacing, angles, Ns)
 

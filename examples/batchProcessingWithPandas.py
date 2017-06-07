@@ -82,6 +82,12 @@ def main():
 
     imageFilepath = flists[entry]['Image']
     maskFilepath = flists[entry]['Mask']
+    label = flists[entry].get('Label', None)
+
+    if str(label).isdigit():
+      label = int(label)
+    else:
+      label = None
 
     if (imageFilepath is not None) and (maskFilepath is not None):
       featureVector = flists[entry]  # This is a pandas Series
@@ -92,7 +98,7 @@ def main():
         # PyRadiomics returns the result as an ordered dictionary, which can be easily converted to a pandas Series
         # The keys in the dictionary will be used as the index (labels for the rows), with the values of the features
         # as the values in the rows.
-        result = pandas.Series(extractor.execute(imageFilepath, maskFilepath))
+        result = pandas.Series(extractor.execute(imageFilepath, maskFilepath, label))
         featureVector = featureVector.append(result)
       except Exception:
         logger.error('FEATURE EXTRACTION FAILED:', exc_info=True)

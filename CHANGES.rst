@@ -6,6 +6,12 @@ Release Notes
 Next Release
 ------------
 
+New Features
+############
+
+- Add a row by row customization of the extraction label in the batch processing command line script, as well as both
+  batchprocessing examples.
+
 Bug fixes
 #########
 

@@ -135,7 +135,6 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     angles = imageoperations.generateAngles(size, **self.kwargs)
 
     grayLevels = self.coefficients['grayLevels']
-    grayLevel_idx = range(0, len(grayLevels))
 
     P_glcm = numpy.zeros((len(grayLevels), len(grayLevels), int(angles.shape[0])), dtype='float64')
 

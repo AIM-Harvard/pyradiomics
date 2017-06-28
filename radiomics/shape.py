@@ -381,7 +381,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{major axis} = 4 \sqrt{\lambda_{\text{major}}}
 
     """
-    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[2]) * 4
+    return numpy.sqrt(self.lssif.GetPrincipalMoments(self.label)[2]) * 4
 
   def getMinorAxisFeatureValue(self):
     r"""
@@ -392,7 +392,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{minor axis} = 4 \sqrt{\lambda_{\text{minor}}}
 
     """
-    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[1]) * 4
+    return numpy.sqrt(self.lssif.GetPrincipalMoments(self.label)[1]) * 4
 
   def getLeastAxisFeatureValue(self):
     r"""
@@ -403,7 +403,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{least axis} = 4 \sqrt{\lambda_{\text{least}}}
 
     """
-    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[0]) * 4
+    return numpy.sqrt(self.lssif.GetPrincipalMoments(self.label)[0]) * 4
 
   def getElongationFeatureValue(self):
     r"""
@@ -420,7 +420,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     largest principal moments is circle-like (non-elongated)) and 0 (where the object is a single point or 1 dimensional
     line).
     """
-    principalMoments = self.lssif.GetPrincipalMoments(1)
+    principalMoments = self.lssif.GetPrincipalMoments(self.label)
     return numpy.sqrt(principalMoments[1] / principalMoments[2])
 
   def getFlatnessFeatureValue(self):
@@ -436,7 +436,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{least}}` are the lengths of the largest and smallest
     principal component axes. The values range between 1 (non-flat, sphere-like) and 0 (a flat object).
     """
-    principalMoments = self.lssif.GetPrincipalMoments(1)
+    principalMoments = self.lssif.GetPrincipalMoments(self.label)
     return numpy.sqrt(principalMoments[0] / principalMoments[2])
 
   def _interpolate(self, grid, p1, p2):

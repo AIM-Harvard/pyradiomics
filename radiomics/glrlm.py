@@ -86,6 +86,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = self.targetVoxelArray.size
+    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.matrixCoordinates])
 
     if cMatsEnabled():
       self.P_glrlm = self._calculateCMatrix()
@@ -129,7 +130,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         diags = chain.from_iterable([self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, d1, d2)
                                      for a in range(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
 
-      else:  # movement in 3 dimensions, e.g. angle (1, 1, 1)
+      else:  # movement in 3 dimensions, e.g. angle (1, 1, 1)/
         diags = []
         direction = numpy.where(angle < 0, -1, 1)
         for h in [self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, 0, 1)
@@ -188,13 +189,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     """
     self.logger.debug('Process calculated matrix')
 
-    # Crop gray-level axis of GLRLMs to between minimum and maximum observed gray-levels
-    # Crop run-length axis of GLRLMs up to maximum observed run-length
-    self.logger.debug('Cropping calculated matrix to observed gray levels and maximum observed zone size')
-    P_glrlm_bounds = numpy.argwhere(P_glrlm)
-    (xstart, ystart, zstart), (xstop, ystop, zstop) = P_glrlm_bounds.min(0), P_glrlm_bounds.max(0) + 1  # noqa: F841
-    P_glrlm = P_glrlm[xstart:xstop, :ystop, :]
-
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:
       self.logger.debug('Applying weighting (%s)', self.weightingNorm)
@@ -240,8 +234,18 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     pr = numpy.sum(self.P_glrlm, 0)
     pg = numpy.sum(self.P_glrlm, 1)
 
-    ivector = numpy.arange(1, self.P_glrlm.shape[0] + 1, dtype=numpy.float64)
+    ivector = self.coefficients['grayLevels']
     jvector = numpy.arange(1, self.P_glrlm.shape[1] + 1, dtype=numpy.float64)
+
+    emptyGrayLevels = numpy.where(numpy.sum(pg, 1) == 0)
+    emptyRunLenghts = numpy.where(numpy.sum(pr, 1) == 0)
+
+    self.P_glrlm = numpy.delete(self.P_glrlm, emptyGrayLevels, 0)
+    self.P_glrlm = numpy.delete(self.P_glrlm, emptyRunLenghts, 1)
+    jvector = numpy.delete(jvector, emptyRunLenghts)
+
+    pg = numpy.delete(pg, emptyGrayLevels, 0)
+    pr = numpy.delete(pr, emptyRunLenghts, 0)
 
     self.coefficients['pr'] = pr
     self.coefficients['pg'] = pg

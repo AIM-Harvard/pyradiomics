@@ -24,6 +24,25 @@ Bug fixes
   on a given line of x have the same values for y and z (which is not necessarily the case).
   (`#264 <https://github.com/Radiomics/pyradiomics/pull/264>`_)
 
+Tests
+#####
+
+- Update the C Matrices test, so that the C and python calculated matrices will have the same dimensions when compared
+  (In the previous implementation, the ``_calculateCoefficients`` function was applied to the C calculated matrix, but
+  not in the python calculated matrix, for some texture matrices, this function can change the dimension of the matrix).
+  This update ensures that ``_calculateCoefficients`` is applied to neither matrix.
+  (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
+
+Internal API
+############
+
+- Remove unnecessary rows and columns from texture matrices prior to feature calculation. This does not affect the value
+  of the calculated features, as the i and j vectors are updated accordingly, but it does reduce both computation time
+  and memory requirements. This is especially the case when calculating GLSZM on large segmentations, where there may be
+  many 'empty' zone sizes (i.e. no zones of that size are present in the ROI). This reduces the size of the matrix,
+  which therefore reduces the memory needed and the number of calculations performed in the vectorized operations.
+  (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
+
 -----------------
 PyRadiomics 1.2.0
 -----------------

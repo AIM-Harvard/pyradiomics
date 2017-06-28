@@ -108,6 +108,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     # binning
     self.matrix, self.binEdges = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
     self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
+    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.matrixCoordinates])
 
     if cMatsEnabled():
       self.P_glcm = self._calculateCMatrix()
@@ -127,26 +128,26 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     self.logger.debug('Calculating GLCM matrix in Python')
 
-    Ng = self.coefficients['Ng']
-
     # Exclude voxels outside segmentation, due to binning, no negative values will be encountered inside the mask
     self.matrix[self.maskArray == 0] = -1
 
     size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     angles = imageoperations.generateAngles(size, **self.kwargs)
 
-    P_glcm = numpy.zeros((Ng, Ng, int(angles.shape[0])), dtype='float64')
+    grayLevels = self.coefficients['grayLevels']
+
+    P_glcm = numpy.zeros((len(grayLevels), len(grayLevels), int(angles.shape[0])), dtype='float64')
 
     # If verbosity > INFO, or no progress reporter is set in radiomics.progressReporter, _dummyProgressReporter is used,
     # which just iterates over the iterator without reporting progress
-    with self.progressReporter(range(1, Ng + 1), desc='calculate GLCM') as bar:
+    with self.progressReporter(grayLevels, desc='calculate GLCM') as bar:
       # iterate over gray levels for center voxel
-      for i in bar:
+      for i_idx, i in enumerate(bar):
         # get the indices to all voxels which have the current gray level i
         i_indices = numpy.where(self.matrix == i)
 
         # iterate over gray levels for neighbouring voxel
-        for j in range(1, Ng + 1):
+        for j_idx, j in enumerate(grayLevels):
           # get the indices to all voxels which have the current gray level j
           j_indices = set(zip(*numpy.where(self.matrix == j)))
 
@@ -158,7 +159,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
             # that are also a neighbour of a voxel with gray level i for angle a.
             # The number of indices is then equal to the total number of pairs with gray level i and j for angle a
             count = len(neighbour_indices.intersection(j_indices))
-            P_glcm[i - 1, j - 1, a_idx] = count
+            P_glcm[i_idx, j_idx, a_idx] = count
 
     P_glcm = self._applyMatrixOptions(P_glcm, angles)
 
@@ -173,6 +174,15 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     P_glcm = cMatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
     P_glcm = self._applyMatrixOptions(P_glcm, angles)
+
+    # Delete rows and columns that specify gray levels not present in the ROI
+    Ng = self.coefficients['Ng']
+    NgVector = range(1, Ng + 1)  # All possible gray values
+    GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
+    emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
+
+    P_glcm = numpy.delete(P_glcm, emptyGrayLevels - 1, 0)
+    P_glcm = numpy.delete(P_glcm, emptyGrayLevels - 1, 1)
 
     return P_glcm
 
@@ -235,7 +245,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
     eps = numpy.spacing(1)
 
-    NgVector = numpy.arange(1, self.P_glcm.shape[0] + 1, dtype='float64')
+    NgVector = self.coefficients['grayLevels']
     # shape = (Ng, Ng)
     i, j = numpy.meshgrid(NgVector, NgVector, indexing='ij')
 

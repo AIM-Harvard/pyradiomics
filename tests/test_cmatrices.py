@@ -62,7 +62,7 @@ class TestFeatures:
     else:
       assert "_calculateMatrix" in dir(featureClass)
 
-      cMat = getattr(featureClass, 'P_%s' % featureClassName)  # matrix calculated at initialization by C extension
+      cMat = featureClass._calculateCMatrix()
       assert cMat is not None
 
       pyMat = featureClass._calculateMatrix()

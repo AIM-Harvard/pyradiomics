@@ -22,12 +22,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     self.pixelSpacing = numpy.array(inputImage.GetSpacing()[::-1])
 
-    # Use SimpleITK for some shape features
-    self.logger.debug('Extracting simple ITK shape features')
-
-    self.lssif = sitk.LabelShapeStatisticsImageFilter()
-    self.lssif.Execute(inputMask)
-
     # Pad inputMask to prevent index-out-of-range errors
     self.logger.debug('Padding the mask with 0s')
 
@@ -48,14 +42,29 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
     self.matrixCoordinates = numpy.where(self.maskArray != 0)
 
-    self.logger.debug('Pre-calculate Volume and Surface Area')
+    self.logger.debug('Pre-calculate Volume, Surface Area and Eigenvalues')
 
-    # Volume and Surface Area are pre-calculated
-    self.Volume = self.lssif.GetPhysicalSize(self.label)
+    # Volume, Surface Area and eigenvalues are pre-calculated
+    # Compute volume
+    z, x, y = self.pixelSpacing
+    Np = len(self.matrixCoordinates[0])
+    self.Volume = Np * (z * x * y)
+
+    # Compute Surface Area
     if cMatsEnabled():
       self.SurfaceArea = self._calculateCSurfaceArea()
     else:
       self.SurfaceArea = self._calculateSurfaceArea()
+
+    # Compute eigenvalues and -vectors
+    coordinates = numpy.array(self.matrixCoordinates, dtype='int').transpose((1, 0))  # Transpose equivalent to zip(*a)
+    physicalCoordinates = [self.inputMask.TransformIndexToPhysicalPoint((idx.tolist())[::-1]) for idx in coordinates]
+    physicalCoordinates -= numpy.mean(physicalCoordinates, axis=0)  # Centered at 0
+    physicalCoordinates /= numpy.sqrt(Np)
+    covariance = numpy.dot(physicalCoordinates.T.copy(), physicalCoordinates)
+    self.eigenValues, eigenVectors = numpy.linalg.eig(covariance)  # eigenVectors are not used
+
+    self.eigenValues.sort()  # Sort the eigenValues from small to large
 
     self.diameters = None  # Do not precompute diameters
 
@@ -381,7 +390,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{major axis} = 4 \sqrt{\lambda_{\text{major}}}
 
     """
-    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[2]) * 4
+    return numpy.sqrt(self.eigenValues[2]) * 4
 
   def getMinorAxisFeatureValue(self):
     r"""
@@ -392,7 +401,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{minor axis} = 4 \sqrt{\lambda_{\text{minor}}}
 
     """
-    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[1]) * 4
+    return numpy.sqrt(self.eigenValues[1]) * 4
 
   def getLeastAxisFeatureValue(self):
     r"""
@@ -403,7 +412,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{least axis} = 4 \sqrt{\lambda_{\text{least}}}
 
     """
-    return numpy.sqrt(self.lssif.GetPrincipalMoments(1)[0]) * 4
+    return numpy.sqrt(self.eigenValues[0]) * 4
 
   def getElongationFeatureValue(self):
     r"""
@@ -420,8 +429,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     largest principal moments is circle-like (non-elongated)) and 0 (where the object is a single point or 1 dimensional
     line).
     """
-    principalMoments = self.lssif.GetPrincipalMoments(1)
-    return numpy.sqrt(principalMoments[1] / principalMoments[2])
+    return numpy.sqrt(self.eigenValues[1] / self.eigenValues[2])
 
   def getFlatnessFeatureValue(self):
     r"""
@@ -436,8 +444,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{least}}` are the lengths of the largest and smallest
     principal component axes. The values range between 1 (non-flat, sphere-like) and 0 (a flat object).
     """
-    principalMoments = self.lssif.GetPrincipalMoments(1)
-    return numpy.sqrt(principalMoments[0] / principalMoments[2])
+    return numpy.sqrt(self.eigenValues[0] / self.eigenValues[2])
 
   def _interpolate(self, grid, p1, p2):
     diff = (.5 - self.maskArray[tuple(grid[p1])]) / (self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])

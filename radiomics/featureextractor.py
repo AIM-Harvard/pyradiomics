@@ -6,7 +6,6 @@ from itertools import chain
 import logging
 import os
 
-import pykwalify.core
 import SimpleITK as sitk
 import six
 
@@ -45,25 +44,21 @@ class RadiomicsFeaturesExtractor:
     self.inputImages = {}
     self.enabledFeatures = {}
 
-    if len(args) == 1 and isinstance(args[0], six.string_types):
-      self.logger.info("Loading parameter file")
-      self.loadParams(args[0])
+    # Set default settings and update with and changed settings contained in kwargs
+    self.settings = self._getDefaultSettings()
+    if len(kwargs) > 0:
+      self.logger.info('Applying custom settings')
+      self.settings.update(kwargs)
     else:
-      # Set default settings and update with and changed settings contained in kwargs
-      self.settings = self._getDefaultSettings()
-      if len(kwargs) > 0:
-        self.logger.info('Applying custom settings')
-        self.settings.update(kwargs)
-      else:
-        self.logger.info('No customized settings, applying defaults')
+      self.logger.info('No customized settings, applying defaults')
 
-      self.logger.debug("Settings: %s", self.settings)
+    self.logger.debug("Settings: %s", self.settings)
 
-      self.inputImages = {'Original': {}}
+    self.inputImages = {'Original': {}}
 
-      self.enabledFeatures = {}
-      for featureClassName in self.getFeatureClassNames():
-        self.enabledFeatures[featureClassName] = []
+    self.enabledFeatures = {}
+    for featureClassName in self.getFeatureClassNames():
+      self.enabledFeatures[featureClassName] = []
 
     self._setTolerance()
 
@@ -106,49 +101,6 @@ class RadiomicsFeaturesExtractor:
     To disable this, call ``addProvenance(False)``.
     """
     self.settings['additionalInfo'] = provenance_on
-
-  def loadParams(self, paramsFile):
-    """
-    Parse specified parameters file and use it to update settings, enabled feature(Classes) and input
-    images. For more information on the structure of the parameter file, see
-    :ref:`Customizing the extraction <radiomics-customization-label>`.
-
-    If supplied file does not match the requirements (i.e. unrecognized names or invalid values for a setting), a
-    pykwalify error is raised.
-    """
-    dataDir = os.path.abspath(os.path.join(radiomics.__path__[0], 'schemas'))
-    schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
-    schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
-    c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
-    params = c.validate()
-
-    inputImages = params.get('inputImage', {})
-    enabledFeatures = params.get('featureClass', {})
-    settings = params.get('setting', {})
-
-    self.logger.debug("Parameter file parsed. Applying settings")
-
-    if len(inputImages) == 0:
-      self.inputImages = {'Original': {}}
-    else:
-      self.inputImages = inputImages
-
-    self.logger.debug("Enabled input images: %s", self.inputImages)
-
-    if len(enabledFeatures) == 0:
-      self.enabledFeatures = {}
-      for featureClassName in self.getFeatureClassNames():
-        self.enabledFeatures[featureClassName] = []
-    else:
-      self.enabledFeatures = enabledFeatures
-
-    self.logger.debug("Enabled features: %s", enabledFeatures)
-
-    # Set default settings and update with and changed settings contained in kwargs
-    self.settings = self._getDefaultSettings()
-    self.settings.update(settings)
-
-    self.logger.debug("Settings: %s", settings)
 
   def enableAllInputImages(self):
     """

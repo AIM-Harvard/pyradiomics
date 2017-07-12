@@ -14,7 +14,7 @@ of radiomic capabilities and expand the community. The platform supports both th
 **If you publish any work which uses this package, please cite the following publication:**
 *Joost JM van Griethuysen, Andriy Fedorov, Chintan Parmar, Ahmed Hosny, Nicole Aucoin, Vivek Narayan, Regina GH
 Beets-Tan, Jean-Christophe Fillion-Robin, Steve Pieper, Hugo JWL Aerts, “Computational Radiomics System to Decode the
-Radiographic Phenotype”; Submitted 2017*
+Radiographic Phenotype”; Accepted Cancer Research 2017*
 
 .. note::
 
@@ -34,6 +34,7 @@ Table of Contents
 
    installation
    usage
+   customization
    radiomics
    features
    developers

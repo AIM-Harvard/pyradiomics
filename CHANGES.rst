@@ -33,6 +33,13 @@ Tests
   This update ensures that ``_calculateCoefficients`` is applied to neither matrix.
   (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
 
+Documentation
+#############
+
+- Update reference. (`#271 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
+- Move section "Customizing the Extraction" to the top level, to make it more visible.
+  (`#265 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
+
 Internal API
 ############
 
@@ -42,6 +49,8 @@ Internal API
   many 'empty' zone sizes (i.e. no zones of that size are present in the ROI). This reduces the size of the matrix,
   which therefore reduces the memory needed and the number of calculations performed in the vectorized operations.
   (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
+- Remove circular import statement in ``__init__.py` (circular with ``radiomics.base``)
+  (`#270 <https://github.com/Radiomics/pyradiomics/pull/270>`_)
 
 -----------------
 PyRadiomics 1.2.0

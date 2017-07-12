@@ -12,7 +12,7 @@ import urllib
 
 import numpy  # noqa: F401
 
-from . import base, imageoperations
+from . import imageoperations
 
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
@@ -108,7 +108,7 @@ def getFeatureClasses():
   global _featureClasses
   if _featureClasses is None:  # On first call, enumerate possible feature classes and import PyRadiomics modules
     _featureClasses = {}
-    for _, mod, _ in pkgutil.iter_modules([os.path.dirname(base.__file__)]):
+    for _, mod, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
       if str(mod).startswith('_'):  # Skip loading of 'private' classes, these don't contain feature classes
         continue
       __import__('radiomics.' + mod)
@@ -116,8 +116,10 @@ def getFeatureClasses():
       attributes = inspect.getmembers(module, inspect.isclass)
       for a in attributes:
         if a[0].startswith('Radiomics'):
-          if base.RadiomicsFeaturesBase in inspect.getmro(a[1])[1:]:
-            _featureClasses[mod] = a[1]
+          for parentClass in inspect.getmro(a[1])[1:]:  # only include classes that inherit from RadiomicsFeaturesBase
+            if parentClass.__name__ == 'RadiomicsFeaturesBase':
+              _featureClasses[mod] = a[1]
+              break
 
   return _featureClasses
 
@@ -181,7 +183,7 @@ def getTestCase(testCase, repoDirectory=None):
   # No repository directory specified, check if running in development mode (code run from repository)
   logger.debug('Repository not specified or test case not found, checking if running in development mode')
   # This folder exists if radiomics is run from the repository:
-  dataDir = os.path.join(os.path.basename(base.__file__), '..', 'data')
+  dataDir = os.path.join(os.path.basename(__file__), '..', 'data')
   imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
   maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
   if os.path.isfile(imageFile) and os.path.isfile(maskFile):

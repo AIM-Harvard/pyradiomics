@@ -107,7 +107,7 @@ See also the [requirements file](requirements.txt).
  - Implementation of this package as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org)
 
 ### License
-This package is covered by the open source [3D Slicer License](LICENSE.txt).
+This package is covered by the open source [3-clause BSD License](LICENSE.txt).
 
 ### Developers
  - [Joost van Griethuysen](https://github.com/JoostJM)<sup>1,3,4</sup>

@@ -119,7 +119,7 @@ Pyradiomics Indices and Tables
 License
 -------
 
-This package is covered by the open source `3D Slicer License <https://github.com/Radiomics/pyradiomics/blob/master/LICENSE.txt>`_.
+This package is covered by the open source `3-clause BSD License <https://github.com/Radiomics/pyradiomics/blob/master/LICENSE.txt>`_.
 
 Developers
 ----------

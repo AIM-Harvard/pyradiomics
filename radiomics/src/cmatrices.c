@@ -387,3 +387,71 @@ int run_diagonal(int *image, char *mask, int *size, int *strides, int *angles, i
   }
   return elements;
 }
+
+int calculate_ngtdm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, int Na, double *ngtdm, int Ng)
+{
+  int gl;
+  int ngtdm_idx_max = Ng * 3;
+  int i = 0, j = 0;
+  int iz, iy, ix;
+  double count, sum, diff;
+  int d, a;
+  int ngtdm_idx;
+
+  // Fill gray levels (empty slices gray levels are later deleted in python)
+  for (gl = 0; gl < Ng; gl++)
+  {
+      ngtdm[gl*3 + 2] = gl + 1;
+  }
+
+  /* Calculate matrix: for each gray level, element 0 describes the number of voxels with gray level i and
+  *  element 1 describes the sum of all differences between voxels with gray level i and their neighbourhood
+  */
+  for (iz = 0; iz < Sz; iz ++) // Iterate over all voxels in a row - column - slice order
+  {
+    for (iy = 0; iy < Sy; iy ++)
+    {
+      for (ix = 0; ix < Sx; ix ++)
+      {
+        if (mask[i])  // Check if the current voxel is part of the segmentation
+        {
+          count = 0;
+          sum = 0;
+          for (d = 1; d >= -1; d-=2) // Iterate over both directions for each angle
+          {
+            for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
+            {
+              // Check whether the neighbour index is not out of range (i.e. part of the image)
+              if (iz + d * angles[a * 3] >= 0 && iz + d * angles[a * 3] < Sz &&
+                  iy + d * angles[a * 3 + 1] >= 0 && iy + d * angles[a * 3 + 1] < Sy &&
+                  ix + d * angles[a * 3 + 2] >= 0 && ix + d * angles[a * 3 + 2] < Sx)
+              {
+                j = i + d * angles[a * 3 + 2] +
+                        d * angles[a * 3 + 1] * Sx +
+                        d * angles[a * 3] * Sy * Sx;
+                if (mask[j])  // Check whether neighbour voxel is part of the segmentation
+                {
+                 count++;
+                 sum += image[j];
+                }
+              }
+            }
+          }
+          if (count == 0) { diff = 0; }
+          else { diff = (double)image[i] - sum  / count; }
+
+          if (diff < 0) diff *= -1;  // Get absolute difference
+
+          ngtdm_idx = (image[i]-1) * 3;
+          if (ngtdm_idx >= ngtdm_idx_max) return 0; // Index out of range
+          ngtdm[ngtdm_idx]++;
+          ngtdm[ngtdm_idx + 1] += diff;
+        }
+        // Increase index to point to next item. Only one index is needed as data is stored one dimensionally in memory.
+        // This is in row-column-slice order.
+        i++;
+      }
+    }
+  }
+  return 1;
+}

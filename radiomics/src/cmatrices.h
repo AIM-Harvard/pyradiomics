@@ -3,3 +3,4 @@ int calculate_glszm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles,
 int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion);
 int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *glrlm, int Ng, int Nr);
 int run_diagonal(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *glrlm, int glrlm_idx_max, int Nr, int *jd, int a);
+int calculate_ngtdm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, int Na, double *ngtdm, int Ng);

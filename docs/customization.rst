@@ -249,6 +249,15 @@ Feature Class Level
     For more information on how weighting is applied, see the documentation on :ref:`GLCM <radiomics-glcm-label>` and
     :ref:`GLRLM <radiomics-glszm-label>`.
 
+*Distance to neighbour*
+
+- distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
+  angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles`
+
+.. note::
+
+    This only affects the GLCM and NGTDM feature classes. The GLSZM and GLRLM feature classes use a fixed distance of 1
+    (infinity norm) to define neighbours.
 
 Feature Class Specific Settings
 +++++++++++++++++++++++++++++++
@@ -262,8 +271,9 @@ Feature Class Specific Settings
 
 *GLCM*
 
-- distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
-  angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles`
+- symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
+  which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`. A symmetrical matrix
+  corresponds to the GLCM as defined by Haralick et al.
 
 .. _radiomics-parameter-file-label:
 

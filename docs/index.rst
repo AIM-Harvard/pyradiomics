@@ -21,6 +21,10 @@ Radiographic Phenotype”; Accepted Cancer Research 2017*
    This work was supported in part by the US National Cancer Institute grant
    5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.
 
+.. warning::
+
+   Not intended for clinical use.
+
 Table of Contents
 -----------------
 

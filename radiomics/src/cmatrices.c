@@ -455,3 +455,56 @@ int calculate_ngtdm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles,
   }
   return 1;
 }
+
+int calculate_gldm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, int Na, double *gldm, int Ng, int alpha)
+{
+  /* Calculate GLDM: Count the number of voxels with gray level i, that have j dependent neighbours.
+  *  A voxel is considered dependent if the absolute difference between the center voxel and the neighbour <= alpha
+  */
+  int gldm_idx_max = Ng * (Na * 2 + 1);
+  int i = 0, j = 0;
+  int iz, iy, ix;
+  int dep, d, a, diff;
+  int gldm_idx;
+  for (iz = 0; iz < Sz; iz ++) // Iterate over all voxels in a row - column - slice order
+  {
+    for (iy = 0; iy < Sy; iy ++)
+    {
+      for (ix = 0; ix < Sx; ix ++)
+      {
+        if (mask[i])  // Check if the current voxel is part of the segmentation
+        {
+          dep = 0;
+          for (d = 1; d >= -1; d-=2) // Iterate over both directions for each angle
+          {
+            for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
+            {
+              // Check whether the neighbour index is not out of range (i.e. part of the image)
+              if (iz + d * angles[a * 3] >= 0 && iz + d * angles[a * 3] < Sz &&
+                  iy + d * angles[a * 3 + 1] >= 0 && iy + d * angles[a * 3 + 1] < Sy &&
+                  ix + d * angles[a * 3 + 2] >= 0 && ix + d * angles[a * 3 + 2] < Sx)
+              {
+                j = i + d * angles[a * 3 + 2] +
+                        d * angles[a * 3 + 1] * Sx +
+                        d * angles[a * 3] * Sy * Sx;
+                if (mask[j])  // Check whether neighbour voxel is part of the segmentation
+                {
+                  diff = image[i] - image[j];
+                  if (diff < 0) diff *= -1;  // Get absolute difference
+                  if (diff <= alpha) dep++;
+                }
+              }
+            }
+          }
+          gldm_idx = dep + (image[i]-1) * (Na * 2 + 1);
+          if (gldm_idx >= gldm_idx_max) return 0; // Index out of range
+          gldm[gldm_idx] ++;
+        }
+        // Increase index to point to next item. Only one index is needed as data is stored one dimensionally in memory.
+        // This is in row-column-slice order.
+        i++;
+      }
+    }
+  }
+  return 1;
+}

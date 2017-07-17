@@ -11,6 +11,7 @@ New Features
 
 - Add a row by row customization of the extraction label in the batch processing command line script, as well as both
   batchprocessing examples.
+  (`#262 <https://github.com/Radiomics/pyradiomics/pull/262>`_)
 
 Bug fixes
 #########
@@ -19,6 +20,7 @@ Bug fixes
   and not a copy of the array, causing erroneous results when adding it to the original array. use
   ``numpy.ndarray.copy`` to prevent this bug. **N.B. This affects the feature values calculated by GLCM when symmetrical
   matrix is enabled (as is the default setting).**
+  (`#261 <https://github.com/Radiomics/pyradiomics/pull/261>`_)
 - Use a python implementation to compute eigenvalues for ``shape.py`` instead of SimpleITK. The implementation in
   SimpleITK assumes segmented voxels to be consecutive on the x-axis lines. Furthermore, it also assumes that all voxels
   on a given line of x have the same values for y and z (which is not necessarily the case).
@@ -38,7 +40,8 @@ Documentation
 
 - Update reference. (`#271 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
 - Move section "Customizing the Extraction" to the top level, to make it more visible.
-  (`#265 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
+  (`#271 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
+- Change License to 3-clause BSD (`#272 <https://github.com/Radiomics/pyradiomics/pull/272>`_
 
 Internal API
 ############

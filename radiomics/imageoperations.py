@@ -554,6 +554,7 @@ def normalizeImage(image, scale=1, outliers=None):
 
     newImage = sitk.GetImageFromArray(imageArr)
     newImage.CopyInformation(image)
+    image = newImage
 
   image *= scale
 

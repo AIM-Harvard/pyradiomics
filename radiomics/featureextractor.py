@@ -59,7 +59,11 @@ class RadiomicsFeaturesExtractor:
 
       self.logger.debug("Settings: %s", self.settings)
 
-      self.inputImages = {'Original': {}}
+      if 'inputImage' in kwargs.keys():
+        self.inputImages = kwargs['inputImage']
+      else:
+        self.inputImages = {'Original': {}}
+      self.logging.info('inputImages set to'+str(self.inputImages))
 
       self.enabledFeatures = {}
       for featureClassName in self.getFeatureClassNames():

@@ -54,6 +54,8 @@ class RadiomicsFeaturesExtractor:
       if len(kwargs) > 0:
         self.logger.info('Applying custom settings')
         self.settings.update(kwargs)
+        if 'inputImage' in kwargs.keys():
+          del self.settings['inputImage']
       else:
         self.logger.info('No customized settings, applying defaults')
 

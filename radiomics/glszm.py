@@ -36,7 +36,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   Let:
 
   - :math:`\textbf{P}(i,j)` be the size zone matrix
-  - :math:`p(i,j)` be the normalized size zone matrix, defined as :math:`p(i,j) = \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
+  - :math:`p(i,j)` be the normalized size zone matrix, defined as
+    :math:`p(i,j) = \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
   - :math:`N_g` be the number of discreet intensity values in the image
   - :math:`N_s` be the number of discreet zone sizes in the image
   - :math:`N_p` be the number of voxels in the image
@@ -59,14 +60,14 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     self.P_glszm = None
 
-    self._initLesionWiseCalculation()
+    self._initSegmentBasedCalculation()
 
-  def _initLesionWiseCalculation(self):
-    super(RadiomicsGLSZM, self)._initLesionWiseCalculation()
+  def _initSegmentBasedCalculation(self):
+    super(RadiomicsGLSZM, self)._initSegmentBasedCalculation()
 
     self._applyBinning()
 
-    self.coefficients['Np'] = len(self.ROICoordinates[0])
+    self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     if cMatsEnabled():
       self.P_glszm = self._calculateCMatrix()
@@ -75,7 +76,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
-    self.logger.debug('Feature class initialized, calculated GLSZM with shape %s', self.P_glszm.shape)
+    self.logger.debug('GLSZM feature class initialized, calculated GLSZM with shape %s', self.P_glszm.shape)
 
   def _calculateMatrix(self):
     """
@@ -88,7 +89,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     Np = self.coefficients['Np']
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(self.size,
+    angles = imageoperations.generateAngles(self.boundingBoxSize,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
@@ -104,7 +105,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       # Iterate over all gray levels in the image
       for i_idx, i in enumerate(bar):
         ind = zip(*numpy.where(self.matrix == i))
-        ind = list(set(ind).intersection(set(zip(*self.ROICoordinates))))
+        ind = list(set(ind).intersection(set(zip(*self.labelledVoxelCoordinates))))
 
         while ind:  # check if ind is not empty: unprocessed regions for current gray level
           # Pop first coordinate of an unprocessed zone, start new stack
@@ -145,7 +146,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.logger.debug('Calculating GLSZM matrix in C')
 
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(self.size,
+    angles = imageoperations.generateAngles(self.boundingBoxSize,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
     Ng = self.coefficients['Ng']

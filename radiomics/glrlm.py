@@ -80,15 +80,15 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     self.P_glrlm = None
 
-    self._initLesionWiseCalculation()
+    self._initSegmentBasedCalculation()
 
-  def _initLesionWiseCalculation(self):
-    super(RadiomicsGLRLM, self)._initLesionWiseCalculation()
+  def _initSegmentBasedCalculation(self):
+    super(RadiomicsGLRLM, self)._initSegmentBasedCalculation()
     self._applyBinning()
 
     # binning
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
-    self.coefficients['Np'] = len(self.ROICoordinates[0])
+    self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     if cMatsEnabled():
       self.P_glrlm = self._calculateCMatrix()
@@ -97,7 +97,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
-    self.logger.debug('Feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
+    self.logger.debug('GLRLM feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
 
   def _calculateMatrix(self):
     self.logger.debug('Calculating GLRLM matrix in Python')
@@ -111,7 +111,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     matrixDiagonals = []
 
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(self.size,
+    angles = imageoperations.generateAngles(self.boundingBoxSize,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
@@ -172,7 +172,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Nr = self.coefficients['Nr']
 
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(self.size,
+    angles = imageoperations.generateAngles(self.boundingBoxSize,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 

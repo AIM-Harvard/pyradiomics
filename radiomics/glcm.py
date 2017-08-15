@@ -104,10 +104,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     self.P_glcm = None
 
-    self._initLesionWiseCalculation()
+    self._initSegmentBasedCalculation()
 
-  def _initLesionWiseCalculation(self):
-    super(RadiomicsGLCM, self)._initLesionWiseCalculation()
+  def _initSegmentBasedCalculation(self):
+    super(RadiomicsGLCM, self)._initSegmentBasedCalculation()
 
     self._applyBinning()
 
@@ -118,7 +118,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
-    self.logger.debug('Feature class initialized, calculated GLCM with shape %s', self.P_glcm.shape)
+    self.logger.debug('GLCM feature class initialized, calculated GLCM with shape %s', self.P_glcm.shape)
 
   def _calculateMatrix(self):
     r"""
@@ -132,7 +132,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     # Exclude voxels outside segmentation, due to binning, no negative values will be encountered inside the mask
     self.matrix[self.maskArray == 0] = -1
 
-    angles = imageoperations.generateAngles(self.size, **self.kwargs)
+    angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
 
     grayLevels = self.coefficients['grayLevels']
 
@@ -168,7 +168,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   def _calculateCMatrix(self):
     self.logger.debug('Calculating GLCM matrix in C')
 
-    angles = imageoperations.generateAngles(self.size, **self.kwargs)
+    angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
     Ng = self.coefficients['Ng']
 
     P_glcm = cMatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)

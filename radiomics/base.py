@@ -61,12 +61,12 @@ class RadiomicsFeaturesBase(object):
       self.logger.warning('Missing input image or mask')
       return
 
-  def _initLesionWiseCalculation(self):
+  def _initSegmentBasedCalculation(self):
     self.imageArray = sitk.GetArrayFromImage(self.inputImage)
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)  # boolean array
 
-    self.ROICoordinates = numpy.where(self.maskArray != 0)
-    self.size = numpy.max(self.ROICoordinates, 1) - numpy.min(self.ROICoordinates, 1) + 1
+    self.labelledVoxelCoordinates = numpy.where(self.maskArray != 0)
+    self.boundingBoxSize = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
 
   def _applyBinning(self):
       self.matrix, self.binEdges = imageoperations.binImage(self.binWidth,

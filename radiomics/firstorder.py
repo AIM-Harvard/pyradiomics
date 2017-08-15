@@ -30,13 +30,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     self.pixelSpacing = inputImage.GetSpacing()
     self.voxelArrayShift = kwargs.get('voxelArrayShift', 0)
 
-    self._initLesionWiseCalculation()
+    self._initSegmentBasedCalculation()
 
-  def _initLesionWiseCalculation(self):
-    super(RadiomicsFirstOrder, self)._initLesionWiseCalculation()
-    self.targetVoxelArray = self.imageArray[self.ROICoordinates].astype('float')
+  def _initSegmentBasedCalculation(self):
+    super(RadiomicsFirstOrder, self)._initSegmentBasedCalculation()
+    self.targetVoxelArray = self.imageArray[self.labelledVoxelCoordinates].astype('float')
 
-    self.logger.debug('Feature class initialized')
+    self.logger.debug('First order feature class initialized')
 
   def _moment(self, a, moment=1, axis=0):
     r"""

@@ -41,6 +41,9 @@ featureClass:
           'Maximum2DDiameterSlice',
           'Maximum2DDiameterColumn',
           'Maximum2DDiameterRow',
+          'MajorAxis',
+          'MinorAxis',
+          'LeastAxis',
           'Elongation',
           'Flatness'] # Only enable these shape descriptors (disables redundant Compactness 1 and Compactness 2)
   firstorder: [] # specifying an empty list has the same effect as specifying nothing.

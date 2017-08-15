@@ -27,12 +27,15 @@ RUN /bin/bash -c "source activate python2 \
     && python setup.py install"
 
 # Install sample data and notebooks
-ADD data/ /home/jovyan/work/example_data/
-ADD notebooks/RadiomicsExample.ipynb /home/jovyan/work/
-ADD notebooks/FeatureVisualization.ipynb /home/jovyan/work/
-ADD notebooks/FeatureVisualizationWithClustering.ipynb /home/jovyan/work/
-ADD notebooks/FilteringEffects.ipynb /home/jovyan/work/
-ADD examples/exampleSettings/Params.yaml /home/jovyan/work/
+ADD data/ /home/jovyan/work/data/
+ADD notebooks/RadiomicsExample.ipynb /home/jovyan/work/notebooks/
+ADD notebooks/FeatureVisualization.ipynb /home/jovyan/work/notebooks/
+ADD notebooks/FeatureVisualizationWithClustering.ipynb /home/jovyan/work/notebooks/
+ADD notebooks/FilteringEffects.ipynb /home/jovyan/work/notebooks/
+ADD notebooks/helloRadiomics.ipynb /home/jovyan/work/notebooks/
+ADD notebooks/helloFeatureClass.ipynb /home/jovyan/work/notebooks/
+ADD notebooks/PyRadiomicsExample.ipynb /home/jovyan/work/notebooks/
+ADD examples/exampleSettings/Params.yaml /home/jovyan/work/examples/exampleSettings/
 
 # Make a global directory and link it to the work directory
 RUN mkdir /data
@@ -42,11 +45,11 @@ RUN chown -R jovyan:users /home/jovyan/work
 
 # Trust the notebooks that we've installed
 USER jovyan
-RUN jupyter trust /home/jovyan/work/*.ipynb
+RUN jupyter trust /home/jovyan/work/notebooks/*.ipynb
 
 # Run the notebooks
-RUN jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --execute /home/jovyan/work/*.ipynb
-RUN jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --execute /home/jovyan/work/*.ipynb
+RUN jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --execute /home/jovyan/work/notebooks/helloRadiomics.ipynb /home/jovyan/work/notebooks/helloFeatureClass.ipynb /home/jovyan/work/notebooks/PyRadiomicsExample.ipynb
+RUN jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --execute /home/jovyan/work/notebooks/helloRadiomics.ipynb /home/jovyan/work/notebooks/helloFeatureClass.ipynb /home/jovyan/work/notebooks/PyRadiomicsExample.ipynb
 
 # The user's data will show up as /data
 VOLUME /data

@@ -18,6 +18,10 @@ obtained by applying one of several filters. The shape descriptors are independe
 the label mask. If enabled, they are calculated separately of enabled input image types, and listed in the result as if
 calculated on the original image.
 
+Most features defined below are in compliance with feature definitions as described by the Imaging Biomarker
+Standardization Initiative (IBSI), which are available in a separate document by Zwanenburg et al. (2016) [1]_.
+Where features differ, a note has been added specifying the difference.
+
 .. _radiomics-firstorder-label:
 
 First Order Features
@@ -73,3 +77,5 @@ Gray Level Run Length Matrix (GLRLM) Features
     :show-inheritance:
     :member-order: bysource
 
+.. [1] Zwanenburg, A., Leger, S., Vallières, M., and Löck, S. (2016). Image biomarker
+    standardisation initiative - feature definitions. In eprint arXiv:1612.07003 [cs.CV]

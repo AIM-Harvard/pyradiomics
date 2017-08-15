@@ -42,7 +42,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   - :math:`N_p` be the number of voxels in the image
 
   .. note::
-
     The mathematical formulas that define the GLSZM features correspond to the definitions of features extracted from
     the GLRLM.
 
@@ -195,7 +194,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **1. Small Area Emphasis (SAE)**
 
     .. math::
-
       \textit{SAE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -213,7 +211,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **2. Large Area Emphasis (LAE)**
 
     .. math::
-
       \textit{LAE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)j^2}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -231,7 +228,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **3. Gray Level Non-Uniformity (GLN)**
 
     .. math::
-
       \textit{GLN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -249,7 +245,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **4. Gray Level Non-Uniformity Normalized (GLNN)**
 
     .. math::
-
       \textit{GLNN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}
 
@@ -267,7 +262,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **5. Size-Zone Non-Uniformity (SZN)**
 
     .. math::
-
       \textit{SZN} = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -285,7 +279,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **6. Size-Zone Non-Uniformity Normalized (SZNN)**
 
     .. math::
-
       \textit{SZNN} = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}
 
@@ -303,7 +296,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **7. Zone Percentage (ZP)**
 
     .. math::
-
       \textit{ZP} = \sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{N_p}}
 
     ZP measures the coarseness of the texture by taking the ratio of number of zones and number of voxels in the ROI.
@@ -322,7 +314,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **8. Gray Level Variance (GLV)**
 
     .. math::
-
       \textit{GLV} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)(i - \mu)^2}
 
     Here, :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)i}`
@@ -340,7 +331,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **9. Zone Variance (ZV)**
 
     .. math::
-
       \textit{ZV} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)(j - \mu)^2}
 
     Here, :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)j}`
@@ -358,7 +348,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **10. Zone Entropy (ZE)**
 
     .. math::
-
       \textit{ZE} = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
@@ -376,7 +365,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **11. Low Gray Level Zone Emphasis (LGLZE)**
 
     .. math::
-
       \textit{LGLZE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -391,7 +379,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **12. High Gray Level Zone Emphasis (HGLZE)**
 
     .. math::
-
       \textit{HGLZE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -406,7 +393,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **13. Small Area Low Gray Level Emphasis (SALGLE)**
 
     .. math::
-
       \textit{SALGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -423,7 +409,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **14. Small Area High Gray Level Emphasis (SAHGLE)**
 
     .. math::
-
       \textit{SAHGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -440,7 +425,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **15. Large Area Low Gray Level Emphasis (LALGLE)**
 
     .. math::
-
       \textit{LALGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -457,7 +441,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **16. Large Area High Gray Level Emphasis (LAHGLE)**
 
     .. math::
-
       \textit{LAHGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2j^2}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 

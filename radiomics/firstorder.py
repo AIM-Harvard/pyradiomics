@@ -22,6 +22,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     RMS, this is to prevent negative values. *If using CT data, or data normalized with mean 0, consider setting this
     parameter to a fixed value (e.g. 2000) that ensures non-negative numbers in the image. Bear in mind however, that
     the larger the value, the larger the volume confounding effect will be.*
+
+  .. note::
+    In the IBSI feature definitions, no correction for negative gray values is implemented. To achieve similar behaviour
+    in PyRadiomics, set ``voxelArrayShift`` to 0.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -49,7 +53,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **1. Energy**
 
     .. math::
-
       \textit{energy} = \displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
@@ -60,7 +63,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     squares of these values.
 
     .. note::
-
       This feature is volume-confounded, a larger value of :math:`c` increases the effect of volume-confounding.
     """
 
@@ -73,7 +75,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **2. Total Energy**
 
     .. math::
-
       \textit{total energy} = V_{voxel}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
@@ -83,8 +84,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Total Energy is the value of Energy feature scaled by the volume of the voxel in cubic mm.
 
     .. note::
-
       This feature is volume-confounded, a larger value of :math:`c` increases the effect of volume-confounding.
+
+    .. note::
+      Not present in IBSI feature definitions
     """
 
     x, y, z = self.pixelSpacing
@@ -97,13 +100,15 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **3. Entropy**
 
     .. math::
-
       \textit{entropy} = -\displaystyle\sum^{N_l}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
 
     Entropy specifies the uncertainty/randomness in the image values. It measures the average amount of information
     required to encode the image values.
+
+    .. note::
+      Defined by IBSI as Intensity Histogram Entropy.
     """
 
     eps = numpy.spacing(1)
@@ -123,7 +128,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **4. Minimum**
 
     .. math::
-
       \textit{minimum} = \min(\textbf{X})
     """
 
@@ -152,7 +156,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **7. Maximum**
 
     .. math::
-
       \textit{maximum} = \max(\textbf{X})
 
     The maximum gray level intensity within the ROI.
@@ -165,7 +168,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **8. Mean**
 
     .. math::
-
       \textit{mean} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)}
 
     The average gray level intensity within the ROI.
@@ -187,7 +189,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **10. Interquartile Range**
 
     .. math::
-
       \textit{interquartile range} = \textbf{P}_{75} - \textbf{P}_{25}
 
     Here :math:`\textbf{P}_{25}` and :math:`\textbf{P}_{75}` are the 25\ :sup:`th` and 75\ :sup:`th` percentile of the
@@ -201,7 +202,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **11. Range**
 
     .. math::
-
       \textit{range} = \max(\textbf{X}) - \min(\textbf{X})
 
     The range of gray values in the ROI.
@@ -214,7 +214,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **12. Mean Absolute Deviation (MAD)**
 
     .. math::
-
       \textit{MAD} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}
 
     Mean Absolute Deviation is the mean distance of all intensity values from the Mean Value of the image array.
@@ -227,7 +226,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **13. Robust Mean Absolute Deviation (rMAD)**
 
     .. math::
-
       \textit{rMAD} = \frac{1}{N_{10-90}}\displaystyle\sum^{N_{10-90}}_{i=1}
       {|\textbf{X}_{10-90}(i)-\bar{X}_{10-90}|}
 
@@ -247,7 +245,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **14. Root Mean Squared (RMS)**
 
     .. math::
-
       \textit{RMS} = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
@@ -271,11 +268,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **15. Standard Deviation**
 
     .. math::
-
       \textit{standard deviation} = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}
 
     Standard Deviation measures the amount of variation or dispersion from the Mean Value. By definition,
     :math:\textit{standard deviation} = \sqrt{\textit{variance}}
+
+    .. note::
+      Not present in IBSI feature definitions (correlated with variance)
     """
 
     return numpy.std(self.targetVoxelArray)
@@ -285,7 +284,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **16. Skewness**
 
     .. math::
-
       \textit{skewness} = \displaystyle\frac{\mu_3}{\sigma^3} =
       \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^3}}
       {\left(\sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}\right)^3}
@@ -300,7 +298,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     https://en.wikipedia.org/wiki/Skewness
 
     .. note::
-
       In case of a flat region, the standard deviation and 4\ :sup:`rd` central moment will be both 0. In this case, a
       value of 0 is returned.
     """
@@ -318,7 +315,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **17. Kurtosis**
 
     .. math::
-
       \textit{kurtosis} = \displaystyle\frac{\mu_4}{\sigma^4} =
       \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^4}}
       {\left(\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2\right)^2}
@@ -334,9 +330,12 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     https://en.wikipedia.org/wiki/Kurtosis
 
     .. note::
-
       In case of a flat region, the standard deviation and 4\ :sup:`rd` central moment will be both 0. In this case, a
       value of 0 is returned.
+
+    .. note::
+      The IBSI feature definition implements excess kurtosis, where kurtosis is corrected by -3, yielding 0 for normal
+      distributions. The PyRadiomics kurtosis is not corrected, yielding a value 3 higher than the IBSI kurtosis.
     """
 
     m2 = self._moment(self.targetVoxelArray, 2, axis)
@@ -352,7 +351,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **18. Variance**
 
     .. math::
-
       \textit{variance} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}
 
     Variance is the the mean of the squared distances of each intensity value from the Mean value. This is a measure of
@@ -366,12 +364,14 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **19. Uniformity**
 
     .. math::
-
       \textit{uniformity} = \displaystyle\sum^{N_l}_{i=1}{p(i)^2}
 
     Uniformity is a measure of the sum of the squares of each intensity value. This is a measure of the heterogeneity of
     the image array, where a greater uniformity implies a greater heterogeneity or a greater range of discrete intensity
     values.
+
+    .. note::
+      Defined by IBSI as Intensity Histogram Uniformity.
     """
 
     eps = numpy.spacing(1)

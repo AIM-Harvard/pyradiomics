@@ -597,8 +597,9 @@ def getLoGImage(inputImage, **kwargs):
   - sigma: List of floats or integers, must be greater than 0. Sigma values to
     use for the filter (determines coarseness).
 
-  N.B. Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
-  will return an empty dictionary.
+  .. warning::
+    Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
+    will return an empty dictionary.
 
   Returned filter name reflects LoG settings:
   log-sigma-<sigmaValue>-3D.

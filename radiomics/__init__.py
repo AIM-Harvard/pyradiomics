@@ -249,10 +249,10 @@ class _DummyProgressReporter(object):
     pass  # Nothing needs to be closed or handled, so just specify 'pass'
 
 
-def _getProgressReporter(*args, **kwargs):
+def getProgressReporter(*args, **kwargs):
   """
-  This function returns an instance of the progressReporter, or, if it is not set (None), returns a dummy progress
-  reporter.
+  This function returns an instance of the progressReporter, if it is set and the logging level is defined at level INFO
+  or DEBUG. In all other cases a dummy progress reporter is returned.
 
   To enable progress reporting, the progressReporter variable should be set to a class object (NOT an instance), which
   fits the following signature:
@@ -267,11 +267,11 @@ def _getProgressReporter(*args, **kwargs):
   `__next__` function of the iterable (i.e. `return self.iterable.__next__()`). Any prints/progress reporting calls can
   then be inserted in this function prior to the return statement.
   """
-  global progressReporter
-  if progressReporter is None:
-    return _DummyProgressReporter(*args, **kwargs)
-  else:
+  global handler, progressReporter
+  if progressReporter is not None and logging.NOTSET < handler.level <= logging.INFO:
     return progressReporter(*args, **kwargs)
+  else:
+    return _DummyProgressReporter(*args, **kwargs)
 
 progressReporter = None
 

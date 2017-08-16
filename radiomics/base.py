@@ -6,7 +6,7 @@ import numpy
 import SimpleITK as sitk
 import six
 
-import radiomics
+from radiomics import getProgressReporter, imageoperations
 
 class RadiomicsFeaturesBase(object):
   """
@@ -41,15 +41,13 @@ class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):
     self.logger = logging.getLogger(self.__module__)
     self.logger.debug('Initializing feature class')
-    # check if the handler to stderr is set and its level is INFO or lower
-    if logging.NOTSET < radiomics.handler.level <= logging.INFO:
-      self.progressReporter = radiomics._getProgressReporter
-    else:
-      self.progressReporter = radiomics._DummyProgressReporter
+    self.progressReporter = getProgressReporter
 
     self.kwargs = kwargs
     self.binWidth = kwargs.get('binWidth', 25)
     self.label = kwargs.get('label', 1)
+
+    self.coefficients = {}
 
     # all features are disabled by default
     self.disableAllFeatures()
@@ -63,13 +61,19 @@ class RadiomicsFeaturesBase(object):
       self.logger.warning('Missing input image or mask')
       return
 
+  def _initSegmentBasedCalculation(self):
     self.imageArray = sitk.GetArrayFromImage(self.inputImage)
-    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
+    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)  # boolean array
 
-    self.matrix = self.imageArray.astype('float')
-    self.matrixCoordinates = numpy.where(self.maskArray != 0)
+    self.labelledVoxelCoordinates = numpy.where(self.maskArray != 0)
+    self.boundingBoxSize = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
 
-    self.targetVoxelArray = self.matrix[self.matrixCoordinates]
+  def _applyBinning(self):
+      self.matrix, self.binEdges = imageoperations.binImage(self.binWidth,
+                                                            self.imageArray,
+                                                            self.maskArray)
+      self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.maskArray])
+      self.coefficients['Ng'] = int(numpy.max(self.coefficients['grayLevels']))  # max gray level in the ROI
 
   def enableFeatureByName(self, featureName, enable=True):
     """

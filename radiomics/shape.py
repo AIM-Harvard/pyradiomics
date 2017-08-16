@@ -171,8 +171,16 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     r"""
     **1. Volume**
 
-    The volume of the ROI is approximated by multiplying the number of voxels in the ROI by the volume of a single
-    voxel.
+    .. math::
+      V = \displaystyle\sum^{N}_{i=1}{V_i}
+
+    The volume of the ROI :math:`V` is approximated by multiplying the number of voxels in the ROI by the volume of a
+    single voxel :math:`V_i`.
+
+    .. note::
+      In the IBSI feature definitions, a more precise approximation of the volume is used. That method uses tetrahedrons
+      consisting of the origin and faces in the ROI. Although the method implemented here overestimates the volume,
+      especially in small volumes, the difference will be negligible in large ROIs.
     """
     return self.Volume
 
@@ -181,7 +189,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **2. Surface Area**
 
     .. math::
-
       A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\text{a}_i\text{b}_i \times \text{a}_i\text{c}_i|}
 
     Where:
@@ -205,7 +212,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **3. Surface Area to Volum ratio**
 
     .. math::
-
       \textit{surface to volume ratio} = \frac{A}{V}
 
     Here, a lower value indicates a more compact (sphere-like) shape. This feature is not dimensionless, and is
@@ -218,7 +224,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **4. Sphericity**
 
     .. math::
-
       \textit{sphericity} = \frac{\sqrt[3]{36 \pi V^2}}{A}
 
     Sphericity is a measure of the roundness of the shape of the tumor region relative to a sphere. It is a
@@ -227,7 +232,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     compared to other solids).
 
     .. note::
-
       This feature is correlated to Compactness 1, Compactness 2 and Spherical Disproportion. In the default
       parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
       are therefore disabled.
@@ -239,7 +243,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **5. Compactness 1**
 
     .. math::
-
       \textit{compactness 1} = \frac{V}{\sqrt{\pi A^3}}
 
     Similar to Sphericity, Compactness 1 is a measure of how compact the shape of the tumor is relative to a sphere
@@ -251,7 +254,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     \frac{1}{6 \pi}\sqrt{sphericity^3}`.
 
     .. note::
-
       This feature is correlated to Compactness 2, Sphericity and Spherical Disproportion. In the default
       parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
       are therefore disabled.
@@ -263,7 +265,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **6. Compactness 2**
 
     .. math::
-
       \textit{compactness 2} = 36 \pi \frac{V^2}{A^3}
 
     Similar to Sphericity and Compactness 1, Compactness 2 is a measure of how compact the shape of the tumor is
@@ -273,7 +274,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     By definition, :math:`compactness\ 2 = (sphericity)^3`
 
     .. note::
-
       This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
       parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
       are therefore disabled.
@@ -285,7 +285,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **7. Spherical Disproportion**
 
     .. math::
-
       \textit{spherical disproportion} = \frac{A}{4\pi R^2} = \frac{A}{\sqrt[3]{36 \pi V^2}}
 
     Where :math:`R` is the radius of a sphere with the same volume as the tumor, and equal to
@@ -296,7 +295,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     :math:`spherical\ disproportion \geq 1`, with a value of 1 indicating a perfect sphere.
 
     .. note::
-
       This feature is correlated to Compactness 1, Compactness 2 and Sphericity. In the default
       parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
       are therefore disabled.
@@ -312,7 +310,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Also known as Feret Diameter.
 
     .. warning::
-
       This feature is only available when C Extensions are enabled
     """
 
@@ -333,7 +330,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     the row-column (generally the axial) plane.
 
     .. warning::
-
       This feature is only available when C Extensions are enabled
     """
     if cMatsEnabled():
@@ -353,7 +349,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     the row-slice (usually the coronal) plane.
 
     .. warning::
-
       This feature is only available when C Extensions are enabled
     """
     if cMatsEnabled():
@@ -373,7 +368,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     column-slice (usually the sagittal) plane.
 
     .. warning::
-
       This feature is only available when C Extensions are enabled
     """
     if cMatsEnabled():
@@ -390,7 +384,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **12. Major Axis**
 
     .. math::
-
       \textit{major axis} = 4 \sqrt{\lambda_{\text{major}}}
 
     """
@@ -401,7 +394,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **13. Minor Axis**
 
     .. math::
-
       \textit{minor axis} = 4 \sqrt{\lambda_{\text{minor}}}
 
     """
@@ -412,7 +404,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **14. Least Axis**
 
     .. math::
-
       \textit{least axis} = 4 \sqrt{\lambda_{\text{least}}}
 
     """
@@ -425,7 +416,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Elongation is calculated using its implementation in SimpleITK, and is defined as:
 
     .. math::
-
       \textit{elongation} = \sqrt{\frac{\lambda_{\text{minor}}}{\lambda_{\text{major}}}}
 
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{minor}}` are the lengths of the largest and second
@@ -442,7 +432,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Flatness is calculated using its implementation in SimpleITK, and is defined as:
 
     .. math::
-
       \textit{flatness} = \sqrt{\frac{\lambda_{\text{least}}}{\lambda_{\text{major}}}}
 
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{least}}` are the lengths of the largest and smallest

@@ -513,10 +513,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       \textit{energy} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(p(i,j)\big)^2}
 
-    Energy (or Angular Second Moment)is a measure of homogeneous patterns
+    Energy is a measure of homogeneous patterns
     in the image. A greater Energy implies that there are more instances
     of intensity value pairs in the image that neighbor each other at
     higher frequencies.
+
+    .. note::
+      Defined by IBSI as Angular Second Moment.
     """
     ene = numpy.sum((self.P_glcm ** 2), (0, 1))
     return ene.mean()
@@ -531,6 +534,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       {p(i,j)\log_2\big(p(i,j)+\epsilon\big)}
 
     Entropy is a measure of the randomness/variability in neighborhood intensity values.
+
+    .. note::
+      Defined by IBSI as Joint entropy
     """
     ent = self.coefficients['HXY']
     return ent.mean()
@@ -546,6 +552,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Homogeneity 1 is a measure of the similarity in intensity values for
     neighboring voxels. It is a measure of local homogeneity that increases
     with less contrast in the window.
+
+    .. note::
+      Not present in IBSI feature definitions
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -562,6 +571,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     Homogeneity 2 is a measure of the similarity in intensity values
     for neighboring voxels.
+
+    .. note::
+      Not present in IBSI feature definitions
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -715,6 +727,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     Maximum Probability is occurrences of the most predominant pair of
     neighboring intensity values.
+
+    .. note::
+      Defined by IBSI as Joint maximum
     """
     maxprob = self.P_glcm.max((0, 1))
     return maxprob.mean()
@@ -784,6 +799,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       This formula represents the variance of the distribution of :math:`i` and is independent from the distribution
       of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where
       :math:`p_x(i) = p_y(j) \text{, where } i = j`
+
+    .. note::
+      Defined by IBSI as Joint Variance
     """
     i = self.coefficients['i']
     ux = self.coefficients['ux']

@@ -8,7 +8,8 @@ import os
 import pkgutil
 import sys
 import tempfile
-import urllib
+
+from six.moves import urllib
 
 import numpy  # noqa: F401
 
@@ -211,8 +212,8 @@ def getTestCase(testCase, repoDirectory=None):
   # Download the test case files (image and label)
   url = r'https://github.com/Radiomics/pyradiomics/raw/master/data/%s_%s.nrrd'
   try:
-    urllib.urlretrieve(url % (testCase, 'image'), imageFile)
-    urllib.urlretrieve(url % (testCase, 'label'), maskFile)
+    urllib.request.urlretrieve(url % (testCase, 'image'), imageFile)
+    urllib.request.urlretrieve(url % (testCase, 'label'), maskFile)
   except Exception:
     logger.error('Download failed!', exc_info=True)
     return None, None

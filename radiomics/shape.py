@@ -209,7 +209,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getSurfaceVolumeRatioFeatureValue(self):
     r"""
-    **3. Surface Area to Volum ratio**
+    **3. Surface Area to Volume ratio**
 
     .. math::
       \textit{surface to volume ratio} = \frac{A}{V}

@@ -12,7 +12,7 @@ inputImage:
   LoG:
     # Because of resampling to (3, 3, 3), the use of sigmas < 3 mm is not recommended.
     sigma: [3.0, 5.0]
-  wavelet: {}
+  Wavelet: {}
 
 featureClass:
   shape: ['Volume',

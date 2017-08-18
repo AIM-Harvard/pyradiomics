@@ -16,7 +16,7 @@ inputImage:
   LoG:
     # If the in-plane spacing is large (> 2mm), consider removing sigma value 1.
     sigma: [1.0, 3.0, 5.0]
-  wavelet: {}
+  Wavelet: {}
 
 featureClass:
   shape: ['Volume',

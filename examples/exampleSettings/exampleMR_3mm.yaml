@@ -13,7 +13,7 @@ inputImage:
     # If you include sigma values >5, remember to also increase the padDistance. Because of resampling to (2, 2, 2), the
     # use of sigmas < 2 mm is not recommended.
     sigma: [2.0, 3.0, 4.0, 5.0]
-  wavelet: {}
+  Wavelet: {}
 
 featureClass:
   shape: ['Volume',

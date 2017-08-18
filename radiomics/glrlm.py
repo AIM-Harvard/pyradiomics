@@ -78,15 +78,17 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
-    self.coefficients = {}
-    self.P_glrlm = {}
+    self.P_glrlm = None
+
+    self._initSegmentBasedCalculation()
+
+  def _initSegmentBasedCalculation(self):
+    super(RadiomicsGLRLM, self)._initSegmentBasedCalculation()
+    self._applyBinning()
 
     # binning
-    self.matrix, self.binEdges = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
-    self.coefficients['Np'] = self.targetVoxelArray.size
-    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.matrixCoordinates])
+    self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     if cMatsEnabled():
       self.P_glrlm = self._calculateCMatrix()
@@ -95,7 +97,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
-    self.logger.debug('Feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
+    self.logger.debug('GLRLM feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
 
   def _calculateMatrix(self):
     self.logger.debug('Calculating GLRLM matrix in Python')
@@ -108,9 +110,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     matrixDiagonals = []
 
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(size,
+    angles = imageoperations.generateAngles(self.boundingBoxSize,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
@@ -170,9 +171,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
     Nr = self.coefficients['Nr']
 
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(size,
+    angles = imageoperations.generateAngles(self.boundingBoxSize,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
@@ -257,7 +257,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **1. Short Run Emphasis (SRE)**
 
     .. math::
-
       \textit{SRE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -279,7 +278,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **2. Long Run Emphasis (LRE)**
 
     .. math::
-
       \textit{LRE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)j^2}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -301,7 +299,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **3. Gray Level Non-Uniformity (GLN)**
 
     .. math::
-
       \textit{GLN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -322,7 +319,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **4. Gray Level Non-Uniformity Normalized (GLNN)**
 
     .. math::
-
       \textit{GLNN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}^2}
 
@@ -343,7 +339,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **5. Run Length Non-Uniformity (RLN)**
 
     .. math::
-
       \textit{RLN} = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j|\theta)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -364,7 +359,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **6. Run Length Non-Uniformity Normalized (RLNN)**
 
     .. math::
-
       \textit{RLNN} = \frac{\sum^{N_r}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j|\theta)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -385,13 +379,16 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **7. Run Percentage (RP)**
 
     .. math::
-
       \textit{RP} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{N_p}}
 
     RP measures the coarseness of the texture by taking the ratio of number of runs and number of voxels in the ROI.
 
     Values are in range :math:`\frac{1}{N_p} \leq RP \leq 1`, with higher values indicating a larger portion of the ROI
     consists of short runs (indicates a more fine texture).
+
+    .. note::
+      Note that when weighting is applied and matrices are merged before calculation, :math:`N_p` is multiplied by
+      :math:`n` number of matrices merged to ensure correct normalization (as each voxel is considered :math:`n` times)
     """
     Np = self.coefficients['Np']
 
@@ -406,7 +403,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **8. Gray Level Variance (GLV)**
 
     .. math::
-
       \textit{GLV} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)(i - \mu)^2}
 
     Here, :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)i}`
@@ -424,7 +420,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **9. Run Variance (RV)**
 
     .. math::
-
       \textit{RV} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)(j - \mu)^2}
 
     Here, :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}{p(i,j|\theta)j}`
@@ -442,7 +437,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **10. Run Entropy (RE)**
 
     .. math::
-
       \textit{RE} = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_r}_{j=1}
       {p(i,j|\theta)\log_{2}(p(i,j|\theta)+\epsilon)}
 
@@ -461,7 +455,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **11. Low Gray Level Run Emphasis (LGLRE)**
 
     .. math::
-
       \textit{LGLRE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{i^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -480,7 +473,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **12. High Gray Level Run Emphasis (HGLRE)**
 
     .. math::
-
       \textit{HGLRE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)i^2}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -499,7 +491,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **13. Short Run Low Gray Level Emphasis (SRLGLE)**
 
     .. math::
-
       \textit{SRLGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)}{i^2j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -518,7 +509,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **14. Short Run High Gray Level Emphasis (SRHGLE)**
 
     .. math::
-
       \textit{SRHGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)i^2}{j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -537,7 +527,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **15. Long Run Low Gray Level Emphasis (LRLGLE)**
 
     .. math::
-
       \textit{LRLGLRE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\frac{\textbf{P}(i,j|\theta)j^2}{i^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 
@@ -556,7 +545,6 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     **16. Long Run High Gray Level Emphasis (LRHGLE)**
 
     .. math::
-
       \textit{LRHGLRE} = \frac{\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)i^2j^2}}
       {\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}}
 

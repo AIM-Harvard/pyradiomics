@@ -71,10 +71,15 @@ def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates):
   level intensities in the ROI after binning is number of bins + 1.
 
   .. warning::
-
     This is different from the assignment of voxels to the bins by ``numpy.histogram`` , which has half-open bins, with
     the exception of the rightmost bin, which means this maximum values are assigned to the topmost bin.
     ``numpy.digitize`` uses half-open bins, including the rightmost bin.
+
+  .. note::
+    This method is slightly different from the fixed bin size discretization method described by IBSI. The two most
+    notable differences are 1) that PyRadiomics uses a floor division (and adds 1), as opposed to a ceiling division and
+    2) that in PyRadiomics, bins are always equally spaced from 0, as opposed to equally spaced from the minimum
+    gray level intensity.
   """
   global logger
   logger.debug('Discretizing gray levels inside ROI')
@@ -554,6 +559,7 @@ def normalizeImage(image, scale=1, outliers=None):
 
     newImage = sitk.GetImageFromArray(imageArr)
     newImage.CopyInformation(image)
+    image = newImage
 
   image *= scale
 
@@ -596,8 +602,9 @@ def getLoGImage(inputImage, **kwargs):
   - sigma: List of floats or integers, must be greater than 0. Sigma values to
     use for the filter (determines coarseness).
 
-  N.B. Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
-  will return an empty dictionary.
+  .. warning::
+    Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
+    will return an empty dictionary.
 
   Returned filter name reflects LoG settings:
   log-sigma-<sigmaValue>-3D.

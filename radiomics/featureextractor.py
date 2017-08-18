@@ -54,12 +54,18 @@ class RadiomicsFeaturesExtractor:
       if len(kwargs) > 0:
         self.logger.info('Applying custom settings')
         self.settings.update(kwargs)
+        if 'inputImage' in kwargs.keys():
+          del self.settings['inputImage']
       else:
         self.logger.info('No customized settings, applying defaults')
 
       self.logger.debug("Settings: %s", self.settings)
 
-      self.inputImages = {'Original': {}}
+      if 'inputImage' in kwargs.keys():
+        self.inputImages = kwargs['inputImage']
+      else:
+        self.inputImages = {'Original': {}}
+      self.logger.info('inputImages set to'+str(self.inputImages))
 
       self.enabledFeatures = {}
       for featureClassName in self.getFeatureClassNames():
@@ -116,7 +122,7 @@ class RadiomicsFeaturesExtractor:
     If supplied file does not match the requirements (i.e. unrecognized names or invalid values for a setting), a
     pykwalify error is raised.
     """
-    dataDir = os.path.abspath(os.path.join(radiomics.__path__[0], 'schemas'))
+    dataDir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'schemas'))
     schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
     schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
     c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])

@@ -102,13 +102,14 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.symmetricalGLCM = kwargs.get('symmetricalGLCM', True)
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
-    self.coefficients = {}
-    self.P_glcm = {}
+    self.P_glcm = None
 
-    # binning
-    self.matrix, self.binEdges = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
-    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.matrixCoordinates])
+    self._initSegmentBasedCalculation()
+
+  def _initSegmentBasedCalculation(self):
+    super(RadiomicsGLCM, self)._initSegmentBasedCalculation()
+
+    self._applyBinning()
 
     if cMatsEnabled():
       self.P_glcm = self._calculateCMatrix()
@@ -117,7 +118,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
-    self.logger.debug('Feature class initialized, calculated GLCM with shape %s', self.P_glcm.shape)
+    self.logger.debug('GLCM feature class initialized, calculated GLCM with shape %s', self.P_glcm.shape)
 
   def _calculateMatrix(self):
     r"""
@@ -131,8 +132,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     # Exclude voxels outside segmentation, due to binning, no negative values will be encountered inside the mask
     self.matrix[self.maskArray == 0] = -1
 
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size, **self.kwargs)
+    angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
 
     grayLevels = self.coefficients['grayLevels']
 
@@ -168,15 +168,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   def _calculateCMatrix(self):
     self.logger.debug('Calculating GLCM matrix in C')
 
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(size, **self.kwargs)
+    angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
     Ng = self.coefficients['Ng']
 
     P_glcm = cMatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
     P_glcm = self._applyMatrixOptions(P_glcm, angles)
 
     # Delete rows and columns that specify gray levels not present in the ROI
-    Ng = self.coefficients['Ng']
     NgVector = range(1, Ng + 1)  # All possible gray values
     GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
     emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
@@ -245,9 +243,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
     eps = numpy.spacing(1)
 
-    NgVector = self.coefficients['grayLevels']
+    NgVector = self.coefficients['grayLevels'].astype('float')
     # shape = (Ng, Ng)
-    i, j = numpy.meshgrid(NgVector, NgVector, indexing='ij')
+    i, j = numpy.meshgrid(NgVector, NgVector, indexing='ij', sparse=True)
 
     # shape = (2*Ng-1)
     kValuesSum = numpy.arange(2, (Ng * 2) + 1)
@@ -515,10 +513,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       \textit{energy} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(p(i,j)\big)^2}
 
-    Energy (or Angular Second Moment)is a measure of homogeneous patterns
+    Energy is a measure of homogeneous patterns
     in the image. A greater Energy implies that there are more instances
     of intensity value pairs in the image that neighbor each other at
     higher frequencies.
+
+    .. note::
+      Defined by IBSI as Angular Second Moment.
     """
     ene = numpy.sum((self.P_glcm ** 2), (0, 1))
     return ene.mean()
@@ -533,6 +534,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       {p(i,j)\log_2\big(p(i,j)+\epsilon\big)}
 
     Entropy is a measure of the randomness/variability in neighborhood intensity values.
+
+    .. note::
+      Defined by IBSI as Joint entropy
     """
     ent = self.coefficients['HXY']
     return ent.mean()
@@ -548,6 +552,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Homogeneity 1 is a measure of the similarity in intensity values for
     neighboring voxels. It is a measure of local homogeneity that increases
     with less contrast in the window.
+
+    .. note::
+      Not present in IBSI feature definitions
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -564,6 +571,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     Homogeneity 2 is a measure of the similarity in intensity values
     for neighboring voxels.
+
+    .. note::
+      Not present in IBSI feature definitions
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -717,6 +727,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     Maximum Probability is occurrences of the most predominant pair of
     neighboring intensity values.
+
+    .. note::
+      Defined by IBSI as Joint maximum
     """
     maxprob = self.P_glcm.max((0, 1))
     return maxprob.mean()
@@ -786,6 +799,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       This formula represents the variance of the distribution of :math:`i` and is independent from the distribution
       of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where
       :math:`p_x(i) = p_y(j) \text{, where } i = j`
+
+    .. note::
+      Defined by IBSI as Joint Variance
     """
     i = self.coefficients['i']
     ux = self.coefficients['ux']

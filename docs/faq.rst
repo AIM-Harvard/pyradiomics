@@ -164,7 +164,7 @@ I have some ideas for PyRadiomics. How can I contribute?
 
 We welcome suggestions and contributions to PyRadiomics. Check our
 `guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_ to see how you can contribute to
-PyRadiomics. Signatures and code styles used in PyRadiomics are documented in the :ref:`developers` section.
+PyRadiomics. Signatures and code styles used in PyRadiomics are documented in the :ref:`radiomics-developers` section.
 
 I found a bug! Where do I report it?
 ####################################

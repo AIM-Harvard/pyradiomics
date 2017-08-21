@@ -8,7 +8,7 @@ import radiomics
 
 
 class GeneralInfo():
-  def __init__(self, imagePath, maskPath, resampledMask, kwargs, inputImages):
+  def __init__(self, imagePath, maskPath, resampledMask, settings, enabledImageTypes):
     self.logger = logging.getLogger(self.__module__)
 
     self.elements = self._getElementNames()
@@ -31,10 +31,10 @@ class GeneralInfo():
 
     self.resampledMask = resampledMask
 
-    self.kwargs = kwargs
-    self.inputImages = inputImages
+    self._settings = settings
+    self._enabledImageTypes = enabledImageTypes
 
-    self.label = self.kwargs.get('label', 1)
+    self.label = self._settings.get('label', 1)
 
     if resampledMask is not None:
       self.lssif = sitk.LabelShapeStatisticsImageFilter()
@@ -71,10 +71,10 @@ class GeneralInfo():
 
   def getGeneralSettingsValue(self):
     """
-    Return a string representation of the settings contained in kwargs.
+    Return a string representation of the general settings.
     Format is {<settings_name>:<value>, ...}.
     """
-    return self.kwargs
+    return self._settings
 
   def getImageHashValue(self):
     """
@@ -90,7 +90,7 @@ class GeneralInfo():
 
   def getImageSpacingValue(self):
     """
-    Returns the original spacing of the image.
+    Returns the original spacing (before any resampling) of the image.
 
     If the reading of the image fails, an empty string is returned.
     """
@@ -99,12 +99,12 @@ class GeneralInfo():
     else:
       return None
 
-  def getInputImagesValue(self):
+  def getEnabledImageTypesValue(self):
     """
-    Return a string representation of the enabled filters and any custom settings for the filter.
-    Format is {<filter_name>:{<setting_name>:<value>, ...}, ...}.
+    Return a string representation of the enabled image types and any custom settings for each image type.
+    Format is {<imageType_name>:{<setting_name>:<value>, ...}, ...}.
     """
-    return self.inputImages
+    return self._enabledImageTypes
 
   def getMaskHashValue(self):
     """

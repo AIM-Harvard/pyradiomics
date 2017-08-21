@@ -584,7 +584,7 @@ def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None,
 def getOriginalImage(inputImage, **kwargs):
   """
   This function does not apply any filter, but returns the original image. This function is needed to
-  dyanmically expose the original image as a valid input image.
+  dynamically expose the original image as a valid image type.
 
   :return: Yields original image, 'original' and ``kwargs``
   """
@@ -595,7 +595,7 @@ def getOriginalImage(inputImage, **kwargs):
 
 def getLoGImage(inputImage, **kwargs):
   """
-  Apply Laplacian of Gaussian filter to input image and compute signature for each filtered image.
+  Applies a Laplacian of Gaussian filter to the input image and yields a derived image for each sigma value specified.
 
   Following settings are possible:
 
@@ -609,7 +609,8 @@ def getLoGImage(inputImage, **kwargs):
   Returned filter name reflects LoG settings:
   log-sigma-<sigmaValue>-3D.
 
-  :return: Yields log filtered image for each specified sigma, corresponding filter name and ``kwargs``
+  :return: Yields log filtered image for each specified sigma, corresponding image type name and ``kwargs`` (customized
+    settings).
   """
   global logger
 
@@ -647,7 +648,7 @@ def getLoGImage(inputImage, **kwargs):
 
 def getWaveletImage(inputImage, **kwargs):
   """
-  Apply wavelet filter to image and compute signature for each filtered image.
+  Applies wavelet filter to the input image and yields the decompositions and the approximation.
 
   Following settings are possible:
 
@@ -671,7 +672,8 @@ def getWaveletImage(inputImage, **kwargs):
 
   N.B. only levels greater than the first level are entered into the name.
 
-  :return: Yields each wavelet decomposition and final approximation, corresponding filter name and ``kwargs``
+  :return: Yields each wavelet decomposition and final approximation, corresponding imaget type name and ``kwargs``
+    (customized settings).
   """
   global logger
 
@@ -807,7 +809,7 @@ def getSquareImage(inputImage, **kwargs):
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
-  :return: Yields square filtered image, 'square' and ``kwargs``
+  :return: Yields square filtered image, 'square' and ``kwargs`` (customized settings).
   """
   global logger
 
@@ -835,7 +837,7 @@ def getSquareRootImage(inputImage, **kwargs):
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
-  :return: Yields square root filtered image, 'squareroot' and ``kwargs``
+  :return: Yields square root filtered image, 'squareroot' and ``kwargs`` (customized settings).
   """
   global logger
 
@@ -866,7 +868,7 @@ def getLogarithmImage(inputImage, **kwargs):
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
-  :return: Yields logarithm filtered image, 'logarithm' and ``kwargs``
+  :return: Yields logarithm filtered image, 'logarithm' and ``kwargs`` (customized settings)
   """
   global logger
 
@@ -893,7 +895,7 @@ def getExponentialImage(inputImage, **kwargs):
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
-  :return: Yields exponential filtered image, 'exponential' and ``kwargs``
+  :return: Yields exponential filtered image, 'exponential' and ``kwargs`` (customized settings)
   """
   global logger
 

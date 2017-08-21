@@ -92,6 +92,7 @@ mapping:
         type: int
         range:
           min: 0
+
   featureClass:
     type: map
     func: checkFeatureClass
@@ -100,10 +101,11 @@ mapping:
       regex;(.+):
         type: any
 
-  inputImage:
+  imageType:
     type: map
     mapping:
-      # possible image filters, it's value is a dictionary that follows the rules in setting
+      # possible image types, it's value is a dictionary (holding image type specific settings) that follows the rules
+      # as in 'setting'
       Original: *settings
       LoG: *settings
       Wavelet: *settings

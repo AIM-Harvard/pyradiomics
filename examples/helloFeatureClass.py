@@ -35,16 +35,16 @@ applyWavelet = False
 # Setting for the feature calculation.
 # Currently, resampling is disabled.
 # Can be enabled by setting 'resampledPixelSpacing' to a list of 3 floats (new voxel size in mm for x, y and z)
-kwargs = {'binWidth': 25,
-          'interpolator': sitk.sitkBSpline,
-          'resampledPixelSpacing': None}
+settings = {'binWidth': 25,
+            'interpolator': sitk.sitkBSpline,
+            'resampledPixelSpacing': None}
 
 #
 # If enabled, resample image (resampled image is automatically cropped.
 # If resampling is not enabled, crop image instead
 #
-if kwargs['interpolator'] is not None and kwargs['resampledPixelSpacing'] is not None:
-  image, mask = imageoperations.resampleImage(image, mask, kwargs['resampledPixelSpacing'], kwargs['interpolator'])
+if settings['interpolator'] is not None and settings['resampledPixelSpacing'] is not None:
+  image, mask = imageoperations.resampleImage(image, mask, settings['resampledPixelSpacing'], settings['interpolator'])
 else:
   bb, correctedMask = imageoperations.checkMask(image, mask)
   if correctedMask is not None:
@@ -54,7 +54,7 @@ else:
 #
 # Show the first order feature calculations
 #
-firstOrderFeatures = firstorder.RadiomicsFirstOrder(image, mask, **kwargs)
+firstOrderFeatures = firstorder.RadiomicsFirstOrder(image, mask, **settings)
 
 firstOrderFeatures.enableFeatureByName('Mean', True)
 # firstOrderFeatures.enableAllFeatures()
@@ -75,7 +75,7 @@ for (key, val) in six.iteritems(firstOrderFeatures.featureValues):
 #
 # Show Shape features
 #
-shapeFeatures = shape.RadiomicsShape(image, mask, **kwargs)
+shapeFeatures = shape.RadiomicsShape(image, mask, **settings)
 shapeFeatures.enableAllFeatures()
 
 print('Will calculate the following Shape features: ')
@@ -94,7 +94,7 @@ for (key, val) in six.iteritems(shapeFeatures.featureValues):
 #
 # Show GLCM features
 #
-glcmFeatures = glcm.RadiomicsGLCM(image, mask, **kwargs)
+glcmFeatures = glcm.RadiomicsGLCM(image, mask, **settings)
 glcmFeatures.enableAllFeatures()
 
 print('Will calculate the following GLCM features: ')
@@ -113,7 +113,7 @@ for (key, val) in six.iteritems(glcmFeatures.featureValues):
 #
 # Show GLRLM features
 #
-glrlmFeatures = glrlm.RadiomicsGLRLM(image, mask, **kwargs)
+glrlmFeatures = glrlm.RadiomicsGLRLM(image, mask, **settings)
 glrlmFeatures.enableAllFeatures()
 
 print('Will calculate the following GLRLM features: ')
@@ -132,7 +132,7 @@ for (key, val) in six.iteritems(glrlmFeatures.featureValues):
 #
 # Show GLSZM features
 #
-glszmFeatures = glszm.RadiomicsGLSZM(image, mask, **kwargs)
+glszmFeatures = glszm.RadiomicsGLSZM(image, mask, **settings)
 glszmFeatures.enableAllFeatures()
 
 print('Will calculate the following GLSZM features: ')
@@ -153,12 +153,12 @@ for (key, val) in six.iteritems(glszmFeatures.featureValues):
 #
 if applyLog:
   sigmaValues = numpy.arange(5., 0., -.5)[::1]
-  for logImage, inputImageName, inputKwargs in imageoperations.getLoGImage(image, sigma=sigmaValues, verbose=True):
+  for logImage, imageTypeName, inputKwargs in imageoperations.getLoGImage(image, sigma=sigmaValues):
     logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **inputKwargs)
     logFirstorderFeatures.enableAllFeatures()
     logFirstorderFeatures.calculateFeatures()
     for (key, val) in six.iteritems(logFirstorderFeatures.featureValues):
-      laplacianFeatureName = '%s_%s' % (inputImageName, key)
+      laplacianFeatureName = '%s_%s' % (imageTypeName, key)
       print('  ', laplacianFeatureName, ':', val)
 #
 # Show FirstOrder features, calculated on a wavelet filtered image
@@ -170,5 +170,5 @@ if applyWavelet:
     waveletFirstOrderFeaturs.calculateFeatures()
     print('Calculated firstorder features with wavelet ', decompositionName)
     for (key, val) in six.iteritems(waveletFirstOrderFeaturs.featureValues):
-      waveletFeatureName = 'wavelet-%s_%s' % (str(decompositionName), key)
+      waveletFeatureName = '%s_%s' % (str(decompositionName), key)
       print('  ', waveletFeatureName, ':', val)

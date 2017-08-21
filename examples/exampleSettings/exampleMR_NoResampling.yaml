@@ -11,7 +11,7 @@
 
 # #############################  Extracted using PyRadiomics version: <version>  ######################################
 
-inputImage:
+imageType:
   Original: {}
   LoG:
     # If the in-plane spacing is large (> 2mm), consider removing sigma value 1.

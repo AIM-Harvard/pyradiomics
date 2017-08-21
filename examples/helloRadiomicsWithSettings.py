@@ -105,7 +105,7 @@ extractor = featureextractor.RadiomicsFeaturesExtractor(paramsFile)
 # clickProgressbar()
 
 print("Active features:")
-for cls, features in six.iteritems(extractor.enabledFeatures):
+for cls, features in six.iteritems(extractor._enabledFeatures):
   if len(features) == 0:
     features = extractor.getFeatureNames(cls)
   for f in features:

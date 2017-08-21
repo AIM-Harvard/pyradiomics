@@ -11,7 +11,7 @@ import SimpleITK as sitk
 import six
 
 import radiomics
-from radiomics import generalinfo, getFeatureClasses, getInputImageTypes, imageoperations
+from radiomics import generalinfo, getFeatureClasses, getImageTypes, imageoperations
 
 
 class RadiomicsFeaturesExtractor:
@@ -28,9 +28,10 @@ class RadiomicsFeaturesExtractor:
   At initialization, a parameters file can be provided containing all necessary settings. This is done by passing the
   location of the file as the single argument in the initialization call, without specifying it as a keyword argument.
   If such a file location is provided, any additional kwargs are ignored.
-  Alternatively, at initialisation, custom settings can be provided as keyword arguments, with the setting name as key
-  and its value as the argument value (e.g. ``binWidth=25``). For mor information on possible settings and
-  customization, see :ref:`Customizing the Extraction <radiomics-customization-label>`.
+  Alternatively, at initialisation, custom settings (*NOT enabled image types and/or feature classes*) can be provided
+  as keyword arguments, with the setting name as key and its value as the argument value (e.g. ``binWidth=25``). For
+  more information on possible settings and customization, see
+  :ref:`Customizing the Extraction <radiomics-customization-label>`.
 
   By default, all features in all feature classes are enabled.
   By default, only `Original` input image is enabled (No filter applied).
@@ -42,8 +43,8 @@ class RadiomicsFeaturesExtractor:
     self.featureClasses = getFeatureClasses()
 
     self.settings = {}
-    self.inputImages = {}
-    self.enabledFeatures = {}
+    self._enabledImagetypes = {}
+    self._enabledFeatures = {}
 
     if len(args) == 1 and isinstance(args[0], six.string_types):
       self.logger.info("Loading parameter file")
@@ -59,12 +60,12 @@ class RadiomicsFeaturesExtractor:
 
       self.logger.debug("Settings: %s", self.settings)
 
-      self.inputImages = {'Original': {}}
-      self.logger.info('inputImages set to %s', self.inputImages)
+      self._enabledImagetypes = {'Original': {}}
+      self.logger.info('inputImages set to %s', self._enabledImagetypes)
 
-      self.enabledFeatures = {}
+      self._enabledFeatures = {}
       for featureClassName in self.getFeatureClassNames():
-        self.enabledFeatures[featureClassName] = []
+        self._enabledFeatures[featureClassName] = []
 
     self._setTolerance()
 
@@ -110,8 +111,8 @@ class RadiomicsFeaturesExtractor:
 
   def loadParams(self, paramsFile):
     """
-    Parse specified parameters file and use it to update settings, enabled feature(Classes) and input
-    images. For more information on the structure of the parameter file, see
+    Parse specified parameters file and use it to update settings, enabled feature(Classes) and image types. For more
+    information on the structure of the parameter file, see
     :ref:`Customizing the extraction <radiomics-customization-label>`.
 
     If supplied file does not match the requirements (i.e. unrecognized names or invalid values for a setting), a
@@ -123,25 +124,25 @@ class RadiomicsFeaturesExtractor:
     c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
     params = c.validate()
 
-    inputImages = params.get('inputImage', {})
+    enabledImageTypes = params.get('imageType', {})
     enabledFeatures = params.get('featureClass', {})
     settings = params.get('setting', {})
 
     self.logger.debug("Parameter file parsed. Applying settings")
 
-    if len(inputImages) == 0:
-      self.inputImages = {'Original': {}}
+    if len(enabledImageTypes) == 0:
+      self._enabledImagetypes = {'Original': {}}
     else:
-      self.inputImages = inputImages
+      self._enabledImagetypes = enabledImageTypes
 
-    self.logger.debug("Enabled input images: %s", self.inputImages)
+    self.logger.debug("Enabled input images: %s", self._enabledImagetypes)
 
     if len(enabledFeatures) == 0:
-      self.enabledFeatures = {}
+      self._enabledFeatures = {}
       for featureClassName in self.getFeatureClassNames():
-        self.enabledFeatures[featureClassName] = []
+        self._enabledFeatures[featureClassName] = []
     else:
-      self.enabledFeatures = enabledFeatures
+      self._enabledFeatures = enabledFeatures
 
     self.logger.debug("Enabled features: %s", enabledFeatures)
 
@@ -151,28 +152,28 @@ class RadiomicsFeaturesExtractor:
 
     self.logger.debug("Settings: %s", settings)
 
-  def enableAllInputImages(self):
+  def enableAllImageTypes(self):
     """
-    Enable all possible input images without any custom settings.
+    Enable all possible image types without any custom settings.
     """
     self.logger.debug('Enabling all input image types')
-    for imageType in getInputImageTypes():
-      self.inputImages[imageType] = {}
-    self.logger.debug('Enabled input images types: %s', self.inputImages)
+    for imageType in getImageTypes():
+      self._enabledImagetypes[imageType] = {}
+    self.logger.debug('Enabled input images types: %s', self._enabledImagetypes)
 
-  def disableAllInputImages(self):
+  def disableAllImageTypes(self):
     """
-    Disable all input images.
+    Disable all image types.
     """
     self.logger.debug('Disabling all input image types')
-    self.inputImages = {}
+    self._enabledImagetypes = {}
 
-  def enableInputImageByName(self, inputImage, enabled=True, customArgs=None):
+  def enableImageTypeByName(self, imageType, enabled=True, customArgs=None):
     r"""
-    Enable or disable specified input image. If enabling input image, optional custom settings can be specified in
+    Enable or disable specified image type. If enabling image type, optional custom settings can be specified in
     customArgs.
 
-    Current possible input images are:
+    Current possible image types are:
 
     - Original: No filter applied
     - Wavelet: Wavelet filtering, yields 8 decompositions per level (all possible combinations of applying either
@@ -199,23 +200,23 @@ class RadiomicsFeaturesExtractor:
     :py:func:`~radiomics.imageoperations.getExponentialImage`,
     respectively).
     """
-    if inputImage not in getInputImageTypes():
-      self.logger.warning('Input image type %s is not recognized', inputImage)
+    if imageType not in getImageTypes():
+      self.logger.warning('Input image type %s is not recognized', imageType)
       return
 
     if enabled:
       if customArgs is None:
         customArgs = {}
-        self.logger.debug('Enabling input image type %s (no additional custom settings)', inputImage)
+        self.logger.debug('Enabling input image type %s (no additional custom settings)', imageType)
       else:
-        self.logger.debug('Enabling input image type %s (additional custom settings: %s)', inputImage, customArgs)
-      self.inputImages[inputImage] = customArgs
-    elif inputImage in self.inputImages:
-      self.logger.debug('Disabling input image type %s', inputImage)
-      del self.inputImages[inputImage]
-    self.logger.debug('Enabled input images types: %s', self.inputImages)
+        self.logger.debug('Enabling input image type %s (additional custom settings: %s)', imageType, customArgs)
+      self._enabledImagetypes[imageType] = customArgs
+    elif imageType in self._enabledImagetypes:
+      self.logger.debug('Disabling input image type %s', imageType)
+      del self._enabledImagetypes[imageType]
+    self.logger.debug('Enabled input images types: %s', self._enabledImagetypes)
 
-  def enableInputImages(self, **inputImages):
+  def enableImageTypes(self, **enabledImagetypes):
     """
     Enable input images, with optionally custom settings, which are applied to the respective input image.
     Settings specified here override those in kwargs.
@@ -233,9 +234,9 @@ class RadiomicsFeaturesExtractor:
     :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings
       (dictionary)
     """
-    self.logger.debug('Updating enabled input images types with %s', inputImages)
-    self.inputImages.update(inputImages)
-    self.logger.debug('Enabled input images types: %s', self.inputImages)
+    self.logger.debug('Updating enabled input images types with %s', enabledImagetypes)
+    self._enabledImagetypes.update(enabledImagetypes)
+    self.logger.debug('Enabled input images types: %s', self._enabledImagetypes)
 
   def enableAllFeatures(self):
     """
@@ -243,15 +244,15 @@ class RadiomicsFeaturesExtractor:
     """
     self.logger.debug('Enabling all features in all feature classes')
     for featureClassName in self.getFeatureClassNames():
-      self.enabledFeatures[featureClassName] = []
-    self.logger.debug('Enabled features: %s', self.enabledFeatures)
+      self._enabledFeatures[featureClassName] = []
+    self.logger.debug('Enabled features: %s', self._enabledFeatures)
 
   def disableAllFeatures(self):
     """
     Disable all classes.
     """
     self.logger.debug('Disabling all feature classes')
-    self.enabledFeatures = {}
+    self._enabledFeatures = {}
 
   def enableFeatureClassByName(self, featureClass, enabled=True):
     """
@@ -263,11 +264,11 @@ class RadiomicsFeaturesExtractor:
 
     if enabled:
       self.logger.debug('Enabling all features in class %s', featureClass)
-      self.enabledFeatures[featureClass] = []
-    elif featureClass in self.enabledFeatures:
+      self._enabledFeatures[featureClass] = []
+    elif featureClass in self._enabledFeatures:
       self.logger.debug('Disabling feature class %s', featureClass)
-      del self.enabledFeatures[featureClass]
-    self.logger.debug('Enabled features: %s', self.enabledFeatures)
+      del self._enabledFeatures[featureClass]
+    self.logger.debug('Enabled features: %s', self._enabledFeatures)
 
   def enableFeaturesByName(self, **enabledFeatures):
     """
@@ -279,8 +280,8 @@ class RadiomicsFeaturesExtractor:
     To disable the entire class, use :py:func:`disableAllFeatures` or :py:func:`enableFeatureClassByName` instead.
     """
     self.logger.debug('Updating enabled features with %s', enabledFeatures)
-    self.enabledFeatures.update(enabledFeatures)
-    self.logger.debug('Enabled features: %s', self.enabledFeatures)
+    self._enabledFeatures.update(enabledFeatures)
+    self.logger.debug('Enabled features: %s', self._enabledFeatures)
 
   def execute(self, imageFilepath, maskFilepath, label=None):
     """
@@ -291,15 +292,16 @@ class RadiomicsFeaturesExtractor:
        bounding box.
     3. If enabled, provenance information is calculated and stored as part of the result.
     4. Shape features are calculated on a cropped (no padding) version of the original image.
-    5. Other enabled featureclasses are calculated using all specified input image types in ``inputImages``. Images are
-       cropped to tumor mask (no padding) after application of any filter and before being passed to the feature class.
+    5. Other enabled feature classes are calculated using all specified image types in ``_enabledImageTypes``. Images
+       are cropped to tumor mask (no padding) after application of any filter and before being passed to the feature
+       class.
     6. The calculated features is returned as ``collections.OrderedDict``.
 
     :param imageFilepath: SimpleITK Image, or string pointing to image file location
     :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
     :param label: Integer, value of the label for which to extract features. If not specified, last specified label
         is used. Default label is 1.
-    :returns: dictionary containing calculated signature ("<filter>_<featureClass>_<featureName>":value).
+    :returns: dictionary containing calculated signature ("<imageType>_<featureClass>_<featureName>":value).
     """
     # Enable or disable C extensions for high performance matrix calculation. Only logs a message (INFO) when setting is
     # successfully changed. If an error occurs, full-python mode is forced and a warning is logged.
@@ -311,8 +313,8 @@ class RadiomicsFeaturesExtractor:
       self.settings['label'] = label
 
     self.logger.info('Calculating features with label: %d', self.settings['label'])
-    self.logger.debug('Enabled input images types: %s', self.inputImages)
-    self.logger.debug('Enabled features: %s', self.enabledFeatures)
+    self.logger.debug('Enabled images types: %s', self._enabledImagetypes)
+    self.logger.debug('Enabled features: %s', self._enabledFeatures)
     self.logger.debug('Current settings: %s', self.settings)
 
     # 1. Load the image and mask
@@ -341,9 +343,9 @@ class RadiomicsFeaturesExtractor:
       featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
     # 4. If shape descriptors should be calculated, handle it separately here
-    if 'shape' in self.enabledFeatures.keys():
+    if 'shape' in self._enabledFeatures.keys():
       croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox)
-      enabledFeatures = self.enabledFeatures['shape']
+      enabledFeatures = self._enabledFeatures['shape']
 
       self.logger.info('Computing shape')
       shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.settings)
@@ -358,11 +360,11 @@ class RadiomicsFeaturesExtractor:
         newFeatureName = 'original_shape_%s' % featureName
         featureVector[newFeatureName] = featureValue
 
-    # 5. Calculate other enabled feature classes using enabled input image types
-    # Make generators for all enabled input image types
-    self.logger.debug('Creating input image type iterator')
+    # 5. Calculate other enabled feature classes using enabled image types
+    # Make generators for all enabled image types
+    self.logger.debug('Creating image type iterator')
     imageGenerators = []
-    for imageType, customKwargs in six.iteritems(self.inputImages):
+    for imageType, customKwargs in six.iteritems(self._enabledImagetypes):
       args = self.settings.copy()
       args.update(customKwargs)
       self.logger.info('Adding image type "%s" with settings: %s' % (imageType, str(args)))
@@ -370,10 +372,10 @@ class RadiomicsFeaturesExtractor:
 
     self.logger.debug('Extracting features')
     # Calculate features for all (filtered) images in the generator
-    for inputImage, inputImageName, inputKwargs in imageGenerators:
-      self.logger.info('Calculating features for %s image', inputImageName)
+    for inputImage, imageTypeName, inputKwargs in imageGenerators:
+      self.logger.info('Calculating features for %s image', imageTypeName)
       inputImage, inputMask = imageoperations.cropToTumorMask(inputImage, mask, boundingBox)
-      featureVector.update(self.computeFeatures(inputImage, inputMask, inputImageName, **inputKwargs))
+      featureVector.update(self.computeFeatures(inputImage, inputMask, imageTypeName, **inputKwargs))
 
     self.logger.debug('Features extracted')
 
@@ -431,28 +433,32 @@ class RadiomicsFeaturesExtractor:
     self.logger.info('Adding additional extraction information')
 
     provenanceVector = collections.OrderedDict()
-    generalinfoClass = generalinfo.GeneralInfo(imageFilepath, maskFilepath, mask, self.settings, self.inputImages)
+    generalinfoClass = generalinfo.GeneralInfo(imageFilepath,
+                                               maskFilepath,
+                                               mask,
+                                               self.settings,
+                                               self._enabledImagetypes)
     for k, v in six.iteritems(generalinfoClass.execute()):
       provenanceVector['general_info_%s' % k] = v
     return provenanceVector
 
-  def computeFeatures(self, image, mask, inputImageName, **kwargs):
+  def computeFeatures(self, image, mask, imageTypeName, **kwargs):
     """
     Compute signature using image, mask, \*\*kwargs settings.
 
     This function computes the signature for just the passed image (original or derived), it does not preprocess or
     apply a filter to the passed image. Features / Classes to use for calculation of signature are defined in
-    self.enabledFeatures. See also :py:func:`enableFeaturesByName`.
+    ``self._enabledFeatures``. See also :py:func:`enableFeaturesByName`.
 
     .. note::
 
-      shape descriptors are independent of gray level and therefore calculated separately (handeled in `execute`). In
+      shape descriptors are independent of gray level and therefore calculated separately (handled in `execute`). In
       this function, no shape functions are calculated.
     """
     featureVector = collections.OrderedDict()
 
     # Calculate feature classes
-    for featureClassName, enabledFeatures in six.iteritems(self.enabledFeatures):
+    for featureClassName, enabledFeatures in six.iteritems(self._enabledFeatures):
       # Handle calculation of shape features separately
       if featureClassName == 'shape':
         continue
@@ -470,7 +476,7 @@ class RadiomicsFeaturesExtractor:
 
         featureClass.calculateFeatures()
         for (featureName, featureValue) in six.iteritems(featureClass.featureValues):
-          newFeatureName = '%s_%s_%s' % (inputImageName, featureClassName, featureName)
+          newFeatureName = '%s_%s_%s' % (imageTypeName, featureClassName, featureName)
           featureVector[newFeatureName] = featureValue
 
     return featureVector

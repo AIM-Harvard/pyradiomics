@@ -8,36 +8,64 @@ Customizing the Extraction
 Types of Customization
 ----------------------
 
-There are 3 ways in which the feature extraction can be customized in PyRadiomics: 1) Specifying which image types
-(original/derived) to use to extract features from, 2) Specifying which feature(class) to extract, 3) Specifying
-settings, which control the pre processing and customize the behaviour of filters and feature classes.
+There are 3 ways in which the feature extraction can be customized in PyRadiomics:
+
+1. Specifying which image types (original/derived) to use to extract features from
+2. Specifying which feature(class) to extract
+3. Specifying settings, which control the pre processing and customize the behaviour of enabled filters and feature
+   classes.
+
+.. warning::
+    At initialization of the feature extractor or an individual feature class, settings can be provided as keyword
+    arguments in ``**kwargs``. These consist *only* of type 3 parameters (setting). Parameters of type 1 (image type)
+    and 2 (feature class) can only provided at initialization when using the parameter file. When the parameter file is
+    not used, or when these parameters have to be changed after initialization, use the respective function calls.
 
 Image Types
 ###########
 
-These are the input image types (either the original image or derived images) that can be used to extract features from.
-The image types that are available are determined dynamically (all functions in ``imageoperations.py`` that fit the
-:ref:`signature <radiomics-developers-filter>` of a filter.
+These are the image types (either the original image or derived images using filters) that can be used to extract
+features from. The image types that are available are determined dynamically (all are functions in
+``imageoperations.py`` that fit the :ref:`signature <radiomics-developers-filter>` of an image type).
 
-The enabled types are stored in the ``inputImages`` dictionary in the feature extractor class instance and can be
-changed using the functions :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableAllInputImages`,
-:py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.disableAllInputImages`,
-:py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableInputImageByName` and
-:py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableInputImages`. Moreover, custom settings can be
-provided for each enabled input type, which will then only be applied for that input image type. Please note that this
-will only work for settings that are applied at or after any filter is applied (i.e. not at the feature extractor
-level).
+The enabled types are stored in the ``_enabledImageTypes`` dictionary in the feature extractor class instance and can be
+changed using the functions :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableAllImageTypes`,
+:py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.disableAllImageTypes`,
+:py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableImageTypeByName` and
+:py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableImageTypes`. Moreover, custom settings can be
+provided for each enabled image type, which will then only be applied during feature extraction for that image type.
+Please note that this will only work for settings that are applied at or after any filter is applied (i.e. not at the
+feature extractor level).
 
-By default, only the original input type is enabled.
+By default, only the "Original" image type is enabled.
+
+Currently available image types are:
+
+- Original: No filter applied
+- Wavelet: Wavelet filtering, yields 8 decompositions per level (all possible combinations of applying either
+  a High or a Low pass filter in each of the three dimensions.
+  See also :py:func:`~radiomics.imageoperations.getWaveletImage`
+- LoG: Laplacian of Gaussian filter, edge enhancement filter. Emphasizes areas of gray level change, where sigma
+  defines how coarse the emphasised texture should be. A low sigma emphasis on fine textures (change over a
+  short distance), where a high sigma value emphasises coarse textures (gray level change over a large distance).
+  See also :py:func:`~radiomics.imageoperations.getLoGImage`
+- Square: Takes the square of the image intensities and linearly scales them back to the original range.
+  Negative values in the original image will be made negative again after application of filter.
+- SquareRoot: Takes the square root of the absolute image intensities and scales them back to original range.
+  Negative values in the original image will be made negative again after application of filter.
+- Logarithm: Takes the logarithm of the absolute intensity + 1. Values are scaled to original range and
+  negative original values are made negative again after application of filter.
+- Exponential: Takes the the exponential, where filtered intensity is e^(absolute intensity). Values are
+  scaled to original range and negative original values are made negative again after application of filter.
 
 Enabled Features
 ################
 
-These are the features that are extracted from each (original and/or derived) input image. The available features are
+These are the features that are extracted from each (original and/or derived) image type. The available features are
 determined dynamically, and are ordered in feature classes. For more information on the signature used to identify
-features and feature classes, see the `Developers <radiomics-developers>` section.
+features and feature classes, see the :ref:`radiomics-developers` section.
 
-The enable features are stored in the ``enabledFeatures`` dictionary in the feature extractor class instance and can be
+The enable features are stored in the ``_enabledFeatures`` dictionary in the feature extractor class instance and can be
 changed using the functions :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableAllFeatures`,
 :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.disableAllFeatures`,
 :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeatureClassByName` and
@@ -47,6 +75,19 @@ names as value. If the value is ``None`` or an empty list, all features in that 
 features specified.
 
 By default, all feature classes and all features are enabled.
+
+Currently available feature classes are:
+
+- firstorder
+- shape
+- glcm
+- glrlm
+- glszm
+
+An individual feature can be enabled by submitting the feature name as defined in the unique part of the function
+signature (e.g. the First Order feature defined by ``get10PercentileFeatureValue()`` is enabled by specifying
+``{firstorder: ['10Percentile']}``). Function signatures for all features are available in the
+:ref:`radiomics-features-label` section.
 
 .. _radiomics-settings-label:
 
@@ -62,7 +103,6 @@ sensitive setting name. Custom settings are provided as keyword arguments at ini
 with the ``settings`` dictionary.
 
 .. note::
-
     When using the feature classes directly, feature class level settings can be customized by providing them as keyword
     arguments at initialization of the feature class.
 
@@ -110,7 +150,6 @@ Feature Extractor Level
   again without padding.**
 
 .. note::
-
     Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
 
 *Mask validation*
@@ -141,7 +180,6 @@ Filter Level
 - sigma: List of floats or integers, must be greater than 0. Sigma values to use for the filter (determines coarseness).
 
 .. warning::
-
     Setting for sigma must be provided if LoG filter is enabled. If omitted, no LoG image features are calculated and
     the function will return an empty dictionary.
 
@@ -194,7 +232,6 @@ Feature Class Level
   In case of other values, an warning is logged and option 'no_weighting' is used.
 
 .. note::
-
     This only affects the GLCM and GLRLM feature classes. Moreover, weighting is applied differently in those classes.
     For more information on how weighting is applied, see the documentation on :ref:`GLCM <radiomics-glcm-label>` and
     :ref:`GLRLM <radiomics-glszm-label>`.
@@ -220,50 +257,82 @@ Feature Class Specific Settings
 Parameter File
 --------------
 
-All 3 types of customization can be provided in a single yaml-structured text file, which can be provided in an optional
-argument (``--param``) when running pyradiomics from the command line. In interactive mode, it can be provided during
-initialization of the :ref:`feature extractor <radiomics-featureextractor-label>`, or using
+All 3 categories of customization can be provided in a single yaml-structured text file, which can be provided in an
+optional argument (``--param``) when running pyradiomics from the command line. In interactive mode, it can be provided
+during initialization of the :ref:`feature extractor <radiomics-featureextractor-label>`, or using
 :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.loadParams` after initialization. This removes the need
 to hard code a customized extraction in a python script through use of functions described above. Additionally, this
 also makes it more easy to share settings for customized extractions.
 
 .. note::
-
     Examples of the parameter file are provided in the ``pyradiomics/examples/exampleSettings`` folder.
 
 The paramsFile is written according to the YAML-convention (www.yaml.org) and is checked by the code for
-consistency. Only one yaml document per file is allowed. Settings must be grouped by customization type as mentioned
+consistency. Only one yaml document per file is allowed. Parameters must be grouped by customization category as mentioned
 above. This is reflected in the structure of the document as follows::
 
-    <Customization Type>:
+    <Customization Category>:
       <Setting Name>: <value>
       ...
-    <Customization Type>:
+    <Customization Categort>:
       ...
 
 Blank lines may be inserted to increase readability, these are ignored by the parser. Additional comments are also
-possible, these are preceded by an '#' and can be inserted on a blank line, or on a line containing settings::
+possible, these are preceded by an '#' and can be inserted on a blank line, or on a line containing parameters::
 
     # This is a line containing only comments
-    setting: # This is a comment placed after the declaration of the 'setting' group.
+    setting: # This is a comment placed after the declaration of the 'setting' category.
 
-Any keyword, such as a customization type or setting name may only be mentioned once. Multiple instances do not raise
-an error, but only the last one encountered is used.
+Any keyword, such as a customization category or setting name may only be mentioned once. Multiple instances do not
+raise an error, but only the last one encountered is used.
 
 The three setting types are named as follows:
 
-1. **inputImage:** input image to calculate features on. <value> is custom kwarg settings (dictionary). if <value>
+1. **imageType:** image type to calculate features on. <value> is custom kwarg settings (dictionary). if <value>
    is an empty dictionary ('{}'), no custom settings are added for this input image.
 2. **featureClass:** Feature class to enable, <value> is list of strings representing enabled features. If no
    <value> is specified or <value> is an empty list ('[]'), all features for this class are enabled.
 3. **setting:** Setting to use for pre processing and class specific settings. if no <value> is specified, the value for
    this setting is set to None.
 
-.. note::
+Example::
 
+    # This is a non-active comment on a separate line
+    imageType:
+        Original: {}
+        LoG: {'sigma' : [1.0, 3.0]}  # This is a non active comment on a line with active code preceding it.
+        Wavelet:
+            binWidth: 10
+
+    featureClass:
+        glcm:
+        glrlm: []
+        firstorder: ['Mean',
+                     'StandardDeviation']
+        shape:
+            - Volume
+            - SurfaceArea
+
+    setting:
+        binWidth: 25
+        resampledPixelSpacing:
+
+In this example, 3 image types are enabled ("Original", "LoG" (Laplacian of Gaussian) and "Wavelet"), with custom
+settings specified for "LoG" ("sigma") and "Wavelet" ("binWidth"). Note that the manner of specifying the custom
+settings for "LoG" and "Wavelet" is equivalent.
+
+Next, 4 feature classes are defined. "glcm" and "glrlm" are both enabled with all possible features in the respective
+class, whereas only "Mean" and "StandardDeviation" are enabled for "firstorder", and only "Volume" and "SurfaceArea" for
+shape. Note that the manner of specifying individual features for "firstorder" and "shape" is equivalent.
+
+Finally, 2 settings are specified: "binWidth", whose value has been set to 25 (but will be set to 10 during extraction
+of "Wavelet" derived features), and "resampledPixelSpacing", where no value is provided, which is equivalent to a
+python "None" value.
+
+.. note::
     - settings not specified in parameters are set to their default value.
     - enabledFeatures are replaced by those in parameters (i.e. only specified features/classes are enabled. If the
-      'featureClass' customization type is omitted, all featureClasses and features are enabled.
-    - inputImages are replaced by those in parameters (i.e. only specified types are used to extract features from. If
-      the 'inputImage' customization type is ommited, only original image is used for feature extraction, with no
+      'featureClass' customization type is omitted, all feature classes and features are enabled.
+    - ImageTypes are replaced by those in parameters (i.e. only specified types are used to extract features from. If
+      the 'inputImage' customization type is omitted, only "Original" image type is used for feature extraction, with no
       additional custom settings.

@@ -7,7 +7,7 @@
 
 # #############################  Extracted using PyRadiomics version: <version>  ######################################
 
-inputImage:
+imageType:
   Original: {}
   LoG:
     # If you include sigma values >5, remember to also increase the padDistance. Because of resampling to (2, 2, 2), the

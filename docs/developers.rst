@@ -1,4 +1,4 @@
-.. _developers:
+.. _radiomics-developers:
 
 ==========
 Developers
@@ -80,23 +80,22 @@ and identifies the feature function as non-static.
 
 .. _radiomics-developers-filter:
 
----------------------
-Signature of a filter
----------------------
+--------------------------
+Signature of an image type
+--------------------------
 
-All filters are defined in the :ref:`imageoperations module<radiomics-imageoperations-label>`, and identified by the
+All image types are defined in the :ref:`imageoperations module<radiomics-imageoperations-label>`, and identified by the
 signature ``get[Name]Image(inputImage, **kwargs)``. Here, ``[Name]`` represents the unique name for the image type,
-which is also used to identify the filter during extraction. The input of a filter is fixed and consists of the
-``inputImage``, a SimpleITK Image object of the original image and ``**kwargs``, which are the customized setting that
-should be used for the extraction of features from the derived image.
+which is also used to identify the image type during extraction. The input of a image type function is fixed and
+consists of the ``inputImage``, a SimpleITK Image object of the original image and ``**kwargs``, which are the
+customized settings that should be used for the extraction of features from the derived image.
 
-One or more derived images are returned using the 'yield' statement: ``yield derivedImage, inputImageName, kwargs``.
-Here, ``derivedImage`` is one SimpleITK image object representing the filtered imag
-e, ``inputImageName`` is a unique
+One or more derived images are returned using the 'yield' statement: ``yield derivedImage, imageTypeName, kwargs``.
+Here, ``derivedImage`` is one SimpleITK image object representing the filtered image, ``imageTypeName`` is a unique
 string identifying features calculated using this filter in the output and ``kwargs`` are the customized settings for
 the extraction (``**kwargs`` passed as input, without the double asterisk). Multiple derived images can be
 returned by multiple yield statements, or yield statements inside a loop. Please note that only one derived image should
-be returned on each call to yield and that ``inputImageName`` is a unique name for each returned derived image. Derived
+be returned on each call to yield and that ``imageTypeName`` is a unique name for *each* returned derived image. Derived
 images must have the same dimensions and occupy the same physical space to ensure compatibility with the mask.
 
 .. _radiomics-developers-progressreporting:

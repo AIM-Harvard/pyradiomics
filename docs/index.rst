@@ -41,6 +41,7 @@ Table of Contents
    customization
    radiomics
    features
+   contributing
    developers
    FAQs <faq>
    changes

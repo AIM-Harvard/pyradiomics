@@ -103,8 +103,10 @@ extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRad
 
 See also the [requirements file](requirements.txt).
 
-### WIP
- - Implementation of this package as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org)
+### 3D Slicer
+PyRadiomics is also available as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org). 
+Download and install the 3D slicer [nightly build](http://download.slicer.org/), the extension is then available in the
+extension manager under "SlicerRadiomics".
 
 ### License
 This package is covered by the open source [3-clause BSD License](LICENSE.txt).

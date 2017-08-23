@@ -25,6 +25,14 @@ Bug fixes
   SimpleITK assumes segmented voxels to be consecutive on the x-axis lines. Furthermore, it also assumes that all voxels
   on a given line of x have the same values for y and z (which is not necessarily the case).
   (`#264 <https://github.com/Radiomics/pyradiomics/pull/264>`_)
+- Removal of outliers was not applied to returned object in ``normalizeImage``.
+  (`#277 <https://github.com/Radiomics/pyradiomics/pull/277>`_)
+- Fix python 3 incompatibility when using ``urllib``
+  (`#285 <https://github.com/Radiomics/pyradiomics/pull/285>`_)
+- Fix broken URL link in feature visualization notebooks.
+- Update docker manually install python2 support (since recently not supported by default in
+  jupyter/datascience-notebook).
+  (`#287 <https://github.com/Radiomics/pyradiomics/pull/287>`_)
 
 Tests
 #####
@@ -42,6 +50,16 @@ Documentation
 - Move section "Customizing the Extraction" to the top level, to make it more visible.
   (`#271 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
 - Change License to 3-clause BSD (`#272 <https://github.com/Radiomics/pyradiomics/pull/272>`_
+- Document the extend of compliance between PyRadiomics and the IBSI feature definitions
+  (`#289 <https://github.com/Radiomics/pyradiomics/pull/289>`_)
+- Fix typos in documentation.
+- Expand documentation on customizing the extraction
+  (`#291 <https://github.com/Radiomics/pyradiomics/pull/291>`_)
+
+Examples
+########
+- Add example settings for CT, MR (3 scenarios).
+  (`#273 <https://github.com/Radiomics/pyradiomics/pull/273>`_)
 
 Internal API
 ############
@@ -54,6 +72,15 @@ Internal API
   (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
 - Remove circular import statement in ``__init__.py` (circular with ``radiomics.base``)
   (`#270 <https://github.com/Radiomics/pyradiomics/pull/270>`_)
+- Revise initialization of the feature class.
+  (`#274 <https://github.com/Radiomics/pyradiomics/pull/274>`_)
+- Rename parts of the customization variables and functions to better reflect their definition
+  (`#291 <https://github.com/Radiomics/pyradiomics/pull/291>`_)
+
+License
+#######
+- Switch to 3-clause BSD license.
+  (`#272 <https://github.com/Radiomics/pyradiomics/pull/272>`_)
 
 -----------------
 PyRadiomics 1.2.0

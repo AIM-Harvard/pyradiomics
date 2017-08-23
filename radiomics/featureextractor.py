@@ -61,11 +61,12 @@ class RadiomicsFeaturesExtractor:
       self.logger.debug("Settings: %s", self.settings)
 
       self._enabledImagetypes = {'Original': {}}
-      self.logger.info('inputImages set to %s', self._enabledImagetypes)
+      self.logger.info('Enabled image types: %s', self._enabledImagetypes)
 
       self._enabledFeatures = {}
       for featureClassName in self.getFeatureClassNames():
         self._enabledFeatures[featureClassName] = []
+      self.logger.info('Enabled features: %s', self._enabledFeatures)
 
     self._setTolerance()
 
@@ -135,7 +136,7 @@ class RadiomicsFeaturesExtractor:
     else:
       self._enabledImagetypes = enabledImageTypes
 
-    self.logger.debug("Enabled input images: %s", self._enabledImagetypes)
+    self.logger.debug("Enabled image types: %s", self._enabledImagetypes)
 
     if len(enabledFeatures) == 0:
       self._enabledFeatures = {}
@@ -144,7 +145,7 @@ class RadiomicsFeaturesExtractor:
     else:
       self._enabledFeatures = enabledFeatures
 
-    self.logger.debug("Enabled features: %s", enabledFeatures)
+    self.logger.debug("Enabled features: %s", self._enabledFeatures)
 
     # Set default settings and update with and changed settings contained in kwargs
     self.settings = self._getDefaultSettings()
@@ -156,16 +157,16 @@ class RadiomicsFeaturesExtractor:
     """
     Enable all possible image types without any custom settings.
     """
-    self.logger.debug('Enabling all input image types')
+    self.logger.debug('Enabling all image types')
     for imageType in getImageTypes():
       self._enabledImagetypes[imageType] = {}
-    self.logger.debug('Enabled input images types: %s', self._enabledImagetypes)
+    self.logger.debug('Enabled images types: %s', self._enabledImagetypes)
 
   def disableAllImageTypes(self):
     """
     Disable all image types.
     """
-    self.logger.debug('Disabling all input image types')
+    self.logger.debug('Disabling all image types')
     self._enabledImagetypes = {}
 
   def enableImageTypeByName(self, imageType, enabled=True, customArgs=None):
@@ -201,20 +202,20 @@ class RadiomicsFeaturesExtractor:
     respectively).
     """
     if imageType not in getImageTypes():
-      self.logger.warning('Input image type %s is not recognized', imageType)
+      self.logger.warning('Image type %s is not recognized', imageType)
       return
 
     if enabled:
       if customArgs is None:
         customArgs = {}
-        self.logger.debug('Enabling input image type %s (no additional custom settings)', imageType)
+        self.logger.debug('Enabling image type %s (no additional custom settings)', imageType)
       else:
-        self.logger.debug('Enabling input image type %s (additional custom settings: %s)', imageType, customArgs)
+        self.logger.debug('Enabling image type %s (additional custom settings: %s)', imageType, customArgs)
       self._enabledImagetypes[imageType] = customArgs
     elif imageType in self._enabledImagetypes:
-      self.logger.debug('Disabling input image type %s', imageType)
+      self.logger.debug('Disabling image type %s', imageType)
       del self._enabledImagetypes[imageType]
-    self.logger.debug('Enabled input images types: %s', self._enabledImagetypes)
+    self.logger.debug('Enabled images types: %s', self._enabledImagetypes)
 
   def enableImageTypes(self, **enabledImagetypes):
     """
@@ -234,9 +235,9 @@ class RadiomicsFeaturesExtractor:
     :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings
       (dictionary)
     """
-    self.logger.debug('Updating enabled input images types with %s', enabledImagetypes)
+    self.logger.debug('Updating enabled images types with %s', enabledImagetypes)
     self._enabledImagetypes.update(enabledImagetypes)
-    self.logger.debug('Enabled input images types: %s', self._enabledImagetypes)
+    self.logger.debug('Enabled images types: %s', self._enabledImagetypes)
 
   def enableAllFeatures(self):
     """

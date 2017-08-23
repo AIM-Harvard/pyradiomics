@@ -66,9 +66,9 @@ def main():
     extractor = featureextractor.RadiomicsFeaturesExtractor(**settings)
     # extractor.enableInputImages(wavelet= {'level': 2})
 
-  logger.info('Enabled input images types: %s', extractor.inputImages)
-  logger.info('Enabled features: %s', extractor.enabledFeatures)
-  logger.info('Current settings: %s', extractor.kwargs)
+  logger.info('Enabled input images types: %s', extractor._enabledImagetypes)
+  logger.info('Enabled features: %s', extractor._enabledFeatures)
+  logger.info('Current settings: %s', extractor.settings)
 
   # Instantiate a pandas data frame to hold the results of all patients
   results = pandas.DataFrame()

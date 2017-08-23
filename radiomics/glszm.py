@@ -36,13 +36,13 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   Let:
 
   - :math:`\textbf{P}(i,j)` be the size zone matrix
-  - :math:`p(i,j)` be the normalized size zone matrix, defined as :math:`p(i,j) = \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
+  - :math:`p(i,j)` be the normalized size zone matrix, defined as
+    :math:`p(i,j) = \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
   - :math:`N_g` be the number of discreet intensity values in the image
   - :math:`N_s` be the number of discreet zone sizes in the image
   - :math:`N_p` be the number of voxels in the image
 
   .. note::
-
     The mathematical formulas that define the GLSZM features correspond to the definitions of features extracted from
     the GLRLM.
 
@@ -57,14 +57,16 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsGLSZM, self).__init__(inputImage, inputMask, **kwargs)
 
-    self.coefficients = {}
-    self.P_glszm = {}
+    self.P_glszm = None
 
-    # binning
-    self.matrix, self.binEdges = imageoperations.binImage(self.binWidth, self.matrix, self.matrixCoordinates)
-    self.coefficients['Ng'] = int(numpy.max(self.matrix[self.matrixCoordinates]))  # max gray level in the ROI
-    self.coefficients['Np'] = self.targetVoxelArray.size
-    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.matrixCoordinates])
+    self._initSegmentBasedCalculation()
+
+  def _initSegmentBasedCalculation(self):
+    super(RadiomicsGLSZM, self)._initSegmentBasedCalculation()
+
+    self._applyBinning()
+
+    self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     if cMatsEnabled():
       self.P_glszm = self._calculateCMatrix()
@@ -73,7 +75,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     self._calculateCoefficients()
 
-    self.logger.debug('Feature class initialized, calculated GLSZM with shape %s', self.P_glszm.shape)
+    self.logger.debug('GLSZM feature class initialized, calculated GLSZM with shape %s', self.P_glszm.shape)
 
   def _calculateMatrix(self):
     """
@@ -85,9 +87,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self.logger.debug('Calculating GLSZM matrix in Python')
 
     Np = self.coefficients['Np']
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(size,
+    angles = imageoperations.generateAngles(self.boundingBoxSize,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
@@ -103,7 +104,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
       # Iterate over all gray levels in the image
       for i_idx, i in enumerate(bar):
         ind = zip(*numpy.where(self.matrix == i))
-        ind = list(set(ind).intersection(set(zip(*self.matrixCoordinates))))
+        ind = list(set(ind).intersection(set(zip(*self.labelledVoxelCoordinates))))
 
         while ind:  # check if ind is not empty: unprocessed regions for current gray level
           # Pop first coordinate of an unprocessed zone, start new stack
@@ -143,9 +144,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   def _calculateCMatrix(self):
     self.logger.debug('Calculating GLSZM matrix in C')
 
-    size = numpy.max(self.matrixCoordinates, 1) - numpy.min(self.matrixCoordinates, 1) + 1
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(size,
+    angles = imageoperations.generateAngles(self.boundingBoxSize,
                                             force2Dextraction=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
     Ng = self.coefficients['Ng']
@@ -154,7 +154,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     P_glszm = cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
 
     # Delete rows that specify gray levels not present in the ROI
-    Ng = self.coefficients['Ng']
     NgVector = range(1, Ng + 1)  # All possible gray values
     GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
     emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
@@ -195,7 +194,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **1. Small Area Emphasis (SAE)**
 
     .. math::
-
       \textit{SAE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -213,7 +211,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **2. Large Area Emphasis (LAE)**
 
     .. math::
-
       \textit{LAE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)j^2}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -231,7 +228,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **3. Gray Level Non-Uniformity (GLN)**
 
     .. math::
-
       \textit{GLN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -249,7 +245,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **4. Gray Level Non-Uniformity Normalized (GLNN)**
 
     .. math::
-
       \textit{GLNN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_s}_{j=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}
 
@@ -267,12 +262,11 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **5. Size-Zone Non-Uniformity (SZN)**
 
     .. math::
-
       \textit{SZN} = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
-    SZN measures the variability of size zone volumes in the image, with a lower value indicating more homogeneity in size
-    zone volumes.
+    SZN measures the variability of size zone volumes in the image, with a lower value indicating more homogeneity in
+    size zone volumes.
     """
     try:
       szv = numpy.sum(self.coefficients['pr'] ** 2) / self.coefficients['sumP_glszm']
@@ -285,7 +279,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **6. Size-Zone Non-Uniformity Normalized (SZNN)**
 
     .. math::
-
       \textit{SZNN} = \frac{\sum^{N_s}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}
       {\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}
 
@@ -303,7 +296,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **7. Zone Percentage (ZP)**
 
     .. math::
-
       \textit{ZP} = \sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{N_p}}
 
     ZP measures the coarseness of the texture by taking the ratio of number of zones and number of voxels in the ROI.
@@ -322,7 +314,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **8. Gray Level Variance (GLV)**
 
     .. math::
-
       \textit{GLV} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)(i - \mu)^2}
 
     Here, :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)i}`
@@ -340,7 +331,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **9. Zone Variance (ZV)**
 
     .. math::
-
       \textit{ZV} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)(j - \mu)^2}
 
     Here, :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)j}`
@@ -358,7 +348,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **10. Zone Entropy (ZE)**
 
     .. math::
-
       \textit{ZE} = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_s}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
@@ -376,7 +365,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **11. Low Gray Level Zone Emphasis (LGLZE)**
 
     .. math::
-
       \textit{LGLZE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -391,7 +379,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **12. High Gray Level Zone Emphasis (HGLZE)**
 
     .. math::
-
       \textit{HGLZE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -406,7 +393,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **13. Small Area Low Gray Level Emphasis (SALGLE)**
 
     .. math::
-
       \textit{SALGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -423,7 +409,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **14. Small Area High Gray Level Emphasis (SAHGLE)**
 
     .. math::
-
       \textit{SAHGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -440,7 +425,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **15. Large Area Low Gray Level Emphasis (LALGLE)**
 
     .. math::
-
       \textit{LALGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 
@@ -457,7 +441,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     **16. Large Area High Gray Level Emphasis (LAHGLE)**
 
     .. math::
-
       \textit{LAHGLE} = \frac{\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)i^2j^2}}
       {\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}{\textbf{P}(i,j)}}
 

@@ -18,6 +18,17 @@ jobs:
             apt-get update
             apt-get install -y openssh-client openssh-server
       - run:
+          # Jupyter datascience notebook does not support python 2 anymore, install it manually.
+          # See also https://github.com/jupyter/docker-stacks/issues/432
+          # Next, install python 2 kernel globally, so it can be found from the root
+          name: Install Python 2 Kernel
+          command: |
+            conda create -n python2 python=2 ipykernel
+            pip install kernda --no-cache
+            $CONDA_DIR/envs/python2/bin/python -m ipykernel install
+            kernda -o -y /usr/local/share/jupyter/kernels/python2/kernel.json
+            pip uninstall kernda -y
+      - run:
           name: Install pyradiomics in Python 2 and 3
           command: |
             source activate python2
@@ -44,6 +55,3 @@ jobs:
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
-
-
-

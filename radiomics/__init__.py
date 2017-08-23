@@ -8,11 +8,12 @@ import os
 import pkgutil
 import sys
 import tempfile
-import urllib
+
+from six.moves import urllib
 
 import numpy  # noqa: F401
 
-from . import base, imageoperations
+from . import imageoperations
 
 if sys.version_info < (2, 6, 0):
   raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
@@ -108,7 +109,7 @@ def getFeatureClasses():
   global _featureClasses
   if _featureClasses is None:  # On first call, enumerate possible feature classes and import PyRadiomics modules
     _featureClasses = {}
-    for _, mod, _ in pkgutil.iter_modules([os.path.dirname(base.__file__)]):
+    for _, mod, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
       if str(mod).startswith('_'):  # Skip loading of 'private' classes, these don't contain feature classes
         continue
       __import__('radiomics.' + mod)
@@ -116,28 +117,30 @@ def getFeatureClasses():
       attributes = inspect.getmembers(module, inspect.isclass)
       for a in attributes:
         if a[0].startswith('Radiomics'):
-          if base.RadiomicsFeaturesBase in inspect.getmro(a[1])[1:]:
-            _featureClasses[mod] = a[1]
+          for parentClass in inspect.getmro(a[1])[1:]:  # only include classes that inherit from RadiomicsFeaturesBase
+            if parentClass.__name__ == 'RadiomicsFeaturesBase':
+              _featureClasses[mod] = a[1]
+              break
 
   return _featureClasses
 
 
-def getInputImageTypes():
+def getImageTypes():
   """
-  Returns a list of possible input image types. This function finds the image types dynamically by matching the
-  signature ("get<inputImage>Image") against functions defined in :ref:`imageoperations
-  <radiomics-imageoperations-label>`. Returns a list containing available input image names (<inputImage> part of the
-  corresponding function name).
+  Returns a list of possible image types (i.e. the possible filters and the "Original", unfiltered image type). This
+  function finds the image types dynamically by matching the signature ("get<imageType>Image") against functions defined
+  in :ref:`imageoperations <radiomics-imageoperations-label>`. Returns a list containing available image type names
+  (<imageType> part of the corresponding function name).
 
   This iteration only occurs once, at initialization of the toolbox. Found results are stored and returned on subsequent
   calls.
   """
-  global _inputImages
-  if _inputImages is None:  # On first cal, enumerate possible input image types (original and any filters)
-    _inputImages = [member[3:-5] for member in dir(imageoperations)
-                    if member.startswith('get') and member.endswith("Image")]
+  global _imageTypes
+  if _imageTypes is None:  # On first cal, enumerate possible input image types (original and any filters)
+    _imageTypes = [member[3:-5] for member in dir(imageoperations)
+                   if member.startswith('get') and member.endswith("Image")]
 
-  return _inputImages
+  return _imageTypes
 
 
 def getTestCase(testCase, repoDirectory=None):
@@ -181,7 +184,7 @@ def getTestCase(testCase, repoDirectory=None):
   # No repository directory specified, check if running in development mode (code run from repository)
   logger.debug('Repository not specified or test case not found, checking if running in development mode')
   # This folder exists if radiomics is run from the repository:
-  dataDir = os.path.join(os.path.basename(base.__file__), '..', 'data')
+  dataDir = os.path.join(os.path.basename(__file__), '..', 'data')
   imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
   maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
   if os.path.isfile(imageFile) and os.path.isfile(maskFile):
@@ -209,8 +212,8 @@ def getTestCase(testCase, repoDirectory=None):
   # Download the test case files (image and label)
   url = r'https://github.com/Radiomics/pyradiomics/raw/master/data/%s_%s.nrrd'
   try:
-    urllib.urlretrieve(url % (testCase, 'image'), imageFile)
-    urllib.urlretrieve(url % (testCase, 'label'), maskFile)
+    urllib.request.urlretrieve(url % (testCase, 'image'), imageFile)
+    urllib.request.urlretrieve(url % (testCase, 'label'), maskFile)
   except Exception:
     logger.error('Download failed!', exc_info=True)
     return None, None
@@ -246,10 +249,10 @@ class _DummyProgressReporter(object):
     pass  # Nothing needs to be closed or handled, so just specify 'pass'
 
 
-def _getProgressReporter(*args, **kwargs):
+def getProgressReporter(*args, **kwargs):
   """
-  This function returns an instance of the progressReporter, or, if it is not set (None), returns a dummy progress
-  reporter.
+  This function returns an instance of the progressReporter, if it is set and the logging level is defined at level INFO
+  or DEBUG. In all other cases a dummy progress reporter is returned.
 
   To enable progress reporting, the progressReporter variable should be set to a class object (NOT an instance), which
   fits the following signature:
@@ -264,11 +267,11 @@ def _getProgressReporter(*args, **kwargs):
   `__next__` function of the iterable (i.e. `return self.iterable.__next__()`). Any prints/progress reporting calls can
   then be inserted in this function prior to the return statement.
   """
-  global progressReporter
-  if progressReporter is None:
-    return _DummyProgressReporter(*args, **kwargs)
-  else:
+  global handler, progressReporter
+  if progressReporter is not None and logging.NOTSET < handler.level <= logging.INFO:
     return progressReporter(*args, **kwargs)
+  else:
+    return _DummyProgressReporter(*args, **kwargs)
 
 progressReporter = None
 
@@ -300,9 +303,9 @@ except Exception:
 
 # 3. Enumerate implemented feature classes and input image types available in PyRadiomics
 _featureClasses = None
-_inputImages = None
+_imageTypes = None
 getFeatureClasses()
-getInputImageTypes()
+getImageTypes()
 
 # 4. Set the version using the versioneer scripts
 from ._version import get_versions

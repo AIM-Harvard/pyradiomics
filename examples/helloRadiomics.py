@@ -102,8 +102,8 @@ settings['interpolator'] = sitk.sitkBSpline
 # Initialize feature extractor
 extractor = featureextractor.RadiomicsFeaturesExtractor(**settings)
 
-# By default, only original is enabled. Optionally enable some filters:
-# extractor.enableInputImages(Original={}, LoG={}, Wavelet={})
+# By default, only original is enabled. Optionally enable some image types:
+# extractor.enableImageTypes(Original={}, LoG={}, Wavelet={})
 
 # Disable all classes except firstorder
 extractor.disableAllFeatures()

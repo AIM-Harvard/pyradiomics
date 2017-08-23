@@ -71,10 +71,15 @@ def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates):
   level intensities in the ROI after binning is number of bins + 1.
 
   .. warning::
-
     This is different from the assignment of voxels to the bins by ``numpy.histogram`` , which has half-open bins, with
     the exception of the rightmost bin, which means this maximum values are assigned to the topmost bin.
     ``numpy.digitize`` uses half-open bins, including the rightmost bin.
+
+  .. note::
+    This method is slightly different from the fixed bin size discretization method described by IBSI. The two most
+    notable differences are 1) that PyRadiomics uses a floor division (and adds 1), as opposed to a ceiling division and
+    2) that in PyRadiomics, bins are always equally spaced from 0, as opposed to equally spaced from the minimum
+    gray level intensity.
   """
   global logger
   logger.debug('Discretizing gray levels inside ROI')
@@ -554,6 +559,7 @@ def normalizeImage(image, scale=1, outliers=None):
 
     newImage = sitk.GetImageFromArray(imageArr)
     newImage.CopyInformation(image)
+    image = newImage
 
   image *= scale
 
@@ -578,7 +584,7 @@ def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None,
 def getOriginalImage(inputImage, **kwargs):
   """
   This function does not apply any filter, but returns the original image. This function is needed to
-  dyanmically expose the original image as a valid input image.
+  dynamically expose the original image as a valid image type.
 
   :return: Yields original image, 'original' and ``kwargs``
   """
@@ -589,20 +595,22 @@ def getOriginalImage(inputImage, **kwargs):
 
 def getLoGImage(inputImage, **kwargs):
   """
-  Apply Laplacian of Gaussian filter to input image and compute signature for each filtered image.
+  Applies a Laplacian of Gaussian filter to the input image and yields a derived image for each sigma value specified.
 
   Following settings are possible:
 
   - sigma: List of floats or integers, must be greater than 0. Sigma values to
     use for the filter (determines coarseness).
 
-  N.B. Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
-  will return an empty dictionary.
+  .. warning::
+    Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
+    will return an empty dictionary.
 
   Returned filter name reflects LoG settings:
   log-sigma-<sigmaValue>-3D.
 
-  :return: Yields log filtered image for each specified sigma, corresponding filter name and ``kwargs``
+  :return: Yields log filtered image for each specified sigma, corresponding image type name and ``kwargs`` (customized
+    settings).
   """
   global logger
 
@@ -640,7 +648,7 @@ def getLoGImage(inputImage, **kwargs):
 
 def getWaveletImage(inputImage, **kwargs):
   """
-  Apply wavelet filter to image and compute signature for each filtered image.
+  Applies wavelet filter to the input image and yields the decompositions and the approximation.
 
   Following settings are possible:
 
@@ -664,7 +672,8 @@ def getWaveletImage(inputImage, **kwargs):
 
   N.B. only levels greater than the first level are entered into the name.
 
-  :return: Yields each wavelet decomposition and final approximation, corresponding filter name and ``kwargs``
+  :return: Yields each wavelet decomposition and final approximation, corresponding imaget type name and ``kwargs``
+    (customized settings).
   """
   global logger
 
@@ -800,7 +809,7 @@ def getSquareImage(inputImage, **kwargs):
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
-  :return: Yields square filtered image, 'square' and ``kwargs``
+  :return: Yields square filtered image, 'square' and ``kwargs`` (customized settings).
   """
   global logger
 
@@ -828,7 +837,7 @@ def getSquareRootImage(inputImage, **kwargs):
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
-  :return: Yields square root filtered image, 'squareroot' and ``kwargs``
+  :return: Yields square root filtered image, 'squareroot' and ``kwargs`` (customized settings).
   """
   global logger
 
@@ -859,7 +868,7 @@ def getLogarithmImage(inputImage, **kwargs):
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
-  :return: Yields logarithm filtered image, 'logarithm' and ``kwargs``
+  :return: Yields logarithm filtered image, 'logarithm' and ``kwargs`` (customized settings)
   """
   global logger
 
@@ -886,7 +895,7 @@ def getExponentialImage(inputImage, **kwargs):
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
-  :return: Yields exponential filtered image, 'exponential' and ``kwargs``
+  :return: Yields exponential filtered image, 'exponential' and ``kwargs`` (customized settings)
   """
   global logger
 

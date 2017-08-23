@@ -14,12 +14,16 @@ of radiomic capabilities and expand the community. The platform supports both th
 **If you publish any work which uses this package, please cite the following publication:**
 *Joost JM van Griethuysen, Andriy Fedorov, Chintan Parmar, Ahmed Hosny, Nicole Aucoin, Vivek Narayan, Regina GH
 Beets-Tan, Jean-Christophe Fillion-Robin, Steve Pieper, Hugo JWL Aerts, “Computational Radiomics System to Decode the
-Radiographic Phenotype”; Submitted 2017*
+Radiographic Phenotype”; Accepted Cancer Research 2017*
 
 .. note::
 
    This work was supported in part by the US National Cancer Institute grant
    5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.
+
+.. warning::
+
+   Not intended for clinical use.
 
 Table of Contents
 -----------------
@@ -34,6 +38,7 @@ Table of Contents
 
    installation
    usage
+   customization
    radiomics
    features
    developers
@@ -118,7 +123,7 @@ Pyradiomics Indices and Tables
 License
 -------
 
-This package is covered by the open source `3D Slicer License <https://github.com/Radiomics/pyradiomics/blob/master/LICENSE.txt>`_.
+This package is covered by the open source `3-clause BSD License <https://github.com/Radiomics/pyradiomics/blob/master/LICENSE.txt>`_.
 
 Developers
 ----------
@@ -144,5 +149,5 @@ We are happy to help you with any questions. Please contact us on the `pyradiomi
 
 We'd welcome your contributions to PyRadiomics. Please read the
 `contributing guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_ on how to contribute
-to PyRadiomics. Information on adding / customizing feature classes and filters can be found in the :ref:`developers`
-section.
+to PyRadiomics. Information on adding / customizing feature classes and filters can be found in the
+:ref:`radiomics-developers` section.

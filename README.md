@@ -15,12 +15,12 @@ With this package we aim to establish a reference standard for Radiomic Analysis
 open-source platform for easy and reproducible Radiomic Feature extraction. By doing so, we hope to increase awareness
 of radiomic capabilities and expand the community.
 
-The platform supports both the feature extraction in 2D and 3D.
+The platform supports both the feature extraction in 2D and 3D. **Not intended for clinical use.**
 
-**If you publish any work which uses this package, please cite the following publication:**\
+**If you publish any work which uses this package, please cite the following publication:**
 *Joost JM van Griethuysen, Andriy Fedorov, Chintan Parmar, Ahmed Hosny, Nicole Aucoin, Vivek Narayan, Regina GH 
 Beets-Tan, Jean-Christophe Fillion-Robin, Steve Pieper, Hugo JWL Aerts, “Computational Radiomics System to Decode the
-Radiographic Phenotype”; Submitted 2017*
+Radiographic Phenotype”; Accepted Cancer Research 2017*
 
 ### Feature Classes
 Currently supports the following feature classes:
@@ -107,7 +107,7 @@ See also the [requirements file](requirements.txt).
  - Implementation of this package as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org)
 
 ### License
-This package is covered by the open source [3D Slicer License](LICENSE.txt).
+This package is covered by the open source [3-clause BSD License](LICENSE.txt).
 
 ### Developers
  - [Joost van Griethuysen](https://github.com/JoostJM)<sup>1,3,4</sup>

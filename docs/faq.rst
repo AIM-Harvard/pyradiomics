@@ -39,8 +39,9 @@ I want to customize my extraction. How do I do that?
 ####################################################
 
 See also :ref:`radiomics-customization-label`. PyRadiomics can be customized in various ways, but it's most easy to
-do this by providing a parameter file. In this `yaml structured <http://yaml.org/>`_ text file you can define your
-custom settings and which features and input image types to enable.
+do this by providing a :ref:`parameter file <radiomics-parameter-file-label>`. In this
+`yaml structured <http://yaml.org/>`_ text file you can define your custom settings and which features and input image
+types to enable.
 
 Error loading parameter file
 ############################
@@ -163,7 +164,7 @@ I have some ideas for PyRadiomics. How can I contribute?
 
 We welcome suggestions and contributions to PyRadiomics. Check our
 `guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_ to see how you can contribute to
-PyRadiomics. Signatures and code styles used in PyRadiomics are documented in the :ref:`developers` section.
+PyRadiomics. Signatures and code styles used in PyRadiomics are documented in the :ref:`radiomics-developers` section.
 
 I found a bug! Where do I report it?
 ####################################

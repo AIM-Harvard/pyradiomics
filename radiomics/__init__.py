@@ -125,22 +125,22 @@ def getFeatureClasses():
   return _featureClasses
 
 
-def getInputImageTypes():
+def getImageTypes():
   """
-  Returns a list of possible input image types. This function finds the image types dynamically by matching the
-  signature ("get<inputImage>Image") against functions defined in :ref:`imageoperations
-  <radiomics-imageoperations-label>`. Returns a list containing available input image names (<inputImage> part of the
-  corresponding function name).
+  Returns a list of possible image types (i.e. the possible filters and the "Original", unfiltered image type). This
+  function finds the image types dynamically by matching the signature ("get<imageType>Image") against functions defined
+  in :ref:`imageoperations <radiomics-imageoperations-label>`. Returns a list containing available image type names
+  (<imageType> part of the corresponding function name).
 
   This iteration only occurs once, at initialization of the toolbox. Found results are stored and returned on subsequent
   calls.
   """
-  global _inputImages
-  if _inputImages is None:  # On first cal, enumerate possible input image types (original and any filters)
-    _inputImages = [member[3:-5] for member in dir(imageoperations)
-                    if member.startswith('get') and member.endswith("Image")]
+  global _imageTypes
+  if _imageTypes is None:  # On first cal, enumerate possible input image types (original and any filters)
+    _imageTypes = [member[3:-5] for member in dir(imageoperations)
+                   if member.startswith('get') and member.endswith("Image")]
 
-  return _inputImages
+  return _imageTypes
 
 
 def getTestCase(testCase, repoDirectory=None):
@@ -303,9 +303,9 @@ except Exception:
 
 # 3. Enumerate implemented feature classes and input image types available in PyRadiomics
 _featureClasses = None
-_inputImages = None
+_imageTypes = None
 getFeatureClasses()
-getInputImageTypes()
+getImageTypes()
 
 # 4. Set the version using the versioneer scripts
 from ._version import get_versions

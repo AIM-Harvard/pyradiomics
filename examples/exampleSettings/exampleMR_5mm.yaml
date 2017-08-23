@@ -7,7 +7,7 @@
 
 # #############################  Extracted using PyRadiomics version: <version>  ######################################
 
-inputImage:
+imageType:
   Original: {}
   LoG:
     # Because of resampling to (3, 3, 3), the use of sigmas < 3 mm is not recommended.

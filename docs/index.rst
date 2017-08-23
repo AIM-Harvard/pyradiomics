@@ -149,5 +149,5 @@ We are happy to help you with any questions. Please contact us on the `pyradiomi
 
 We'd welcome your contributions to PyRadiomics. Please read the
 `contributing guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_ on how to contribute
-to PyRadiomics. Information on adding / customizing feature classes and filters can be found in the :ref:`developers`
-section.
+to PyRadiomics. Information on adding / customizing feature classes and filters can be found in the
+:ref:`radiomics-developers` section.

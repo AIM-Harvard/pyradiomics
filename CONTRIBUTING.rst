@@ -1,3 +1,5 @@
+.. _radiomics-contributing-label:
+
 ===========================
 Contributing to pyradiomics
 ===========================

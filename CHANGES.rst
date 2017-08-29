@@ -42,6 +42,8 @@ Tests
   not in the python calculated matrix, for some texture matrices, this function can change the dimension of the matrix).
   This update ensures that ``_calculateCoefficients`` is applied to neither matrix.
   (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
+- Add a test to check validity of parameter files included in ``examples/exampleSettings``.
+  (`#294 <https://github.com/Radiomics/pyradiomics/pull/294>`_)
 
 Documentation
 #############
@@ -55,6 +57,8 @@ Documentation
 - Fix typos in documentation.
 - Expand documentation on customizing the extraction
   (`#291 <https://github.com/Radiomics/pyradiomics/pull/291>`_)
+- Include contributing guidelines in sphinx-generated documentation and add a section on sharing parameter files.
+  (`#294 <https://github.com/Radiomics/pyradiomics/pull/294>`_)
 
 Examples
 ########

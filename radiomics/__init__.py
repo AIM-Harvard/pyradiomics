@@ -223,6 +223,19 @@ def getTestCase(testCase, repoDirectory=None):
   return imageFile, maskFile
 
 
+def getParameterValidationFiles():
+  """
+  Returns file locations for the parameter schema and custom validation functions, which are needed when validating
+  a parameter file using ``PyKwalify.core``.
+  This functions returns a tuple with the file location of the schema as first and python script with custom validation
+  functions as second element.
+  """
+  dataDir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'schemas'))
+  schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
+  schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
+  return schemaFile, schemaFuncs
+
+
 class _DummyProgressReporter(object):
   """
   This class represents the dummy Progress reporter and is used for where progress reporting is implemented, but not

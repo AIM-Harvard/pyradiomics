@@ -11,7 +11,7 @@ import SimpleITK as sitk
 import six
 
 import radiomics
-from radiomics import generalinfo, getFeatureClasses, getImageTypes, imageoperations
+from radiomics import generalinfo, getFeatureClasses, getImageTypes, getParameterValidationFiles, imageoperations
 
 
 class RadiomicsFeaturesExtractor:
@@ -119,9 +119,7 @@ class RadiomicsFeaturesExtractor:
     If supplied file does not match the requirements (i.e. unrecognized names or invalid values for a setting), a
     pykwalify error is raised.
     """
-    dataDir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'schemas'))
-    schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
-    schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
+    schemaFile, schemaFuncs = getParameterValidationFiles()
     c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
     params = c.validate()
 

@@ -262,7 +262,9 @@ optional argument (``--param``) when running pyradiomics from the command line. 
 during initialization of the :ref:`feature extractor <radiomics-featureextractor-label>`, or using
 :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.loadParams` after initialization. This removes the need
 to hard code a customized extraction in a python script through use of functions described above. Additionally, this
-also makes it more easy to share settings for customized extractions.
+also makes it more easy to share settings for customized extractions. We encourage users to share their parameter files
+in the PyRadiomics repository. See :ref:`radiomics-submit-parameter-file-label` for more information on how to submit
+your parameter file.
 
 .. note::
     Examples of the parameter file are provided in the ``pyradiomics/examples/exampleSettings`` folder.

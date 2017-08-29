@@ -131,8 +131,8 @@ This package is covered by the open source [3-clause BSD License](LICENSE.txt).
 
 We are happy to help you with any questions. Please contact us on the [pyradiomics email list](https://groups.google.com/forum/#!forum/pyradiomics).
 
-We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.md) on how to contribute
-to PyRadiomics.
+We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.rst) on how to
+contribute to PyRadiomics.
 
 **This work was supported in part by the US National Cancer Institute grant 
 5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.**

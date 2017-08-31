@@ -75,14 +75,14 @@ setup(
         ]},
 
     description='Radiomics features library for python',
-    license='Slicer',
+    license='BSD License',
 
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        'License :: Slicer',
+        'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: C',
         'Programming Language :: Python :: 2',

@@ -59,6 +59,7 @@ Documentation
   (`#291 <https://github.com/Radiomics/pyradiomics/pull/291>`_)
 - Include contributing guidelines in sphinx-generated documentation and add a section on sharing parameter files.
   (`#294 <https://github.com/Radiomics/pyradiomics/pull/294>`_)
+- Insert missing line to enable all features in documentation on using the feature classes directly.
 
 Examples
 ########

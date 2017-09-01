@@ -156,6 +156,7 @@ Using feature classes directly
 * Calculate the first order features::
 
      firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
+     firstOrderFeatures.enableAllFeatures()  # On the feature class level, all features are disabled by default.
      firstOrderFeatures.calculateFeatures()
      for (key,val) in six.iteritems(firstOrderFeatures.featureValues):
        print("\t%s: %s" % (key, val))

@@ -318,13 +318,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ac = numpy.sum(self.P_glcm * (i * j)[:, :, None], (0, 1))
     return ac.mean()
 
-  def getAverageIntensityFeatureValue(self):
+  def getJointAverageFeatureValue(self):
     r"""
     **2. Joint Average**
 
     .. math::
 
-      \mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)i}
+      \textit{joint average} = \mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)i}
 
     Returns the mean gray level intensity of the :math:`i` distribution.
 
@@ -505,13 +505,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     dis = numpy.sum((self.P_glcm * (numpy.abs(i - j))[:, :, None]), (0, 1))
     return dis.mean()
 
-  def getEnergyFeatureValue(self):
+  def getJointEnergyFeatureValue(self):
     r"""
     **12. Joint Energy**
 
     .. math::
 
-      \textit{energy} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(p(i,j)\big)^2}
+      \textit{joint energy} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(p(i,j)\big)^2}
 
     Energy is a measure of homogeneous patterns
     in the image. A greater Energy implies that there are more instances
@@ -524,13 +524,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ene = numpy.sum((self.P_glcm ** 2), (0, 1))
     return ene.mean()
 
-  def getEntropyFeatureValue(self):
+  def getJointEntropyFeatureValue(self):
     r"""
     **13. Joint Entropy**
 
     .. math::
 
-      \textit{entropy} = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
+      \textit{joint entropy} = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
       {p(i,j)\log_2\big(p(i,j)+\epsilon\big)}
 
     Entropy is a measure of the randomness/variability in neighborhood intensity values.

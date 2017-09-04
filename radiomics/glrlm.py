@@ -112,7 +112,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
     angles = imageoperations.generateAngles(self.boundingBoxSize,
-                                            force2Dextraction=self.kwargs.get('force2D', False),
+                                            force2D=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
     self.logger.debug('Calculating diagonals')
@@ -173,7 +173,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
     angles = imageoperations.generateAngles(self.boundingBoxSize,
-                                            force2Dextraction=self.kwargs.get('force2D', False),
+                                            force2D=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
     P_glrlm = cMatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)

@@ -89,7 +89,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Np = self.coefficients['Np']
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
     angles = imageoperations.generateAngles(self.boundingBoxSize,
-                                            force2Dextraction=self.kwargs.get('force2D', False),
+                                            force2D=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
 
     grayLevels = self.coefficients['grayLevels']
@@ -146,7 +146,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
     angles = imageoperations.generateAngles(self.boundingBoxSize,
-                                            force2Dextraction=self.kwargs.get('force2D', False),
+                                            force2D=self.kwargs.get('force2D', False),
                                             force2Ddimension=self.kwargs.get('force2Ddimension', 0))
     Ng = self.coefficients['Ng']
     Ns = self.coefficients['Np']

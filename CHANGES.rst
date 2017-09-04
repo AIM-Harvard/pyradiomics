@@ -33,6 +33,8 @@ Bug fixes
 - Update docker manually install python2 support (since recently not supported by default in
   jupyter/datascience-notebook).
   (`#287 <https://github.com/Radiomics/pyradiomics/pull/287>`_)
+- For GLRLM and GLSZM, force2D keyword is passed manually, but was incorrectly named and therefore ignored. Fix name to
+  enable forced 2D extraction for GLRLM and GLSZM.
 
 Tests
 #####

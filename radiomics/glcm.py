@@ -50,9 +50,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   - :math:`p_x(i) = \sum^{N_g}_{j=1}{P(i,j)}` be the marginal row probabilities
   - :math:`p_y(j) = \sum^{N_g}_{i=1}{P(i,j)}` be the marginal column probabilities
   - :math:`\mu_x` be the mean gray level intensity of :math:`p_x` and defined as
-    :math:`\mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)i}`
+    :math:`\mu_x = \displaystyle\sum^{N_g}_{i=1}{p_x(i)i}`
   - :math:`\mu_y` be the mean gray level intensity of :math:`p_y` and defined as
-    :math:`\mu_y = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)j}`
+    :math:`\mu_y = \displaystyle\sum^{N_g}_{j=1}{p_y(j)j}`
   - :math:`\sigma_x` be the standard deviation of :math:`p_x`
   - :math:`\sigma_y` be the standard deviation of :math:`p_y`
   - :math:`p_{x+y}(k) = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)},\text{ where }i+j=k,\text{ and }k=2,3,\dots,2N_g`
@@ -344,7 +344,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. math::
 
       \textit{cluster prominence} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
-      {\big( i+j-\mu_x(i)-\mu_y(j)\big)^4p(i,j)}
+      {\big( i+j-\mu_x-\mu_y\big)^4p(i,j)}
 
     Cluster Prominence is a measure of the skewness and asymmetry of the GLCM. A higher values implies more asymmetry
     about the mean while a lower value indicates a peak near the mean value and less variation about the mean.
@@ -363,7 +363,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. math::
 
       \textit{cluster shade} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
-      {\big(i+j-\mu_x(i)-\mu_y(j)\big)^3p(i,j)}
+      {\big(i+j-\mu_x-\mu_y\big)^3p(i,j)}
 
     Cluster Shade is a measure of the skewness and uniformity of the GLCM.
     A higher cluster shade implies greater asymmetry about the mean.
@@ -382,7 +382,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. math::
 
       \textit{cluster tendency} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
-      {\big(i+j-\mu_x(i)-\mu_y(j)\big)^2p(i,j)}
+      {\big(i+j-\mu_x-\mu_y\big)^2p(i,j)}
 
     Cluster Tendency is a measure of groupings of voxels with similar gray-level values.
     """
@@ -415,7 +415,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      \textit{correlation} = \frac{\sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)ij-\mu_x(i)\mu_y(j)}}{\sigma_x(i)\sigma_y(j)}
+      \textit{correlation} = \frac{\sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)ij-\mu_x\mu_y}}{\sigma_x(i)\sigma_y(j)}
 
     Correlation is a value between 0 (uncorrelated) and 1 (perfectly correlated) showing the
     linear dependency of gray level values to their respective voxels in the GLCM.

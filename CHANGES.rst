@@ -12,6 +12,10 @@ New Features
 - Add a row by row customization of the extraction label in the batch processing command line script, as well as both
   batchprocessing examples.
   (`#262 <https://github.com/Radiomics/pyradiomics/pull/262>`_)
+- Allow value 0 for a resampled pixel spacing (per dimension). Values of 0 are replaced by the spacing for that
+  dimension as it is in the original (non-resampled) mask. This allows resampling over a subset of dimension (e.g. only
+  in-plane resampling when out-of-plane spacing is set to 0).
+  (`#299 <https://github.com/Radiomics/pyradiomics/pull/299>`_)
 
 Bug fixes
 #########

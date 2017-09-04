@@ -128,7 +128,9 @@ Feature Extractor Level
 
 *Resampling the image*
 
-- resampledPixelSpacing [None]: List of 3 floats (> 0), sets the size of the voxel in (x, y, z) plane when resampling.
+- resampledPixelSpacing [None]: List of 3 floats (>= 0), sets the size of the voxel in (x, y, z) plane when resampling.
+  A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) mask, thereby
+  enabling only in-plane resampling, for example.
 - interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
   Enumerated value, possible values:
 

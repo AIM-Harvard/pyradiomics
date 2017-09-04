@@ -414,6 +414,9 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   'imageNode' and 'maskNode' are SimpleITK Objects, and 'resampledPixelSpacing' is the output pixel spacing (sequence of
   3 elements).
 
+  If only in-plane resampling is required, set the output pixel spacing for the out-of-plane dimension (usually the last
+  dimension) to 0. Spacings with a value of 0 are replaced by the spacing as it is in the original mask.
+
   Only part of the image and labelmap are resampled. The resampling grid is aligned to the input origin, but only voxels
   covering the area of the image ROI (defined by the bounding box) and the padDistance are resampled. This results in a
   resampled and partially cropped image and mask. Additional padding is required as some filters also sample voxels
@@ -443,14 +446,13 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   if imageNode is None or maskNode is None:
     return None, None  # this function is expected to always return a tuple of 2 elements
 
-  logger.debug('Comparing resampled spacing to original spacing (image and mask')
   maskSpacing = numpy.array(maskNode.GetSpacing())
   imageSpacing = numpy.array(imageNode.GetSpacing())
 
-  # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
-  if numpy.array_equal(maskSpacing, resampledPixelSpacing) and numpy.array_equal(imageSpacing, resampledPixelSpacing):
-    logger.info('New spacing equal to old, no resampling required')
-    return imageNode, maskNode
+  # If spacing for a direction is set to 0, use the original spacing (enables "only in-slice" resampling)
+  logger.debug('Where resampled spacing is set to 0, set it to the original spacing (mask)')
+  resampledPixelSpacing = numpy.array(resampledPixelSpacing)
+  resampledPixelSpacing = numpy.where(resampledPixelSpacing == 0, maskSpacing, resampledPixelSpacing)
 
   # Check if the maskNode contains a valid ROI. If ROI is valid, the bounding box needed to calculate the resampling
   # grid is returned.
@@ -462,6 +464,13 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Do not resample in those directions where labelmap spans only one slice.
   maskSize = numpy.array(maskNode.GetSize())
   resampledPixelSpacing = numpy.where(bb[3:] != 1, resampledPixelSpacing, maskSpacing)
+
+  # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
+  # Tolerance = 1e-5 + 1e-8*abs(resampledSpacing)
+  logger.debug('Comparing resampled spacing to original spacing (image and mask')
+  if numpy.allclose(maskSpacing, resampledPixelSpacing) and numpy.allclose(imageSpacing, resampledPixelSpacing):
+    logger.info('New spacing equal to old, no resampling required')
+    return imageNode, maskNode
 
   spacingRatio = maskSpacing / resampledPixelSpacing
 

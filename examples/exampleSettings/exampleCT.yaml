@@ -29,7 +29,21 @@ featureClass:
           'Elongation',
           'Flatness'] # Only enable these shape descriptors (disables redundant Compactness 1 and Compactness 2)
   firstorder:
-  glcm:
+  glcm:  # disable redundant Compactness 1 and Compactness 2 features by specifying all other shape features
+    - 'Volume'
+    - 'SurfaceArea'
+    - 'SurfaceVolumeRatio'
+    - 'Sphericity'
+    - 'SphericalDisproportion'
+    - 'Maximum3DDiameter'
+    - 'Maximum2DDiameterSlice'
+    - 'Maximum2DDiameterColumn'
+    - 'Maximum2DDiameterRow'
+    - 'MajorAxis'
+    - 'MinorAxis'
+    - 'LeastAxis'
+    - 'Elongation'
+    - 'Flatness'
   glrlm:
   glszm:
 

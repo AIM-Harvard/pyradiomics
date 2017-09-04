@@ -385,6 +385,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       {\big(i+j-\mu_x-\mu_y\big)^2p(i,j)}
 
     Cluster Tendency is a measure of groupings of voxels with similar gray-level values.
+
+    .. note::
+      Cluster Tendency is mathematically identical to Sum Variance, the latter has therefore been removed from
+      PyRadiomics. See :ref:`here <radiomics-excluded-sumvariance-label>` for the proof.
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -745,6 +749,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Sum Average measures the relationship between occurrences of pairs
     with lower intensity values and occurrences of pairs with higher intensity
     values.
+
+    .. warning::
+      When GLCM is symmetrical, :math:`\mu_x = \mu_y`, and therefore :math:`\text{Sum Average} = \mu_x + \mu_y =
+      2 \mu_x = 2 * Joint Average`. See formulas (4.), (5.) and (6.) defined
+      :ref:`here <radiomics-excluded-sumvariance-label>` for the proof that :math:`\text{Sum Average} = \mu_x + \mu_y`.
+      In the default parameter files provided in the ``examples/exampleSettings``, this feature has been disabled.
     """
     pxAddy = self.coefficients['pxAddy']
     kValuesSum = self.coefficients['kValuesSum']
@@ -766,26 +776,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     sumentr = (-1) * numpy.sum((pxAddy * numpy.log2(pxAddy + eps)), 0)
     return sumentr.mean()
 
-  def getSumVarianceFeatureValue(self):
-    r"""
-    **26. Sum Variance**
-
-    .. math::
-
-      \textit{sum variance} = \displaystyle\sum^{2N_g}_{k=2}{(k-SA)^2p_{x+y}(k)}
-
-    Sum Variance is a measure of heterogeneity that places higher weights on
-    neighboring intensity level pairs that deviate more from the mean.
-    """
-    pxAddy = self.coefficients['pxAddy']
-    kValuesSum = self.coefficients['kValuesSum']
-    sumavg = numpy.sum((kValuesSum[:, None] * pxAddy), 0, keepdims=True)
-    sumvar = numpy.sum((pxAddy * ((kValuesSum[:, None] - sumavg) ** 2)), 0)
-    return sumvar.mean()
-
   def getSumSquaresFeatureValue(self):
     r"""
-    **27. Sum of Squares**
+    **26. Sum of Squares**
 
     .. math::
 

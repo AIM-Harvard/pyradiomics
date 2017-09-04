@@ -9,7 +9,7 @@ subdivided into the following classes:
 
 * :ref:`radiomics-firstorder-label` (19 features)
 * :ref:`radiomics-shape-label` (16 features)
-* :ref:`radiomics-glcm-label` (27 features)
+* :ref:`radiomics-glcm-label` (26 features)
 * :ref:`radiomics-glszm-label` (16 features)
 * :ref:`radiomics-glrlm-label` (16 features)
 

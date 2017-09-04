@@ -31,7 +31,7 @@ imageType:
 # Featureclasses, from which features must be calculated. If a featureclass is not mentioned, no features are calculated
 # for that class. Otherwise, the specified features are calculated, or, if none are specified, all are calculated.
 featureClass:
-  shape:
+  shape:  # disable redundant Compactness 1 and Compactness 2 features by specifying all other shape features
     - 'Volume'
     - 'SurfaceArea'
     - 'SurfaceVolumeRatio'
@@ -45,8 +45,33 @@ featureClass:
     - 'MinorAxis'
     - 'LeastAxis'
     - 'Elongation'
-    - 'Flatness'  # Only enable these shape descriptors (disables redundant Compactness 1 and Compactness 2)
+    - 'Flatness'
   firstorder: [] # specifying an empty list has the same effect as specifying nothing.
-  glcm: # for lists none values are allowed, in this case, all features are enabled
-  glrlm:
+  glcm:  # Disable SumAverage by specifying all other GLCM features available
+    - 'Autocorrelation'
+    - 'JointAverage'
+    - 'ClusterProminence'
+    - 'ClusterShade'
+    - 'ClusterTendency'
+    - 'Contrast'
+    - 'Correlation'
+    - 'DifferenceAverage'
+    - 'DifferenceEntropy'
+    - 'DifferenceVariance'
+    - 'Dissimilarity'
+    - 'JointEnergy'
+    - 'JointEntropy'
+    - 'Homogeneity1'
+    - 'Homogeneity2'
+    - 'Imc1'
+    - 'Imc2'
+    - 'Idm'
+    - 'Idmn'
+    - 'Id'
+    - 'Idn'
+    - 'InverseVariance'
+    - 'MaximumProbability'
+    - 'SumEntropy'
+    - 'SumSquares'
+  glrlm: # for lists none values are allowed, in this case, all features are enabled
   glszm:

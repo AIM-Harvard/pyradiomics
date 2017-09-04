@@ -65,6 +65,9 @@ mapping:
         range:
           min: 0
           max: 2
+      resegmentRange:
+        seq:
+          - type: float
       sigma:
         seq:
           - type: float

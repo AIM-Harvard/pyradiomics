@@ -481,7 +481,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      \textit{difference variance} = \displaystyle\sum^{N_g-1}_{k=0}{(1-DA)^2p_{x-y}(k)}
+      \textit{difference variance} = \displaystyle\sum^{N_g-1}_{k=0}{(k-DA)^2p_{x-y}(k)}
 
     Difference Variance is a measure of heterogeneity that places higher weights on
     differing intensity level pairs that deviate more from the mean.

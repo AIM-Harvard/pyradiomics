@@ -77,7 +77,7 @@ Internal API
   many 'empty' zone sizes (i.e. no zones of that size are present in the ROI). This reduces the size of the matrix,
   which therefore reduces the memory needed and the number of calculations performed in the vectorized operations.
   (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
-- Remove circular import statement in ``__init__.py` (circular with ``radiomics.base``)
+- Remove circular import statement in ``__init__.py`` (circular with ``radiomics.base``)
   (`#270 <https://github.com/Radiomics/pyradiomics/pull/270>`_)
 - Revise initialization of the feature class.
   (`#274 <https://github.com/Radiomics/pyradiomics/pull/274>`_)
@@ -99,7 +99,7 @@ Feature Calculation Changes
 - Remove feature *SumVariance*, rename *SumVariance2*  to *SumVariance*. *SumVariance* reflected the formula as is
   defined in the paper by Haralick et al [1]_. However, the variance is calculated by subtracting the entropy as opposed to
   subtracting the average, most likely due to a typo('f8' instead of 'f6'). *SumVariance2* reflected the formula where
-  the average is subtracted and is retrained as the only *SumVariance*.
+  the average is subtracted and is retained as the only *SumVariance*.
   (`#233 <https://github.com/Radiomics/pyradiomics/pull/233>`_)
 - Redefine features *Elongation* and *Flatness* as the inverse of the original definition. This prevents a returned
   value of NaN when the shape is completely flat. (`#234 <https://github.com/Radiomics/pyradiomics/pull/234>`_)

@@ -50,9 +50,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   - :math:`p_x(i) = \sum^{N_g}_{j=1}{P(i,j)}` be the marginal row probabilities
   - :math:`p_y(j) = \sum^{N_g}_{i=1}{P(i,j)}` be the marginal column probabilities
   - :math:`\mu_x` be the mean gray level intensity of :math:`p_x` and defined as
-    :math:`\mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)i}`
+    :math:`\mu_x = \displaystyle\sum^{N_g}_{i=1}{p_x(i)i}`
   - :math:`\mu_y` be the mean gray level intensity of :math:`p_y` and defined as
-    :math:`\mu_y = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)j}`
+    :math:`\mu_y = \displaystyle\sum^{N_g}_{j=1}{p_y(j)j}`
   - :math:`\sigma_x` be the standard deviation of :math:`p_x`
   - :math:`\sigma_y` be the standard deviation of :math:`p_y`
   - :math:`p_{x+y}(k) = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)},\text{ where }i+j=k,\text{ and }k=2,3,\dots,2N_g`
@@ -318,13 +318,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ac = numpy.sum(self.P_glcm * (i * j)[:, :, None], (0, 1))
     return ac.mean()
 
-  def getAverageIntensityFeatureValue(self):
+  def getJointAverageFeatureValue(self):
     r"""
     **2. Joint Average**
 
     .. math::
 
-      \mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)i}
+      \textit{joint average} = \mu_x = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)i}
 
     Returns the mean gray level intensity of the :math:`i` distribution.
 
@@ -344,7 +344,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. math::
 
       \textit{cluster prominence} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
-      {\big( i+j-\mu_x(i)-\mu_y(j)\big)^4p(i,j)}
+      {\big( i+j-\mu_x-\mu_y\big)^4p(i,j)}
 
     Cluster Prominence is a measure of the skewness and asymmetry of the GLCM. A higher values implies more asymmetry
     about the mean while a lower value indicates a peak near the mean value and less variation about the mean.
@@ -363,7 +363,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. math::
 
       \textit{cluster shade} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
-      {\big(i+j-\mu_x(i)-\mu_y(j)\big)^3p(i,j)}
+      {\big(i+j-\mu_x-\mu_y\big)^3p(i,j)}
 
     Cluster Shade is a measure of the skewness and uniformity of the GLCM.
     A higher cluster shade implies greater asymmetry about the mean.
@@ -382,9 +382,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. math::
 
       \textit{cluster tendency} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
-      {\big(i+j-\mu_x(i)-\mu_y(j)\big)^2p(i,j)}
+      {\big(i+j-\mu_x-\mu_y\big)^2p(i,j)}
 
     Cluster Tendency is a measure of groupings of voxels with similar gray-level values.
+
+    .. note::
+      Cluster Tendency is mathematically identical to Sum Variance, the latter has therefore been removed from
+      PyRadiomics. See :ref:`here <radiomics-excluded-sumvariance-label>` for the proof.
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -415,7 +419,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      \textit{correlation} = \frac{\sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)ij-\mu_x(i)\mu_y(j)}}{\sigma_x(i)\sigma_y(j)}
+      \textit{correlation} = \frac{\sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)ij-\mu_x\mu_y}}{\sigma_x(i)\sigma_y(j)}
 
     Correlation is a value between 0 (uncorrelated) and 1 (perfectly correlated) showing the
     linear dependency of gray level values to their respective voxels in the GLCM.
@@ -477,7 +481,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      \textit{difference variance} = \displaystyle\sum^{N_g-1}_{k=0}{(1-DA)^2p_{x-y}(k)}
+      \textit{difference variance} = \displaystyle\sum^{N_g-1}_{k=0}{(k-DA)^2p_{x-y}(k)}
 
     Difference Variance is a measure of heterogeneity that places higher weights on
     differing intensity level pairs that deviate more from the mean.
@@ -505,13 +509,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     dis = numpy.sum((self.P_glcm * (numpy.abs(i - j))[:, :, None]), (0, 1))
     return dis.mean()
 
-  def getEnergyFeatureValue(self):
+  def getJointEnergyFeatureValue(self):
     r"""
     **12. Joint Energy**
 
     .. math::
 
-      \textit{energy} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(p(i,j)\big)^2}
+      \textit{joint energy} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\big(p(i,j)\big)^2}
 
     Energy is a measure of homogeneous patterns
     in the image. A greater Energy implies that there are more instances
@@ -524,13 +528,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ene = numpy.sum((self.P_glcm ** 2), (0, 1))
     return ene.mean()
 
-  def getEntropyFeatureValue(self):
+  def getJointEntropyFeatureValue(self):
     r"""
     **13. Joint Entropy**
 
     .. math::
 
-      \textit{entropy} = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
+      \textit{joint entropy} = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
       {p(i,j)\log_2\big(p(i,j)+\epsilon\big)}
 
     Entropy is a measure of the randomness/variability in neighborhood intensity values.
@@ -745,6 +749,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Sum Average measures the relationship between occurrences of pairs
     with lower intensity values and occurrences of pairs with higher intensity
     values.
+
+    .. warning::
+      When GLCM is symmetrical, :math:`\mu_x = \mu_y`, and therefore :math:`\text{Sum Average} = \mu_x + \mu_y =
+      2 \mu_x = 2 * Joint Average`. See formulas (4.), (5.) and (6.) defined
+      :ref:`here <radiomics-excluded-sumvariance-label>` for the proof that :math:`\text{Sum Average} = \mu_x + \mu_y`.
+      In the default parameter files provided in the ``examples/exampleSettings``, this feature has been disabled.
     """
     pxAddy = self.coefficients['pxAddy']
     kValuesSum = self.coefficients['kValuesSum']
@@ -766,26 +776,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     sumentr = (-1) * numpy.sum((pxAddy * numpy.log2(pxAddy + eps)), 0)
     return sumentr.mean()
 
-  def getSumVarianceFeatureValue(self):
-    r"""
-    **26. Sum Variance**
-
-    .. math::
-
-      \textit{sum variance} = \displaystyle\sum^{2N_g}_{k=2}{(k-SA)^2p_{x+y}(k)}
-
-    Sum Variance is a measure of heterogeneity that places higher weights on
-    neighboring intensity level pairs that deviate more from the mean.
-    """
-    pxAddy = self.coefficients['pxAddy']
-    kValuesSum = self.coefficients['kValuesSum']
-    sumavg = numpy.sum((kValuesSum[:, None] * pxAddy), 0, keepdims=True)
-    sumvar = numpy.sum((pxAddy * ((kValuesSum[:, None] - sumavg) ** 2)), 0)
-    return sumvar.mean()
-
   def getSumSquaresFeatureValue(self):
     r"""
-    **27. Sum of Squares**
+    **26. Sum of Squares**
 
     .. math::
 

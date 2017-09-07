@@ -43,9 +43,9 @@ mapping:
           min-ex: 0
       resampledPixelSpacing:
         seq:
-          - type: int
+          - type: float
             range:
-              min-ex: 0
+              min: 0
       interpolator:
         type: any
         func: checkInterpolator

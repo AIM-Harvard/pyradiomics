@@ -1,4 +1,4 @@
-FROM centos:5
+FROM centos:6
 MAINTAINER http://github.com/radiomics
 
 RUN yum update -y && \
@@ -11,6 +11,8 @@ RUN yum update -y && \
    gettext \
    openssl-devel \
    perl \
+   perl-CPAN \
+   perl-ExtUtils-MakeMaker \
    wget \
    zlib-devel
 

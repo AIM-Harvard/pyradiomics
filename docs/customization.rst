@@ -154,6 +154,17 @@ Feature Extractor Level
 .. note::
     Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
 
+*Resegmentation*
+
+- resegmentRange [None]: List of 2 floats, specifies the lower and upper threshold, respectively. Segmented voxels
+  outside this range are removed from the mask prior to feature calculation. When the value is None (default), no
+  resegmentation is performed. Resegemented size is checked (using parameter ``minimumROISize``, default 1) and upon
+  fail, an error is logged and the mask is reset to the original mask.
+
+.. note::
+    This only affects first order and texture classes. No resegmentation is performed prior to calculating shape
+    features.
+
 *Mask validation*
 
 - minimumROIDimensions [1]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively).
@@ -237,6 +248,7 @@ Feature Class Level
     This only affects the GLCM and GLRLM feature classes. Moreover, weighting is applied differently in those classes.
     For more information on how weighting is applied, see the documentation on :ref:`GLCM <radiomics-glcm-label>` and
     :ref:`GLRLM <radiomics-glszm-label>`.
+
 
 Feature Class Specific Settings
 +++++++++++++++++++++++++++++++

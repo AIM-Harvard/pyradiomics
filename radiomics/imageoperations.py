@@ -251,7 +251,7 @@ def checkMask(imageNode, maskNode, **kwargs):
     correctedMask = _correctMask(imageNode, maskNode, label)
     if correctedMask is None:  # Resampling failed (ROI outside image physical space
       logger.error('Image/Mask correction failed, ROI invalid (not found or outside of physical image bounds)')
-      return (boundingBox, correctedMask)
+      return boundingBox, correctedMask
 
     # Resampling succesful, try to calculate boundingbox
     try:
@@ -259,7 +259,7 @@ def checkMask(imageNode, maskNode, **kwargs):
     except RuntimeError:
       logger.error('Calculation of bounding box failed, for more information run with DEBUG logging and check log')
       logger.debug('Bounding box calculation with resampled mask failed', exc_info=True)
-      return (boundingBox, correctedMask)
+      return boundingBox, correctedMask
 
   # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
   boundingBox = numpy.array(lsif.GetBoundingBox(label))
@@ -268,16 +268,16 @@ def checkMask(imageNode, maskNode, **kwargs):
   ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
   if ndims <= minDims:
     logger.error('mask has too few dimensions (number of dimensions %d, minimum required %d)', ndims, minDims)
-    return (boundingBox, correctedMask)
+    return None, correctedMask
 
   if minSize is not None:
     logger.debug('Checking minimum size requirements (minimum size: %d)', minSize)
     roiSize = lsif.GetCount(label)
     if roiSize <= minSize:
       logger.error('Size of the ROI is too small (minimum size: %g, ROI size: %g', minSize, roiSize)
-      return (boundingBox, correctedMask)
+      return None, correctedMask
 
-  return (boundingBox, correctedMask)
+  return boundingBox, correctedMask
 
 
 def _correctMask(imageNode, maskNode, label):
@@ -575,19 +575,41 @@ def normalizeImage(image, scale=1, outliers=None):
   return image
 
 
-def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
-  # this mode is useful to generate the mask of thresholded voxels
-  if insideValue:
-    tif = sitk.BinaryThresholdImageFilter()
-    tif.SetInsideValue(insideValue)
-    tif.SetLowerThreshold(lowerThreshold)
-    tif.SetUpperThreshold(upperThreshold)
-  else:
-    tif = sitk.ThresholdImageFilter()
-    tif.SetLower(lowerThreshold)
-    tif.SetUpper(upperThreshold)
-  tif.SetOutsideValue(outsideValue)
-  return tif.Execute(inputImage)
+def resegmentMask(imageNode, maskNode, resegmentRange, label=1):
+  """
+  Resegment the Mask based on the range specified in ``resegmentRange``. All voxels with a gray level outside the
+  range specified are removed from the mask. The resegmented mask is therefore always equal or smaller in size than
+  the original mask. The resegemented mask is then checked for size (as specified by parameter ``minimumROISize``,
+  defaults to minimum size 1). When this check fails, an error is logged and maskArray is reset to the original mask.
+  """
+  global logger
+
+  if resegmentRange is None:
+    return maskNode
+
+  logger.debug('Resegmenting mask (range %s)', resegmentRange)
+
+  im_arr = sitk.GetArrayFromImage(imageNode)
+  ma_arr = (sitk.GetArrayFromImage(maskNode) == label)  # boolean array
+
+  oldSize = numpy.sum(ma_arr)
+  # Get a boolean array specifying per voxel if its gray value is inside the range specified by resegmentRange.
+  intensitySegmentation = numpy.logical_and(im_arr >= resegmentRange[0],
+                                            im_arr <= resegmentRange[1])
+  # Then, take the intersection between voxels segmented (ma_arr) and
+  # voxels inside specified range (intensitySegmentation)
+  ma_arr = numpy.logical_and(ma_arr, intensitySegmentation)
+  roiSize = numpy.sum(ma_arr)
+
+  # Transform the boolean array back to an image with the correct voxels set to the label value
+  newMask_arr = numpy.zeros(ma_arr.shape, dtype='int')
+  newMask_arr[ma_arr] = label
+
+  newMask = sitk.GetImageFromArray(newMask_arr)
+  newMask.CopyInformation(maskNode)
+  logger.debug('Resegmentation complete, new size: %d voxels (excluded %d voxels)', roiSize, oldSize - roiSize)
+
+  return newMask
 
 
 def getOriginalImage(inputImage, **kwargs):

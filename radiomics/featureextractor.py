@@ -415,7 +415,7 @@ class RadiomicsFeaturesExtractor:
     padding as specified in padDistance) after assignment of image and mask.
     """
     self.logger.info('Loading image and mask')
-    if isinstance(ImageFilePath, six.string_types) and os.path.exists(ImageFilePath):
+    if isinstance(ImageFilePath, six.string_types) and os.path.isfile(ImageFilePath):
       image = sitk.ReadImage(ImageFilePath)
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       image = ImageFilePath
@@ -423,7 +423,7 @@ class RadiomicsFeaturesExtractor:
       self.logger.warning('Error reading image Filepath or SimpleITK object')
       return None, None  # this function is expected to always return a tuple of 2 elements
 
-    if isinstance(MaskFilePath, six.string_types) and os.path.exists(MaskFilePath):
+    if isinstance(MaskFilePath, six.string_types) and os.path.isfile(MaskFilePath):
       mask = sitk.ReadImage(MaskFilePath)
     elif isinstance(MaskFilePath, sitk.SimpleITK.Image):
       mask = MaskFilePath

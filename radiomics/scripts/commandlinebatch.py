@@ -68,12 +68,16 @@ def main():
     cr = csv.DictReader(args.inFile, lineterminator='\n')
     flists = [row for row in cr]
     args.inFile.close()
+
+    # Check if required Image and Mask columns are present
+    if 'Image' not in cr.fieldnames:
+      logger.error('Required column "Image" not present in input, unable to extract features...')
+      exit(-1)
+    if 'Mask' not in cr.fieldnames:
+      logger.error('Required column "Mask" not present in input, unable to extract features...')
+      exit(-1)
   except Exception:
     logging.error('CSV READ FAILED', exc_info=True)
-    args.inFile.close()
-    args.outFile.close()
-    if args.log_file is not None:
-      args.log_file.close()
     exit(-1)
 
   # Initialize extractor
@@ -85,8 +89,6 @@ def main():
       extractor = featureextractor.RadiomicsFeaturesExtractor()
   except Exception:
     logger.error('EXTRACTOR INITIALIZATION FAILED', exc_info=True)
-    args.outFile.close()
-    args.log_file.close()
     exit(-1)
 
   # Extract features
@@ -94,6 +96,13 @@ def main():
 
   headers = None
   for idx, entry in enumerate(flists, start=1):
+    # Check if the required columns have a value, if not, skip them.
+    if entry['Image'] is '':
+      logger.error('Missing value in column "Image", cannot process. Skipping patient (%d/%d)', idx, len(flists))
+      continue
+    if entry['Mask'] is '':
+      logger.error('Missing value in column "Mask", cannot process. Skipping patient (%d/%d)', idx, len(flists))
+      continue
 
     logger.info("(%d/%d) Processing Patient (Image: %s, Mask: %s)", idx, len(flists), entry['Image'], entry['Mask'])
 
@@ -101,6 +110,13 @@ def main():
     maskFilepath = entry['Mask']
 
     if (imageFilepath is not None) and (maskFilepath is not None):
+      if not os.path.isabs(imageFilepath):
+        imageFilepath = os.path.abspath(os.path.join(os.path.dirname(args.inFile.name), imageFilepath))
+        logger.debug('Updated relative image filepath to be relative to input CSV: %s', imageFilepath)
+      if not os.path.isabs(maskFilepath):
+        maskFilepath = os.path.abspath(os.path.join(os.path.dirname(args.inFile.name), maskFilepath))
+        logger.debug('Updated relative mask filepath to be relative to input CSV: %s', maskFilepath)
+
       featureVector = collections.OrderedDict(entry)
       if args.shorten:
         featureVector['Image'] = os.path.basename(imageFilepath)

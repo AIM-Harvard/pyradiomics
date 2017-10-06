@@ -6,6 +6,16 @@ Release Notes
 Next Release
 ------------
 
+-----------------
+PyRadiomics 1.3.0
+-----------------
+
+Feature Calculation Changes
+###########################
+
+- Remove feature *Sum Variance*, as this is mathematically equal to *Cluster Tendency*.
+  (`#300 <https://github.com/Radiomics/pyradiomics/pull/300>`_)
+
 New Features
 ############
 
@@ -16,6 +26,13 @@ New Features
   dimension as it is in the original (non-resampled) mask. This allows resampling over a subset of dimension (e.g. only
   in-plane resampling when out-of-plane spacing is set to 0).
   (`#299 <https://github.com/Radiomics/pyradiomics/pull/299>`_)
+- Add optional resegmentation of mask based on customizable threshold.
+  (`#302 <https://github.com/Radiomics/pyradiomics/pull/302>`_)
+- Add Neighbouring Gray Tone Difference Matrix (NGTDM) (`#296 <https://github.com/Radiomics/pyradiomics/pull/296>`_)
+- Add Add Gray Level Dependence Matrix (GLDM) (`#295 <https://github.com/Radiomics/pyradiomics/pull/295>`_)
+- Add a docker file that exposes the PyRadiomics commandline tools.
+  (`#297 <https://github.com/Radiomics/pyradiomics/pull/297>`_,
+  `#301 <https://github.com/Radiomics/pyradiomics/pull/301>`_)
 
 Bug fixes
 #########
@@ -38,7 +55,7 @@ Bug fixes
   jupyter/datascience-notebook).
   (`#287 <https://github.com/Radiomics/pyradiomics/pull/287>`_)
 - For GLRLM and GLSZM, force2D keyword is passed manually, but was incorrectly named and therefore ignored. Fix name to
-  enable forced 2D extraction for GLRLM and GLSZM.
+  enable forced 2D extraction for GLRLM and GLSZM. (`26b9ef3 <https://github.com/Radiomics/pyradiomics/commit/26b9ef3>`_)
 
 Tests
 #####
@@ -54,6 +71,8 @@ Tests
 Documentation
 #############
 
+`version 1.3.0 docs <http://pyradiomics.readthedocs.io/en/1.3.0>`_
+
 - Update reference. (`#271 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
 - Move section "Customizing the Extraction" to the top level, to make it more visible.
   (`#271 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
@@ -66,6 +85,7 @@ Documentation
 - Include contributing guidelines in sphinx-generated documentation and add a section on sharing parameter files.
   (`#294 <https://github.com/Radiomics/pyradiomics/pull/294>`_)
 - Insert missing line to enable all features in documentation on using the feature classes directly.
+  (`5ce9f48 <https://github.com/Radiomics/pyradiomics/commit/5ce9f48>`_)
 
 Examples
 ########

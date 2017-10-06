@@ -12,6 +12,7 @@ subdivided into the following classes:
 * :ref:`radiomics-glcm-label` (26 features)
 * :ref:`radiomics-glszm-label` (16 features)
 * :ref:`radiomics-glrlm-label` (16 features)
+* :ref:`radiomics-ngtdm-label` (5 features)
 
 All feature classes, with the exception of shape can be calculated on either the original image and/or a derived image,
 obtained by applying one of several filters. The shape descriptors are independent of gray value, and are extracted from
@@ -72,6 +73,17 @@ Gray Level Run Length Matrix (GLRLM) Features
 ---------------------------------------------
 
 .. automodule:: radiomics.glrlm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
+.. _radiomics-ngtdm-label:
+
+Neigbouring Gray Tone Difference Matrix (NGTDM) Features
+--------------------------------------------------------
+
+.. automodule:: radiomics.ngtdm
     :members:
     :undoc-members:
     :show-inheritance:

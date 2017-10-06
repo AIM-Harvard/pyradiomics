@@ -74,6 +74,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   The following class specific settings are possible:
 
+  - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
+    angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles`
   - symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
     which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`. A symmetrical matrix
     corresponds to the GLCM as defined by Haralick et al.

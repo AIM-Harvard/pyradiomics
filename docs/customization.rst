@@ -275,6 +275,11 @@ Feature Class Specific Settings
   which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`. A symmetrical matrix
   corresponds to the GLCM as defined by Haralick et al.
 
+*GLDM*
+
+- gldm_a [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is
+  considered dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
+
 .. _radiomics-parameter-file-label:
 
 --------------

@@ -10,8 +10,8 @@ import pykwalify.core
 import SimpleITK as sitk
 import six
 
-import radiomics
-from radiomics import generalinfo, getFeatureClasses, getImageTypes, getParameterValidationFiles, imageoperations
+from radiomics import enableCExtensions, generalinfo, getFeatureClasses, getImageTypes, getParameterValidationFiles, \
+  imageoperations
 
 
 class RadiomicsFeaturesExtractor:
@@ -120,6 +120,11 @@ class RadiomicsFeaturesExtractor:
     If supplied file does not match the requirements (i.e. unrecognized names or invalid values for a setting), a
     pykwalify error is raised.
     """
+    # Ensure pykwalify.core has a log handler (needed when parameter validation fails)
+    if len(pykwalify.core.log.handlers) == 0 and len(logging.getLogger().handlers) == 0:
+      # No handler available for either pykwalify or root logger, provide first radiomics handler (outputs to stderr)
+      pykwalify.core.log.addHandler(logging.getLogger('radiomics').handlers[0])
+
     schemaFile, schemaFuncs = getParameterValidationFiles()
     c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
     params = c.validate()
@@ -231,7 +236,7 @@ class RadiomicsFeaturesExtractor:
     To disable input images, use :py:func:`enableInputImageByName` or :py:func:`disableAllInputImages`
     instead.
 
-    :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings
+    :param enabledImagetypes: dictionary, key is imagetype (original, wavelet or log) and value is custom settings
       (dictionary)
     """
     self.logger.debug('Updating enabled images types with %s', enabledImagetypes)
@@ -307,7 +312,7 @@ class RadiomicsFeaturesExtractor:
     """
     # Enable or disable C extensions for high performance matrix calculation. Only logs a message (INFO) when setting is
     # successfully changed. If an error occurs, full-python mode is forced and a warning is logged.
-    radiomics.enableCExtensions(self.settings['enableCExtensions'])
+    enableCExtensions(self.settings['enableCExtensions'])
     if self.geometryTolerance != self.settings.get('geometryTolerance'):
       self._setTolerance()
 

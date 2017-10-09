@@ -29,7 +29,7 @@ Which python versions is PyRadiomics compatible with?
 #####################################################
 
 PyRadiomics is compatible with both python 2 and python 3. The automated testing uses python versions 2.7, 3.4 and 3.5
-(both 32 and 64 bits). Python < 2.6 is not supported. Other python versions may be compatible with PyRadiomics, but this
+(only 64 bits architecture). Python < 2.6 is not supported. Other python versions may be compatible with PyRadiomics, but this
 is not actively tested and therefore not guaranteed to work.
 
 Input / Customization

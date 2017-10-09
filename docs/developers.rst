@@ -203,9 +203,9 @@ To ensure consistency in the extraction provided by PyRadiomics, continuous test
 source code after each commit. These tests are defined in the test folder and used to run tests for the following
 environments:
 
-    - Python 2.7 32 and 64 bits (Windows, Linux and Mac)
-    - Python 3.4 32 and 64 bits (Windows and Linux)
-    - Python 3.5 32 and 64 bits (Windows and Linux)
+    - Python 2.7 64 bits (Windows, Linux and Mac)
+    - Python 3.4 64 bits (Windows and Linux)
+    - Python 3.5 64 bits (Windows and Linux)
 
 .. note::
 

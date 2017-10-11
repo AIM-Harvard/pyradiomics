@@ -35,10 +35,14 @@ jobs:
           name: Install pyradiomics in Python 2 and 3
           command: |
             source activate python2
+            python -m pip install -U cmake
+            python -m pip install -U scikit-build
             python -m pip install --no-cache-dir -r requirements.txt
             python -m pip install --no-cache-dir -r requirements-dev.txt
             python setup.py install
             source activate root
+            python -m pip install -U cmake
+            python -m pip install -U scikit-build
             python -m pip install --no-cache-dir -r requirements.txt
             python -m pip install --no-cache-dir -r requirements-dev.txt
             python setup.py install

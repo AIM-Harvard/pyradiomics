@@ -1,11 +1,20 @@
-
-[![Appveyor](https://ci.appveyor.com/api/projects/status/tw69xbbeyluk7fl7/branch/master?svg=true)](https://ci.appveyor.com/project/Radiomics/pyradiomics/branch/master)
-
-[![Circle CI](https://circleci.com/gh/Radiomics/pyradiomics.svg?style=svg&circle-token=a4748cf0de5fad2c12bc93a485282378551c3584)](https://circleci.com/gh/Radiomics/pyradiomics)
-
-[![Travis CI](https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master)](https://travis-ci.org/Radiomics/pyradiomics)
-
 # pyradiomics v1.3.0
+
+## Build Status
+
+| Linux                          | macOS                         | Windows                       |
+|--------------------------------|-------------------------------|-------------------------------|
+| [![][circleci]][circleci-lnk]  | [![][travisci]][travisci-lnk] | [![][appveyor]][appveyor-lnk] |
+
+
+[appveyor]: https://ci.appveyor.com/api/projects/status/tw69xbbeyluk7fl7/branch/master?svg=true
+[appveyor-lnk]: https://ci.appveyor.com/project/Radiomics/pyradiomics/branch/master
+
+[circleci]: https://circleci.com/gh/Radiomics/pyradiomics.svg?style=svg&circle-token=a4748cf0de5fad2c12bc93a485282378551c3584
+[circleci-lnk]: https://circleci.com/gh/Radiomics/pyradiomics
+
+[travisci]: https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master
+[travisci-lnk]: https://travis-ci.org/Radiomics/pyradiomics
 
 ## Radiomics feature extraction in Python
 

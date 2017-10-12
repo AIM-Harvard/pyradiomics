@@ -6,6 +6,39 @@ Release Notes
 Next Release
 ------------
 
+Bug fixes
+#########
+
+- Ensure PyKwalify has a log handler, which is needed when parameter file validation fails.
+  (`#309 <https://github.com/Radiomics/pyradiomics/pull/309>`_)
+
+Tests
+#####
+
+- Improve testing badge layout. (`#312 <https://github.com/Radiomics/pyradiomics/pull/312>`_)
+- Remove unused testing configuration files. (`#313 <https://github.com/Radiomics/pyradiomics/pull/313>`_)
+
+Documentation
+#############
+
+- Update documentation of ``base.py`` (`#306 <https://github.com/Radiomics/pyradiomics/pull/306>`_)
+- Update notebooks to reflect most recent version of PyRadiomics.
+
+Examples
+########
+
+- Add example for batchprocessing using a multithreaded approach.
+  (`#305 <https://github.com/Radiomics/pyradiomics/pull/305>`_)
+
+Internal API
+############
+
+- Update batch script for the commandline interface. Ensures all required input is available and relative filepaths are
+  relative to the input file, not the current working directory.
+  (`#307 <https://github.com/Radiomics/pyradiomics/pull/307>`_)
+- Remove support for 32-bits python, as memory errors can arise when extracting from many or large images in 32-bits
+  python. (`#310 <https://github.com/Radiomics/pyradiomics/pull/310>`_)
+
 -----------------
 PyRadiomics 1.3.0
 -----------------

@@ -15,8 +15,6 @@ import numpy  # noqa: F401
 
 from . import imageoperations
 
-if sys.version_info < (2, 6, 0):
-  raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
 
 def setVerbosity(level):
   """

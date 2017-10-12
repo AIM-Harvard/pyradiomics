@@ -69,7 +69,7 @@ Furthermore, an instruction video is available [here](http://radiomics.io/pyradi
 
 ### Installation
 
-PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4.
+PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4 (64-bits).
 To install this package on unix like systems run the following commands from the root directory:
 
     python -m pip install -r requirements.txt

@@ -840,7 +840,7 @@ def getSquareImage(inputImage, **kwargs):
   Resulting values are rescaled on the range of the initial original image and negative intensities are made
   negative in resultant filtered image.
 
-  :math:`f(x) = (cx)^2,\text{ where } c=\displaystyle\frac{1}{\sqrt{\max(x)}}`
+  :math:`f(x) = (cx)^2,\text{ where } c=\displaystyle\frac{1}{\sqrt{\max(|x|)}}`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
@@ -850,7 +850,7 @@ def getSquareImage(inputImage, **kwargs):
 
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = 1 / numpy.sqrt(numpy.max(im))
+  coeff = 1 / numpy.sqrt(numpy.max(numpy.abs(im)))
   im = (coeff * im) ** 2
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
@@ -868,7 +868,7 @@ def getSquareRootImage(inputImage, **kwargs):
 
   :math:`f(x) = \left\{ {\begin{array}{lcl}
   \sqrt{cx} & \mbox{for} & x \ge 0 \\
-  -\sqrt{-cx} & \mbox{for} & x < 0\end{array}} \right.,\text{ where } c=\max(x)`
+  -\sqrt{-cx} & \mbox{for} & x < 0\end{array}} \right.,\text{ where } c=\max(|x|)`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
@@ -878,7 +878,7 @@ def getSquareRootImage(inputImage, **kwargs):
 
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = numpy.max(im)
+  coeff = numpy.max(numpy.abs(im))
   im[im > 0] = numpy.sqrt(im[im > 0] * coeff)
   im[im < 0] = - numpy.sqrt(-im[im < 0] * coeff)
   im = sitk.GetImageFromArray(im)
@@ -897,9 +897,7 @@ def getLogarithmImage(inputImage, **kwargs):
 
   :math:`f(x) = \left\{ {\begin{array}{lcl}
   c\log{(x + 1)} & \mbox{for} & x \ge 0 \\
-  -c\log{(-x + 1)} & \mbox{for} & x < 0\end{array}} \right. \text{, where } c=\left\{ {\begin{array}{lcl}
-  \frac{\max(x)}{\log(\max(x) + 1)} & if & \max(x) \geq 0 \\
-  \frac{\max(x)}{-\log(-\max(x) - 1)} & if & \max(x) < 0 \end{array}} \right.`
+  -c\log{(-x + 1)} & \mbox{for} & x < 0\end{array}} \right. \text{, where } c=\frac{\max(|x|)}{\log(\max(|x|) + 1)}`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
@@ -909,10 +907,10 @@ def getLogarithmImage(inputImage, **kwargs):
 
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  im_max = numpy.max(im)
+  im_max = numpy.max(numpy.abs(im))
   im[im > 0] = numpy.log(im[im > 0] + 1)
   im[im < 0] = - numpy.log(- (im[im < 0] - 1))
-  im = im * (im_max / numpy.max(im))
+  im = im * (im_max / numpy.max(numpy.abs(im)))
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
 
@@ -926,7 +924,7 @@ def getExponentialImage(inputImage, **kwargs):
 
   Resulting values are rescaled on the range of the initial original image.
 
-  :math:`f(x) = e^{cx},\text{ where } c=\displaystyle\frac{\log(\max(x))}{\max(x)}`
+  :math:`f(x) = e^{cx},\text{ where } c=\displaystyle\frac{\log(\max(|x|))}{\max(|x|)}`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
@@ -936,7 +934,8 @@ def getExponentialImage(inputImage, **kwargs):
 
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = numpy.log(numpy.max(im)) / numpy.max(im)
+  im_max = numpy.max(numpy.abs(im))
+  coeff = numpy.log(im_max) / im_max
   im = numpy.exp(coeff * im)
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)

@@ -68,6 +68,8 @@ mapping:
       resegmentRange:
         seq:
           - type: float
+      preCrop:
+        type: bool
       sigma:
         seq:
           - type: float

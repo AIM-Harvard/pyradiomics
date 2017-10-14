@@ -85,6 +85,7 @@ class RadiomicsFeaturesExtractor:
             'removeOutliers': None,
             'resampledPixelSpacing': None,  # No resampling by default
             'interpolator': 'sitkBSpline',  # Alternative: sitk.sitkBSpline
+            'preCrop': False,
             'padDistance': 5,
             'distances': [1],
             'force2D': False,
@@ -446,6 +447,15 @@ class RadiomicsFeaturesExtractor:
                                                   self.settings['interpolator'],
                                                   self.settings['label'],
                                                   self.settings['padDistance'])
+    elif self.settings['preCrop']:
+      bb, correctedMask = imageoperations.checkMask(image, mask, **self.settings)
+      if correctedMask is not None:
+        # Update the mask if it had to be resampled
+        mask = correctedMask
+      if bb is None:
+        # Mask checks failed
+        return None, None
+      image, mask = imageoperations.cropToTumorMask(image, mask, bb, self.settings['padDistance'])
 
     return image, mask
 

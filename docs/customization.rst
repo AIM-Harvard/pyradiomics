@@ -154,6 +154,17 @@ Feature Extractor Level
 .. note::
     Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
 
+*Pre-Cropping*
+
+- preCrop [False]: Boolean, if true and resampling is disabled, crops the image onto the bounding box with additional
+  padding as specified in ``padDistance``. Similar to padding after resampling, padding does not exceed original image
+  bounds after pre-cropping. Setting ``preCrop`` to true speeds up extraction and makes it less memory intensive,
+  especially in the case of large images with only small ROIs.
+
+.. note::
+  Because image and mask are also cropped onto the bounding box before they are passed to the feature classes,
+  pre-crop is only beneficial when filters are enabled.
+
 *Resegmentation*
 
 - resegmentRange [None]: List of 2 floats, specifies the lower and upper threshold, respectively. Segmented voxels

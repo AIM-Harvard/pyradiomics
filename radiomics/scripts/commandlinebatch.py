@@ -7,6 +7,8 @@ import json
 import logging
 import os.path
 
+import numpy
+
 import radiomics
 from radiomics import featureextractor
 
@@ -22,6 +24,8 @@ parser.add_argument('--format', '-f', choices=['csv', 'json'], default='csv', he
                     'Default is "csv": one row of feature names, followed by one row of feature values for each '
                     'image-mask combination. For "json": Features are written in a JSON format dictionary '
                     '"{name:value}", one line per image-mask combination')
+parser.add_argument('--skip-nans', action='store_true',
+                    help='Add this argument to skip returning features that have an invalid result (NaN)')
 parser.add_argument('--param', '-p', metavar='FILE', type=str, default=None,
                     help='Parameter file containing the settings to be used in extraction')
 parser.add_argument('--label', '-l', metavar='N', default=None, type=int,
@@ -131,6 +135,13 @@ def main():
 
         featureVector.update(extractor.execute(imageFilepath, maskFilepath, label))
 
+        # if specified, skip NaN values
+        if args.skip_nans:
+          for key in list(featureVector.keys()):
+            if isinstance(featureVector[key], float) and numpy.isnan(featureVector[key]):
+              logger.debug('Feature %s computed NaN, removing from results', key)
+              del featureVector[key]
+
         if args.format == 'csv':
           writer = csv.writer(args.outFile, lineterminator='\n')
           if headers is None:
@@ -139,7 +150,7 @@ def main():
 
           row = []
           for h in headers:
-            row.append(featureVector.get(h, "N/A"))
+            row.append(featureVector.get(h, ""))
           writer.writerow(row)
         elif args.format == 'json':
           json.dump(featureVector, args.out)

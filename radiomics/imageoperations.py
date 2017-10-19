@@ -363,7 +363,7 @@ def _checkROI(imageNode, maskNode, label):
   return bb
 
 
-def cropToTumorMask(imageNode, maskNode, boundingBox):
+def cropToTumorMask(imageNode, maskNode, boundingBox, padDistance=0):
   """
   Create a sitkImage of the segmented region of the image based on the input label.
 
@@ -382,8 +382,12 @@ def cropToTumorMask(imageNode, maskNode, boundingBox):
   maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
   size = numpy.array(maskNode.GetSize())
 
-  ijkMinBounds = boundingBox[0::2]
-  ijkMaxBounds = size - boundingBox[1::2] - 1
+  ijkMinBounds = boundingBox[0::2] - padDistance
+  ijkMaxBounds = size - boundingBox[1::2] - padDistance - 1
+
+  # Ensure cropped area is not outside original image bounds
+  ijkMinBounds = numpy.maximum(ijkMinBounds, 0)
+  ijkMaxBounds = numpy.maximum(ijkMaxBounds, 0)
 
   # Crop Image
   logger.debug('Cropping to size %s', (boundingBox[1::2] - boundingBox[0::2]) + 1)

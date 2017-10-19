@@ -75,7 +75,9 @@ setting:
 
   # Resampling:
   # Not enabled in this example. However, because texture calculation assumes isotropic spacing, a forced 2D extraction
-  # is used, therefore only requiring the voxels to be isotropic in-plane.
+  # is used, therefore only requiring the voxels to be isotropic in-plane. Enable pre-cropping to reduce memory
+  # footprint and speed up applying the filters.
+  preCrop: true
 
   # Forced 2D extracion:
   # This allows to calculate texture features using anisotropic voxels (although it assumes that voxels are isotropic

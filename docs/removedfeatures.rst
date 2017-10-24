@@ -14,8 +14,8 @@ For included features and class definition, see :ref:`radiomics-glcm-label`.
 
 .. _radiomics-excluded-sumvariance-label:
 
-1. Sum Variance
-###############
+Sum Variance
+############
 
 .. math::
     \textit{sum variance} = \displaystyle\sum^{2N_g}_{k=2}{(k-SA)^2p_{x+y}(k)}
@@ -80,9 +80,127 @@ The mathematical proof is as follows:
 (7) Combining (3.) and (6.) yields the following formula:
 
 .. math::
-
     \text{Cluster Tendency} =
     \displaystyle\sum^{2N_g}_{k=2}{\Big[\big(k-SA\big)^2p_{x+y}(k)\Big]} =
     \textit{ sum variance}
 
 Q.E.D
+
+Dissimilarity
+#############
+
+.. math::
+    \textit{dissimilarity} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)|i-j|}
+
+Dissimilarity is a measure of local intensity variation defined as the mean absolute difference between the
+neighbouring pairs. A larger value correlates with a greater disparity in intensity values
+among neighboring voxels.
+
+This feature has been removed, as it is mathematically identical to Difference Average (see
+:py:func:`~radiomics.glcm.RadiomicsGLCM.getDifferenceAverageFeatureValue()`).
+
+The mathematical proof is as follows:
+
+(1) As defined in GLCM, :math:`p_{x-y}(k) = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)},\text{ where }|i-j|=k`
+
+(2) Starting with Dissimilarity as defined in GLCM:
+
+.. math::
+    \textit{dissimilarity} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)|i-j|}
+
+    = \displaystyle\sum^{N_g-1}_{k=0}{\Big[
+    \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)|i-j|} \text{, where }|i-j|=k\Big]}
+
+    = \displaystyle\sum^{N_g-1}_{k=0}{\Big[
+    \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p(i,j)k} \text{, where }|i-j|=k\Big]}
+
+(3) Using (1.) and (2.)
+
+.. math::
+    \textit{dissimilarity} = \displaystyle\sum^{N_g-1}_{k=0}{p_{x-y}(k)k} = \textit{difference average}
+
+Q.E.D.
+
+.. _radiomics-excluded-gldm-label:
+
+Excluded GLDM Features
+----------------------
+
+For included features and class definition, see :ref:`radiomics-gldm-label`.
+
+.. _radiomics-excluded-gldm-glnn-label:
+
+Dependence Count percentage
+###########################
+
+.. math::
+    \textit{dependence percentage} = \frac{N_z}{N_p}
+
+Dependence percentage is the ratio between voxels with a dependence zone and the total number of voxels in the image.
+Because PyRadiomics allows for incomplete dependence zones, all voxels have a dependence zone and :math:`N_z = N_p`.
+Therefore, this feature would always compute to 1.
+
+Gray Level Non-Uniformity Normalized
+####################################
+
+.. math::
+    \textit{GLNN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{N_z^2}
+
+Measures the similarity of gray-level intensity values in the image, where a lower GLNN value
+correlates with a greater similarity in intensity values. This is the normalized version of the GLN formula.
+
+This formula has been removed, because due to the definition of GLDM matrix (allowing incomplete zones), this feature is
+equal to first order Uniformity (see :py:func:`~radiomics.firstorder.RadiomicsFirstOrder.getUniformityFeatureValue()`).
+
+The mathematical proof is as follows:
+
+(1) Starting with Gray Level Non-Uniformity Normalized as defined in GLDM,
+
+.. math::
+    \textit{GLNN} = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{N_z^2}
+
+    = \displaystyle\sum^{N_g}_{i=1}{
+        \frac{ \left( \sum^{N_d}_{j=1}{ \textbf{P}(i,j) } \right)^2 }{ N_z^2 }
+    }
+
+    = \displaystyle\sum^{N_g}_{i=1}{ \left(
+        \frac{ \sum^{N_d}_{j=1}{ \textbf{P}(i,j) } }{ N_z }
+    \right)^2}
+
+    = \displaystyle\sum^{N_g}_{i=1}{ \left(
+        \sum^{N_d}_{j=1}{ \frac{ \textbf{P}(i,j) } { N_z } }
+    \right)^2}
+
+(2) As defined in GLDM, :math:`p(i,j) = \frac{\textbf{P}(i,j)}{N_z}`
+
+(3) Using (1.) and (2.)
+
+.. math::
+    \textit{GLNN} = \displaystyle\sum^{N_g}_{i=1}{ \left(
+        \sum^{N_d}_{j=1}{ p(i,j) }
+    \right)^2}
+
+(4) Because in the PyRadiomics definition incomplete dependence zones are allowed, every voxel in the ROI has a
+    dependence zone. Therefore, :math:`N_z = N_p` and :math:`\sum^{N_d}_{j=1}{\textbf{P}(i,j)}` equals the number of voxels
+    with gray level :math:`i` and is equal to :math:`\textbf{P}(i)`, the first order histogram with :math:`N_g` discreet
+    gray levels, as defined in first order.
+
+(5) As defined in first order, :math:`p(i) = \frac{\textbf{P}(i)}{N_p}`
+
+(6) Using (2.), (4.) and (5.)
+
+.. math::
+    \displaystyle\sum^{N_d}_{j=1}{\textbf{P}(i,j)} = \textbf{P}(i)
+
+    \frac{\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}{N_z} = \frac{\textbf{P}(i)}{N_p}
+
+    \displaystyle\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{N_z}} = \frac{\textbf{P}(i)}{N_p}
+
+    \displaystyle\sum^{N_d}_{j=1}{p(i,j)} = p(i)
+
+(7) Combining (3.) and (6.) yields:
+
+.. math::
+    \textit{GLNN} = \displaystyle\sum^{N_g}_{i=1}{p(i)^2} = Uniformity
+
+Q.E.D.

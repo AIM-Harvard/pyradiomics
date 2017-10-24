@@ -35,15 +35,20 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
   Let:
 
-  :math:`\textbf{P}(i,j)` be the dependence matrix
+  - :math:`N_g` be the number of discreet intensity values in the image
+  - :math:`N_d` be the number of discreet dependency sizes in the image
+  - :math:`N_z` be the number of dependency zones in the image, which is equal to
+    :math:`\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}`
+  - :math:`\textbf{P}(i,j)` be the dependence matrix
+  - :math:`p(i,j)` be the normalized dependence matrix, defined as :math:`p(i,j) = \frac{\textbf{P}(i,j)}{N_z}`
 
-  :math:`p(i,j)` be the normalized dependence matrix, defined as :math:`p(i,j) = \frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
-
-  :math:`N_g` be the number of discreet intensity values in the image
-
-  :math:`N_d` be the number of discreet dependency sizes in the image
-
-  :math:`N_p` be the number of voxels in the image
+  .. note::
+    Because incomplete zones are allowed, every voxel in the ROI has a dependency zone. Therefore, :math:`N_z = N_p`,
+    where :math:`N_p` is the number of voxels in the image.
+    Due to the fact that :math:`Nz = N_p`, the Dependence Percentage and Gray Level Non-Uniformity Normalized (GLNN)
+    have been removed. The first because it would always compute to 1, the latter because it is mathematically equal to
+    first order - Uniformity (see :py:func:`~radiomics.firstorder.RadiomicsFirstOrder.getUniformityFeatureValue()`). For
+    mathematical proofs, see :ref:`here <radiomics-excluded-gldm-label>`.
 
   The following class specific settings are possible:
 
@@ -64,6 +69,8 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLDM, self)._initSegmentBasedCalculation()
 
     self._applyBinning()
+
+    self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     if cMatsEnabled:
       self.P_gldm = self._calculateCMatrix()
@@ -121,14 +128,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
           # with gray level i and dependence d.
           P_gldm[i_idx, d_idx] = numpy.sum(i_mat * (depMat == d))
 
-    sumP_gldm = numpy.sum(P_gldm, (0, 1))
-
     pd = numpy.sum(P_gldm, 0)
     pg = numpy.sum(P_gldm, 1)
 
     self.coefficients['ivector'] = grayLevels
     self.coefficients['jvector'] = dependenceSizes
-    self.coefficients['sumP_gldm'] = sumP_gldm
     self.coefficients['pd'] = pd
     self.coefficients['pg'] = pg
     return P_gldm
@@ -142,7 +146,6 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     jvector = numpy.arange(1, P_gldm.shape[1] + 1, dtype='float64')
 
     # Delete rows and columns that specify gray levels not present in the ROI
-    sumP_gldm = numpy.sum(P_gldm)
     pd = numpy.sum(P_gldm, 0)
     pg = numpy.sum(P_gldm, 1)
 
@@ -154,7 +157,6 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     pg = numpy.delete(pg, numpy.where(pg == 0))
     pd = numpy.delete(pd, numpy.where(pd == 0))
 
-    self.coefficients['sumP_gldm'] = sumP_gldm
     self.coefficients['pd'] = pd
     self.coefficients['pg'] = pg
 
@@ -167,17 +169,18 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     **1. Small Dependence Emphasis (SDE)**
 
-    :math:`SDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
+      SDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{N_z}
 
     A measure of the distribution of small dependencies, with a greater value indicative
     of smaller dependence and less homogeneous textures.
     """
     pd = self.coefficients['pd']
     jvector = self.coefficients['jvector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
 
     try:
-      sde = numpy.sum(pd / (jvector ** 2)) / sumP_gldm
+      sde = numpy.sum(pd / (jvector ** 2)) / Nz
       return sde
     except ZeroDivisionError:
       return numpy.core.nan
@@ -186,17 +189,18 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     **2. Large Dependence Emphasis (LDE)**
 
-    :math:`LDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)j^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
+      LDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)j^2}}{N_z}
 
     A measure of the distribution of large dependencies, with a greater value indicative
     of larger dependence and more homogeneous textures.
     """
     pd = self.coefficients['pd']
     jvector = self.coefficients['jvector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
 
     try:
-      lre = numpy.sum(pd * (jvector ** 2)) / sumP_gldm
+      lre = numpy.sum(pd * (jvector ** 2)) / Nz
       return lre
     except ZeroDivisionError:
       return numpy.core.nan
@@ -205,223 +209,220 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     **3. Gray Level Non-Uniformity (GLN)**
 
-    :math:`GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    ..math::
+      GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{N_z}
 
     Measures the similarity of gray-level intensity values in the image, where a lower GLN value
     correlates with a greater similarity in intensity values.
     """
     pg = self.coefficients['pg']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
 
     try:
-      gln = numpy.sum(pg ** 2) / sumP_gldm
+      gln = numpy.sum(pg ** 2) / Nz
       return gln
-    except ZeroDivisionError:
-      return numpy.core.nan
-
-  def getGrayLevelNonUniformityNormalizedFeatureValue(self):
-    r"""
-    **4. Gray Level Non-Uniformity Normalized (GLNN)**
-
-    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
-
-    Measures the similarity of gray-level intensity values in the image, where a lower GLNN value
-    correlates with a greater similarity in intensity values. This is the normalized version of the GLN formula.
-    """
-    pg = self.coefficients['pg']
-    sumP_gldm = self.coefficients['sumP_gldm']
-
-    try:
-      glnn = numpy.sum(pg ** 2) / (sumP_gldm ** 2)
-      return glnn
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getDependenceNonUniformityFeatureValue(self):
     r"""
-    **5. Dependence Non-Uniformity (DN)**
+    **4. Dependence Non-Uniformity (DN)**
 
-    :math:`DN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
+      DN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{N_z}
 
     Measures the similarity of dependence throughout the image, with a lower value indicating
     more homogeneity among dependencies in the image.
     """
     pd = self.coefficients['pd']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
 
     try:
-      dn = numpy.sum(pd ** 2) / sumP_gldm
+      dn = numpy.sum(pd ** 2) / Nz
       return dn
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getDependenceNonUniformityNormalizedFeatureValue(self):
     r"""
-    **6. Dependence Non-Uniformity Normalized (DNN)**
+    **5. Dependence Non-Uniformity Normalized (DNN)**
 
-    :math:`DNN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+    .. math::
+      DNN = \frac{\sum^{N_d}_{j=1}\left(\sum^{N_g}_{i=1}{\textbf{P}(i,j)}\right)^2}{N_z^2}
 
     Measures the similarity of dependence throughout the image, with a lower value indicating
     more homogeneity among dependencies in the image. This is the normalized version of the DLN formula.
     """
     pd = self.coefficients['pd']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
 
     try:
-      dnn = numpy.sum(pd ** 2) / (sumP_gldm ** 2)
+      dnn = numpy.sum(pd ** 2) / (Nz ** 2)
       return dnn
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getGrayLevelVarianceFeatureValue(self):
     r"""
-    **7. Gray Level Variance (GLV)**
+    **6. Gray Level Variance (GLV)**
 
-    :math:`GLV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)(i - \mu)^2}`, where
-
-    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{ip(i,j)}`
+    .. math::
+      GLV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)(i - \mu)^2} \text{, where}
+      \mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{ip(i,j)}
 
     Measures the variance in grey level in the image.
     """
     ivector = self.coefficients['ivector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
+    pg = self.coefficients['pg'] / Nz  # divide by Nz to get the normalized matrix
 
-    u_i = numpy.sum(self.coefficients['pg'] * ivector) / sumP_gldm
-    glv = numpy.sum(self.coefficients['pg'] * (ivector - u_i) ** 2) / sumP_gldm
+    u_i = numpy.sum(pg * ivector)
+    glv = numpy.sum(pg * (ivector - u_i) ** 2)
     return glv
 
   def getDependenceVarianceFeatureValue(self):
     r"""
-    **8. Dependence Variance (DV)**
+    **7. Dependence Variance (DV)**
 
-    :math:`DV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)(j - \mu)^2}`, where
-
-    :math:`\mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{jp(i,j)}`
+    .. math::
+      DV = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)(j - \mu)^2} \text{, where}
+      \mu = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{jp(i,j)}
 
     Measures the variance in dependence size in the image.
     """
     jvector = self.coefficients['jvector']
-    sumP_gldm = self.coefficients['sumP_gldm']
-    u_j = numpy.sum(self.coefficients['pd'] * jvector) / sumP_gldm
-    dv = numpy.sum(self.coefficients['pd'] * (jvector - u_j) ** 2) / sumP_gldm
+    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
+    pd = self.coefficients['pd'] / Nz  # divide by Nz to get the normalized matrix
+
+    u_j = numpy.sum(pd * jvector)
+    dv = numpy.sum(pd * (jvector - u_j) ** 2)
     return dv
 
   def getDependenceEntropyFeatureValue(self):
     r"""
-    **9. Dependence Entropy (DE)**
+    **8. Dependence Entropy (DE)**
 
-    :math:`Dependence Entropy = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}`
+    .. math::
+      Dependence Entropy = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}
     """
     eps = numpy.spacing(1)
-    p_gldm = self.P_gldm / self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
+    p_gldm = self.P_gldm / Nz  # divide by Nz to get the normalized matrix
+
     return -numpy.sum(p_gldm * numpy.log2(p_gldm + eps))
 
   def getLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    **10. Low Gray Level Emphasis (LGLE)**
+    **9. Low Gray Level Emphasis (LGLE)**
 
-    :math:`LGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
+      LGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{N_z}
 
     Measures the distribution of low gray-level values, with a higher value indicating a greater
     concentration of low gray-level values in the image.
     """
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']
 
     try:
-      lgle = numpy.sum(pg / (ivector ** 2)) / sumP_gldm
+      lgle = numpy.sum(pg / (ivector ** 2)) / Nz
       return lgle
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    **11. High Gray Level Emphasis (HGLE)**
+    **10. High Gray Level Emphasis (HGLE)**
 
-    :math:`HGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)i^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
+      HGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)i^2}}{N_z}
 
     Measures the distribution of the higher gray-level values, with a higher value indicating
     a greater concentration of high gray-level values in the image.
     """
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']
 
     try:
-      hgle = numpy.sum(pg * (ivector ** 2)) / sumP_gldm
+      hgle = numpy.sum(pg * (ivector ** 2)) / Nz
       return hgle
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getSmallDependenceLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    **12. Small Dependence Low Gray Level Emphasis (SDLGLE)**
+    **11. Small Dependence Low Gray Level Emphasis (SDLGLE)**
 
-    :math:`SDLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
+      SDLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2j^2}}}{N_z}
 
     Measures the joint distribution of small dependence with lower gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']
 
     try:
-      sdlgle = numpy.sum(self.P_gldm / ((ivector[:, None] ** 2) * (jvector[None, :] ** 2))) / sumP_gldm
+      sdlgle = numpy.sum(self.P_gldm / ((ivector[:, None] ** 2) * (jvector[None, :] ** 2))) / Nz
       return sdlgle
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getSmallDependenceHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    **13. Small Dependence High Gray Level Emphasis (SDHGLE)**
+    **12. Small Dependence High Gray Level Emphasis (SDHGLE)**
 
-    :math:`SDHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math:
+      SDHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)i^2}{j^2}}}{N_z}
 
     Measures the joint distribution of small dependence with higher gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']
 
     try:
-      sdhgle = numpy.sum(self.P_gldm * (ivector[:, None] ** 2) / (jvector[None, :] ** 2)) / sumP_gldm
+      sdhgle = numpy.sum(self.P_gldm * (ivector[:, None] ** 2) / (jvector[None, :] ** 2)) / Nz
       return sdhgle
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getLargeDependenceLowGrayLevelEmphasisFeatureValue(self):
     r"""
-    **14. Large Dependence Low Gray Level Emphasis (LDLGLE)**
+    **13. Large Dependence Low Gray Level Emphasis (LDLGLE)**
 
-    :math:`LDLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
+      LDLGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)j^2}{i^2}}}{N_z}
 
     Measures the joint distribution of large dependence with lower gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']
 
     try:
-      ldlgle = numpy.sum(self.P_gldm * (jvector[None, :] ** 2) / (ivector[:, None] ** 2)) / sumP_gldm
+      ldlgle = numpy.sum(self.P_gldm * (jvector[None, :] ** 2) / (ivector[:, None] ** 2)) / Nz
       return ldlgle
     except ZeroDivisionError:
       return numpy.core.nan
 
   def getLargeDependenceHighGrayLevelEmphasisFeatureValue(self):
     r"""
-    **15. Large Dependence High Gray Level Emphasis (LDHGLE)**
+    **14. Large Dependence High Gray Level Emphasis (LDHGLE)**
 
-    :math:`LDHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)i^2j^2}}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}}`
+    .. math::
+      LDHGLE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)i^2j^2}}{N_z}
 
     Measures the joint distribution of large dependence with higher gray-level values.
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    sumP_gldm = self.coefficients['sumP_gldm']
+    Nz = self.coefficients['Np']
 
     try:
-      ldhgle = numpy.sum(self.P_gldm * ((jvector[None, :] ** 2) * (ivector[:, None] ** 2))) / sumP_gldm
+      ldhgle = numpy.sum(self.P_gldm * ((jvector[None, :] ** 2) * (ivector[:, None] ** 2))) / Nz
       return ldhgle
     except ZeroDivisionError:
       return numpy.core.nan

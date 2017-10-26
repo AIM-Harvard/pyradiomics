@@ -1,6 +1,6 @@
 import numpy
 
-from radiomics import base, cMatrices, cMatsEnabled, imageoperations
+from radiomics import base, cMatrices, cMatsEnabled, deprecated, imageoperations
 
 
 class RadiomicsGLDM(base.RadiomicsFeaturesBase):
@@ -224,6 +224,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     except ZeroDivisionError:
       return numpy.core.nan
 
+  @deprecated
   def getGrayLevelNonUniformityNormalizedFeatureValue(self):
     r"""
     **DEPRECATED. Gray Level Non-Uniformity Normalized (GLNN)**
@@ -233,7 +234,8 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     .. warning::
       This feature has been deprecated, as it is mathematically equal to First Order - Uniformity
       :py:func:`~radiomics.firstorder.RadiomicsFirstOrder.getUniformityFeatureValue()`.
-      See :ref:`here <radiomics-excluded-gldm-glnn-label>` for the proof.
+      See :ref:`here <radiomics-excluded-gldm-glnn-label>` for the proof. **Enabling this feature will result in the
+      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
     """
     raise DeprecationWarning('GLDM - Gray Level Non-Uniformity Normalized is mathematically equal to First Order - Uniformity, '
                              'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')
@@ -325,6 +327,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
     return -numpy.sum(p_gldm * numpy.log2(p_gldm + eps))
 
+  @deprecated
   def getDependencePercentageFeatureValue(self):
     r"""
     **DEPRECATED. Dependence Percentage**
@@ -334,7 +337,8 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
     .. warning::
       This feature has been deprecated, as it would always compute 1. See
-      :ref:`here <radiomics-excluded-gldm-dependence-percentage-label>` for more details.
+      :ref:`here <radiomics-excluded-gldm-dependence-percentage-label>` for more details. **Enabling this feature will result in the
+      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
     """
     raise DeprecationWarning('GLDM - Dependence Percentage always computes 1, '
                              'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')

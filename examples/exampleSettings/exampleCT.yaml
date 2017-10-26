@@ -14,21 +14,9 @@ imageType:
   Wavelet: {}
 
 featureClass:
-  shape:  # disable redundant Compactness 1 and Compactness 2 features by specifying all other shape features
-    - 'Volume'
-    - 'SurfaceArea'
-    - 'SurfaceVolumeRatio'
-    - 'Sphericity'
-    - 'SphericalDisproportion'
-    - 'Maximum3DDiameter'
-    - 'Maximum2DDiameterSlice'
-    - 'Maximum2DDiameterColumn'
-    - 'Maximum2DDiameterRow'
-    - 'MajorAxis'
-    - 'MinorAxis'
-    - 'LeastAxis'
-    - 'Elongation'
-    - 'Flatness'
+  # redundant Compactness 1, Compactness 2 an Spherical Disproportion features are disabled by default, they can be
+  # enabled by specifying individual feature names (as is done for glcm) and including them in the list.
+  shape:
   firstorder:
   glcm:  # Disable SumAverage by specifying all other GLCM features available
     - 'Autocorrelation'
@@ -55,6 +43,7 @@ featureClass:
     - 'SumSquares'
   glrlm:
   glszm:
+  gldm:
 
 setting:
   # Normalization:

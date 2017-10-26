@@ -107,9 +107,19 @@ class RadiomicsFeaturesBase(object):
   def enableAllFeatures(self):
     """
     Enables all features found in this class for calculation.
+
+    .. note::
+      Features that have been marked "deprecated" are not enabled by this function. They can still be enabled manually by
+      a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
+      :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeaturesByName()`
+      or in the parameter file (by specifying the feature by name, not when enabling all features).
+      However, in most cases this will still result only in a deprecation warning.
     """
     for featureName in self.featureNames:
-      self.enableFeatureByName(featureName, True)
+      # only enable non-deprecated features here
+      func = getattr(self, 'get%sFeatureValue' % featureName)
+      if not getattr(func, '_is_deprecated', False):
+        self.enableFeatureByName(featureName, True)
 
   def disableAllFeatures(self):
     """

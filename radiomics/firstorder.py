@@ -1,6 +1,6 @@
 import numpy
 
-from radiomics import base, imageoperations
+from radiomics import base, deprecated, imageoperations
 
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
@@ -269,6 +269,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
     return numpy.sqrt((numpy.sum(shiftedParameterArray ** 2)) / float(shiftedParameterArray.size))
 
+  @deprecated
   def getStandardDeviationFeatureValue(self):
     r"""
     **15. Standard Deviation**
@@ -280,6 +281,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     :math:\textit{standard deviation} = \sqrt{\textit{variance}}
 
     .. note::
+      As this feature is correlated with variance, it is marked so it is not enabled by default.
+      To include this feature in the extraction, specify it by name in the enabled features
+      (i.e. this feature will not be enabled if no individual features are specified (enabling 'all' features),
+      but will be enabled when individual features are specified, including this feature).
       Not present in IBSI feature definitions (correlated with variance)
     """
 

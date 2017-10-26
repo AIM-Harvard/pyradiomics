@@ -16,6 +16,15 @@ import numpy  # noqa: F401
 from . import imageoperations
 
 
+def deprecated(func):
+  """
+  Decorator function to mark functions as deprecated. This is used to ensure deprecated feature functions are not
+  added to the enabled features list when enabling 'all' features.
+  """
+  func._is_deprecated = True
+  return func
+
+
 def setVerbosity(level):
   """
   Change the amount of information PyRadiomics should print out during extraction. The lower the level, the more

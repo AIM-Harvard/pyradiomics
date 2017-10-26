@@ -247,6 +247,13 @@ class RadiomicsFeaturesExtractor:
   def enableAllFeatures(self):
     """
     Enable all classes and all features.
+
+    .. note::
+      Individual features that have been marked "deprecated" are not enabled by this function. They can still be enabled manually by
+      a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
+      :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeaturesByName()`
+      or in the parameter file (by specifying the feature by name, not when enabling all features).
+      However, in most cases this will still result only in a deprecation warning.
     """
     self.logger.debug('Enabling all features in all feature classes')
     for featureClassName in self.getFeatureClassNames():
@@ -263,6 +270,13 @@ class RadiomicsFeaturesExtractor:
   def enableFeatureClassByName(self, featureClass, enabled=True):
     """
     Enable or disable all features in given class.
+
+    .. note::
+      Individual features that have been marked "deprecated" are not enabled by this function. They can still be enabled manually by
+      a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
+      :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeaturesByName()`
+      or in the parameter file (by specifying the feature by name, not when enabling all features).
+      However, in most cases this will still result only in a deprecation warning.
     """
     if featureClass not in self.getFeatureClassNames():
       self.logger.warning('Feature class %s is not recognized', featureClass)

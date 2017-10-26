@@ -1,7 +1,7 @@
 import numpy
 from six.moves import range
 
-from radiomics import base, cMatrices, cMatsEnabled, imageoperations
+from radiomics import base, cMatrices, cMatsEnabled, deprecated, imageoperations
 
 
 class RadiomicsGLCM(base.RadiomicsFeaturesBase):
@@ -478,6 +478,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     diffvar = numpy.sum((pxSuby * ((kValuesDiff[:, None] - diffavg) ** 2)), 0)
     return diffvar.mean()
 
+  @deprecated
   def getDissimilarityFeatureValue(self):
     r"""
     **DEPRECATED. Dissimilarity**
@@ -489,7 +490,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. warning::
       This feature has been deprecated, as it is mathematically equal to Difference Average
       :py:func:`~radiomics.glcm.RadiomicsGLCM.getDifferenceAverageFeatureValue()`.
-      See :ref:`here <radiomics-excluded-dissimilarity-label>` for the proof.
+      See :ref:`here <radiomics-excluded-dissimilarity-label>` for the proof. **Enabling this feature will result in the
+      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
     """
     raise DeprecationWarning('GLCM - Dissimilarity is mathematically equal to GLCM - Difference Average, '
                              'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')
@@ -529,6 +531,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ent = self.coefficients['HXY']
     return ent.mean()
 
+  @deprecated
   def getHomogeneity1FeatureValue(self):
     r"""
     **DEPRECATED. Homogeneity 1**
@@ -539,11 +542,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. warning::
       This feature has been deprecated, as it is mathematically equal to Inverse Difference
-      :py:func:`~radiomics.glcm.RadiomicsGLCM.getIdFeatureValue()`.
+      :py:func:`~radiomics.glcm.RadiomicsGLCM.getIdFeatureValue()`. **Enabling this feature will result in the
+      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
     """
     raise DeprecationWarning('GLCM - Homogeneity 1 is mathematically equal to GLCM - Inverse Difference, '
                              'see documentation of the GLCM feature class (section "Radiomic Features") for more details')
 
+  @deprecated
   def getHomogeneity2FeatureValue(self):
     r"""
     **DEPRECATED. Homogeneity 2**
@@ -554,7 +559,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. warning::
       This feature has been deprecated, as it is mathematically equal to Inverse Difference Moment
-      :py:func:`~radiomics.glcm.RadiomicsGLCM.getIdmFeatureValue()`.
+      :py:func:`~radiomics.glcm.RadiomicsGLCM.getIdmFeatureValue()`. **Enabling this feature will result in the
+      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
     """
     raise DeprecationWarning('GLCM - Homogeneity 2 is mathematically equal to GLCM - Inverse Difference Moment, '
                              'see documentation of the GLCM feature class (section "Radiomic Features") for more details')
@@ -740,6 +746,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     sumavg = numpy.sum((kValuesSum[:, None] * pxAddy), 0)
     return sumavg.mean()
 
+  @deprecated
   def getSumVarianceFeatureValue(self):
     r"""
     **DEPRECATED. Sum Variance**
@@ -750,7 +757,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. warning::
       This feature has been deprecated, as it is mathematically equal to Cluster Tendency
       :py:func:`~radiomics.glcm.RadiomicsGLCM.getClusterTendencyFeatureValue()`.
-      See :ref:`here <radiomics-excluded-sumvariance-label>` for the proof.
+      See :ref:`here <radiomics-excluded-sumvariance-label>` for the proof. **Enabling this feature will result in the
+      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
     """
     raise DeprecationWarning('GLCM - Sum Variance is mathematically equal to GLCM - Cluster Tendency, '
                              'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')

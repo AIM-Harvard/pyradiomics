@@ -319,7 +319,7 @@ getFeatureClasses()
 getImageTypes()
 
 # 4. Set the version using the versioneer scripts
-from ._version import get_versions
+from ._version import get_versions  # noqa: I202
 
 __version__ = get_versions()['version']
 del get_versions

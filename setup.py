@@ -5,10 +5,8 @@ import platform
 import sys
 
 import numpy
-
 from setuptools import Extension, setup
 from setuptools.command.test import test as TestCommand
-
 import versioneer
 
 # Check if current PyRadiomics is compatible with current python installation (> 2.6, 64 bits)

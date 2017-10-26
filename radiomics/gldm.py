@@ -78,7 +78,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
     # Set voxels outside delineation to padding value
     padVal = numpy.nan
-    self.matrix[(self.maskArray != self.label)] = padVal
+    self.matrix[~self.maskArray] = padVal
 
     angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
     angles = numpy.concatenate((angles, angles * -1))
@@ -109,7 +109,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         depMat[~nanMask] += (numpy.abs(angMat[~nanMask]) <= self.gldm_a)
 
     grayLevels = self.coefficients['grayLevels']
-    dependenceSizes = numpy.unique(depMat[self.labelledVoxelCoordinates])
+    dependenceSizes = numpy.unique(depMat[self.maskArray])
     P_gldm = numpy.zeros((len(grayLevels), len(dependenceSizes)))
 
     with self.progressReporter(grayLevels, desc='calculate GLDM') as bar:

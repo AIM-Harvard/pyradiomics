@@ -127,7 +127,7 @@ def run(case):
 
       ptLogger.info('Patient %s read by %s processed in %s', case['Patient'], case['Reader'], delta_t)
 
-  except:
+  except Exception:
     ptLogger.error('Feature extraction failed!', exc_info=True)
 
   return feature_vector

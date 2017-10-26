@@ -224,6 +224,20 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     except ZeroDivisionError:
       return numpy.core.nan
 
+  def getGrayLevelNonUniformityNormalizedFeatureValue(self):
+    r"""
+    **DEPRECATED. Gray Level Non-Uniformity Normalized (GLNN)**
+
+    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+
+    .. warning::
+      This feature has been deprecated, as it is mathematically equal to First Order - Uniformity
+      :py:func:`~radiomics.firstorder.RadiomicsFirstOrder.getUniformityFeatureValue()`.
+      See :ref:`here <radiomics-excluded-gldm-glnn-label>` for the proof.
+    """
+    raise DeprecationWarning('GLDM - Gray Level Non-Uniformity Normalized is mathematically equal to First Order - Uniformity, '
+                             'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')
+
   def getDependenceNonUniformityFeatureValue(self):
     r"""
     **4. Dependence Non-Uniformity (DN)**
@@ -310,6 +324,20 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     p_gldm = self.P_gldm / Nz  # divide by Nz to get the normalized matrix
 
     return -numpy.sum(p_gldm * numpy.log2(p_gldm + eps))
+
+  def getDependencePercentageFeatureValue(self):
+    r"""
+    **DEPRECATED. Dependence Percentage**
+
+    .. math::
+      \textit{dependence percentage} = \frac{N_z}{N_p}
+
+    .. warning::
+      This feature has been deprecated, as it would always compute 1. See
+      :ref:`here <radiomics-excluded-gldm-dependence-percentage-label>` for more details.
+    """
+    raise DeprecationWarning('GLDM - Dependence Percentage always computes 1, '
+                             'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')
 
   def getLowGrayLevelEmphasisFeatureValue(self):
     r"""

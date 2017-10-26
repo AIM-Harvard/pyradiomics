@@ -86,6 +86,8 @@ The mathematical proof is as follows:
 
 Q.E.D
 
+.. _radiomics-excluded-dissimilarity-label:
+
 Dissimilarity
 #############
 
@@ -128,10 +130,10 @@ Excluded GLDM Features
 
 For included features and class definition, see :ref:`radiomics-gldm-label`.
 
-.. _radiomics-excluded-gldm-glnn-label:
+.. _radiomics-excluded-gldm-dependence-percentage-label:
 
-Dependence Count percentage
-###########################
+Dependence percentage
+#####################
 
 .. math::
     \textit{dependence percentage} = \frac{N_z}{N_p}
@@ -139,6 +141,8 @@ Dependence Count percentage
 Dependence percentage is the ratio between voxels with a dependence zone and the total number of voxels in the image.
 Because PyRadiomics allows for incomplete dependence zones, all voxels have a dependence zone and :math:`N_z = N_p`.
 Therefore, this feature would always compute to 1.
+
+.. _radiomics-excluded-gldm-glnn-label:
 
 Gray Level Non-Uniformity Normalized
 ####################################

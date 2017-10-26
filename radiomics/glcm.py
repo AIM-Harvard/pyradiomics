@@ -332,7 +332,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       distribution of :math:`j`. Therefore, only use this formula if the GLCM is symmetrical, where
       :math:`p_x(i) = p_y(j) \text{, where } i = j`.
     """
-
+    if not self.symmetricalGLCM:
+      self.logger.warning('The formula for GLCM - Joint Average assumes that the GLCM is symmetrical, but this is not the case.')
     return self.coefficients['ux'].mean()
 
   def getClusterProminenceFeatureValue(self):
@@ -380,10 +381,6 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       {\big(i+j-\mu_x-\mu_y\big)^2p(i,j)}
 
     Cluster Tendency is a measure of groupings of voxels with similar gray-level values.
-
-    .. note::
-      Cluster Tendency is mathematically identical to Sum Variance, the latter has therefore been removed from
-      PyRadiomics. See :ref:`here <radiomics-excluded-sumvariance-label>` for the proof.
     """
     i = self.coefficients['i']
     j = self.coefficients['j']
@@ -444,10 +441,6 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Difference Average measures the relationship between occurrences of pairs
     with similar intensity values and occurrences of pairs with differing intensity
     values.
-
-    .. note::
-      Difference Average is mathematically identical to Dissimilarity, the latter has therefore been removed from
-      PyRadiomics. See :ref:`here <radiomics-excluded-sumvariance-label>` for the proof.
     """
     pxSuby = self.coefficients['pxSuby']
     kValuesDiff = self.coefficients['kValuesDiff']
@@ -485,6 +478,22 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     diffvar = numpy.sum((pxSuby * ((kValuesDiff[:, None] - diffavg) ** 2)), 0)
     return diffvar.mean()
 
+  def getDissimilarityFeatureValue(self):
+    r"""
+    **DEPRECATED. Dissimilarity**
+
+    .. math::
+
+      \textit{dissimilarity} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{|i-j|p(i,j)}
+
+    .. warning::
+      This feature has been deprecated, as it is mathematically equal to Difference Average
+      :py:func:`~radiomics.glcm.RadiomicsGLCM.getDifferenceAverageFeatureValue()`.
+      See :ref:`here <radiomics-excluded-dissimilarity-label>` for the proof.
+    """
+    raise DeprecationWarning('GLCM - Dissimilarity is mathematically equal to GLCM - Difference Average, '
+                             'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')
+
   def getJointEnergyFeatureValue(self):
     r"""
     **11. Joint Energy**
@@ -519,6 +528,36 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     ent = self.coefficients['HXY']
     return ent.mean()
+
+  def getHomogeneity1FeatureValue(self):
+    r"""
+    **DEPRECATED. Homogeneity 1**
+
+    .. math::
+
+      \textit{homogeneity 1} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\frac{p(i,j)}{1+|i-j|}}
+
+    .. warning::
+      This feature has been deprecated, as it is mathematically equal to Inverse Difference
+      :py:func:`~radiomics.glcm.RadiomicsGLCM.getIdFeatureValue()`.
+    """
+    raise DeprecationWarning('GLCM - Homogeneity 1 is mathematically equal to GLCM - Inverse Difference, '
+                             'see documentation of the GLCM feature class (section "Radiomic Features") for more details')
+
+  def getHomogeneity2FeatureValue(self):
+    r"""
+    **DEPRECATED. Homogeneity 2**
+
+    .. math::
+
+      \textit{homogeneity 2} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\frac{p(i,j)}{1+|i-j|^2}}
+
+    .. warning::
+      This feature has been deprecated, as it is mathematically equal to Inverse Difference Moment
+      :py:func:`~radiomics.glcm.RadiomicsGLCM.getIdmFeatureValue()`.
+    """
+    raise DeprecationWarning('GLCM - Homogeneity 2 is mathematically equal to GLCM - Inverse Difference Moment, '
+                             'see documentation of the GLCM feature class (section "Radiomic Features") for more details')
 
   def getImc1FeatureValue(self):
     r"""
@@ -575,7 +614,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       \textit{IDM} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{p(i,j)}{1+|i-j|^2} }
 
-    IDM (inverse difference moment; a.k.a Homogeneity 2) is a measure of the local
+    IDM (a.k.a Homogeneity 2) is a measure of the local
     homogeneity of an image. IDM weights are the inverse of the Contrast
     weights (decreasing exponentially from the diagonal i=j in the GLCM).
     """
@@ -614,7 +653,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       \textit{ID} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{p(i,j)}{1+|i-j|} }
 
-    ID (inverse difference; a.k.a. Homogeneity 1) is another measure of the local homogeneity of an image.
+    ID (a.k.a. Homogeneity 1) is another measure of the local homogeneity of an image.
     With more uniform gray levels, the denominator will remain low, resulting in a higher overall value.
     """
     i = self.coefficients['i']
@@ -692,10 +731,29 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       :ref:`here <radiomics-excluded-sumvariance-label>` for the proof that :math:`\text{Sum Average} = \mu_x + \mu_y`.
       In the default parameter files provided in the ``examples/exampleSettings``, this feature has been disabled.
     """
+    # warn the user if the GLCM is symmetrical and this feature is calculated (as it is then linearly correlated to Joint Average)
+    if self.symmetricalGLCM:
+      self.logger.warning('GLCM is symmetrical, therefore Sum Average = 2 * Joint Average, only 1 needs to be calculated')
+
     pxAddy = self.coefficients['pxAddy']
     kValuesSum = self.coefficients['kValuesSum']
     sumavg = numpy.sum((kValuesSum[:, None] * pxAddy), 0)
     return sumavg.mean()
+
+  def getSumVarianceFeatureValue(self):
+    r"""
+    **DEPRECATED. Sum Variance**
+
+    .. math::
+      \textit{sum variance} = \displaystyle\sum^{2N_g}_{k=2}{(k-SA)^2p_{x+y}(k)}
+
+    .. warning::
+      This feature has been deprecated, as it is mathematically equal to Cluster Tendency
+      :py:func:`~radiomics.glcm.RadiomicsGLCM.getClusterTendencyFeatureValue()`.
+      See :ref:`here <radiomics-excluded-sumvariance-label>` for the proof.
+    """
+    raise DeprecationWarning('GLCM - Sum Variance is mathematically equal to GLCM - Cluster Tendency, '
+                             'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')
 
   def getSumEntropyFeatureValue(self):
     r"""
@@ -732,6 +790,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. note::
       Defined by IBSI as Joint Variance
     """
+    if not self.symmetricalGLCM:
+      self.logger.warning('The formula for GLCM - Sum of Squares assumes that the GLCM is symmetrical, but this is not the case.')
     i = self.coefficients['i']
     ux = self.coefficients['ux']
     # Also known as Variance

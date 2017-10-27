@@ -102,6 +102,8 @@ class RadiomicsFeaturesBase(object):
     """
     if featureName not in self.featureNames:
       raise LookupError('Feature not found: ' + featureName)
+    if self.featureNames[featureName]:
+      self.logger.warning('Feature %s is deprecated, use with caution!', featureName)
     self.enabledFeatures[featureName] = enable
 
   def enableAllFeatures(self):
@@ -115,10 +117,9 @@ class RadiomicsFeaturesBase(object):
       or in the parameter file (by specifying the feature by name, not when enabling all features).
       However, in most cases this will still result only in a deprecation warning.
     """
-    for featureName in self.featureNames:
+    for featureName, deprecated in six.iteritems(self.featureNames):
       # only enable non-deprecated features here
-      func = getattr(self, 'get%sFeatureValue' % featureName)
-      if not getattr(func, '_is_deprecated', False):
+      if not deprecated:
         self.enableFeatureByName(featureName, True)
 
   def disableAllFeatures(self):
@@ -134,12 +135,14 @@ class RadiomicsFeaturesBase(object):
     Dynamically enumerates features defined in the feature class. Features are identified by the
     ``get<Feature>FeatureValue`` signature, where <Feature> is the name of the feature (unique on the class level).
 
-    Found features are returned as a list of the feature names (``[<Feature1>, <Feature2>, ...]``).
+    Found features are returned as a dictionary of the feature names, where the value ``True`` if the
+    feature is deprecated, ``False`` otherwise (``{<Feature1>:<deprecated>, <Feature2>:<deprecated>, ...}``).
 
     This function is called at initialization, found features are stored in the ``featureNames`` variable.
     """
     attributes = inspect.getmembers(cls)
-    features = [a[0][3:-12] for a in attributes if a[0].startswith('get') and a[0].endswith('FeatureValue')]
+    features = {a[0][3:-12]: getattr(a[1], '_is_deprecated', False) for a in attributes
+                if a[0].startswith('get') and a[0].endswith('FeatureValue')}
     return features
 
   def calculateFeatures(self):

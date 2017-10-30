@@ -107,7 +107,7 @@ extractor = featureextractor.RadiomicsFeaturesExtractor(paramsFile)
 print("Active features:")
 for cls, features in six.iteritems(extractor._enabledFeatures):
   if len(features) == 0:
-    features = extractor.getFeatureNames(cls)
+    features = [f for f, deprecated in six.iteritems(extractor.getFeatureNames(cls)) if not deprecated]
   for f in features:
     print(f)
     print(getattr(extractor.featureClasses[cls], 'get%sFeatureValue' % f).__doc__)

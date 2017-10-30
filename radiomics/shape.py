@@ -2,7 +2,7 @@ import numpy
 import SimpleITK as sitk
 from six.moves import range
 
-from radiomics import base, cMatsEnabled, cShape, imageoperations
+from radiomics import base, cMatsEnabled, cShape, deprecated, imageoperations
 
 
 class RadiomicsShape(base.RadiomicsFeaturesBase):
@@ -238,6 +238,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     """
     return (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0) / self.SurfaceArea
 
+  @deprecated
   def getCompactness1FeatureValue(self):
     r"""
     **5. Compactness 1**
@@ -254,12 +255,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     \frac{1}{6 \pi}\sqrt{sphericity^3}`.
 
     .. note::
-      This feature is correlated to Compactness 2, Sphericity and Spherical Disproportion. In the default
-      parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
-      are therefore disabled.
+      This feature is correlated to Compactness 2, Sphericity and Spherical Disproportion.
+      Therefore, this feature is marked, so it is not enabled by default (i.e. this feature will not be enabled if no
+      individual features are specified (enabling 'all' features), but will be enabled when individual features are
+      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled features.
     """
     return self.Volume / (self.SurfaceArea ** (3.0 / 2.0) * numpy.sqrt(numpy.pi))
 
+  @deprecated
   def getCompactness2FeatureValue(self):
     r"""
     **6. Compactness 2**
@@ -274,12 +277,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     By definition, :math:`compactness\ 2 = (sphericity)^3`
 
     .. note::
-      This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion. In the default
-      parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
-      are therefore disabled.
+      This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion.
+      Therefore, this feature is marked, so it is not enabled by default (i.e. this feature will not be enabled if no
+      individual features are specified (enabling 'all' features), but will be enabled when individual features are
+      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled features.
     """
     return (36.0 * numpy.pi) * (self.Volume ** 2.0) / (self.SurfaceArea ** 3.0)
 
+  @deprecated
   def getSphericalDisproportionFeatureValue(self):
     r"""
     **7. Spherical Disproportion**
@@ -295,9 +300,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     :math:`spherical\ disproportion \geq 1`, with a value of 1 indicating a perfect sphere.
 
     .. note::
-      This feature is correlated to Compactness 1, Compactness 2 and Sphericity. In the default
-      parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
-      are therefore disabled.
+      This feature is correlated to Compactness 2, Compactness2 and Sphericity.
+      Therefore, this feature is marked, so it is not enabled by default (i.e. this feature will not be enabled if no
+      individual features are specified (enabling 'all' features), but will be enabled when individual features are
+      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled features.
     """
     return self.SurfaceArea / (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0)
 

@@ -12,9 +12,9 @@ open-source platform for easy and reproducible Radiomic Feature extraction. By d
 of radiomic capabilities and expand the community. The platform supports both the feature extraction in 2D and 3D.
 
 **If you publish any work which uses this package, please cite the following publication:**
-*Joost JM van Griethuysen, Andriy Fedorov, Chintan Parmar, Ahmed Hosny, Nicole Aucoin, Vivek Narayan, Regina GH
-Beets-Tan, Jean-Christophe Fillion-Robin, Steve Pieper, Hugo JWL Aerts, “Computational Radiomics System to Decode the
-Radiographic Phenotype”; Accepted Cancer Research 2017*
+*van Griethuysen, J. J. M., Fedorov, A., Parmar, C., Hosny, A., Aucoin, N., Narayan, V., Beets-Tan, R. G. H.,
+Fillon-Robin, J. C., Pieper, S.,  Aerts, H. J. W. L. (2017). Computational Radiomics System to Decode the Radiographic
+Phenotype. Cancer Research, 77(21), e104–e107. https://doi.org/10.1158/0008-5472.CAN-17-0339*
 
 .. note::
 

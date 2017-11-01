@@ -43,6 +43,21 @@ do this by providing a :ref:`parameter file <radiomics-parameter-file-label>`. I
 `yaml structured <http://yaml.org/>`_ text file you can define your custom settings and which features and input image
 types to enable.
 
+Why is there no parameter to specify a fixed bin count?
+#######################################################
+
+PyRadiomics does not have the option for setting a fixed bin count, as a fixed bin count makes the values less
+comparable, instead of more. This is because a fixed bin count means that the “meaning” of difference between gray
+values is dependent on the range of gray values in the ROI. Take for example 2 images with 2 ROIs, with the range of
+gray values in the first being {0-100} and in the second {0-10}. If you use a fixed bin count, the “meaning” of 1 gray
+value difference is different (in the first it means 10 gray values different, in the second just 1). This means you are
+looking at texture based on very different contrasts.
+Therefore, PyRadiomics uses a fixed bin width (parameter ``binWidth``), which ensures texture feature values are
+calculated using the same “contrast” between gray values [1]_. There are currently no specific guidelines as to what
+constitutes an optimal bin width. We try to choose a bin width in such a way, that the resulting amount of bins is
+somewhere between 30 and 130 bins. This allows for differing ranges of intensity in ROIs, while still keeping the
+texture features informative (and comparable inter lesion!).
+
 Error loading parameter file
 ############################
 
@@ -137,7 +152,7 @@ comparing the range of gray values in the ROI (a First Order feature) with the v
 More bins capture smaller differences in gray values, but too many bins (compared to number of voxels) will yield low
 probabilities in the texture matrices, resulting in non-informative features. There is no definitive answer for the
 ideal number of discretized gray values, and this may differ between modalities.
-One study [1]_ assessed the number of bins in PET and found that in the range of 16 - 128 bins, texture features did not
+One study [2]_ assessed the number of bins in PET and found that in the range of 16 - 128 bins, texture features did not
 differ significantly.
 
 Does PyRadiomics support voxel-wise feature extraction?
@@ -183,6 +198,9 @@ If you have a question that is not listed here, check the
 `issues on GitHub <https://github.com/Radiomics/pyradiomics/issues>`_. Feel free to post a new question or issue and
 we'll try to get back to you ASAP.
 
-.. [1] Tixier F, Cheze-Le Rest C, Hatt M, Albarghach NM, Pradier O, Metges J-P, et al. *Intratumor
+.. [1] Leijenaar RTH, Nalbantov G, Carvalho S, van Elmpt WJC, Troost EGC, Boellaard R, et al. ; The effect of SUV
+        discretization in quantitative FDG-PET Radiomics: the need for standardized methodology in tumor texture
+        analysis; Sci Rep. 2015;5(August):11075
+.. [2] Tixier F, Cheze-Le Rest C, Hatt M, Albarghach NM, Pradier O, Metges J-P, et al. *Intratumor
         Heterogeneity Characterized by Textural Features on Baseline 18F-FDG PET Images Predicts Response to Concomitant
         Radiochemotherapy in Esophageal Cancer.* J Nucl Med. 2011;52:369–78.

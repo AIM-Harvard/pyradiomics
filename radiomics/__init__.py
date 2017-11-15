@@ -9,9 +9,8 @@ import pkgutil
 import sys
 import tempfile
 
-from six.moves import urllib
-
 import numpy  # noqa: F401
+from six.moves import urllib
 
 from . import imageoperations
 

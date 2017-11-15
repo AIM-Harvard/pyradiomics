@@ -234,11 +234,11 @@ def checkMask(imageNode, maskNode, **kwargs):
   except RuntimeError as e:
     # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
     if not kwargs.get('correctMask', False):
-      if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.message:
+      if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.args[0]:
         logger.error('Image/Mask datatype or size mismatch. Potential solution: enable correctMask, see '
                      'Documentation:Usage:Customizing the Extraction:Settings:correctMask for more information')
         logger.debug('Additional information on error.', exc_info=True)
-      elif "Inputs do not occupy the same physical space!" in e.message:
+      elif "Inputs do not occupy the same physical space!" in e.args[0]:
         logger.error('Image/Mask geometry mismatch. Potential solution: increase tolerance using geometryTolerance, '
                      'see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more '
                      'information')

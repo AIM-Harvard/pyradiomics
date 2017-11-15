@@ -11,6 +11,7 @@ Bug fixes
 
 - Ensure PyKwalify has a log handler, which is needed when parameter file validation fails.
   (`#309 <https://github.com/Radiomics/pyradiomics/pull/309>`_)
+- Fix bug in error handling in :py:func:`~radiomics.imageoperations.checkMask` (compatibility issue between python 2 and 3).
 
 Tests
 #####

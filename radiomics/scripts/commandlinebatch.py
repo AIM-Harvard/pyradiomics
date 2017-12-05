@@ -7,6 +7,8 @@ import json
 import logging
 import os.path
 
+import numpy
+
 import radiomics
 from radiomics import featureextractor
 
@@ -22,6 +24,8 @@ parser.add_argument('--format', '-f', choices=['csv', 'json'], default='csv', he
                     'Default is "csv": one row of feature names, followed by one row of feature values for each '
                     'image-mask combination. For "json": Features are written in a JSON format dictionary '
                     '"{name:value}", one line per image-mask combination')
+parser.add_argument('--skip-nans', action='store_true',
+                    help='Add this argument to skip returning features that have an invalid result (NaN)')
 parser.add_argument('--param', '-p', metavar='FILE', type=str, default=None,
                     help='Parameter file containing the settings to be used in extraction')
 parser.add_argument('--label', '-l', metavar='N', default=None, type=int,
@@ -68,12 +72,16 @@ def main():
     cr = csv.DictReader(args.inFile, lineterminator='\n')
     flists = [row for row in cr]
     args.inFile.close()
+
+    # Check if required Image and Mask columns are present
+    if 'Image' not in cr.fieldnames:
+      logger.error('Required column "Image" not present in input, unable to extract features...')
+      exit(-1)
+    if 'Mask' not in cr.fieldnames:
+      logger.error('Required column "Mask" not present in input, unable to extract features...')
+      exit(-1)
   except Exception:
     logging.error('CSV READ FAILED', exc_info=True)
-    args.inFile.close()
-    args.outFile.close()
-    if args.log_file is not None:
-      args.log_file.close()
     exit(-1)
 
   # Initialize extractor
@@ -85,8 +93,6 @@ def main():
       extractor = featureextractor.RadiomicsFeaturesExtractor()
   except Exception:
     logger.error('EXTRACTOR INITIALIZATION FAILED', exc_info=True)
-    args.outFile.close()
-    args.log_file.close()
     exit(-1)
 
   # Extract features
@@ -94,6 +100,13 @@ def main():
 
   headers = None
   for idx, entry in enumerate(flists, start=1):
+    # Check if the required columns have a value, if not, skip them.
+    if entry['Image'] is '':
+      logger.error('Missing value in column "Image", cannot process. Skipping patient (%d/%d)', idx, len(flists))
+      continue
+    if entry['Mask'] is '':
+      logger.error('Missing value in column "Mask", cannot process. Skipping patient (%d/%d)', idx, len(flists))
+      continue
 
     logger.info("(%d/%d) Processing Patient (Image: %s, Mask: %s)", idx, len(flists), entry['Image'], entry['Mask'])
 
@@ -101,6 +114,13 @@ def main():
     maskFilepath = entry['Mask']
 
     if (imageFilepath is not None) and (maskFilepath is not None):
+      if not os.path.isabs(imageFilepath):
+        imageFilepath = os.path.abspath(os.path.join(os.path.dirname(args.inFile.name), imageFilepath))
+        logger.debug('Updated relative image filepath to be relative to input CSV: %s', imageFilepath)
+      if not os.path.isabs(maskFilepath):
+        maskFilepath = os.path.abspath(os.path.join(os.path.dirname(args.inFile.name), maskFilepath))
+        logger.debug('Updated relative mask filepath to be relative to input CSV: %s', maskFilepath)
+
       featureVector = collections.OrderedDict(entry)
       if args.shorten:
         featureVector['Image'] = os.path.basename(imageFilepath)
@@ -115,6 +135,13 @@ def main():
 
         featureVector.update(extractor.execute(imageFilepath, maskFilepath, label))
 
+        # if specified, skip NaN values
+        if args.skip_nans:
+          for key in list(featureVector.keys()):
+            if isinstance(featureVector[key], float) and numpy.isnan(featureVector[key]):
+              logger.debug('Feature %s computed NaN, removing from results', key)
+              del featureVector[key]
+
         if args.format == 'csv':
           writer = csv.writer(args.outFile, lineterminator='\n')
           if headers is None:
@@ -123,7 +150,7 @@ def main():
 
           row = []
           for h in headers:
-            row.append(featureVector.get(h, "N/A"))
+            row.append(featureVector.get(h, ""))
           writer.writerow(row)
         elif args.format == 'json':
           json.dump(featureVector, args.out)

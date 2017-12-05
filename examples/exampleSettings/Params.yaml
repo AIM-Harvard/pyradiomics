@@ -29,24 +29,36 @@ imageType:
   Original: {} # for dictionaries / mappings, None values are not allowed, '{}' is interpreted as an empty dictionary
 
 # Featureclasses, from which features must be calculated. If a featureclass is not mentioned, no features are calculated
-# for that class. Otherwise, the specified features are calculated, or, if none are specified, all are calculated.
+# for that class. Otherwise, the specified features are calculated, or, if none are specified, all are calculated (excluding redundant/deprecated features).
 featureClass:
   shape:
-    - 'Volume'
-    - 'SurfaceArea'
-    - 'SurfaceVolumeRatio'
-    - 'Sphericity'
-    - 'SphericalDisproportion'
-    - 'Maximum3DDiameter'
-    - 'Maximum2DDiameterSlice'
-    - 'Maximum2DDiameterColumn'
-    - 'Maximum2DDiameterRow'
-    - 'MajorAxis'
-    - 'MinorAxis'
-    - 'LeastAxis'
-    - 'Elongation'
-    - 'Flatness'  # Only enable these shape descriptors (disables redundant Compactness 1 and Compactness 2)
+  # redundant Compactness 1, Compactness 2 an Spherical Disproportion features are disabled by default, they can be
+  # enabled by specifying individual feature names (as is done for glcm) and including them in the list.
+  shape:
   firstorder: [] # specifying an empty list has the same effect as specifying nothing.
-  glcm: # for lists none values are allowed, in this case, all features are enabled
-  glrlm:
+  glcm:  # Disable SumAverage by specifying all other GLCM features available
+    - 'Autocorrelation'
+    - 'JointAverage'
+    - 'ClusterProminence'
+    - 'ClusterShade'
+    - 'ClusterTendency'
+    - 'Contrast'
+    - 'Correlation'
+    - 'DifferenceAverage'
+    - 'DifferenceEntropy'
+    - 'DifferenceVariance'
+    - 'JointEnergy'
+    - 'JointEntropy'
+    - 'Imc1'
+    - 'Imc2'
+    - 'Idm'
+    - 'Idmn'
+    - 'Id'
+    - 'Idn'
+    - 'InverseVariance'
+    - 'MaximumProbability'
+    - 'SumEntropy'
+    - 'SumSquares'
+  glrlm: # for lists none values are allowed, in this case, all features are enabled
   glszm:
+  gldm:  # contains deprecated features, but as no individual features are specified, the deprecated features are not enabled

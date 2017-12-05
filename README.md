@@ -1,11 +1,20 @@
+# pyradiomics v1.3.0
 
-[![Appveyor](https://ci.appveyor.com/api/projects/status/tw69xbbeyluk7fl7/branch/master?svg=true)](https://ci.appveyor.com/project/Radiomics/pyradiomics/branch/master)
+## Build Status
 
-[![Circle CI](https://circleci.com/gh/Radiomics/pyradiomics.svg?style=svg&circle-token=a4748cf0de5fad2c12bc93a485282378551c3584)](https://circleci.com/gh/Radiomics/pyradiomics)
+| Linux                          | macOS                         | Windows                       |
+|--------------------------------|-------------------------------|-------------------------------|
+| [![][circleci]][circleci-lnk]  | [![][travisci]][travisci-lnk] | [![][appveyor]][appveyor-lnk] |
 
-[![Travis CI](https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master)](https://travis-ci.org/Radiomics/pyradiomics)
 
-# pyradiomics v1.2.0
+[appveyor]: https://ci.appveyor.com/api/projects/status/tw69xbbeyluk7fl7/branch/master?svg=true
+[appveyor-lnk]: https://ci.appveyor.com/project/Radiomics/pyradiomics/branch/master
+
+[circleci]: https://circleci.com/gh/Radiomics/pyradiomics.svg?style=svg&circle-token=a4748cf0de5fad2c12bc93a485282378551c3584
+[circleci-lnk]: https://circleci.com/gh/Radiomics/pyradiomics
+
+[travisci]: https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master
+[travisci-lnk]: https://travis-ci.org/Radiomics/pyradiomics
 
 ## Radiomics feature extraction in Python
 
@@ -18,9 +27,9 @@ of radiomic capabilities and expand the community.
 The platform supports both the feature extraction in 2D and 3D. **Not intended for clinical use.**
 
 **If you publish any work which uses this package, please cite the following publication:**
-*Joost JM van Griethuysen, Andriy Fedorov, Chintan Parmar, Ahmed Hosny, Nicole Aucoin, Vivek Narayan, Regina GH 
-Beets-Tan, Jean-Christophe Fillion-Robin, Steve Pieper, Hugo JWL Aerts, “Computational Radiomics System to Decode the
-Radiographic Phenotype”; Accepted Cancer Research 2017*
+*van Griethuysen, J. J. M., Fedorov, A., Parmar, C., Hosny, A., Aucoin, N., Narayan, V., Beets-Tan, R. G. H.,
+Fillon-Robin, J. C., Pieper, S.,  Aerts, H. J. W. L. (2017). Computational Radiomics System to Decode the Radiographic
+Phenotype. Cancer Research, 77(21), e104–e107. https://doi.org/10.1158/0008-5472.CAN-17-0339*
 
 ### Feature Classes
 Currently supports the following feature classes:
@@ -60,7 +69,7 @@ Furthermore, an instruction video is available [here](http://radiomics.io/pyradi
 
 ### Installation
 
-PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4.
+PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4 (64-bits).
 To install this package on unix like systems run the following commands from the root directory:
 
     python -m pip install -r requirements.txt
@@ -103,8 +112,10 @@ extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRad
 
 See also the [requirements file](requirements.txt).
 
-### WIP
- - Implementation of this package as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org)
+### 3D Slicer
+PyRadiomics is also available as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org). 
+Download and install the 3D slicer [nightly build](http://download.slicer.org/), the extension is then available in the
+extension manager under "SlicerRadiomics".
 
 ### License
 This package is covered by the open source [3-clause BSD License](LICENSE.txt).
@@ -129,8 +140,8 @@ This package is covered by the open source [3-clause BSD License](LICENSE.txt).
 
 We are happy to help you with any questions. Please contact us on the [pyradiomics email list](https://groups.google.com/forum/#!forum/pyradiomics).
 
-We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.md) on how to contribute
-to PyRadiomics.
+We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.rst) on how to
+contribute to PyRadiomics.
 
 **This work was supported in part by the US National Cancer Institute grant 
 5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.**

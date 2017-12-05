@@ -55,10 +55,10 @@ def main():
   # radiomics.pythonMatrixCalculation(True)
 
   extractor.disableAllFeatures()
-  extractor.disableAllInputImages()
+  extractor.disableAllImageTypes()
 
   # Calculate new baseline on original image for all new classes
-  extractor.enableInputImageByName('original')
+  extractor.enableImageTypeByName('Original')
   for cls in newClasses:
     newBaseline[cls] = {}
 

@@ -12,9 +12,9 @@ open-source platform for easy and reproducible Radiomic Feature extraction. By d
 of radiomic capabilities and expand the community. The platform supports both the feature extraction in 2D and 3D.
 
 **If you publish any work which uses this package, please cite the following publication:**
-*Joost JM van Griethuysen, Andriy Fedorov, Chintan Parmar, Ahmed Hosny, Nicole Aucoin, Vivek Narayan, Regina GH
-Beets-Tan, Jean-Christophe Fillion-Robin, Steve Pieper, Hugo JWL Aerts, “Computational Radiomics System to Decode the
-Radiographic Phenotype”; Accepted Cancer Research 2017*
+*van Griethuysen, J. J. M., Fedorov, A., Parmar, C., Hosny, A., Aucoin, N., Narayan, V., Beets-Tan, R. G. H.,
+Fillon-Robin, J. C., Pieper, S.,  Aerts, H. J. W. L. (2017). Computational Radiomics System to Decode the Radiographic
+Phenotype. Cancer Research, 77(21), e104–e107. https://doi.org/10.1158/0008-5472.CAN-17-0339*
 
 .. note::
 
@@ -41,6 +41,8 @@ Table of Contents
    customization
    radiomics
    features
+   removedfeatures
+   contributing
    developers
    FAQs <faq>
    changes
@@ -55,8 +57,10 @@ Currently supports the following feature classes:
 * :ref:`Gray Level Cooccurence Matrix <radiomics-glcm-label>` (GLCM)
 * :ref:`Gray Level Run Length Matrix <radiomics-glrlm-label>` (GLRLM)
 * :ref:`Gray Level Size Zone Matrix <radiomics-glszm-label>` (GLSZM)
+* :ref:`Neigbouring Gray Tone Difference Matrix <radiomics-ngtdm-label>` (NGTDM)
+* :ref:`Gray Level Dependence Matrix <radiomics-gldm-label>` (GLDM)
 
-On average, Pyradiomics extracts :math:`\approx 1300` features per image, which consist of the 16 shape descriptors and
+On average, Pyradiomics extracts :math:`\approx 1500` features per image, which consist of the 16 shape descriptors and
 features extracted from original and derived images (LoG with 5 sigma levels, 1 level of Wavelet decomposistions
 yielding 8 derived images and images derived using Square, Square Root, Logarithm and Exponential filters).
 
@@ -148,6 +152,5 @@ Contact
 We are happy to help you with any questions. Please contact us on the `pyradiomics email list <https://groups.google.com/forum/#!forum/pyradiomics>`_.
 
 We'd welcome your contributions to PyRadiomics. Please read the
-`contributing guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_ on how to contribute
-to PyRadiomics. Information on adding / customizing feature classes and filters can be found in the
-:ref:`radiomics-developers` section.
+:ref:`contributing guidelines <radiomics-contributing-label>` on how to contribute to PyRadiomics. Information on
+adding / customizing feature classes and filters can be found in the :ref:`radiomics-developers` section.

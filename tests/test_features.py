@@ -6,6 +6,7 @@ import logging
 import os
 
 from nose_parameterized import parameterized
+import six
 
 from radiomics.featureextractor import RadiomicsFeaturesExtractor
 from testUtils import custom_name_func, RadiomicsTestUtils
@@ -25,11 +26,23 @@ class TestFeatures:
 
     for testCase in testCases:
       for featureClassName in extractor.getFeatureClassNames():
+        # Get all feature names for which there is a baseline with current test case
+        baselineFeatureNames = testUtils.getFeatureNames(featureClassName, testCase)
+
+        assert (baselineFeatureNames is not None)
+        assert (len(baselineFeatureNames) > 0)
+
+        # Get a list of all features for current class
         featureNames = extractor.featureClasses[featureClassName].getFeatureNames()
-        assert (featureNames is not None)
-        assert (len(featureNames) > 0)
-        logging.debug('generate_scenarios: featureNames = %s', featureNames)
-        for featureName in featureNames:
+        # Get a list of all non-deprecated features
+        activeFeatures = set([f for (f, deprecated) in six.iteritems(featureNames) if not deprecated])
+        # Check if all active features have a baseline (exclude deprecated features from this set)
+        if len(activeFeatures - set(baselineFeatureNames)) > 0:
+          raise AssertionError('Missing baseline for active features %s', activeFeatures - set(baselineFeatureNames))
+
+        logging.debug('generate_scenarios: featureNames = %s', baselineFeatureNames)
+        for featureName in baselineFeatureNames:
+          assert featureName in featureNames  # check if feature function exists
           yield testCase, featureClassName, featureName
 
   global testUtils

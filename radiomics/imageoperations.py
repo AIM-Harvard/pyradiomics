@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-from itertools import chain
 import logging
 
 import numpy
@@ -235,11 +234,11 @@ def checkMask(imageNode, maskNode, **kwargs):
   except RuntimeError as e:
     # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
     if not kwargs.get('correctMask', False):
-      if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.message:
+      if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.args[0]:
         logger.error('Image/Mask datatype or size mismatch. Potential solution: enable correctMask, see '
                      'Documentation:Usage:Customizing the Extraction:Settings:correctMask for more information')
         logger.debug('Additional information on error.', exc_info=True)
-      elif "Inputs do not occupy the same physical space!" in e.message:
+      elif "Inputs do not occupy the same physical space!" in e.args[0]:
         logger.error('Image/Mask geometry mismatch. Potential solution: increase tolerance using geometryTolerance, '
                      'see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more '
                      'information')
@@ -251,7 +250,7 @@ def checkMask(imageNode, maskNode, **kwargs):
     correctedMask = _correctMask(imageNode, maskNode, label)
     if correctedMask is None:  # Resampling failed (ROI outside image physical space
       logger.error('Image/Mask correction failed, ROI invalid (not found or outside of physical image bounds)')
-      return (boundingBox, correctedMask)
+      return boundingBox, correctedMask
 
     # Resampling succesful, try to calculate boundingbox
     try:
@@ -259,7 +258,7 @@ def checkMask(imageNode, maskNode, **kwargs):
     except RuntimeError:
       logger.error('Calculation of bounding box failed, for more information run with DEBUG logging and check log')
       logger.debug('Bounding box calculation with resampled mask failed', exc_info=True)
-      return (boundingBox, correctedMask)
+      return boundingBox, correctedMask
 
   # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
   boundingBox = numpy.array(lsif.GetBoundingBox(label))
@@ -268,16 +267,16 @@ def checkMask(imageNode, maskNode, **kwargs):
   ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
   if ndims <= minDims:
     logger.error('mask has too few dimensions (number of dimensions %d, minimum required %d)', ndims, minDims)
-    return (boundingBox, correctedMask)
+    return None, correctedMask
 
   if minSize is not None:
     logger.debug('Checking minimum size requirements (minimum size: %d)', minSize)
     roiSize = lsif.GetCount(label)
     if roiSize <= minSize:
       logger.error('Size of the ROI is too small (minimum size: %g, ROI size: %g', minSize, roiSize)
-      return (boundingBox, correctedMask)
+      return None, correctedMask
 
-  return (boundingBox, correctedMask)
+  return boundingBox, correctedMask
 
 
 def _correctMask(imageNode, maskNode, label):
@@ -363,7 +362,7 @@ def _checkROI(imageNode, maskNode, label):
   return bb
 
 
-def cropToTumorMask(imageNode, maskNode, boundingBox):
+def cropToTumorMask(imageNode, maskNode, boundingBox, padDistance=0):
   """
   Create a sitkImage of the segmented region of the image based on the input label.
 
@@ -382,8 +381,12 @@ def cropToTumorMask(imageNode, maskNode, boundingBox):
   maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
   size = numpy.array(maskNode.GetSize())
 
-  ijkMinBounds = boundingBox[0::2]
-  ijkMaxBounds = size - boundingBox[1::2] - 1
+  ijkMinBounds = boundingBox[0::2] - padDistance
+  ijkMaxBounds = size - boundingBox[1::2] - padDistance - 1
+
+  # Ensure cropped area is not outside original image bounds
+  ijkMinBounds = numpy.maximum(ijkMinBounds, 0)
+  ijkMaxBounds = numpy.maximum(ijkMaxBounds, 0)
 
   # Crop Image
   logger.debug('Cropping to size %s', (boundingBox[1::2] - boundingBox[0::2]) + 1)
@@ -414,6 +417,9 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   'imageNode' and 'maskNode' are SimpleITK Objects, and 'resampledPixelSpacing' is the output pixel spacing (sequence of
   3 elements).
 
+  If only in-plane resampling is required, set the output pixel spacing for the out-of-plane dimension (usually the last
+  dimension) to 0. Spacings with a value of 0 are replaced by the spacing as it is in the original mask.
+
   Only part of the image and labelmap are resampled. The resampling grid is aligned to the input origin, but only voxels
   covering the area of the image ROI (defined by the bounding box) and the padDistance are resampled. This results in a
   resampled and partially cropped image and mask. Additional padding is required as some filters also sample voxels
@@ -443,14 +449,13 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   if imageNode is None or maskNode is None:
     return None, None  # this function is expected to always return a tuple of 2 elements
 
-  logger.debug('Comparing resampled spacing to original spacing (image and mask')
   maskSpacing = numpy.array(maskNode.GetSpacing())
   imageSpacing = numpy.array(imageNode.GetSpacing())
 
-  # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
-  if numpy.array_equal(maskSpacing, resampledPixelSpacing) and numpy.array_equal(imageSpacing, resampledPixelSpacing):
-    logger.info('New spacing equal to old, no resampling required')
-    return imageNode, maskNode
+  # If spacing for a direction is set to 0, use the original spacing (enables "only in-slice" resampling)
+  logger.debug('Where resampled spacing is set to 0, set it to the original spacing (mask)')
+  resampledPixelSpacing = numpy.array(resampledPixelSpacing)
+  resampledPixelSpacing = numpy.where(resampledPixelSpacing == 0, maskSpacing, resampledPixelSpacing)
 
   # Check if the maskNode contains a valid ROI. If ROI is valid, the bounding box needed to calculate the resampling
   # grid is returned.
@@ -462,6 +467,13 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Do not resample in those directions where labelmap spans only one slice.
   maskSize = numpy.array(maskNode.GetSize())
   resampledPixelSpacing = numpy.where(bb[3:] != 1, resampledPixelSpacing, maskSpacing)
+
+  # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
+  # Tolerance = 1e-5 + 1e-8*abs(resampledSpacing)
+  logger.debug('Comparing resampled spacing to original spacing (image and mask')
+  if numpy.allclose(maskSpacing, resampledPixelSpacing) and numpy.allclose(imageSpacing, resampledPixelSpacing):
+    logger.info('New spacing equal to old, no resampling required')
+    return imageNode, maskNode
 
   spacingRatio = maskSpacing / resampledPixelSpacing
 
@@ -504,7 +516,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   try:
     if isinstance(interpolator, six.string_types):
       interpolator = getattr(sitk, interpolator)
-  except:
+  except Exception:
     logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)
     interpolator = sitk.sitkBSpline
 
@@ -566,19 +578,41 @@ def normalizeImage(image, scale=1, outliers=None):
   return image
 
 
-def applyThreshold(inputImage, lowerThreshold, upperThreshold, insideValue=None, outsideValue=0):
-  # this mode is useful to generate the mask of thresholded voxels
-  if insideValue:
-    tif = sitk.BinaryThresholdImageFilter()
-    tif.SetInsideValue(insideValue)
-    tif.SetLowerThreshold(lowerThreshold)
-    tif.SetUpperThreshold(upperThreshold)
-  else:
-    tif = sitk.ThresholdImageFilter()
-    tif.SetLower(lowerThreshold)
-    tif.SetUpper(upperThreshold)
-  tif.SetOutsideValue(outsideValue)
-  return tif.Execute(inputImage)
+def resegmentMask(imageNode, maskNode, resegmentRange, label=1):
+  """
+  Resegment the Mask based on the range specified in ``resegmentRange``. All voxels with a gray level outside the
+  range specified are removed from the mask. The resegmented mask is therefore always equal or smaller in size than
+  the original mask. The resegemented mask is then checked for size (as specified by parameter ``minimumROISize``,
+  defaults to minimum size 1). When this check fails, an error is logged and maskArray is reset to the original mask.
+  """
+  global logger
+
+  if resegmentRange is None:
+    return maskNode
+
+  logger.debug('Resegmenting mask (range %s)', resegmentRange)
+
+  im_arr = sitk.GetArrayFromImage(imageNode)
+  ma_arr = (sitk.GetArrayFromImage(maskNode) == label)  # boolean array
+
+  oldSize = numpy.sum(ma_arr)
+  # Get a boolean array specifying per voxel if its gray value is inside the range specified by resegmentRange.
+  intensitySegmentation = numpy.logical_and(im_arr >= resegmentRange[0],
+                                            im_arr <= resegmentRange[1])
+  # Then, take the intersection between voxels segmented (ma_arr) and
+  # voxels inside specified range (intensitySegmentation)
+  ma_arr = numpy.logical_and(ma_arr, intensitySegmentation)
+  roiSize = numpy.sum(ma_arr)
+
+  # Transform the boolean array back to an image with the correct voxels set to the label value
+  newMask_arr = numpy.zeros(ma_arr.shape, dtype='int')
+  newMask_arr[ma_arr] = label
+
+  newMask = sitk.GetImageFromArray(newMask_arr)
+  newMask.CopyInformation(maskNode)
+  logger.debug('Resegmentation complete, new size: %d voxels (excluded %d voxels)', roiSize, oldSize - roiSize)
+
+  return newMask
 
 
 def getOriginalImage(inputImage, **kwargs):
@@ -679,7 +713,11 @@ def getWaveletImage(inputImage, **kwargs):
 
   logger.debug('Generating Wavelet images')
 
-  approx, ret = _swt3(inputImage, kwargs.get('wavelet', 'coif1'), kwargs.get('level', 1), kwargs.get('start_level', 0))
+  axes = {2, 1, 0}  # set
+  if kwargs.get('force2D', False):
+    axes -= {kwargs.get('force2Ddimension', 0)}  # set
+
+  approx, ret = _swt3(inputImage, kwargs.get('wavelet', 'coif1'), kwargs.get('level', 1), kwargs.get('start_level', 0), axes=tuple(axes))
 
   for idx, wl in enumerate(ret, start=1):
     for decompositionName, decompositionImage in wl.items():
@@ -700,7 +738,7 @@ def getWaveletImage(inputImage, **kwargs):
   yield approx, inputImageName, kwargs
 
 
-def _swt3(inputImage, wavelet='coif1', level=1, start_level=0):
+def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)):
   matrix = sitk.GetArrayFromImage(inputImage)
   matrix = numpy.asarray(matrix)
   if matrix.ndim != 3:
@@ -715,87 +753,29 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0):
     wavelet = pywt.Wavelet(wavelet)
 
   for i in range(0, start_level):
-    H, L = _decompose_i(data, wavelet)
-    LH, LL = _decompose_j(L, wavelet)
-    LLH, LLL = _decompose_k(LL, wavelet)
-
-    data = LLL.copy()
+    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0]
+    data = dec['a' * len(axes)].copy()
 
   ret = []
   for i in range(start_level, start_level + level):
-    H, L = _decompose_i(data, wavelet)
+    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0]
+    data = dec['a' * len(axes)].copy()
 
-    HH, HL = _decompose_j(H, wavelet)
-    LH, LL = _decompose_j(L, wavelet)
-
-    HHH, HHL = _decompose_k(HH, wavelet)
-    HLH, HLL = _decompose_k(HL, wavelet)
-    LHH, LHL = _decompose_k(LH, wavelet)
-    LLH, LLL = _decompose_k(LL, wavelet)
-
-    data = LLL.copy()
-
-    dec = {'HHH': HHH,
-           'HHL': HHL,
-           'HLH': HLH,
-           'HLL': HLL,
-           'LHH': LHH,
-           'LHL': LHL,
-           'LLH': LLH}
+    dec_im = {}
     for decName, decImage in six.iteritems(dec):
       decTemp = decImage.copy()
       decTemp = numpy.resize(decTemp, original_shape)
       sitkImage = sitk.GetImageFromArray(decTemp)
       sitkImage.CopyInformation(inputImage)
-      dec[decName] = sitkImage
+      dec_im[str(decName).replace('a', 'L').replace('d', 'H')] = sitkImage
 
-    ret.append(dec)
+    ret.append(dec_im)
 
   data = numpy.resize(data, original_shape)
   approximation = sitk.GetImageFromArray(data)
   approximation.CopyInformation(inputImage)
 
   return approximation, ret
-
-
-def _decompose_i(data, wavelet):
-  # process in i:
-  H, L = [], []
-  i_arrays = chain.from_iterable(data)
-  for i_array in i_arrays:
-    cA, cD = pywt.swt(i_array, wavelet, level=1, start_level=0)[0]
-    H.append(cD)
-    L.append(cA)
-  H = numpy.hstack(H).reshape(data.shape)
-  L = numpy.hstack(L).reshape(data.shape)
-  return H, L
-
-
-def _decompose_j(data, wavelet):
-  # process in j:
-  s = data.shape
-  H, L = [], []
-  j_arrays = chain.from_iterable(numpy.transpose(data, (0, 2, 1)))
-  for j_array in j_arrays:
-    cA, cD = pywt.swt(j_array, wavelet, level=1, start_level=0)[0]
-    H.append(cD)
-    L.append(cA)
-  H = numpy.hstack(H).reshape((s[0], s[2], s[1])).transpose((0, 2, 1))
-  L = numpy.hstack(L).reshape((s[0], s[2], s[1])).transpose((0, 2, 1))
-  return H, L
-
-
-def _decompose_k(data, wavelet):
-  # process in k:
-  H, L = [], []
-  k_arrays = chain.from_iterable(numpy.transpose(data, (2, 1, 0)))
-  for k_array in k_arrays:
-    cA, cD = pywt.swt(k_array, wavelet, level=1, start_level=0)[0]
-    H.append(cD)
-    L.append(cA)
-  H = numpy.asarray([slice for slice in numpy.split(numpy.vstack(H), data.shape[2])]).T
-  L = numpy.asarray([slice for slice in numpy.split(numpy.vstack(L), data.shape[2])]).T
-  return H, L
 
 
 def getSquareImage(inputImage, **kwargs):
@@ -805,7 +785,7 @@ def getSquareImage(inputImage, **kwargs):
   Resulting values are rescaled on the range of the initial original image and negative intensities are made
   negative in resultant filtered image.
 
-  :math:`f(x) = (cx)^2,\text{ where } c=\displaystyle\frac{1}{\sqrt{\max(x)}}`
+  :math:`f(x) = (cx)^2,\text{ where } c=\displaystyle\frac{1}{\sqrt{\max(|x|)}}`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
@@ -815,7 +795,7 @@ def getSquareImage(inputImage, **kwargs):
 
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = 1 / numpy.sqrt(numpy.max(im))
+  coeff = 1 / numpy.sqrt(numpy.max(numpy.abs(im)))
   im = (coeff * im) ** 2
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
@@ -833,7 +813,7 @@ def getSquareRootImage(inputImage, **kwargs):
 
   :math:`f(x) = \left\{ {\begin{array}{lcl}
   \sqrt{cx} & \mbox{for} & x \ge 0 \\
-  -\sqrt{-cx} & \mbox{for} & x < 0\end{array}} \right.,\text{ where } c=\max(x)`
+  -\sqrt{-cx} & \mbox{for} & x < 0\end{array}} \right.,\text{ where } c=\max(|x|)`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
@@ -843,7 +823,7 @@ def getSquareRootImage(inputImage, **kwargs):
 
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = numpy.max(im)
+  coeff = numpy.max(numpy.abs(im))
   im[im > 0] = numpy.sqrt(im[im > 0] * coeff)
   im[im < 0] = - numpy.sqrt(-im[im < 0] * coeff)
   im = sitk.GetImageFromArray(im)
@@ -862,9 +842,7 @@ def getLogarithmImage(inputImage, **kwargs):
 
   :math:`f(x) = \left\{ {\begin{array}{lcl}
   c\log{(x + 1)} & \mbox{for} & x \ge 0 \\
-  -c\log{(-x + 1)} & \mbox{for} & x < 0\end{array}} \right. \text{, where } c=\left\{ {\begin{array}{lcl}
-  \frac{\max(x)}{\log(\max(x) + 1)} & if & \max(x) \geq 0 \\
-  \frac{\max(x)}{-\log(-\max(x) - 1)} & if & \max(x) < 0 \end{array}} \right.`
+  -c\log{(-x + 1)} & \mbox{for} & x < 0\end{array}} \right. \text{, where } c=\frac{\max(|x|)}{\log(\max(|x|) + 1)}`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
@@ -874,10 +852,10 @@ def getLogarithmImage(inputImage, **kwargs):
 
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  im_max = numpy.max(im)
+  im_max = numpy.max(numpy.abs(im))
   im[im > 0] = numpy.log(im[im > 0] + 1)
   im[im < 0] = - numpy.log(- (im[im < 0] - 1))
-  im = im * (im_max / numpy.max(im))
+  im = im * (im_max / numpy.max(numpy.abs(im)))
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)
 
@@ -891,7 +869,7 @@ def getExponentialImage(inputImage, **kwargs):
 
   Resulting values are rescaled on the range of the initial original image.
 
-  :math:`f(x) = e^{cx},\text{ where } c=\displaystyle\frac{\log(\max(x))}{\max(x)}`
+  :math:`f(x) = e^{cx},\text{ where } c=\displaystyle\frac{\log(\max(|x|))}{\max(|x|)}`
 
   Where :math:`x` and :math:`f(x)` are the original and filtered intensity, respectively.
 
@@ -901,7 +879,8 @@ def getExponentialImage(inputImage, **kwargs):
 
   im = sitk.GetArrayFromImage(inputImage)
   im = im.astype('float64')
-  coeff = numpy.log(numpy.max(im)) / numpy.max(im)
+  im_max = numpy.max(numpy.abs(im))
+  coeff = numpy.log(im_max) / im_max
   im = numpy.exp(coeff * im)
   im = sitk.GetImageFromArray(im)
   im.CopyInformation(inputImage)

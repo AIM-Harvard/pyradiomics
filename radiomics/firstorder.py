@@ -1,6 +1,6 @@
 import numpy
 
-from radiomics import base, imageoperations
+from radiomics import base, deprecated, imageoperations
 
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
@@ -10,11 +10,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   Let:
 
-  - :math:`\textbf{X}` be a set of :math:`N` voxels included in the ROI
-  - :math:`\textbf{P}(i)` be the first order histogram with :math:`N_l` discrete intensity levels,
-    where :math:`N_l` is the number of non-zero bins, equally spaced from 0 with a width defined in the ``binWidth``
+  - :math:`\textbf{X}` be a set of :math:`N_p` voxels included in the ROI
+  - :math:`\textbf{P}(i)` be the first order histogram with :math:`N_g` discrete intensity levels,
+    where :math:`N_g` is the number of non-zero bins, equally spaced from 0 with a width defined in the ``binWidth``
     parameter.
-  - :math:`p(i)` be the normalized first order histogram and equal to :math:`\frac{\textbf{P}(i)}{\sum{\textbf{P}(i)}}`
+  - :math:`p(i)` be the normalized first order histogram and equal to :math:`\frac{\textbf{P}(i)}{N_p}`
 
   Following additional settings are possible:
 
@@ -59,7 +59,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **1. Energy**
 
     .. math::
-      \textit{energy} = \displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}
+      \textit{energy} = \displaystyle\sum^{N_p}_{i=1}{(\textbf{X}(i) + c)^2}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
     values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to Energy,
@@ -81,7 +81,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **2. Total Energy**
 
     .. math::
-      \textit{total energy} = V_{voxel}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}
+      \textit{total energy} = V_{voxel}\displaystyle\sum^{N_p}_{i=1}{(\textbf{X}(i) + c)^2}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
     values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to Energy,
@@ -106,7 +106,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **3. Entropy**
 
     .. math::
-      \textit{entropy} = -\displaystyle\sum^{N_l}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}
+      \textit{entropy} = -\displaystyle\sum^{N_g}_{i=1}{p(i)\log_2\big(p(i)+\epsilon\big)}
 
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
 
@@ -174,7 +174,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **8. Mean**
 
     .. math::
-      \textit{mean} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{\textbf{X}(i)}
+      \textit{mean} = \frac{1}{N_p}\displaystyle\sum^{N_p}_{i=1}{\textbf{X}(i)}
 
     The average gray level intensity within the ROI.
     """
@@ -220,7 +220,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **12. Mean Absolute Deviation (MAD)**
 
     .. math::
-      \textit{MAD} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{|\textbf{X}(i)-\bar{X}|}
+      \textit{MAD} = \frac{1}{N_p}\displaystyle\sum^{N_p}_{i=1}{|\textbf{X}(i)-\bar{X}|}
 
     Mean Absolute Deviation is the mean distance of all intensity values from the Mean Value of the image array.
     """
@@ -251,7 +251,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **14. Root Mean Squared (RMS)**
 
     .. math::
-      \textit{RMS} = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i) + c)^2}}
+      \textit{RMS} = \sqrt{\frac{1}{N_p}\sum^{N_p}_{i=1}{(\textbf{X}(i) + c)^2}}
 
     Here, :math:`c` is optional value, defined by ``voxelArrayShift``, which shifts the intensities to prevent negative
     values in :math:`\textbf{X}`. This ensures that voxels with the lowest gray values contribute the least to RMS,
@@ -269,17 +269,22 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
     return numpy.sqrt((numpy.sum(shiftedParameterArray ** 2)) / float(shiftedParameterArray.size))
 
+  @deprecated
   def getStandardDeviationFeatureValue(self):
     r"""
     **15. Standard Deviation**
 
     .. math::
-      \textit{standard deviation} = \sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}
+      \textit{standard deviation} = \sqrt{\frac{1}{N_p}\sum^{N_p}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}
 
     Standard Deviation measures the amount of variation or dispersion from the Mean Value. By definition,
     :math:\textit{standard deviation} = \sqrt{\textit{variance}}
 
     .. note::
+      As this feature is correlated with variance, it is marked so it is not enabled by default.
+      To include this feature in the extraction, specify it by name in the enabled features
+      (i.e. this feature will not be enabled if no individual features are specified (enabling 'all' features),
+      but will be enabled when individual features are specified, including this feature).
       Not present in IBSI feature definitions (correlated with variance)
     """
 
@@ -291,8 +296,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     .. math::
       \textit{skewness} = \displaystyle\frac{\mu_3}{\sigma^3} =
-      \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^3}}
-      {\left(\sqrt{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}\right)^3}
+      \frac{\frac{1}{N_p}\sum^{N_p}_{i=1}{(\textbf{X}(i)-\bar{X})^3}}
+      {\left(\sqrt{\frac{1}{N_p}\sum^{N_p}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}\right)^3}
 
     Where :math:`\mu_3` is the 3\ :sup:`rd` central moment.
 
@@ -322,8 +327,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     .. math::
       \textit{kurtosis} = \displaystyle\frac{\mu_4}{\sigma^4} =
-      \frac{\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^4}}
-      {\left(\frac{1}{N}\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X}})^2\right)^2}
+      \frac{\frac{1}{N_p}\sum^{N_p}_{i=1}{(\textbf{X}(i)-\bar{X})^4}}
+      {\left(\frac{1}{N_p}\sum^{N_p}_{i=1}{(\textbf{X}(i)-\bar{X}})^2\right)^2}
 
     Where :math:`\mu_4` is the 4\ :sup:`th` central moment.
 
@@ -357,7 +362,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **18. Variance**
 
     .. math::
-      \textit{variance} = \frac{1}{N}\displaystyle\sum^{N}_{i=1}{(\textbf{X}(i)-\bar{X})^2}
+      \textit{variance} = \frac{1}{N_p}\displaystyle\sum^{N_p}_{i=1}{(\textbf{X}(i)-\bar{X})^2}
 
     Variance is the the mean of the squared distances of each intensity value from the Mean value. This is a measure of
     the spread of the distribution about the mean. By definition, :math:`\textit{variance} = \sigma^2`
@@ -370,7 +375,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     **19. Uniformity**
 
     .. math::
-      \textit{uniformity} = \displaystyle\sum^{N_l}_{i=1}{p(i)^2}
+      \textit{uniformity} = \displaystyle\sum^{N_g}_{i=1}{p(i)^2}
 
     Uniformity is a measure of the sum of the squares of each intensity value. This is a measure of the heterogeneity of
     the image array, where a greater uniformity implies a greater heterogeneity or a greater range of discrete intensity

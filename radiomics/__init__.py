@@ -9,14 +9,20 @@ import pkgutil
 import sys
 import tempfile
 
-from six.moves import urllib
-
 import numpy  # noqa: F401
+from six.moves import urllib
 
 from . import imageoperations
 
-if sys.version_info < (2, 6, 0):
-  raise ImportError("pyradiomics > 0.9.7 requires python 2.6 or later")
+
+def deprecated(func):
+  """
+  Decorator function to mark functions as deprecated. This is used to ensure deprecated feature functions are not
+  added to the enabled features list when enabling 'all' features.
+  """
+  func._is_deprecated = True
+  return func
+
 
 def setVerbosity(level):
   """
@@ -223,6 +229,19 @@ def getTestCase(testCase, repoDirectory=None):
   return imageFile, maskFile
 
 
+def getParameterValidationFiles():
+  """
+  Returns file locations for the parameter schema and custom validation functions, which are needed when validating
+  a parameter file using ``PyKwalify.core``.
+  This functions returns a tuple with the file location of the schema as first and python script with custom validation
+  functions as second element.
+  """
+  dataDir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'schemas'))
+  schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
+  schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
+  return schemaFile, schemaFuncs
+
+
 class _DummyProgressReporter(object):
   """
   This class represents the dummy Progress reporter and is used for where progress reporting is implemented, but not
@@ -308,7 +327,7 @@ getFeatureClasses()
 getImageTypes()
 
 # 4. Set the version using the versioneer scripts
-from ._version import get_versions
+from ._version import get_versions  # noqa: I202
 
 __version__ = get_versions()['version']
 del get_versions

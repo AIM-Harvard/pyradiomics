@@ -8,6 +8,7 @@ import six
 
 from radiomics import getProgressReporter, imageoperations
 
+
 class RadiomicsFeaturesBase(object):
   """
   This is the abstract class, which defines the common interface for the feature classes. All feature classes inherit
@@ -19,23 +20,42 @@ class RadiomicsFeaturesBase(object):
   initialization fails and a warning is logged (does not raise an error).
 
   Logging is set up using a child logger from the parent 'radiomics' logger. This retains the toolbox structure in
-  the generated log.
+  the generated log. The child logger is named after the module containing the feature class (e.g. 'radiomics.glcm').
+
+  Any pre calculations needed before the feature functions are called can be added by overriding the
+  ``_initSegmentBasedCalculation`` function, which prepares the input for feature extraction. If image discretization is
+  needed, this can be implemented by adding a call to ``_applyBinning`` to this initialization function, which also
+  instantiates coefficients holding the maximum ('Ng') and unique ('GrayLevels') that can be found inside the ROI after
+  binning. This function also instantiates the `matrix` variable, which holds the discretized image (the `imageArray`
+  variable will hold only original gray levels).
 
   The following variables are instantiated at initialization:
 
+  - kwargs: dictionary holding all customized settings passed to this feature class.
   - binWidth: bin width, as specified in ``**kwargs``. If key is not present, a default value of 25 is used.
   - label: label value of Region of Interest (ROI) in labelmap. If key is not present, a default value of 1 is used.
-  - verbose: boolean indication whether or not to provide progress reporting to the output.
   - featureNames: list containing the names of features defined in the feature class. See :py:func:`getFeatureNames`
-  - inputImage: Simple ITK image object of the input image
-  - inputMask: Simple ITK image object of the input labelmap
-  - imageArray: numpy array of the gray values in the input image
-  - maskArray: numpy array with elements set to 1 where labelmap = label, 0 otherwise
-  - matrix: numpy array of the gray values in the input image (with gray values inside ROI discretized when necessary in
-    the texture feature classes).
-  - matrixCoordinates: tuple of 3 numpy arrays containing the z, x and y coordinates of the voxels included in the ROI,
-    respectively. Length of each array is equal to total number of voxels inside ROI.
-  - targetVoxelArray: flattened numpy array of gray values inside ROI.
+  - inputImage: SimpleITK image object of the input image (dimensions x, y, z)
+
+  The following variables are instantiated by the ``_initSegmentBasedCalculation`` function:
+
+  - inputMask: SimpleITK image object of the input labelmap (dimensions x, y, z)
+  - imageArray: numpy array of the gray values in the input image (dimensions z, y, x)
+  - maskArray: numpy boolean array with elements set to ``True`` where labelmap = label, ``False`` otherwise,
+    (dimensions z, y, x).
+  - labelledVoxelCoordinates: tuple of 3 numpy arrays containing the z, x and y coordinates of the voxels included in
+    the ROI, respectively. Length of each array is equal to total number of voxels inside ROI.
+  - boundingBoxSize: tuple of 3 integers containing the z, x and y sizes of the ROI bounding box, respectively.
+  - matrix: copy of the imageArray variable, with gray values inside ROI discretized using the specified binWidth.
+    This variable is only instantiated if a call to ``_applyBinning`` is added to an override of
+    ``_initSegmentBasedCalculation`` in the feature class.
+
+  .. note::
+    Although some variables listed here have similar names to customization settings, they do *not* represent all the
+    possible settings on the feature class level. These variables are listed here to help developers develop new feature
+    classes, which make use of these variables. For more information on customization, see
+    :ref:`radiomics-customization-label`, which includes a comprehensive list of all possible settings, including
+    default values and explanation of usage.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -69,11 +89,11 @@ class RadiomicsFeaturesBase(object):
     self.boundingBoxSize = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
 
   def _applyBinning(self):
-      self.matrix, self.binEdges = imageoperations.binImage(self.binWidth,
-                                                            self.imageArray,
-                                                            self.maskArray)
-      self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.maskArray])
-      self.coefficients['Ng'] = int(numpy.max(self.coefficients['grayLevels']))  # max gray level in the ROI
+    self.matrix, self.binEdges = imageoperations.binImage(self.binWidth,
+                                                          self.imageArray,
+                                                          self.maskArray)
+    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.maskArray])
+    self.coefficients['Ng'] = int(numpy.max(self.coefficients['grayLevels']))  # max gray level in the ROI
 
   def enableFeatureByName(self, featureName, enable=True):
     """
@@ -82,14 +102,25 @@ class RadiomicsFeaturesBase(object):
     """
     if featureName not in self.featureNames:
       raise LookupError('Feature not found: ' + featureName)
+    if self.featureNames[featureName]:
+      self.logger.warning('Feature %s is deprecated, use with caution!', featureName)
     self.enabledFeatures[featureName] = enable
 
   def enableAllFeatures(self):
     """
     Enables all features found in this class for calculation.
+
+    .. note::
+      Features that have been marked "deprecated" are not enabled by this function. They can still be enabled manually by
+      a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
+      :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeaturesByName()`
+      or in the parameter file (by specifying the feature by name, not when enabling all features).
+      However, in most cases this will still result only in a deprecation warning.
     """
-    for featureName in self.featureNames:
-      self.enableFeatureByName(featureName, True)
+    for featureName, deprecated in six.iteritems(self.featureNames):
+      # only enable non-deprecated features here
+      if not deprecated:
+        self.enableFeatureByName(featureName, True)
 
   def disableAllFeatures(self):
     """
@@ -104,12 +135,14 @@ class RadiomicsFeaturesBase(object):
     Dynamically enumerates features defined in the feature class. Features are identified by the
     ``get<Feature>FeatureValue`` signature, where <Feature> is the name of the feature (unique on the class level).
 
-    Found features are returned as a list of the feature names (``[<Feature1>, <Feature2>, ...]``).
+    Found features are returned as a dictionary of the feature names, where the value ``True`` if the
+    feature is deprecated, ``False`` otherwise (``{<Feature1>:<deprecated>, <Feature2>:<deprecated>, ...}``).
 
     This function is called at initialization, found features are stored in the ``featureNames`` variable.
     """
     attributes = inspect.getmembers(cls)
-    features = [a[0][3:-12] for a in attributes if a[0].startswith('get') and a[0].endswith('FeatureValue')]
+    features = {a[0][3:-12]: getattr(a[1], '_is_deprecated', False) for a in attributes
+                if a[0].startswith('get') and a[0].endswith('FeatureValue')}
     return features
 
   def calculateFeatures(self):
@@ -127,6 +160,8 @@ class RadiomicsFeaturesBase(object):
         try:
           # Use getattr to get the feature calculation methods, then use '()' to evaluate those methods
           self.featureValues[feature] = getattr(self, 'get%sFeatureValue' % feature)()
+        except DeprecationWarning as deprecatedFeature:
+          self.logger.warning('Feature %s is deprecated: %s', feature, deprecatedFeature.message)
         except Exception:
           self.featureValues[feature] = numpy.nan
           self.logger.error('FAILED: %s', traceback.format_exc())

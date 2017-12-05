@@ -7,9 +7,8 @@ Developers
 This section contains information on how to add or customize the feature classes and filters available in PyRadiomics.
 PyRadiomics enumerates the available feature classes and input image types at initialization of the toolbox. These are
 available from the global ``radiomics`` namespace by use of the functions :py:func:`~radiomics.getFeatureClasses()` and
-:py:func:`~radiomics.getInputImageTypes()`, respectively. Individual features in a feature class are enumerated at
-initialization of the class. See also the
-`contributing guidelines <https://github.com/Radiomics/pyradiomics/blob/master/CONTRIBUTING.md>`_
+:py:func:`~radiomics.getImageTypes()`, respectively. Individual features in a feature class are enumerated at
+initialization of the class. See also the :ref:`contributing guidelines <radiomics-contributing-label>`.
 
 .. _radiomics-developers-featureclass:
 
@@ -204,9 +203,9 @@ To ensure consistency in the extraction provided by PyRadiomics, continuous test
 source code after each commit. These tests are defined in the test folder and used to run tests for the following
 environments:
 
-    - Python 2.7 32 and 64 bits (Windows, Linux and Mac)
-    - Python 3.4 32 and 64 bits (Windows and Linux)
-    - Python 3.5 32 and 64 bits (Windows and Linux)
+    - Python 2.7 64 bits (Windows, Linux and Mac)
+    - Python 3.4 64 bits (Windows and Linux)
+    - Python 3.5 64 bits (Windows and Linux)
 
 .. note::
 

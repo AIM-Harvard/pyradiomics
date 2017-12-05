@@ -84,6 +84,20 @@ class RadiomicsTestUtils:
       self._results[testCase] = {}
       self._diffs[testCase] = {}
 
+  def getFeatureNames(self, className, testCase):
+    """
+    Gets all features for which a baseline value is available for the current class and test case. Returns a list
+    containing the feature names (without image type and feature class specifiers, i.e. just the feature name).
+    """
+    if className not in self._baseline:
+      return None  # No baseline available for specified class
+    if testCase not in self._baseline[className]:
+      return None  # No baseline available for specified test case
+
+    # Get all feature names in the baseline file, but exclude the test case identifier and general info columns
+    features = [f for f in self._baseline[className][testCase].keys() if f != "Patient ID" and "general_info" not in f]
+    return features
+
   def setFeatureClassAndTestCase(self, className, testCase):
     """
     Set testing suite to specified testCase and feature class. Throws an assertion error if either class or test case
@@ -133,7 +147,7 @@ class RadiomicsTestUtils:
                                                                 interpolator,
                                                                 self._kwargs.get('label', 1),
                                                                 self._kwargs.get('padDistance', 5))
-      bb, correctedMask = imageoperations.checkMask(self._image, self._mask)
+      bb, correctedMask = imageoperations.checkMask(self._image, self._mask, **self._kwargs)
       if correctedMask is not None:
         self._mask = correctedMask
       self._image, self._mask = imageoperations.cropToTumorMask(self._image, self._mask, bb)

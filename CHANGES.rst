@@ -6,12 +6,67 @@ Release Notes
 Next Release
 ------------
 
+Bug fixes
+#########
+
+- Ensure PyKwalify has a log handler, which is needed when parameter file validation fails.
+  (`#309 <https://github.com/Radiomics/pyradiomics/pull/309>`_)
+- Fix bug in error handling in :py:func:`~radiomics.imageoperations.checkMask` (compatibility issue between python 2 and 3).
+
+Tests
+#####
+
+- Improve testing badge layout. (`#312 <https://github.com/Radiomics/pyradiomics/pull/312>`_)
+- Remove unused testing configuration files. (`#313 <https://github.com/Radiomics/pyradiomics/pull/313>`_)
+
+Documentation
+#############
+
+- Update documentation of ``base.py`` (`#306 <https://github.com/Radiomics/pyradiomics/pull/306>`_)
+- Update notebooks to reflect most recent version of PyRadiomics.
+
+Examples
+########
+
+- Add example for batchprocessing using a multithreaded approach.
+  (`#305 <https://github.com/Radiomics/pyradiomics/pull/305>`_)
+
+Internal API
+############
+
+- Update batch script for the commandline interface. Ensures all required input is available and relative filepaths are
+  relative to the input file, not the current working directory.
+  (`#307 <https://github.com/Radiomics/pyradiomics/pull/307>`_)
+- Remove support for 32-bits python, as memory errors can arise when extracting from many or large images in 32-bits
+  python. (`#310 <https://github.com/Radiomics/pyradiomics/pull/310>`_)
+
+-----------------
+PyRadiomics 1.3.0
+-----------------
+
+Feature Calculation Changes
+###########################
+
+- Remove feature *Sum Variance*, as this is mathematically equal to *Cluster Tendency*.
+  (`#300 <https://github.com/Radiomics/pyradiomics/pull/300>`_)
+
 New Features
 ############
 
 - Add a row by row customization of the extraction label in the batch processing command line script, as well as both
   batchprocessing examples.
   (`#262 <https://github.com/Radiomics/pyradiomics/pull/262>`_)
+- Allow value 0 for a resampled pixel spacing (per dimension). Values of 0 are replaced by the spacing for that
+  dimension as it is in the original (non-resampled) mask. This allows resampling over a subset of dimension (e.g. only
+  in-plane resampling when out-of-plane spacing is set to 0).
+  (`#299 <https://github.com/Radiomics/pyradiomics/pull/299>`_)
+- Add optional resegmentation of mask based on customizable threshold.
+  (`#302 <https://github.com/Radiomics/pyradiomics/pull/302>`_)
+- Add Neighbouring Gray Tone Difference Matrix (NGTDM) (`#296 <https://github.com/Radiomics/pyradiomics/pull/296>`_)
+- Add Add Gray Level Dependence Matrix (GLDM) (`#295 <https://github.com/Radiomics/pyradiomics/pull/295>`_)
+- Add a docker file that exposes the PyRadiomics commandline tools.
+  (`#297 <https://github.com/Radiomics/pyradiomics/pull/297>`_,
+  `#301 <https://github.com/Radiomics/pyradiomics/pull/301>`_)
 
 Bug fixes
 #########
@@ -25,6 +80,16 @@ Bug fixes
   SimpleITK assumes segmented voxels to be consecutive on the x-axis lines. Furthermore, it also assumes that all voxels
   on a given line of x have the same values for y and z (which is not necessarily the case).
   (`#264 <https://github.com/Radiomics/pyradiomics/pull/264>`_)
+- Removal of outliers was not applied to returned object in ``normalizeImage``.
+  (`#277 <https://github.com/Radiomics/pyradiomics/pull/277>`_)
+- Fix python 3 incompatibility when using ``urllib``
+  (`#285 <https://github.com/Radiomics/pyradiomics/pull/285>`_)
+- Fix broken URL link in feature visualization notebooks.
+- Update docker manually install python2 support (since recently not supported by default in
+  jupyter/datascience-notebook).
+  (`#287 <https://github.com/Radiomics/pyradiomics/pull/287>`_)
+- For GLRLM and GLSZM, force2D keyword is passed manually, but was incorrectly named and therefore ignored. Fix name to
+  enable forced 2D extraction for GLRLM and GLSZM. (`26b9ef3 <https://github.com/Radiomics/pyradiomics/commit/26b9ef3>`_)
 
 Tests
 #####
@@ -34,14 +99,32 @@ Tests
   not in the python calculated matrix, for some texture matrices, this function can change the dimension of the matrix).
   This update ensures that ``_calculateCoefficients`` is applied to neither matrix.
   (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
+- Add a test to check validity of parameter files included in ``examples/exampleSettings``.
+  (`#294 <https://github.com/Radiomics/pyradiomics/pull/294>`_)
 
 Documentation
 #############
+
+`version 1.3.0 docs <http://pyradiomics.readthedocs.io/en/1.3.0>`_
 
 - Update reference. (`#271 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
 - Move section "Customizing the Extraction" to the top level, to make it more visible.
   (`#271 <https://github.com/Radiomics/pyradiomics/pull/271>`_)
 - Change License to 3-clause BSD (`#272 <https://github.com/Radiomics/pyradiomics/pull/272>`_
+- Document the extend of compliance between PyRadiomics and the IBSI feature definitions
+  (`#289 <https://github.com/Radiomics/pyradiomics/pull/289>`_)
+- Fix typos in documentation.
+- Expand documentation on customizing the extraction
+  (`#291 <https://github.com/Radiomics/pyradiomics/pull/291>`_)
+- Include contributing guidelines in sphinx-generated documentation and add a section on sharing parameter files.
+  (`#294 <https://github.com/Radiomics/pyradiomics/pull/294>`_)
+- Insert missing line to enable all features in documentation on using the feature classes directly.
+  (`5ce9f48 <https://github.com/Radiomics/pyradiomics/commit/5ce9f48>`_)
+
+Examples
+########
+- Add example settings for CT, MR (3 scenarios).
+  (`#273 <https://github.com/Radiomics/pyradiomics/pull/273>`_)
 
 Internal API
 ############
@@ -52,8 +135,17 @@ Internal API
   many 'empty' zone sizes (i.e. no zones of that size are present in the ROI). This reduces the size of the matrix,
   which therefore reduces the memory needed and the number of calculations performed in the vectorized operations.
   (`#265 <https://github.com/Radiomics/pyradiomics/pull/265>`_)
-- Remove circular import statement in ``__init__.py` (circular with ``radiomics.base``)
+- Remove circular import statement in ``__init__.py`` (circular with ``radiomics.base``)
   (`#270 <https://github.com/Radiomics/pyradiomics/pull/270>`_)
+- Revise initialization of the feature class.
+  (`#274 <https://github.com/Radiomics/pyradiomics/pull/274>`_)
+- Rename parts of the customization variables and functions to better reflect their definition
+  (`#291 <https://github.com/Radiomics/pyradiomics/pull/291>`_)
+
+License
+#######
+- Switch to 3-clause BSD license.
+  (`#272 <https://github.com/Radiomics/pyradiomics/pull/272>`_)
 
 -----------------
 PyRadiomics 1.2.0
@@ -65,7 +157,7 @@ Feature Calculation Changes
 - Remove feature *SumVariance*, rename *SumVariance2*  to *SumVariance*. *SumVariance* reflected the formula as is
   defined in the paper by Haralick et al [1]_. However, the variance is calculated by subtracting the entropy as opposed to
   subtracting the average, most likely due to a typo('f8' instead of 'f6'). *SumVariance2* reflected the formula where
-  the average is subtracted and is retrained as the only *SumVariance*.
+  the average is subtracted and is retained as the only *SumVariance*.
   (`#233 <https://github.com/Radiomics/pyradiomics/pull/233>`_)
 - Redefine features *Elongation* and *Flatness* as the inverse of the original definition. This prevents a returned
   value of NaN when the shape is completely flat. (`#234 <https://github.com/Radiomics/pyradiomics/pull/234>`_)

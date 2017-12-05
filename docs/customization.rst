@@ -128,8 +128,10 @@ Feature Extractor Level
 
 *Resampling the image*
 
-- resampledPixelSpacing [None]: List of 3 floats (> 0), sets the size of the voxel in (x, y, z) plane when resampling.
-- interpolator [sitkBSpline]: Simple ITK constant or string name thereof, sets interpolator to use for resampling.
+- resampledPixelSpacing [None]: List of 3 floats (>= 0), sets the size of the voxel in (x, y, z) plane when resampling.
+  A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) mask, thereby
+  enabling only in-plane resampling, for example.
+- interpolator [sitkBSpline]: SimpleITK constant or string name thereof, sets interpolator to use for resampling.
   Enumerated value, possible values:
 
     - sitkNearestNeighbor (= 1)
@@ -151,6 +153,28 @@ Feature Extractor Level
 
 .. note::
     Resampling is disabled when either `resampledPixelSpacing` or `interpolator` is set to `None`
+
+*Pre-Cropping*
+
+- preCrop [False]: Boolean, if true and resampling is disabled, crops the image onto the bounding box with additional
+  padding as specified in ``padDistance``. Similar to padding after resampling, padding does not exceed original image
+  bounds after pre-cropping. Setting ``preCrop`` to true speeds up extraction and makes it less memory intensive,
+  especially in the case of large images with only small ROIs.
+
+.. note::
+  Because image and mask are also cropped onto the bounding box before they are passed to the feature classes,
+  pre-crop is only beneficial when filters are enabled.
+
+*Resegmentation*
+
+- resegmentRange [None]: List of 2 floats, specifies the lower and upper threshold, respectively. Segmented voxels
+  outside this range are removed from the mask prior to feature calculation. When the value is None (default), no
+  resegmentation is performed. Resegemented size is checked (using parameter ``minimumROISize``, default 1) and upon
+  fail, an error is logged and the mask is reset to the original mask.
+
+.. note::
+    This only affects first order and texture classes. No resegmentation is performed prior to calculating shape
+    features.
 
 *Mask validation*
 
@@ -203,6 +227,8 @@ Filter Level
 Feature Class Level
 +++++++++++++++++++
 
+- Label [1]: Integer, label value of Region of Interest (ROI) in labelmap.
+
 *Image discretization*
 
 - binWidth [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
@@ -236,6 +262,16 @@ Feature Class Level
     For more information on how weighting is applied, see the documentation on :ref:`GLCM <radiomics-glcm-label>` and
     :ref:`GLRLM <radiomics-glszm-label>`.
 
+*Distance to neighbour*
+
+- distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
+  angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles`
+
+.. note::
+
+    This only affects the GLCM and NGTDM feature classes. The GLSZM and GLRLM feature classes use a fixed distance of 1
+    (infinity norm) to define neighbours.
+
 Feature Class Specific Settings
 +++++++++++++++++++++++++++++++
 
@@ -248,8 +284,14 @@ Feature Class Specific Settings
 
 *GLCM*
 
-- distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
-  angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles`
+- symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
+  which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`. A symmetrical matrix
+  corresponds to the GLCM as defined by Haralick et al.
+
+*GLDM*
+
+- gldm_a [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is
+  considered dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
 
 .. _radiomics-parameter-file-label:
 
@@ -262,7 +304,9 @@ optional argument (``--param``) when running pyradiomics from the command line. 
 during initialization of the :ref:`feature extractor <radiomics-featureextractor-label>`, or using
 :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.loadParams` after initialization. This removes the need
 to hard code a customized extraction in a python script through use of functions described above. Additionally, this
-also makes it more easy to share settings for customized extractions.
+also makes it more easy to share settings for customized extractions. We encourage users to share their parameter files
+in the PyRadiomics repository. See :ref:`radiomics-submit-parameter-file-label` for more information on how to submit
+your parameter file.
 
 .. note::
     Examples of the parameter file are provided in the ``pyradiomics/examples/exampleSettings`` folder.

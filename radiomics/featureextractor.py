@@ -9,8 +9,8 @@ import os
 import SimpleITK as sitk
 import six
 
-import radiomics
-from radiomics import generalinfo, getFeatureClasses, getImageTypes, imageoperations
+from radiomics import enableCExtensions, generalinfo, getFeatureClasses, getImageTypes, getParameterValidationFiles, \
+  imageoperations
 
 
 class RadiomicsFeaturesExtractor:
@@ -80,10 +80,12 @@ class RadiomicsFeaturesExtractor:
             'removeOutliers': None,
             'resampledPixelSpacing': None,  # No resampling by default
             'interpolator': 'sitkBSpline',  # Alternative: sitk.sitkBSpline
+            'preCrop': False,
             'padDistance': 5,
             'distances': [1],
             'force2D': False,
             'force2Ddimension': 0,
+            'resegmentRange': None,  # No resegmentation by default
             'label': 1,
             'enableCExtensions': True,
             'additionalInfo': True}
@@ -184,7 +186,7 @@ class RadiomicsFeaturesExtractor:
     To disable input images, use :py:func:`enableInputImageByName` or :py:func:`disableAllInputImages`
     instead.
 
-    :param inputImages: dictionary, key is imagetype (original, wavelet or log) and value is custom settings
+    :param enabledImagetypes: dictionary, key is imagetype (original, wavelet or log) and value is custom settings
       (dictionary)
     """
     self.logger.debug('Updating enabled images types with %s', enabledImagetypes)
@@ -194,6 +196,13 @@ class RadiomicsFeaturesExtractor:
   def enableAllFeatures(self):
     """
     Enable all classes and all features.
+
+    .. note::
+      Individual features that have been marked "deprecated" are not enabled by this function. They can still be enabled manually by
+      a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
+      :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeaturesByName()`
+      or in the parameter file (by specifying the feature by name, not when enabling all features).
+      However, in most cases this will still result only in a deprecation warning.
     """
     self.logger.debug('Enabling all features in all feature classes')
     for featureClassName in self.getFeatureClassNames():
@@ -210,6 +219,13 @@ class RadiomicsFeaturesExtractor:
   def enableFeatureClassByName(self, featureClass, enabled=True):
     """
     Enable or disable all features in given class.
+
+    .. note::
+      Individual features that have been marked "deprecated" are not enabled by this function. They can still be enabled manually by
+      a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
+      :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeaturesByName()`
+      or in the parameter file (by specifying the feature by name, not when enabling all features).
+      However, in most cases this will still result only in a deprecation warning.
     """
     if featureClass not in self.getFeatureClassNames():
       self.logger.warning('Feature class %s is not recognized', featureClass)
@@ -245,10 +261,12 @@ class RadiomicsFeaturesExtractor:
        bounding box.
     3. If enabled, provenance information is calculated and stored as part of the result.
     4. Shape features are calculated on a cropped (no padding) version of the original image.
-    5. Other enabled feature classes are calculated using all specified image types in ``_enabledImageTypes``. Images
+    5. If enabled, resegment the mask based upon the range specified in ``resegmentRange`` (default None: resegmentation
+       disabled).
+    6. Other enabled feature classes are calculated using all specified image types in ``_enabledImageTypes``. Images
        are cropped to tumor mask (no padding) after application of any filter and before being passed to the feature
        class.
-    6. The calculated features is returned as ``collections.OrderedDict``.
+    7. The calculated features is returned as ``collections.OrderedDict``.
 
     :param imageFilepath: SimpleITK Image, or string pointing to image file location
     :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
@@ -258,7 +276,7 @@ class RadiomicsFeaturesExtractor:
     """
     # Enable or disable C extensions for high performance matrix calculation. Only logs a message (INFO) when setting is
     # successfully changed. If an error occurs, full-python mode is forced and a warning is logged.
-    radiomics.enableCExtensions(self.settings['enableCExtensions'])
+    enableCExtensions(self.settings['enableCExtensions'])
     if self.geometryTolerance != self.settings.get('geometryTolerance'):
       self._setTolerance()
 
@@ -313,7 +331,25 @@ class RadiomicsFeaturesExtractor:
         newFeatureName = 'original_shape_%s' % featureName
         featureVector[newFeatureName] = featureValue
 
-    # 5. Calculate other enabled feature classes using enabled image types
+    # 5. Resegment the mask if enabled (parameter regsegmentMask is not None)
+    resegmentRange = self.settings.get('resegmentRange', None)
+    if resegmentRange is not None:
+      resegmentedMask = imageoperations.resegmentMask(image, mask, resegmentRange, self.settings['label'])
+
+      # Recheck to see if the mask is still valid
+      boundingBox, correctedMask = imageoperations.checkMask(image, resegmentedMask, **self.settings)
+      # Update the mask if it had to be resampled
+      if correctedMask is not None:
+        resegmentedMask = correctedMask
+
+      if boundingBox is None:
+        # Mask checks failed, do not extract features and return the empty featureVector
+        return featureVector
+
+      # Resegmentation successful
+      mask = resegmentedMask
+
+    # 6. Calculate other enabled feature classes using enabled image types
     # Make generators for all enabled image types
     self.logger.debug('Creating image type iterator')
     imageGenerators = []
@@ -348,7 +384,7 @@ class RadiomicsFeaturesExtractor:
     padding as specified in padDistance) after assignment of image and mask.
     """
     self.logger.info('Loading image and mask')
-    if isinstance(ImageFilePath, six.string_types) and os.path.exists(ImageFilePath):
+    if isinstance(ImageFilePath, six.string_types) and os.path.isfile(ImageFilePath):
       image = sitk.ReadImage(ImageFilePath)
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       image = ImageFilePath
@@ -356,7 +392,7 @@ class RadiomicsFeaturesExtractor:
       self.logger.warning('Error reading image Filepath or SimpleITK object')
       return None, None  # this function is expected to always return a tuple of 2 elements
 
-    if isinstance(MaskFilePath, six.string_types) and os.path.exists(MaskFilePath):
+    if isinstance(MaskFilePath, six.string_types) and os.path.isfile(MaskFilePath):
       mask = sitk.ReadImage(MaskFilePath)
     elif isinstance(MaskFilePath, sitk.SimpleITK.Image):
       mask = MaskFilePath
@@ -374,6 +410,15 @@ class RadiomicsFeaturesExtractor:
                                                   self.settings['interpolator'],
                                                   self.settings['label'],
                                                   self.settings['padDistance'])
+    elif self.settings['preCrop']:
+      bb, correctedMask = imageoperations.checkMask(image, mask, **self.settings)
+      if correctedMask is not None:
+        # Update the mask if it had to be resampled
+        mask = correctedMask
+      if bb is None:
+        # Mask checks failed
+        return None, None
+      image, mask = imageoperations.cropToTumorMask(image, mask, bb, self.settings['padDistance'])
 
     return image, mask
 

@@ -31,6 +31,9 @@ The platform supports both the feature extraction in 2D and 3D. **Not intended f
 Fillon-Robin, J. C., Pieper, S.,  Aerts, H. J. W. L. (2017). Computational Radiomics System to Decode the Radiographic
 Phenotype. Cancer Research, 77(21), e104–e107. https://doi.org/10.1158/0008-5472.CAN-17-0339*
 
+### Join the Community!
+Join the PyRadiomics community on google groups [here](https://groups.google.com/forum/#!forum/pyradiomics).
+
 ### Feature Classes
 Currently supports the following feature classes:
 

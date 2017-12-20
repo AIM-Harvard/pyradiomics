@@ -25,6 +25,11 @@ Phenotype. Cancer Research, 77(21), e104–e107. https://doi.org/10.1158/0008-54
 
    Not intended for clinical use.
 
+Join the Community!
+-------------------
+Join the PyRadiomics community on google groups `here <https://groups.google.com/forum/#!forum/pyradiomics>`_.
+
+
 Table of Contents
 -----------------
 

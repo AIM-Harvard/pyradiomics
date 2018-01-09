@@ -196,6 +196,13 @@ be provided in the docstrings of the feature functions. A docstring of the modul
 The presence of a docstring at the class level and at the level of each individual feature is required and checked
 during testing. Missing docstrings will cause the test to fail.
 
+If you make edits to the documentation, or if you want to test how documentation for the new classes you added is rendered, you can generate Sphinx documentation locally:
+
+ 1. ``pip install sphinx``
+ 2. ``pip install sphinx_rtd_theme``
+ 3. Run this command in the ``docs`` folder: ``make html``
+ 4. HTML version of the Sphinx documentation root will be in ``_build/html/index.html``
+
 Testing
 *******
 

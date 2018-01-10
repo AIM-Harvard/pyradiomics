@@ -21,6 +21,8 @@ There are 3 ways in which the feature extraction can be customized in PyRadiomic
     and 2 (feature class) can only provided at initialization when using the parameter file. When the parameter file is
     not used, or when these parameters have to be changed after initialization, use the respective function calls.
 
+.. _radiomics-image-types-label:
+
 Image Types
 ###########
 
@@ -37,7 +39,11 @@ provided for each enabled image type, which will then only be applied during fea
 Please note that this will only work for settings that are applied at or after any filter is applied (i.e. not at the
 feature extractor level).
 
-By default, only the "Original" image type is enabled.
+.. note::
+    This type of customization can be included in the :ref:`radiomics-parameter-file-label` using key ``imageType``.
+
+.. note::
+    By default, only the "Original" image type is enabled.
 
 Currently available image types are:
 
@@ -58,6 +64,8 @@ Currently available image types are:
 - Exponential: Takes the the exponential, where filtered intensity is e^(absolute intensity). Values are
   scaled to original range and negative original values are made negative again after application of filter.
 
+.. _radiomics-feature-classes-label:
+
 Enabled Features
 ################
 
@@ -74,7 +82,11 @@ dictionary represents one enabled feature class with the feature class name as t
 names as value. If the value is ``None`` or an empty list, all features in that class are enabled. Otherwise only the
 features specified.
 
-By default, all feature classes and all features are enabled.
+.. note::
+    This type of customization can be included in the :ref:`radiomics-parameter-file-label` using key ``featureClass``.
+
+.. note::
+    By default, all feature classes and all features are enabled.
 
 Currently available feature classes are:
 
@@ -83,6 +95,8 @@ Currently available feature classes are:
 - glcm
 - glrlm
 - glszm
+- gldm
+- ngtdm
 
 An individual feature can be enabled by submitting the feature name as defined in the unique part of the function
 signature (e.g. the First Order feature defined by ``get10PercentileFeatureValue()`` is enabled by specifying
@@ -103,6 +117,9 @@ sensitive setting name. Custom settings are provided as keyword arguments at ini
 with the ``settings`` dictionary.
 
 .. note::
+    This type of customization can be included in the :ref:`radiomics-parameter-file-label` using key ``setting``.
+
+.. note::
     When using the feature classes directly, feature class level settings can be customized by providing them as keyword
     arguments at initialization of the feature class.
 
@@ -116,11 +133,11 @@ Feature Extractor Level
 
 *Image Normalization*
 
-- normalize [False]: Boolean, set to True to enable normalizing of the image before any resampling. See also
+- ``normalize`` [False]: Boolean, set to True to enable normalizing of the image before any resampling. See also
   :py:func:`~radiomics.imageoperations.normalizeImage`.
-- normalizeScale [1]: Float, > 0, determines the scale after normalizing the image. If normalizing is disabled, this
+- ``normalizeScale`` [1]: Float, > 0, determines the scale after normalizing the image. If normalizing is disabled, this
   has no effect.
-- removeOutliers [None]: Float, > 0, defines the outliers to remove from the image. An outlier is defined as values
+- ``removeOutliers`` [None]: Float, > 0, defines the outliers to remove from the image. An outlier is defined as values
   that differ more than :math:`n\sigma_x` from the mean, where :math:`n>0` and equal to the value of this setting. If
   this parameter is omitted (providing it without a value (i.e. None) in the parameter file will throw an error), no
   outliers are removed. If normalizing is disabled, this has no effect. See also
@@ -128,10 +145,10 @@ Feature Extractor Level
 
 *Resampling the image*
 
-- resampledPixelSpacing [None]: List of 3 floats (>= 0), sets the size of the voxel in (x, y, z) plane when resampling.
+- ``resampledPixelSpacing`` [None]: List of 3 floats (>= 0), sets the size of the voxel in (x, y, z) plane when resampling.
   A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) mask, thereby
   enabling only in-plane resampling, for example.
-- interpolator [sitkBSpline]: SimpleITK constant or string name thereof, sets interpolator to use for resampling.
+- ``interpolator`` [sitkBSpline]: SimpleITK constant or string name thereof, sets interpolator to use for resampling.
   Enumerated value, possible values:
 
     - sitkNearestNeighbor (= 1)
@@ -145,7 +162,7 @@ Feature Extractor Level
     - sitkLanczosWindowedSinc (= 9)
     - sitkBlackmanWindowedSinc (= 10)
 
-- padDistance [5]: Integer, :math:`\geq 0`, set the number of voxels pad cropped tumor volume with during resampling.
+- ``padDistance`` [5]: Integer, :math:`\geq 0`, set the number of voxels pad cropped tumor volume with during resampling.
   Padding occurs in new feature space and is done on all faces, i.e. size increases in x, y and z direction by
   2*padDistance. Padding is needed for some filters (e.g. LoG). Value of padded voxels are set to original gray level
   intensity, padding does not exceed original image boundaries. **N.B. After application of filters image is cropped
@@ -156,7 +173,7 @@ Feature Extractor Level
 
 *Pre-Cropping*
 
-- preCrop [False]: Boolean, if true and resampling is disabled, crops the image onto the bounding box with additional
+- ``preCrop`` [False]: Boolean, if true and resampling is disabled, crops the image onto the bounding box with additional
   padding as specified in ``padDistance``. Similar to padding after resampling, padding does not exceed original image
   bounds after pre-cropping. Setting ``preCrop`` to true speeds up extraction and makes it less memory intensive,
   especially in the case of large images with only small ROIs.
@@ -167,7 +184,7 @@ Feature Extractor Level
 
 *Resegmentation*
 
-- resegmentRange [None]: List of 2 floats, specifies the lower and upper threshold, respectively. Segmented voxels
+- ``resegmentRange`` [None]: List of 2 floats, specifies the lower and upper threshold, respectively. Segmented voxels
   outside this range are removed from the mask prior to feature calculation. When the value is None (default), no
   resegmentation is performed. Resegemented size is checked (using parameter ``minimumROISize``, default 1) and upon
   fail, an error is logged and the mask is reset to the original mask.
@@ -178,22 +195,22 @@ Feature Extractor Level
 
 *Mask validation*
 
-- minimumROIDimensions [1]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively).
+- ``minimumROIDimensions`` [1]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively).
   Single-voxel segmentations are always excluded.
-- minimumROISize [None]: Integer, > 0, specifies the minimum number of voxels required. Test is skipped
+- ``minimumROISize`` [None]: Integer, > 0, specifies the minimum number of voxels required. Test is skipped
   if this parameter is omitted (specifying it as None in the parameter file will throw an error).
-- geometryTolerance [None]: Float, determines the tolarance used by SimpleITK to compare origin, direction and spacing
+- ``geometryTolerance`` [None]: Float, determines the tolarance used by SimpleITK to compare origin, direction and spacing
   between image and mask. Affects the fist step in :py:func:`~radiomics.imageoperations.checkMask`. If set to ``None``,
   PyRadiomics will use SimpleITK default (1e-16).
-- correctMask [False]: Boolean, if set to true, PyRadiomics will attempt to resample the mask to the image geometry when
+- ``correctMask`` [False]: Boolean, if set to true, PyRadiomics will attempt to resample the mask to the image geometry when
   the first step in :py:func:`~radiomics.imageoperations.checkMask` fails. This uses a nearest neighbor interpolator.
   Mask check will still fail if the ROI defined in the mask includes areas outside of the image physical space.
 
 *Miscellaneous*
 
-- enableCExtensions [True]: Boolean, set to False to force calculation to full-python mode. See also
+- ``enableCExtensions`` [True]: Boolean, set to False to force calculation to full-python mode. See also
   :py:func:`~radiomics.enableCExtensions()`.
-- additionalInfo [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
+- ``additionalInfo`` [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
   output. See also :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.addProvenance()`.
 
 Filter Level
@@ -201,7 +218,7 @@ Filter Level
 
 *Laplacian of Gaussian settings*
 
-- sigma: List of floats or integers, must be greater than 0. Sigma values to use for the filter (determines coarseness).
+- ``sigma``: List of floats or integers, must be greater than 0. Sigma values to use for the filter (determines coarseness).
 
 .. warning::
     Setting for sigma must be provided if LoG filter is enabled. If omitted, no LoG image features are calculated and
@@ -209,10 +226,10 @@ Filter Level
 
 *Wavelet settings*
 
-- start_level [0]: integer, 0 based level of wavelet which should be used as first set of decompositions
+- ``start_level`` [0]: integer, 0 based level of wavelet which should be used as first set of decompositions
   from which a signature is calculated
-- level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
-- wavelet ["coif1"]: string, type of wavelet decomposition. Enumerated value, validated against possible values
+- ``level`` [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
+- ``wavelet`` ["coif1"]: string, type of wavelet decomposition. Enumerated value, validated against possible values
   present in the ``pyWavelet.wavelist()``. Current possible values (pywavelet version 0.4.0) (where an
   aditional number is needed, range of values is indicated in []):
 
@@ -227,18 +244,18 @@ Filter Level
 Feature Class Level
 +++++++++++++++++++
 
-- Label [1]: Integer, label value of Region of Interest (ROI) in labelmap.
+- ``Label`` [1]: Integer, label value of Region of Interest (ROI) in labelmap.
 
 *Image discretization*
 
-- binWidth [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
+- ``binWidth`` [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
 
 *Forced 2D extraction*
 
-- force2D [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
+- ``force2D`` [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
   the 'slice' can be defined in ``force2Ddimension``. If input ROI is already a 2D ROI, features are automatically
   extracted in 2D. See also :py:func:`~radiomics.imageoperations.generateAngles`
-- force2Ddimension [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. Value 0
+- ``force2Ddimension`` [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. Value 0
   identifies the 'z' dimension (axial plane feature extraction), and features will be extracted from the xy plane.
   Similarly, 1 identifies the y dimension (coronal plane) and 2 the x dimension (saggital plane). if
   ``force2Dextraction`` is set to False, this parameter has no effect. See also
@@ -246,7 +263,7 @@ Feature Class Level
 
 *Texture matrix weighting*
 
-- weightingNorm [None]: string, indicates which norm should be used when applying distance weighting.
+- ``weightingNorm`` [None]: string, indicates which norm should be used when applying distance weighting.
   Enumerated setting, possible values:
 
     - 'manhattan': first order norm
@@ -264,7 +281,7 @@ Feature Class Level
 
 *Distance to neighbour*
 
-- distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
+- ``distances`` [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
   angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles`
 
 .. note::
@@ -277,20 +294,20 @@ Feature Class Specific Settings
 
 *First Order*
 
-- voxelArrayShift [0]: Integer, This amount is added to the gray level intensity in features Energy, Total Energy and
+- ``voxelArrayShift`` [0]: Integer, This amount is added to the gray level intensity in features Energy, Total Energy and
   RMS, this is to prevent negative values. *If using CT data, or data normalized with mean 0, consider setting this
   parameter to a fixed value (e.g. 2000) that ensures non-negative numbers in the image. Bear in mind however, that
   the larger the value, the larger the volume confounding effect will be.*
 
 *GLCM*
 
-- symmetricalGLCM [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
+- ``symmetricalGLCM`` [True]: boolean, indicates whether co-occurrences should be assessed in two directions per angle,
   which results in a symmetrical matrix, with equal distributions for :math:`i` and :math:`j`. A symmetrical matrix
   corresponds to the GLCM as defined by Haralick et al.
 
 *GLDM*
 
-- gldm_a [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is
+- ``gldm_a`` [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is
   considered dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
 
 .. _radiomics-parameter-file-label:
@@ -299,14 +316,19 @@ Feature Class Specific Settings
 Parameter File
 --------------
 
-All 3 categories of customization can be provided in a single yaml-structured text file, which can be provided in an
-optional argument (``--param``) when running pyradiomics from the command line. In interactive mode, it can be provided
-during initialization of the :ref:`feature extractor <radiomics-featureextractor-label>`, or using
+All 3 categories of customization can be provided in a single yaml or JSON structured text file, which can be provided
+in an optional argument (``--param``) when running pyradiomics from the command line. In interactive mode, it can be
+provided during initialization of the :ref:`feature extractor <radiomics-featureextractor-label>`, or using
 :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.loadParams` after initialization. This removes the need
 to hard code a customized extraction in a python script through use of functions described above. Additionally, this
 also makes it more easy to share settings for customized extractions. We encourage users to share their parameter files
 in the PyRadiomics repository. See :ref:`radiomics-submit-parameter-file-label` for more information on how to submit
 your parameter file.
+
+.. note::
+    For an extensive list of possible settings, see :ref:`Image Types<radiomics-image-types-label>`,
+    :ref:`Feature Classes<radiomics-feature-classes-label>` and :ref:`Settings<radiomics-settings-label>`,
+    which can be provided in the parameter file using key ``imageType``, ``featureClass`` and ``setting``, respectively.
 
 .. note::
     Examples of the parameter file are provided in the ``pyradiomics/examples/exampleSettings`` folder.

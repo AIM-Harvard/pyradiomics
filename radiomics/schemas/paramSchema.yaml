@@ -1,153 +1,154 @@
 # Parameters schema
-name: Parameter schema
-desc: This schema defines what arguments may be present in the parameters file that can be passed to the pyradiomics package.
-type: map
-mapping:
-  setting: &settings
-    type: map
-    mapping:
-      minimumROIDimensions:
-        type: int
-        range:
-          min: 1
-          max: 3
-      minimumROISize:
-        type: int
-        range:
-          min-ex: 0
-      geometryTolerance:
-        type: float
-        range:
-          min-ex: 0
-      correctMask:
-        type: bool
-      additionalInfo:
-        type: bool
-      label:
-        type: int
-      binWidth:
-        type: float
-        range:
-          min-ex: 0
-      binCount:
-        type: int
-        range:
-          min-ex: 0
-      normalize:
-        type: bool
-      normalizeScale:
-        type: float
-        range:
-          min-ex: 0
-      removeOutliers:
-        type: float
-        range:
-          min-ex: 0
-      resampledPixelSpacing:
-        seq:
-          - type: float
-            range:
-              min: 0
-      interpolator:
-        type: any
-        func: checkInterpolator
-      padDistance:
-        type: int
-        range:
-          min: 0
-      distances:
-        seq:
-          - type: int
-            range:
-              min-ex: 0
-      force2D:
-        type: bool
-      force2Ddimension:
-        type: int
-        range:
-          min: 0
-          max: 2
-      resegmentRange:
-        seq:
-          - type: float
-      preCrop:
-        type: bool
-      sigma:
-        seq:
-          - type: float
-            range:
-              min-ex: 0
-      start_level:
-        type: int
-        range:
-          min: 0
-      level:
-        type: int
-        range:
-          min-ex: 0
-      wavelet:
-        type: str
-        func: checkWavelet
-      gradientUseSpacing:
-        type: bool
-      lbp2DRadius:
-        type: float
-        range:
-          min-ex: 0
-      lbp2DSamples:
-        type: int
-        range:
-          min: 1
-      lbp2DMethod:
-        type: str
-        enum: ['default', 'ror', 'uniform', 'var']
-      lbp3DLevels:
-        type: int
-        range:
-          min: 1
-      lbp3DIcosphereRadius:
-        type: float
-        range:
-          min-ex: 0
-      lbp3DIcosphereSubdivision:
-        type: int
-        range:
-          min: 0
-      voxelArrayShift:
-        type: int
-      symmetricalGLCM:
-        type: bool
-      weightingNorm:
-        type: any
-        func: checkWeighting
-      gldm_a:
-        type: int
-        range:
-          min: 0
+schema;customization_schema:
+  name: Parameter schema
+  desc: This schema defines what arguments may be present in the parameters file that can be passed to the pyradiomics package.
+  type: map
+  mapping:
+    setting: &settings
+      type: map
+      mapping:
+        minimumROIDimensions:
+          type: int
+          range:
+            min: 1
+            max: 3
+        minimumROISize:
+          type: int
+          range:
+            min-ex: 0
+        geometryTolerance:
+          type: float
+          range:
+            min-ex: 0
+        correctMask:
+          type: bool
+        additionalInfo:
+          type: bool
+        label:
+          type: int
+        binWidth:
+          type: float
+          range:
+            min-ex: 0
+        binCount:
+          type: int
+          range:
+            min-ex: 0
+        normalize:
+          type: bool
+        normalizeScale:
+          type: float
+          range:
+            min-ex: 0
+        removeOutliers:
+          type: float
+          range:
+            min-ex: 0
+        resampledPixelSpacing:
+          seq:
+            - type: float
+              range:
+                min: 0
+        interpolator:
+          type: any
+          func: checkInterpolator
+        padDistance:
+          type: int
+          range:
+            min: 0
+        distances:
+          seq:
+            - type: int
+              range:
+                min-ex: 0
+        force2D:
+          type: bool
+        force2Ddimension:
+          type: int
+          range:
+            min: 0
+            max: 2
+        resegmentRange:
+          seq:
+            - type: float
+        preCrop:
+          type: bool
+        sigma:
+          seq:
+            - type: float
+              range:
+                min-ex: 0
+        start_level:
+          type: int
+          range:
+            min: 0
+        level:
+          type: int
+          range:
+            min-ex: 0
+        wavelet:
+          type: str
+          func: checkWavelet
+        gradientUseSpacing:
+          type: bool
+        lbp2DRadius:
+          type: float
+          range:
+            min-ex: 0
+        lbp2DSamples:
+          type: int
+          range:
+            min: 1
+        lbp2DMethod:
+          type: str
+          enum: ['default', 'ror', 'uniform', 'var']
+        lbp3DLevels:
+          type: int
+          range:
+            min: 1
+        lbp3DIcosphereRadius:
+          type: float
+          range:
+            min-ex: 0
+        lbp3DIcosphereSubdivision:
+          type: int
+          range:
+            min: 0
+        voxelArrayShift:
+          type: int
+        symmetricalGLCM:
+          type: bool
+        weightingNorm:
+          type: any
+          func: checkWeighting
+        gldm_a:
+          type: int
+          range:
+            min: 0
 
-  voxelSetting:
-    type: map
-    mapping:
-      kernelRadius:
-        type: int
-        range:
-          min-ex: 0
-      maskedKernel:
-        type: bool
-      initValue:
-        type: float
+    voxelSetting:
+      type: map
+      mapping:
+        kernelRadius:
+          type: int
+          range:
+            min-ex: 0
+        maskedKernel:
+          type: bool
+        initValue:
+          type: float
 
-  featureClass:
-    type: map
-    func: checkFeatureClass
-    matching-rule: 'any'
-    mapping:
-      regex;(.+):
-        type: any
+    featureClass:
+      type: map
+      func: checkFeatureClass
+      matching-rule: 'any'
+      mapping:
+        regex;(.+):
+          type: any
 
-  imageType:
-    type: map
-    func: checkImageType
-    matching-rule: 'any'
-    mapping:
-       regex;(.+): *settings
+    imageType:
+      type: map
+      func: checkImageType
+      matching-rule: 'any'
+      mapping:
+         regex;(.+): *settings

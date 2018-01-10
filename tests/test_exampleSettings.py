@@ -16,7 +16,7 @@ def exampleSettings_name_func(testcase_func, param_num, param):
 
 class TestExampleSettings:
   def __init__(self):
-    self.schemaFile, self.schemaFuncs = getParameterValidationFiles()
+    self.schema_data, self.schemaFuncs = getParameterValidationFiles()
 
   def generateScenarios():
     dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'examples', 'exampleSettings')
@@ -29,7 +29,5 @@ class TestExampleSettings:
   @parameterized.expand(generateScenarios(), testcase_func_name=exampleSettings_name_func)
   def test_scenarios(self, settingsFile):
 
-    assert os.path.isfile(self.schemaFile)
-    assert os.path.isfile(self.schemaFuncs)
-    c = pykwalify.core.Core(source_file=settingsFile, schema_files=[self.schemaFile], extensions=[self.schemaFuncs])
+    c = pykwalify.core.Core(source_file=settingsFile, schema_data=self.schema_data, extensions=[self.schemaFuncs])
     c.validate()

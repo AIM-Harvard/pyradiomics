@@ -148,9 +148,9 @@ class RadiomicsFeaturesExtractor:
       # No handler available for either pykwalify or root logger, provide first radiomics handler (outputs to stderr)
       pykwalify.core.log.addHandler(logging.getLogger('radiomics').handlers[0])
 
-    schemaFile, schemaFuncs = getParameterValidationFiles()
+    schema_data, schemaFuncs = getParameterValidationFiles()
     c = pykwalify.core.Core(source_file=paramsFile, source_data=paramsDict,
-                            schema_files=[schemaFile], extensions=[schemaFuncs])
+                            schema_data=schema_data, extensions=[schemaFuncs])
     params = c.validate()
     self.logger.debug('Parameters parsed, input is valid.')
 

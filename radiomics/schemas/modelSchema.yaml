@@ -1,0 +1,22 @@
+#  include: customization_schema
+name: model_schema
+type: map
+mapping:
+  extraction:
+    type: map
+    mapping:
+      regex;(.+):
+        include: customization_schema
+  model:
+    type: map
+    required: true
+    mapping:
+      name:
+        type: str
+        required: true
+      parameters:
+        type: map
+        required: true
+        mapping:
+          regex;(.+):
+            type: any

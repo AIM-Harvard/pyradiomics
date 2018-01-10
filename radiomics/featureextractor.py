@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import collections
 from itertools import chain
+import json
 import logging
 import os
 
@@ -121,20 +122,40 @@ class RadiomicsFeaturesExtractor:
     If supplied file does not match the requirements (i.e. unrecognized names or invalid values for a setting), a
     pykwalify error is raised.
     """
+    self._applyParams(paramsFile=paramsFile)
+
+  def loadJSONParams(self, JSON_configuration):
+    """
+    Pars JSON structured configuration string and use it to update settings, enabled feature(Classes) and image types.
+    For more information on the structure of the parameter file, see
+    :ref:`Customizing the extraction <radiomics-customization-label>`.
+
+    If supplied string does not match the requirements (i.e. unrecognized names or invalid values for a setting), a
+    pykwalify error is raised.
+    """
+    parameter_data = json.loads(JSON_configuration)
+    self._applyParams(paramsDict=parameter_data)
+
+  def _applyParams(self, paramsFile=None, paramsDict=None):
+    """
+    Validates and applies a parameter dictionary. See :py:func:`loadParams` and :py:func:`loadJSONParams` for more info.
+    """
     # Ensure pykwalify.core has a log handler (needed when parameter validation fails)
     if len(pykwalify.core.log.handlers) == 0 and len(logging.getLogger().handlers) == 0:
       # No handler available for either pykwalify or root logger, provide first radiomics handler (outputs to stderr)
       pykwalify.core.log.addHandler(logging.getLogger('radiomics').handlers[0])
 
     schemaFile, schemaFuncs = getParameterValidationFiles()
-    c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
+    c = pykwalify.core.Core(source_file=paramsFile, source_data=paramsDict,
+                            schema_files=[schemaFile], extensions=[schemaFuncs])
     params = c.validate()
+    self.logger.debug('Parameters parsed, input is valid.')
 
     enabledImageTypes = params.get('imageType', {})
     enabledFeatures = params.get('featureClass', {})
     settings = params.get('setting', {})
 
-    self.logger.debug("Parameter file parsed. Applying settings")
+    self.logger.debug("Applying settings")
 
     if len(enabledImageTypes) == 0:
       self._enabledImagetypes = {'Original': {}}

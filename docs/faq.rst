@@ -43,20 +43,39 @@ do this by providing a :ref:`parameter file <radiomics-parameter-file-label>`. I
 `yaml structured <http://yaml.org/>`_ text file you can define your custom settings and which features and input image
 types to enable.
 
-Why is there no parameter to specify a fixed bin count?
-#######################################################
+.. _radiomics_fixed_bin_width:
 
-PyRadiomics does not have the option for setting a fixed bin count, as a fixed bin count makes the values less
-comparable, instead of more. This is because a fixed bin count means that the “meaning” of difference between gray
-values is dependent on the range of gray values in the ROI. Take for example 2 images with 2 ROIs, with the range of
-gray values in the first being {0-100} and in the second {0-10}. If you use a fixed bin count, the “meaning” of 1 gray
-value difference is different (in the first it means 10 gray values different, in the second just 1). This means you are
-looking at texture based on very different contrasts.
-Therefore, PyRadiomics uses a fixed bin width (parameter ``binWidth``), which ensures texture feature values are
-calculated using the same “contrast” between gray values [1]_. There are currently no specific guidelines as to what
-constitutes an optimal bin width. We try to choose a bin width in such a way, that the resulting amount of bins is
-somewhere between 30 and 130 bins. This allows for differing ranges of intensity in ROIs, while still keeping the
-texture features informative (and comparable inter lesion!).
+What about gray value discretization? Fixed bin width? Fixed bin count?
+#######################################################################
+
+Currently, although many studies favour a fixed bin count over a fixed bin width, there is no hard evidence favouring
+either a fixed bin width or a fixed bin count in all cases.
+Therefore PyRadiomics implements both the option for setting a fixed bin count (``binCount``) and a fixed bin width
+(``binWidth``, default).
+
+The reason the a fixed bin width has been chosen as the default parameter is based in part on studies in PET that show
+a better reproducibility of features when implementing a fixed bin width [1]_.
+Furthermore, our reasoning is best illustrated by the following example:
+Given an input with 2 images with 2 ROIs, with the range of gray values in the first being {0-100} and in the second
+{0-10}. If you use a fixed bin count, the “meaning” of 1 (discretized) gray value difference is different (in the first
+it means 10 gray values different, in the second just 1). This means you are looking at texture based on very different
+contrasts.
+
+This example does assume that the original gray values mean the same thing in both images, and in case of images with
+definite/absolute gray values (e.g. HU in CT, SUV in PET imaging), this holds true. However, in case of
+arbitrary/relative gray values (e.g. signal intensity in MR), this is not necessarily the case.
+In this latter case, we still recommend a fixed bin width, but with additional pre-processing (e.g. normalization) to
+ensure better comparability of gray values. Use of a fixed bin count would be possible here, but then the calculated
+features may still be very influenced by the range of gray values seen in the image, as well as noise caused by the fact
+that the original gray values are less comparable. Moreover, regardless of type of gray value discretization, steps must
+be taken to ensure good comparability, as the first order features largely use the original gray values
+(without discretization).
+
+Finally, there is the issue of what value to use for the width of the bin. Again, there are currently no specific
+guidelines from literature as to what constitutes an optimal bin width. We try to choose a bin width in such a way, that
+the resulting amount of bins is somewhere between 30 and 130 bins, which shows good reproducibility and performance in
+literature for a fixed bin count [2]_. This allows for differing ranges of intensity in
+ROIs, while still keeping the texture features informative (and comparable inter lesion!).
 
 Error loading parameter file
 ############################
@@ -99,6 +118,9 @@ the optimal settings may differ between modalities. There are some constraints o
 2. 3D or slice: Although PyRadiomics supports single slice (2D) feature extraction, the input is still required to have
    3 dimensions (where in case of 2D, a dimension may be of size 1).
 
+If you want to use 2D, color and/or 4D volumes, additional preprocessing is required to convert the images.
+See `this thread <https://groups.google.com/forum/#!topic/pyradiomics/QLdD_qEw3PY>`_ for some tips and tricks on how to achieve this.
+
 Can I use DICOM-RT struct for the input mask?
 #############################################
 
@@ -111,7 +133,7 @@ Usage
 -----
 
 How should the input file for ``pyradiomics`` in batch-mode be structured?
-#################################################################
+##########################################################################
 
 Currently, the batch input file for ``pyradiomics`` is a csv file specifying the combinations of images and masks for
 which to extract features. It must contain a header line, where at least header "Image" and "Mask" should be specified
@@ -143,7 +165,7 @@ logger can be accessed via ``radiomics.logger``. See also :ref:`here <radiomics-
 included in the repository on how to set up logging.
 
 I'm able to extract features, but many are NaN, 0 or 1. What happened?
-#####################################################################
+######################################################################
 
 It is possible that the segmentation was too small to extract a valid texture. Check the value of ``VoxelNum``, which is
 part of the additional information in the output. This is the number of voxels in the ROI after pre processing and
@@ -160,9 +182,10 @@ differ significantly.
 Does PyRadiomics support voxel-wise feature extraction?
 #######################################################
 
-No, currently PyRadiomics only supports lesion-based feature extraction. However, voxel-based feature extraction may be
-a good addition in the future. If you have thoughts or ideas on how to implement this, we'd welcome your input on the
-`pyradiomics email list <https://groups.google.com/forum/#!forum/pyradiomics>`_.
+Yes, as of version 2.0, voxelwise calculation has been implemented. However, as this entails the calculations of
+features for each voxel, performing a voxelwise extraction is much slower and as the output consists of a feature map
+for each feature, output size is also much larger. See more on enabling a voxel-based extraction in the
+:ref:`usage section<radiomics-usage-label>`.
 
 Miscellaneous
 -------------

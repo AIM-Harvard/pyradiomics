@@ -29,6 +29,10 @@ mapping:
         type: float
         range:
           min-ex: 0
+      binCount:
+        type: int
+        range:
+          min-ex: 0
       normalize:
         type: bool
       normalizeScale:

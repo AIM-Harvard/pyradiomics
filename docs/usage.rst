@@ -114,6 +114,37 @@ Interactive Use
 
 * See the :ref:`feature extractor class<radiomics-featureextractor-label>` for more information on using this core class.
 
+----------------------
+Voxel-based extraction
+----------------------
+
+As of version 2.0, pyradiomics also implements a voxel-based extraction.
+Currently, this is only available in the interactive mode, and is as simple as telling the feature extractor to
+extract a parameter map::
+
+    from radiomics import featureextractor, getTestCase
+    import six
+    import sys, os
+
+    import SimpleITK as sitk
+
+    dataDir = '/path/to/pyradiomics'
+
+    imageName, maskName = getTestCase('brain1', dataDir)
+    params = os.path.join(dataDir, "examples", "exampleSettings", "exampleVoxel.yaml")
+
+    extractor = featureextractor.RadiomicsFeaturesExtractor(params)
+
+    result = extractor.execute(imageName, maskName, voxelBased=True)
+
+    for key, val in six.iteritems(result):
+      sitk.WriteImage(val, key + 'nrrd')
+
+Important to know here is that this extraction takes longer (features have to be calculated for each voxel), and that
+the output is a SimpleITK image of the parameter map in stead of a float value *for each feature*.
+
+Be sure to also check out the ``helloVoxel.py`` example available in the repository (folder ``examples``).
+
 ------------------------
 PyRadiomics in 3D Slicer
 ------------------------
@@ -126,7 +157,7 @@ Using feature classes directly
 ------------------------------
 
 * This represents an example where feature classes are used directly, circumventing checks and preprocessing done by
-  the radiomics feature extractor class, and is not intended as standard use example.
+  the radiomics feature extractor class, and is not intended as standard use.
 
 * (LINUX) To run from source code, add pyradiomics to the environment variable PYTHONPATH (Not necessary when
   PyRadiomics is installed):
@@ -196,4 +227,4 @@ handler to the pyradiomics logger::
 
 To store a log file when running pyradiomics from the commandline, specify a file location in the optional
 ``--log-file`` argument. The amount of logging that is stored is controlled by the ``--log-level`` argument
-(default level INFO and up).
+(default level WARNING and up).

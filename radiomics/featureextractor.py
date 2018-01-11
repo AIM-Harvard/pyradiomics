@@ -368,6 +368,11 @@ class RadiomicsFeaturesExtractor:
     self.logger.debug('Enabled features: %s', self._enabledFeatures)
     self.logger.debug('Current settings: %s', self.settings)
 
+    if self.settings.get('binCount', None) is not None:
+      self.logger.warning('Fixed bin Count enabled! However, we recommend using a fixed bin Width. See '
+                          'http://pyradiomics.readthedocs.io/en/latest/faq.html#radiomics-fixed-bin-width for more '
+                          'details')
+
     # 1. Load the image and mask
     featureVector = collections.OrderedDict()
     image, mask = self.loadImage(imageFilepath, maskFilepath)

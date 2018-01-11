@@ -277,6 +277,9 @@ Feature Class Level
 *Image discretization*
 
 - ``binWidth`` [25]: Float, > 0, size of the bins when making a histogram and for discretization of the image gray level.
+- ``binCount`` [None]: integer, > 0, specifies the number of bins to create. The width of the bin is
+  then determined by the range in the ROI. No definitive evidence is available on which method of discretization is
+  superior, we advise a fixed bin width. See more :ref:`here <radiomics_fixed_bin_width>`.
 
 *Forced 2D extraction*
 

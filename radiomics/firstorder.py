@@ -37,6 +37,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
   def _initCalculation(self):
     super(RadiomicsFirstOrder, self)._initSegmentBasedCalculation()
     self.targetVoxelArray = self.imageArray[self.labelledVoxelCoordinates].astype('float')
+    self.discretizedTargetVoxelArray = None  # Lazy instantiation
 
     self.logger.debug('First order feature class initialized')
 
@@ -51,6 +52,17 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       mn = numpy.mean(a, axis, keepdims=True)
       s = numpy.power((a - mn), moment)
       return numpy.mean(s, axis)
+
+  def _getDiscretizedTargetVoxelArray(self):
+    if self.discretizedTargetVoxelArray is None:
+      if self.binCount is not None:
+        binEdges = self.binCount
+      else:
+        binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
+
+      self.discretizedTargetVoxelArray = numpy.histogram(self.targetVoxelArray, binEdges)[0]
+
+    return self.discretizedTargetVoxelArray
 
   def getEnergyFeatureValue(self):
     r"""
@@ -116,8 +128,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
 
     eps = numpy.spacing(1)
-    binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
-    bins = numpy.histogram(self.targetVoxelArray, binEdges)[0]
+    bins = self._getDiscretizedTargetVoxelArray()
 
     sumBins = bins.sum()
     if sumBins == 0:  # No segmented voxels
@@ -384,8 +395,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
 
     eps = numpy.spacing(1)
-    binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
-    bins = numpy.histogram(self.targetVoxelArray, binEdges)[0]
+    bins = self._getDiscretizedTargetVoxelArray()
     sumBins = bins.sum()
 
     if sumBins == 0:  # No segmented voxels

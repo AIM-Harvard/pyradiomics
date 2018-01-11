@@ -202,9 +202,9 @@ class RadiomicsFeaturesBase(object):
       or in the parameter file (by specifying the feature by name, not when enabling all features).
       However, in most cases this will still result only in a deprecation warning.
     """
-    for featureName, deprecated in six.iteritems(self.featureNames):
+    for featureName, is_deprecated in six.iteritems(self.featureNames):
       # only enable non-deprecated features here
-      if not deprecated:
+      if not is_deprecated:
         self.enableFeatureByName(featureName, True)
 
   def disableAllFeatures(self):

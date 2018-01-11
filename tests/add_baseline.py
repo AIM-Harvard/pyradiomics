@@ -3,9 +3,10 @@ import os
 import sys
 
 import numpy
+import SimpleITK as sitk
 import six
 
-from radiomics import generalinfo, getFeatureClasses
+from radiomics import generalinfo, getFeatureClasses, getTestCase, imageoperations
 from testUtils import PyRadiomicsBaseline, RadiomicsTestUtils
 
 
@@ -39,7 +40,7 @@ class AddBaseline:
 
     featureClass = self.featureClasses[featureClassName](testImage, testMask, **self.testUtils.getSettings())
 
-    if "_calculateCMatrix" in dir(featureClass):
+    if "_calculateMatrix" in dir(featureClass):
       cMat = getattr(featureClass, 'P_%s' % featureClassName)
       if cMat is not None:
         numpy.save(os.path.join(self.baselineDir, '%s_%s.npy' % (test, featureClassName)), cMat)
@@ -94,7 +95,47 @@ class AddBaseline:
       self.logger.error('Feature Class %s not recognized, cannot create baseline!', featureClass)
 
 
+def generateWaveletBaseline():
+  logger = logging.getLogger('radiomics.addBaseline')
+  baselineFile = '../data/baseline/wavelet.npy'
+  testCase = 'test_wavelet_64x64x64'
+
+  if os.path.isfile(baselineFile):  # Check if the baseline does not yet exist
+    logger.info('Baseline already exists, cancelling generation')
+    return
+
+  baselineDict = {}
+  wavelets = ('HHH', 'HHL', 'HLH', 'HLL', 'LHH', 'LHL', 'LLH', 'LLL')
+
+  im_path, ma_path = getTestCase(testCase)
+  assert im_path is not None
+  assert ma_path is not None
+
+  logger.debug('Loading image and mask for testCase %s', testCase)
+  image = sitk.ReadImage(im_path)
+  mask = sitk.ReadImage(ma_path)
+
+  logger.debug('Checking image and mask for testCase %s', testCase)
+  bb, correctedMask = imageoperations.checkMask(image, mask)
+  assert bb is not None  # Check mask should pass normally
+
+  waveletGenerator = imageoperations.getWaveletImage(image, mask)
+  for wavelet_image, wavelet_name, args in waveletGenerator:
+    level = wavelet_name.split('-')[1]
+
+    im_arr = sitk.GetArrayFromImage(image)
+    ma_arr = sitk.GetArrayFromImage(mask) == 1  # Convert to boolean array, label = 1
+    voxelArray = im_arr[ma_arr]  # 1D array of all voxels inside mask
+
+    baselineDict[level] = voxelArray
+
+  baseline = [baselineDict[wl] for wl in wavelets]
+  baseline = numpy.array(baseline)
+  numpy.save(baselineFile, baseline)
+
+
 if __name__ == '__main__':
+  generateWaveletBaseline()
   add_baseline = AddBaseline()
   if len(sys.argv) == 2:
     add_baseline.run(sys.argv[1])

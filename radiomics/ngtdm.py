@@ -87,14 +87,9 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     super(RadiomicsNGTDM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.P_ngtdm = None
-
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
-    super(RadiomicsNGTDM, self)._initSegmentBasedCalculation()
-
     self._applyBinning()
 
+  def _initCalculation(self):
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
     self.P_ngtdm = self._calculateMatrix()
     self._calculateCoefficients()

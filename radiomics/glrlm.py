@@ -78,14 +78,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
     self.P_glrlm = None
-
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
-    super(RadiomicsGLRLM, self)._initSegmentBasedCalculation()
     self._applyBinning()
 
-    # binning
+  def _initCalculation(self):
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 

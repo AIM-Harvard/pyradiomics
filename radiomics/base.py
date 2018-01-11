@@ -6,7 +6,7 @@ import numpy
 import SimpleITK as sitk
 import six
 
-from radiomics import getProgressReporter, imageoperations
+from radiomics import cMatrices, deprecated, getProgressReporter, imageoperations
 
 
 class RadiomicsFeaturesBase(object):
@@ -66,11 +66,13 @@ class RadiomicsFeaturesBase(object):
     self.kwargs = kwargs
     self.binWidth = kwargs.get('binWidth', 25)
     self.label = kwargs.get('label', 1)
+    self.voxelBased = kwargs.get('voxelBased', False)
 
     self.coefficients = {}
 
     # all features are disabled by default
-    self.disableAllFeatures()
+    self.enabledFeatures = {}
+    self.featureValues = {}
 
     self.featureNames = self.getFeatureNames()
 
@@ -81,12 +83,94 @@ class RadiomicsFeaturesBase(object):
       self.logger.warning('Missing input image or mask')
       return
 
+    if self.voxelBased:
+      self._initVoxelBasedCalculation()
+    else:
+      self._initSegmentBasedCalculation()
+
   def _initSegmentBasedCalculation(self):
     self.imageArray = sitk.GetArrayFromImage(self.inputImage)
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)  # boolean array
 
-    self.labelledVoxelCoordinates = numpy.where(self.maskArray != 0)
+    self.labelledVoxelCoordinates = numpy.where(self.maskArray)
     self.boundingBoxSize = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
+
+  def _initVoxelBasedCalculation(self):
+    self.masked = self.kwargs.get('maskedKernel', True)
+
+    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
+
+    # Set up the mask array for the gray value discretization
+    if self.masked:
+      self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)  # boolean array
+    else:
+      self.maskArray = None  # This will cause the discretization to use the entire image
+
+    # Prepare the kernels (1 per voxel in the ROI)
+    self.kernels = self._getKernelGenerator()
+
+  def _getKernelGenerator(self):
+    kernelRadius = self.kwargs.get('kernelRadius', 1)
+
+    ROI_mask = sitk.GetArrayFromImage(self.inputMask) == self.label
+    ROI_indices = numpy.array(numpy.where(ROI_mask))
+
+    # Get the size of the input, which depends on whether it is in masked mode or not
+    if self.masked:
+      size = numpy.max(ROI_indices, 1) - numpy.min(ROI_indices, 1) + 1
+    else:
+      size = numpy.array(self.imageArray.shape)
+
+    # Take the minimum size along each x, y and z dimension from either the size of the ROI or the kernel
+    # First add the kernel radius to the size, yielding shape (2, 3), then take the minimum along axis 0, getting back
+    # to shape (3,)
+    self.boundingBoxSize = numpy.min(numpy.insert([size], 1, kernelRadius * 2 + 1, axis=0), axis=0)
+
+    # Calculate the offsets, which are used to generate a list of kernel Coordinates
+    kernelOffsets = cMatrices.generate_angles(self.boundingBoxSize,
+                                              numpy.array(six.moves.range(1, kernelRadius + 1)),
+                                              True,  # Bi-directional
+                                              self.kwargs.get('force2D', False),
+                                              self.kwargs.get('force2Ddimension', 0))
+
+
+    # Generator loop that yields a kernel mask: a boolean array that defines the voxels included in the kernel
+    kernelMask = numpy.zeros(self.imageArray.shape, dtype='bool')  # Boolean array to hold mask defining current kernel
+
+    for idx in ROI_indices.T:  # Flip axes to get sets of 3 elements (z, y and x) for each voxel
+      kernelMask[:] = False  # Reset kernel mask
+
+      # Get coordinates for all potential voxels in this kernel
+      kernelCoordinates = kernelOffsets + idx
+
+      # Exclude voxels outside image bounds
+      kernelCoordinates = numpy.delete(kernelCoordinates, numpy.where(numpy.any(kernelCoordinates < 0, axis=1)), axis=0)
+      kernelCoordinates = numpy.delete(kernelCoordinates,
+                                       numpy.where(numpy.any(kernelCoordinates >= self.imageArray.shape, axis=1)), axis=0)
+
+      idx = tuple(idx)
+
+      # Transform indices to boolean mask array
+      kernelMask[tuple(kernelCoordinates.T)] = True
+      kernelMask[idx] = True  # Also include center voxel
+
+      if self.masked:
+        # Exclude voxels outside ROI
+        kernelMask = numpy.logical_and(kernelMask, ROI_mask)
+
+        # check if there are enough voxels to calculate texture, skip voxel if this is not the case.
+        if numpy.sum(kernelMask) <= 1:
+          continue
+
+      # Also yield the index, identifying which voxel this kernel belongs to
+      yield idx, kernelMask
+
+  def _initCalculation(self):
+    """
+    Last steps to prepare the class for extraction. This function calculates the texture matrices and coefficients in
+    the respective feature classes
+    """
+    pass
 
   def _applyBinning(self):
     self.matrix, self.binEdges = imageoperations.binImage(self.binWidth,
@@ -145,7 +229,7 @@ class RadiomicsFeaturesBase(object):
                 if a[0].startswith('get') and a[0].endswith('FeatureValue')}
     return features
 
-  def calculateFeatures(self):
+  def execute(self):
     """
     Calculates all features enabled in  ``enabledFeatures``. A feature is enabled if it's key is present in this
     dictionary and it's value is True.
@@ -154,14 +238,61 @@ class RadiomicsFeaturesBase(object):
     feature value as value. If an exception is thrown during calculation, the error is logged, and the value is set to
     NaN.
     """
+    if self.voxelBased:
+      self._calculateVoxels()
+    else:
+      self._calculateSegment()
+
+    return self.featureValues
+
+  @deprecated
+  def calculateFeatures(self):
+    self.logger.warning('calculateFeatures() is deprecated, use execute() instead.')
+    self.execute()
+
+  def _calculateVoxels(self):
+    # Initialize the output with empyt numpy arrays
+    for feature, enabled in six.iteritems(self.enabledFeatures):
+      if enabled:
+        self.featureValues[feature] = numpy.zeros(self.imageArray.shape, dtype='float')
+
+    # Calculate the feature values for all enabled features
+    with self.progressReporter(self.kernels, 'Calculating voxels') as bar:
+      for vox_idx, kernelMask in bar:
+        self.maskArray = kernelMask
+        self.labelledVoxelCoordinates = numpy.where(self.maskArray)
+
+        # Calculate the feature values for the current kernel
+        for success, featureName, featureValue in self._calculateFeatures():
+          if success:  # Do not store results in case of an error
+            self.featureValues[featureName][vox_idx] = featureValue
+
+    # Convert the output to simple ITK image objects
+    for feature, enabled in six.iteritems(self.enabledFeatures):
+      if enabled:
+        self.featureValues[feature] = sitk.GetImageFromArray(self.featureValues[feature])
+        self.featureValues[feature].CopyInformation(self.inputImage)
+
+  def _calculateSegment(self):
+    # Get the feature values using the current segment.
+    for success, featureName, featureValue in self._calculateFeatures():
+      # Always store the result. In case of an error, featureValue will be NaN
+      self.featureValues[featureName] = featureValue
+
+  def _calculateFeatures(self):
+    # Initialize the calculation
+    # This function serves to calculate the texture matrices where applicable
+    self._initCalculation()
+
     self.logger.debug('Calculating features')
     for feature, enabled in six.iteritems(self.enabledFeatures):
       if enabled:
         try:
           # Use getattr to get the feature calculation methods, then use '()' to evaluate those methods
-          self.featureValues[feature] = getattr(self, 'get%sFeatureValue' % feature)()
+          yield True, feature, getattr(self, 'get%sFeatureValue' % feature)()
         except DeprecationWarning as deprecatedFeature:
-          self.logger.warning('Feature %s is deprecated: %s', feature, deprecatedFeature.message)
+          # Add a debug log message, as a warning is usually shown and would entail a too verbose output
+          self.logger.debug('Feature %s is deprecated: %s', feature, deprecatedFeature.message)
         except Exception:
-          self.featureValues[feature] = numpy.nan
           self.logger.error('FAILED: %s', traceback.format_exc())
+          yield False, feature, numpy.nan

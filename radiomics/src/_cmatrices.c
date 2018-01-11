@@ -18,12 +18,14 @@ static char glszm_docstring[] = "Arguments: Image, Mask, Ng, Ns, force2D, for2Dd
 static char glrlm_docstring[] = "Arguments: Image, Mask, Ng, Nr, force2D, for2Ddimension.";
 static char ngtdm_docstring[] = "Arguments: Image, Mask, Ng, force2D, for2Ddimension.";
 static char gldm_docstring[] = "Arguments: Image, Mask, Ng, Alpha, force2D, for2Ddimension.";
+static char generate_angles_docstring[] = "Arguments: Boundingbox Size, distances, bidirectional, force2Ddimension.";
 
 static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args);
+static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args);
 
 // Function to check if array input is valid. Additionally extracts size and stride values
 int check_arrays(PyArrayObject *image_arr, PyArrayObject *mask_arr, int *size, int *strides);
@@ -35,6 +37,7 @@ static PyMethodDef module_methods[] = {
   { "calculate_glrlm", cmatrices_calculate_glrlm, METH_VARARGS, glrlm_docstring },
   { "calculate_ngtdm", cmatrices_calculate_ngtdm, METH_VARARGS, ngtdm_docstring },
   { "calculate_gldm", cmatrices_calculate_gldm, METH_VARARGS, gldm_docstring },
+  { "generate_angles", cmatrices_generate_angles, METH_VARARGS, generate_angles_docstring},
   { NULL, NULL, 0, NULL }
 };
 
@@ -604,6 +607,79 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   PyArray_ENABLEFLAGS(angles_arr, NPY_ARRAY_OWNDATA);
 
   return Py_BuildValue("OO", PyArray_Return(gldm_arr), PyArray_Return(angles_arr));
+}
+
+static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args)
+{
+  PyObject *size_obj, *distances_obj;
+  PyArrayObject *size_arr, *distances_arr;
+  char bidirectional;
+  int force2D, force2Ddimension;
+  int n_dim, n_dist, n_a;
+  int *size, *distances;
+  int *angles;
+  int *angles_data;
+  int idx;
+  npy_intp dims[2];
+  PyArrayObject *angles_arr;
+
+  // Parse the input tuple
+  if (!PyArg_ParseTuple(args, "OOiii", &size_obj, &distances_obj, &bidirectional, &force2D, &force2Ddimension))
+    return NULL;
+
+  // Interpret the input as numpy arrays
+  size_arr = (PyArrayObject *)PyArray_FROM_OTF(size_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
+  distances_arr = (PyArrayObject *)PyArray_FROM_OTF(distances_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
+
+  if (size_arr == NULL || distances_arr == NULL)
+  {
+    Py_XDECREF(size_arr);
+    Py_XDECREF(distances_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Error parsing array arguments.");
+    return NULL;
+  }
+
+  // Check if Size and Distances have 1 dimension
+  if (PyArray_NDIM(size_arr) != 1 || PyArray_NDIM(distances_arr) != 1)
+  {
+    Py_XDECREF(size_arr);
+    Py_XDECREF(distances_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Expected a 1D array for size and distances.");
+    return NULL;
+  }
+
+  n_dim = (int)PyArray_DIM(size_arr, 0);  // Number of dimensions
+  n_dist = (int)PyArray_DIM(distances_arr, 0);  // Number of distances
+
+  size = (int *)PyArray_DATA(size_arr);
+  distances = (int *)PyArray_DATA(distances_arr);
+
+  if (!force2D) force2Ddimension = -1;
+
+  if (generate_angles(size, distances, n_dim, n_dist, bidirectional, force2Ddimension, &angles, &n_a) > 0)
+  {
+    Py_XDECREF(size_arr);
+    Py_XDECREF(distances_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Error calculcating angles");
+    return NULL;
+  }
+
+  Py_XDECREF(size_arr);
+  Py_XDECREF(distances_arr);
+
+  dims[0] = n_a;
+  dims[1] = n_dim;
+
+  // Create a numpy output array for the angles and store the data
+  // PyArraySimpleNewFromData is not used here, as it caused reference errors, crashing
+  // the program when called many times...
+  angles_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_INT);
+  angles_data = (int *)PyArray_DATA(angles_arr);
+  for (idx = 0; idx < n_a*n_dim; idx++)
+    angles_data[idx] = angles[idx];
+  free(angles); // free the (temporary) array
+
+  return PyArray_Return(angles_arr);
 }
 
 int check_arrays(PyArrayObject *image_arr, PyArrayObject *mask_arr, int *size, int *strides)

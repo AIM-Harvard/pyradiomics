@@ -157,6 +157,7 @@ class RadiomicsFeaturesExtractor:
     enabledImageTypes = params.get('imageType', {})
     enabledFeatures = params.get('featureClass', {})
     settings = params.get('setting', {})
+    voxelSettings = params.get('voxelSetting', {})
 
     self.logger.debug("Applying settings")
 
@@ -179,6 +180,7 @@ class RadiomicsFeaturesExtractor:
     # Set default settings and update with and changed settings contained in kwargs
     self.settings = self._getDefaultSettings()
     self.settings.update(settings)
+    self.settings.update(voxelSettings)
 
     self.logger.debug("Settings: %s", settings)
 
@@ -327,15 +329,17 @@ class RadiomicsFeaturesExtractor:
     self._enabledFeatures.update(enabledFeatures)
     self.logger.debug('Enabled features: %s', self._enabledFeatures)
 
-  def execute(self, imageFilepath, maskFilepath, label=None):
+  def execute(self, imageFilepath, maskFilepath, label=None, voxelBased=False):
     """
     Compute radiomics signature for provide image and mask combination. It comprises of the following steps:
 
     1. Image and mask are loaded and normalized/resampled if necessary.
     2. Validity of ROI is checked using :py:func:`~imageoperations.checkMask`, which also computes and returns the
        bounding box.
-    3. If enabled, provenance information is calculated and stored as part of the result.
-    4. Shape features are calculated on a cropped (no padding) version of the original image.
+    3. If enabled, provenance information is calculated and stored as part of the result. (Not available in voxel-based
+       extraction)
+    4. Shape features are calculated on a cropped (no padding) version of the original image. (Not available in
+       voxel-based extraction)
     5. If enabled, resegment the mask based upon the range specified in ``resegmentRange`` (default None: resegmentation
        disabled).
     6. Other enabled feature classes are calculated using all specified image types in ``_enabledImageTypes``. Images
@@ -354,6 +358,10 @@ class RadiomicsFeaturesExtractor:
 
     if label is not None:
       self.settings['label'] = label
+
+    self.settings['voxelBased'] = voxelBased
+    if voxelBased:
+      self.logger.info('Starting voxel based extraction')
 
     self.logger.info('Calculating features with label: %d', self.settings['label'])
     self.logger.debug('Enabled images types: %s', self._enabledImagetypes)
@@ -381,27 +389,28 @@ class RadiomicsFeaturesExtractor:
 
     self.logger.debug('Image and Mask loaded and valid, starting extraction')
 
-    # 3. Add the additional information if enabled
-    if self.settings['additionalInfo']:
-      featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
+    if not voxelBased:
+      # 3. Add the additional information if enabled
+      if self.settings['additionalInfo']:
+        featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
 
-    # 4. If shape descriptors should be calculated, handle it separately here
-    if 'shape' in self._enabledFeatures.keys():
-      croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox)
-      enabledFeatures = self._enabledFeatures['shape']
+      # 4. If shape descriptors should be calculated, handle it separately here
+      if 'shape' in self._enabledFeatures.keys():
+        croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox)
+        enabledFeatures = self._enabledFeatures['shape']
 
-      self.logger.info('Computing shape')
-      shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.settings)
-      if enabledFeatures is None or len(enabledFeatures) == 0:
-        shapeClass.enableAllFeatures()
-      else:
-        for feature in enabledFeatures:
-          shapeClass.enableFeatureByName(feature)
+        self.logger.info('Computing shape')
+        shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.settings)
+        if enabledFeatures is None or len(enabledFeatures) == 0:
+          shapeClass.enableAllFeatures()
+        else:
+          for feature in enabledFeatures:
+            shapeClass.enableFeatureByName(feature)
 
-      shapeClass.calculateFeatures()
-      for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
-        newFeatureName = 'original_shape_%s' % featureName
-        featureVector[newFeatureName] = featureValue
+        shapeClass.calculateFeatures()
+        for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
+          newFeatureName = 'original_shape_%s' % featureName
+          featureVector[newFeatureName] = featureValue
 
     # 5. Resegment the mask if enabled (parameter regsegmentMask is not None)
     resegmentRange = self.settings.get('resegmentRange', None)
@@ -428,7 +437,7 @@ class RadiomicsFeaturesExtractor:
     for imageType, customKwargs in six.iteritems(self._enabledImagetypes):
       args = self.settings.copy()
       args.update(customKwargs)
-      self.logger.info('Adding image type "%s" with settings: %s' % (imageType, str(args)))
+      self.logger.info('Adding image type "%s" with custom settings: %s' % (imageType, str(customKwargs)))
       imageGenerators = chain(imageGenerators, getattr(imageoperations, 'get%sImage' % imageType)(image, mask, **args))
 
     self.logger.debug('Extracting features')
@@ -544,8 +553,7 @@ class RadiomicsFeaturesExtractor:
           for feature in enabledFeatures:
             featureClass.enableFeatureByName(feature)
 
-        featureClass.calculateFeatures()
-        for (featureName, featureValue) in six.iteritems(featureClass.featureValues):
+        for (featureName, featureValue) in six.iteritems(featureClass.execute()):
           newFeatureName = '%s_%s_%s' % (imageTypeName, featureClassName, featureName)
           featureVector[newFeatureName] = featureValue
 

@@ -59,14 +59,9 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLSZM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.P_glszm = None
-
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
-    super(RadiomicsGLSZM, self)._initSegmentBasedCalculation()
-
     self._applyBinning()
 
+  def _initCalculation(self):
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     self.P_glszm = self._calculateMatrix()

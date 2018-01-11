@@ -19,7 +19,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   def __init__(self, inputImage, inputMask, **kwargs):
     super(RadiomicsShape, self).__init__(inputImage, inputMask, **kwargs)
 
-    self._initSegmentBasedCalculation()
+  def _initVoxelBasedCalculation(self):
+    raise NotImplementedError('Shape features are not available in voxel-based mode')
 
   def _initSegmentBasedCalculation(self):
 
@@ -41,7 +42,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     self.inputMask = cpif.Execute(self.inputMask)
 
-    # Reassign self.maskArray using the now-padded self.inputMask and make it binary
+    # Reassign self.maskArray using the now-padded self.inputMask and force and interger datatype
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
     self.labelledVoxelCoordinates = numpy.where(self.maskArray != 0)
 
@@ -72,7 +73,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     self.eigenValues.sort()  # Sort the eigenValues from small to large
 
-    self.diameters = None  # Do not precompute diameters
+    self.diameters = None  # Do not precompute diameters, but instantiate the variable for lazy assignment
 
     self.logger.debug('Shape feature class initialized')
 

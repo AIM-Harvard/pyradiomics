@@ -64,14 +64,9 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.gldm_a = kwargs.get('gldm_a', 0)
 
     self.P_gldm = None
-
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
-    super(RadiomicsGLDM, self)._initSegmentBasedCalculation()
-
     self._applyBinning()
 
+  def _initCalculation(self):
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     self.P_gldm = self._calculateMatrix()

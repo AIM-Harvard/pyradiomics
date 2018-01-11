@@ -111,7 +111,7 @@ Usage
 -----
 
 How should the input file for ``pyradiomics`` in batch-mode be structured?
-#################################################################
+##########################################################################
 
 Currently, the batch input file for ``pyradiomics`` is a csv file specifying the combinations of images and masks for
 which to extract features. It must contain a header line, where at least header "Image" and "Mask" should be specified
@@ -143,7 +143,7 @@ logger can be accessed via ``radiomics.logger``. See also :ref:`here <radiomics-
 included in the repository on how to set up logging.
 
 I'm able to extract features, but many are NaN, 0 or 1. What happened?
-#####################################################################
+######################################################################
 
 It is possible that the segmentation was too small to extract a valid texture. Check the value of ``VoxelNum``, which is
 part of the additional information in the output. This is the number of voxels in the ROI after pre processing and

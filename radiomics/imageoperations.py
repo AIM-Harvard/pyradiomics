@@ -604,7 +604,8 @@ def getLoGImage(inputImage, inputMask, **kwargs):
 
   References:
 
-  - `SimpleITK Doxygen documentation <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1LaplacianRecursiveGaussianImageFilter.html>`_
+  - `SimpleITK Doxygen documentation
+    <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1LaplacianRecursiveGaussianImageFilter.html>`_
   - `ITK Doxygen documentation <https://itk.org/Doxygen/html/classitk_1_1LaplacianRecursiveGaussianImageFilter.html>`_
   - `<https://en.wikipedia.org/wiki/Blob_detection#The_Laplacian_of_Gaussian>`_
 
@@ -862,6 +863,12 @@ def getGradientImage(inputImage, inputMask, **kwargs):
   Compute and return the Gradient Magnitude in the image.
   By default, takes into account the image spacing, this can be switched off by specifying
   ``gradientUseSpacing = False``.
+
+  References:
+
+  - `SimpleITK documentation
+    <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1GradientMagnitudeImageFilter.html>`_
+  - `<https://en.wikipedia.org/wiki/Image_gradient>`_
   """
   gmif = sitk.GradientMagnitudeImageFilter()
   gmif.SetUseImageSpacing(kwargs.get('gradientUseSpacing', True))
@@ -890,6 +897,14 @@ def getLBP2DImage(inputImage, inputMask, **kwargs):
     LBP can often return only a very small number of different gray levels. A customized bin width is often needed.
   .. warning::
     Requires package ``skimage`` to function. If not available, this filter logs a warning and does not yield an image.
+
+  References:
+
+  - T. Ojala, M. Pietikainen, and D. Harwood (1994), "Performance evaluation of texture measures with classification
+    based on Kullback discrimination of distributions", Proceedings of the 12th IAPR International Conference on Pattern
+    Recognition (ICPR 1994), vol. 1, pp. 582 - 585.
+  - T. Ojala, M. Pietikainen, and D. Harwood (1996), "A Comparative Study of Texture Measures with Classification Based
+    on Feature Distributions", Pattern Recognition, vol. 29, pp. 51-59.
   """
   global logger
   try:
@@ -942,6 +957,12 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
   .. warning::
     Requires package ``scipy`` and ``trimesh`` to function. If not available, this filter logs a warning and does not
     yield an image.
+
+  References:
+
+  - Banerjee, J, Moelker, A, Niessen, W.J, & van Walsum, T.W. (2013), "3D LBP-based rotationally invariant region
+    description." In: Park JI., Kim J. (eds) Computer Vision - ACCV 2012 Workshops. ACCV 2012. Lecture Notes in Computer
+    Science, vol 7728. Springer, Berlin, Heidelberg. doi:10.1007/978-3-642-37410-4_3
   """
   global logger
   try:

@@ -42,6 +42,8 @@ Currently supports the following feature classes:
  - Gray Level Cooccurence Matrix (GLCM)
  - Gray Level Run Length Matrix (GLRLM)
  - Gray Level Size Zone Matrix (GLSZM)
+ - Gray Level Dependece Matrix (GLDM)
+ - Neighboring Gray Tone Difference Matrix (NGTDM)
 
 ### Filter Classes
 Aside from the feature classes, there are also some built-in optional filters:
@@ -52,6 +54,8 @@ Aside from the feature classes, there are also some built-in optional filters:
 - Square Root
 - Logarithm
 - Exponential
+- Gradient (Magnitude)
+- Local Binary Pattern (LBP) 2D / 3D
 
 ### Supporting reproducible extraction
 Aside from calculating features, the pyradiomics package includes provenance information in the

@@ -14,3 +14,4 @@ setting:
 voxelSetting:
   kernelRadius: 2
   maskedKernel: true
+  initValue: nan

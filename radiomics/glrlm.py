@@ -96,8 +96,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
                                                 self.maskArray,
                                                 self.coefficients['Ng'],
                                                 self.coefficients['Nr'],
-                                                self.kwargs.get('force2D', False),
-                                                self.kwargs.get('force2Ddimension', 0))
+                                                self.settings.get('force2D', False),
+                                                self.settings.get('force2Ddimension', 0))
 
     self.logger.debug('Process calculated matrix')
 

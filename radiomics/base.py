@@ -63,10 +63,12 @@ class RadiomicsFeaturesBase(object):
     self.logger.debug('Initializing feature class')
     self.progressReporter = getProgressReporter
 
-    self.kwargs = kwargs
+    self.settings = kwargs
+
     self.binWidth = kwargs.get('binWidth', 25)
     self.label = kwargs.get('label', 1)
     self.voxelBased = kwargs.get('voxelBased', False)
+    self.initValue = kwargs.get('initValue', 0)
 
     self.coefficients = {}
 
@@ -96,7 +98,7 @@ class RadiomicsFeaturesBase(object):
     self.boundingBoxSize = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
 
   def _initVoxelBasedCalculation(self):
-    self.masked = self.kwargs.get('maskedKernel', True)
+    self.masked = self.settings.get('maskedKernel', True)
 
     self.imageArray = sitk.GetArrayFromImage(self.inputImage)
 
@@ -110,7 +112,7 @@ class RadiomicsFeaturesBase(object):
     self.kernels = self._getKernelGenerator()
 
   def _getKernelGenerator(self):
-    kernelRadius = self.kwargs.get('kernelRadius', 1)
+    kernelRadius = self.settings.get('kernelRadius', 1)
 
     ROI_mask = sitk.GetArrayFromImage(self.inputMask) == self.label
     ROI_indices = numpy.array(numpy.where(ROI_mask))
@@ -130,9 +132,8 @@ class RadiomicsFeaturesBase(object):
     kernelOffsets = cMatrices.generate_angles(self.boundingBoxSize,
                                               numpy.array(six.moves.range(1, kernelRadius + 1)),
                                               True,  # Bi-directional
-                                              self.kwargs.get('force2D', False),
-                                              self.kwargs.get('force2Ddimension', 0))
-
+                                              self.settings.get('force2D', False),
+                                              self.settings.get('force2Ddimension', 0))
 
     # Generator loop that yields a kernel mask: a boolean array that defines the voxels included in the kernel
     kernelMask = numpy.zeros(self.imageArray.shape, dtype='bool')  # Boolean array to hold mask defining current kernel
@@ -254,7 +255,7 @@ class RadiomicsFeaturesBase(object):
     # Initialize the output with empyt numpy arrays
     for feature, enabled in six.iteritems(self.enabledFeatures):
       if enabled:
-        self.featureValues[feature] = numpy.zeros(self.imageArray.shape, dtype='float')
+        self.featureValues[feature] = numpy.full(self.imageArray.shape, self.initValue, dtype='float')
 
     # Calculate the feature values for all enabled features
     with self.progressReporter(self.kernels, 'Calculating voxels') as bar:

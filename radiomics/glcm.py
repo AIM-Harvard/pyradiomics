@@ -127,10 +127,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     P_glcm, angles = cMatrices.calculate_glcm(self.matrix,
                                               self.maskArray,
-                                              numpy.array(self.kwargs.get('distances', [1])),
+                                              numpy.array(self.settings.get('distances', [1])),
                                               Ng,
-                                              self.kwargs.get('force2D', False),
-                                              self.kwargs.get('force2Ddimension', 0))
+                                              self.settings.get('force2D', False),
+                                              self.settings.get('force2Ddimension', 0))
 
     self.logger.debug('Process calculated matrix')
 

@@ -130,6 +130,8 @@ mapping:
           min-ex: 0
       maskedKernel:
         type: bool
+      initValue:
+        type: float
 
   featureClass:
     type: map

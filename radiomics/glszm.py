@@ -85,8 +85,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
                                                 self.maskArray,
                                                 Ng,
                                                 Ns,
-                                                self.kwargs.get('force2D', False),
-                                                self.kwargs.get('force2Ddimension', 0))
+                                                self.settings.get('force2D', False),
+                                                self.settings.get('force2Ddimension', 0))
 
     # Delete rows that specify gray levels not present in the ROI
     NgVector = range(1, Ng + 1)  # All possible gray values

@@ -76,11 +76,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
   def _calculateMatrix(self):
     P_gldm, angles = cMatrices.calculate_gldm(self.matrix,
                                               self.maskArray,
-                                              numpy.array(self.kwargs.get('distances', [1])),
+                                              numpy.array(self.settings.get('distances', [1])),
                                               self.coefficients['Ng'],
                                               self.gldm_a,
-                                              self.kwargs.get('force2D', False),
-                                              self.kwargs.get('force2Ddimension', 0))
+                                              self.settings.get('force2D', False),
+                                              self.settings.get('force2Ddimension', 0))
 
     jvector = numpy.arange(1, P_gldm.shape[1] + 1, dtype='float64')
 

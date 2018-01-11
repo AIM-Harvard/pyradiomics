@@ -13,6 +13,8 @@ Feature Calculation Changes
   (`#319 <https://github.com/Radiomics/pyradiomics/pull/319>`_)
 - Mark duplicate features as 'deprecated' and document mathematical proof of the equality.
   (`#321 <https://github.com/Radiomics/pyradiomics/pull/321>`_)
+- Fix error in calculation of NGTDM's Complexity and Contrast features
+  (`#351 <https://github.com/Radiomics/pyradiomics/pull/351>`_)
 
 New Features
 ############
@@ -25,6 +27,8 @@ New Features
   batch mode, NaN is replaced by an empty string. (`#318 <https://github.com/Radiomics/pyradiomics/pull/318>`_)
 - Add support to configure the feature extractor using a JSON structured string.
   (`#334 <https://github.com/Radiomics/pyradiomics/pull/334>`_)
+- Add Gradient Magnitude Filter. (`#356 <https://github.com/Radiomics/pyradiomics/pull/356>`_)
+- Add Local Binary Pattern Filter (2D/3D). (`#357 <https://github.com/Radiomics/pyradiomics/pull/357>`_)
 
 Bug fixes
 #########
@@ -39,6 +43,10 @@ Bug fixes
   (`#333 <https://github.com/Radiomics/pyradiomics/pull/333>`_)
 - Fix incorrect path separator in example scripts. (`c7c5d2e <https://github.com/Radiomics/pyradiomics/commit/c7c5d2e>`_)
 - Fix bug in the calculation of Wavelet. (`#346 <https://github.com/Radiomics/pyradiomics/pull/346>`_)
+- Fix machine-precision errors in Eigenvalue calculation (Shape)
+  (`#355 <https://github.com/Radiomics/pyradiomics/pull/355>`_)
+- Update validation rule for image filters (remove hardcoded filters by package-detected filters).
+  (`#364 <https://github.com/Radiomics/pyradiomics/pull/364>`_)
 
 Tests
 #####
@@ -77,6 +85,12 @@ Internal API
   python. (`#310 <https://github.com/Radiomics/pyradiomics/pull/310>`_)
 - Simplify Calculation of Wavelet Filter. Does not change output.
   (`#323 <https://github.com/Radiomics/pyradiomics/pull/323>`_)
+- Refactor commandline interface to work with only 1 entry point (``pyradiomics``). Also add parallel-processing option
+  for batch-processing (argument ``-j``, which specifies number of CPU cores to use).
+  (`#347 <https://github.com/Radiomics/pyradiomics/pull/347>`_)
+- Reconfigur testing to allow the removal of testcases from the repository itself (still available as binary data
+  attached to release 1.0.0) and store the baseline in a different format (allowing for easier change-tracking)
+  (`#353 <https://github.com/Radiomics/pyradiomics/pull/353>`_)
 
 -----------------
 PyRadiomics 1.3.0
@@ -162,6 +176,12 @@ Documentation
   (`#294 <https://github.com/Radiomics/pyradiomics/pull/294>`_)
 - Insert missing line to enable all features in documentation on using the feature classes directly.
   (`5ce9f48 <https://github.com/Radiomics/pyradiomics/commit/5ce9f48>`_)
+- Fix typo in NGTDM documentation. (`ea9a6ce <https://github.com/Radiomics/pyradiomics/commit/ea9a6ce>`_)
+- Fix some typos in documentation of firstorder - std and gldm - GLN
+  (`#369 <https://github.com/Radiomics/pyradiomics/pull/369>`_)
+- Add additional comments to the code of the Wavelet filter (``_swt3``).
+  (`#375 <https://github.com/Radiomics/pyradiomics/pull/375>`_)
+- Add references to the new filter functions. (`4464d1c <https://github.com/Radiomics/pyradiomics/commit/4464d1c>`_)
 
 Examples
 ########
@@ -183,6 +203,14 @@ Internal API
   (`#274 <https://github.com/Radiomics/pyradiomics/pull/274>`_)
 - Rename parts of the customization variables and functions to better reflect their definition
   (`#291 <https://github.com/Radiomics/pyradiomics/pull/291>`_)
+- Update C extensions: Make python wrapping more similar for different feature classes, simplify calculation of surface
+  area, remove deprecated Numpy C-API references and implement angle-generation in C.
+  (`#360 <https://github.com/Radiomics/pyradiomics/pull/360>`_)
+- Remove Python equivalents of C extensions: Some, but not all C extensions had python equivalents, which calculated
+  equal values but, by using a python-only implementation, are much slower than the C extension. Only advantage is that
+  it would also work when compiling the code fails. Also update the tests to check consistency of the calculated
+  matrices against a baseline file (binary numpy array file) instead of python calculated matrices.
+  (`#373 <https://github.com/Radiomics/pyradiomics/pull/373>`_)
 
 License
 #######

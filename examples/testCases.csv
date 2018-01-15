@@ -1,6 +1,6 @@
 ID,Image,Mask
-brain1,..\data\brain1_image.nrrd,..\data\brain1_label.nrrd
-brain2,..\data\brain2_image.nrrd,..\data\brain2_label.nrrd
-breast1,..\data\breast1_image.nrrd,..\data\breast1_label.nrrd
-lung1,..\data\lung1_image.nrrd,..\data\lung1_label.nrrd
-lung2,..\data\lung2_image.nrrd,..\data\lung2_label.nrrd
+brain1,../data/brain1_image.nrrd,../data/brain1_label.nrrd
+brain2,../data/brain2_image.nrrd,../data/brain2_label.nrrd
+breast1,../data/breast1_image.nrrd,../data/breast1_label.nrrd
+lung1,../data/lung1_image.nrrd,../data/lung1_label.nrrd
+lung2,../data/lung2_image.nrrd,../data/lung2_label.nrrd

@@ -1,6 +1,8 @@
 import collections
 import logging
 
+import numpy
+import pywt
 import SimpleITK as sitk
 import six
 
@@ -123,6 +125,24 @@ class GeneralInfo():
     Return the current version of this package.
     """
     return radiomics.__version__
+
+  def getNumpyVersionValue(self):
+    """
+    Return the current version of the numpy package, used for feature calculation.
+    """
+    return numpy.__version__
+
+  def getSimpleITKVersionValue(self):
+    """
+    Return the current version of the SimpleITK package, used for image processing.
+    """
+    return sitk.Version().VersionString()
+
+  def getPyWaveletVersionValue(self):
+    """
+    Return the current version of the PyWavelet package, used to apply the wavelet filter.
+    """
+    return pywt.__version__
 
   def getVolumeNumValue(self):
     """

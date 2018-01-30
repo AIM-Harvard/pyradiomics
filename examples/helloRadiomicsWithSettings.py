@@ -69,14 +69,14 @@ def clickProgressbar():
 # Get some test data
 
 # repositoryRoot points to the root of the repository. The following line gets that location if this script is run
-# from it's default location in \pyradiomics\bin. Otherwise, it will point to some (invalid) folder, causing the
+# from it's default location in /pyradiomics/examples. Otherwise, it will point to some (invalid) folder, causing the
 # getTestCase function to fail to find the test case in the repository. In that case, a test case will be downloaded to
 # temporary files and it's location is returned.
 repositoryRoot = os.path.abspath(os.path.join(os.getcwd(), ".."))
 imageName, maskName = radiomics.getTestCase('brain1', repositoryRoot)
 
 # Get the location of the example settings file
-paramsFile = os.path.abspath(r'exampleSettings\Params.yaml')
+paramsFile = os.path.abspath(os.path.join('exampleSettings', 'Params.yaml'))
 
 if imageName is None or maskName is None:  # Something went wrong, in this case PyRadiomics will also log an error
   print('Error getting testcase!')

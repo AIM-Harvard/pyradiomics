@@ -16,7 +16,7 @@ from radiomics import firstorder, getTestCase, glcm, glrlm, glszm, imageoperatio
 # Get some test data
 
 # repositoryRoot points to the root of the repository. The following line gets that location if this script is run
-# from it's default location in \pyradiomics\bin. Otherwise, it will point to some (invalid) folder, causing the
+# from it's default location in /pyradiomics/examples. Otherwise, it will point to some (invalid) folder, causing the
 # getTestCase function to fail to find the test case in the repository. In that case, a test case will be downloaded to
 # temporary files and it's location is returned.
 repositoryRoot = os.path.abspath(os.path.join(os.getcwd(), ".."))

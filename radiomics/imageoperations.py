@@ -745,9 +745,9 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)):
     raise ValueError('Expected 3D data array')
 
   original_shape = matrix.shape
-  adjusted_shape = tuple([dim + 1 if dim % 2 != 0 else dim for dim in original_shape])
+  padding = tuple([(0, 1 if dim % 2 != 0 else 0) for dim in original_shape])
   data = matrix.copy()
-  data.resize(adjusted_shape, refcheck=False)
+  data = numpy.pad(data, padding, 'constant')
 
   if not isinstance(wavelet, pywt.Wavelet):
     wavelet = pywt.Wavelet(wavelet)
@@ -764,14 +764,14 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)):
     dec_im = {}
     for decName, decImage in six.iteritems(dec):
       decTemp = decImage.copy()
-      decTemp = numpy.resize(decTemp, original_shape)
+      decTemp = decTemp[[slice(None, -1 if dim % 2 != 0 else None) for dim in original_shape]]
       sitkImage = sitk.GetImageFromArray(decTemp)
       sitkImage.CopyInformation(inputImage)
       dec_im[str(decName).replace('a', 'L').replace('d', 'H')] = sitkImage
 
     ret.append(dec_im)
 
-  data = numpy.resize(data, original_shape)
+  data = data[[slice(None, -1 if dim % 2 != 0 else None) for dim in original_shape]]
   approximation = sitk.GetImageFromArray(data)
   approximation.CopyInformation(inputImage)
 

@@ -667,7 +667,8 @@ def getLoGImage(inputImage, **kwargs):
 
   References:
 
-  - `<https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1LaplacianRecursiveGaussianImageFilter.html>`_
+  - `SimpleITK Doxygen documentation <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1LaplacianRecursiveGaussianImageFilter.html>`_
+  - `ITK Doxygen documentation <https://itk.org/Doxygen/html/classitk_1_1LaplacianRecursiveGaussianImageFilter.html>`_
   - `<https://en.wikipedia.org/wiki/Blob_detection#The_Laplacian_of_Gaussian>`_
 
   :return: Yields log filtered image for each specified sigma, corresponding image type name and ``kwargs`` (customized

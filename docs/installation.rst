@@ -7,9 +7,9 @@ There are three ways you can use pyradiomics:
 2. Use 3D Slicer Radiomics extension
 3. Use pyradiomics Docker
 
-------------
+----------------------
 1. Install from source
-------------
+----------------------
 
 * Ensure you have the version control system ``git`` installed on your machine.
 
@@ -44,9 +44,9 @@ There are three ways you can use pyradiomics:
   * ``python -m pip install -r requirements.txt``
   * ``python setup.py install``
 
-------------
+------------------------------------
 2. Use 3D Slicer Radiomics extension
-------------
+------------------------------------
 
 3D Slicer is a free open source research platform for medical image computing. Learn more and download 3D Slicer binary for your platform here: http://slicer.org.
 
@@ -56,9 +56,9 @@ of tools in 3D Slicer to automate your segmentation tasks.
 
 More detailed instructions about installing 3D Slicer Radiomics extension are available here: https://github.com/Radiomics/SlicerRadiomics
 
-------------
+-------------------------
 3. Use pyradiomics Docker
-------------
+-------------------------
 
 This approach may be preferred if you are interested in using pyradiomics from the command line, but have difficulties installing the library on your system.
 
@@ -77,9 +77,9 @@ an extra step is required to specify which directories will be used for file exc
 The argument above will make the ``HOST_DIR`` path available within the container at ``CONTAINER_DIR`` location. The files that will be read or written by the
 converter run from the docker container should be referred to via the ``CONTAINER_DIR`` path.
 
--------------------
+-----------------
 Setting up Docker
--------------------
+-----------------
 
 Docker (http://docker.com) is a project that automates deployment of applications inside software containers. Docker
 application is defined by _images_ that contain all of the components and steps needed to initialize the application instance. A _container_ is a running instance of the image. We provide an image that contains the compiled `pyradiomics` library in the `docker/pyradiomics:CLI` image. By using `pyradiomics` Docker container you can use `pyradiomics` on any operating system that supports Docker without having to compile `pyradiomics`. All you need to do is install Docker on your system, and download the `pyradiomics` Docker image.

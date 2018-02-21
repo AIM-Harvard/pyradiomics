@@ -628,13 +628,35 @@ def getOriginalImage(inputImage, **kwargs):
 
 
 def getLoGImage(inputImage, **kwargs):
-  """
+  r"""
   Applies a Laplacian of Gaussian filter to the input image and yields a derived image for each sigma value specified.
+
+  A Laplacian of Gaussian image is obtained by convolving the image with the second derivative (Laplacian) of a Gaussian
+  kernel.
+
+  The Gaussian kernel is used to smooth the image and is defined as
+
+  .. math::
+
+    G(x, y, z, \sigma) = \frac{1}{(\sigma \sqrt{2 \pi})^3}e^{-\frac{x^2 + y^2 + z^2}{2\sigma^2}}
+
+  The Gaussian kernel is convolved by the laplacian kernel :math:`\nabla^2G(x, y, z)`, which is sensitive to areas with
+  rapidly changing intensities, enhancing edges. The width of the filter in the Gaussian kernel is determined by
+  :math:`\sigma` and can be used to emphasize more fine (low :math:`\sigma` values) or coarse (high :math:`\sigma`
+  values) textures.
+
+  .. warning::
+
+    The LoG filter implemented in PyRadiomics is a 3D LoG filter, and therefore requires 3D input. Features using a
+    single slice (2D) segmentation can still be extracted, but the input image *must* be a 3D image, with a minimum size
+    in all dimensions :math:`\geq \sigma`. If input image is too small, a warning is logged and :math:`\sigma` value is
+    skipped. Moreover, the image size *must* be at least 4 voxels in each dimensions, if this constraint is not met, no
+    LoG derived images can be generated.
 
   Following settings are possible:
 
-  - sigma: List of floats or integers, must be greater than 0. Sigma values to
-    use for the filter (determines coarseness).
+  - sigma: List of floats or integers, must be greater than 0. Filter width (mm) to use for the Gaussian kernel
+    (determines coarseness).
 
   .. warning::
     Setting for sigma must be provided. If omitted, no LoG image features are calculated and the function
@@ -642,6 +664,12 @@ def getLoGImage(inputImage, **kwargs):
 
   Returned filter name reflects LoG settings:
   log-sigma-<sigmaValue>-3D.
+
+  References:
+
+  - `SimpleITK Doxygen documentation <https://itk.org/SimpleITKDoxygen/html/classitk_1_1simple_1_1LaplacianRecursiveGaussianImageFilter.html>`_
+  - `ITK Doxygen documentation <https://itk.org/Doxygen/html/classitk_1_1LaplacianRecursiveGaussianImageFilter.html>`_
+  - `<https://en.wikipedia.org/wiki/Blob_detection#The_Laplacian_of_Gaussian>`_
 
   :return: Yields log filtered image for each specified sigma, corresponding image type name and ``kwargs`` (customized
     settings).

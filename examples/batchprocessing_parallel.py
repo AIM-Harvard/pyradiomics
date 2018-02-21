@@ -104,7 +104,7 @@ def run(case):
 
       imageFilepath = case['Image']  # Required
       maskFilepath = case['Mask']  # Required
-      label = case.get('Label', 1)  # Optional
+      label = case.get('Label', None)  # Optional
 
       # Instantiate Radiomics Feature extractor
 

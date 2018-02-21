@@ -26,12 +26,14 @@ class RadiomicsFeaturesExtractor:
   signature specified by these settings for the passed image and labelmap combination. This function can be called
   repeatedly in a batch process to calculate the radiomics signature for all image and labelmap combinations.
 
-  At initialization, a parameters file can be provided containing all necessary settings. This is done by passing the
-  location of the file as the single argument in the initialization call, without specifying it as a keyword argument.
-  If such a file location is provided, any additional kwargs are ignored.
-  Alternatively, at initialisation, custom settings (*NOT enabled image types and/or feature classes*) can be provided
-  as keyword arguments, with the setting name as key and its value as the argument value (e.g. ``binWidth=25``). For
-  more information on possible settings and customization, see
+  At initialization, a parameters file (string pointing to yaml or json structured file) or dictionary can be provided
+  containing all necessary settings (top level containing keys "setting", "imageType" and/or "featureClass). This is
+  done by passing it as the first positional argument. If no positional argument is supplied, or the argument is not
+  either a dictionary or a string pointing to a valid file, defaults will be applied.
+  Moreover, at initialisation, custom settings (*NOT enabled image types and/or feature classes*) can be provided
+  as keyword arguments, with the setting name as key and its value as the argument value (e.g. ``binWidth=25``).
+  Settings specified here will override those in the parameter file/dict/default settings.
+  For more information on possible settings and customization, see
   :ref:`Customizing the Extraction <radiomics-customization-label>`.
 
   By default, all features in all feature classes are enabled.
@@ -47,27 +49,29 @@ class RadiomicsFeaturesExtractor:
     self._enabledImagetypes = {}
     self._enabledFeatures = {}
 
-    if len(args) == 1 and isinstance(args[0], six.string_types):
+    if len(args) == 1 and isinstance(args[0], six.string_types) and os.path.isfile(args[0]):
       self.logger.info("Loading parameter file")
-      self.loadParams(args[0])
+      self._applyParams(paramsFile=args[0])
+    elif len(args) == 1 and isinstance(args[0], dict):
+        self.logger.info("Loading parameter dictionary")
+        self._applyParams(paramsDict=args[0])
     else:
       # Set default settings and update with and changed settings contained in kwargs
       self.settings = self._getDefaultSettings()
-      if len(kwargs) > 0:
-        self.logger.info('Applying custom settings')
-        self.settings.update(kwargs)
-      else:
-        self.logger.info('No customized settings, applying defaults')
-
-      self.logger.debug("Settings: %s", self.settings)
+      self.logger.info('No valid config parameter, applying defaults: %s', self.settings)
 
       self._enabledImagetypes = {'Original': {}}
       self.logger.info('Enabled image types: %s', self._enabledImagetypes)
-
       self._enabledFeatures = {}
+
       for featureClassName in self.getFeatureClassNames():
         self._enabledFeatures[featureClassName] = []
       self.logger.info('Enabled features: %s', self._enabledFeatures)
+
+    if len(kwargs) > 0:
+      self.logger.info('Applying custom setting overrides')
+      self.settings.update(kwargs)
+      self.logger.debug("Settings: %s", self.settings)
 
     self._setTolerance()
 
@@ -270,8 +274,8 @@ class RadiomicsFeaturesExtractor:
     Enable all classes and all features.
 
     .. note::
-      Individual features that have been marked "deprecated" are not enabled by this function. They can still be enabled manually by
-      a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
+      Individual features that have been marked "deprecated" are not enabled by this function. They can still be enabled
+      manually by a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
       :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeaturesByName()`
       or in the parameter file (by specifying the feature by name, not when enabling all features).
       However, in most cases this will still result only in a deprecation warning.
@@ -293,8 +297,8 @@ class RadiomicsFeaturesExtractor:
     Enable or disable all features in given class.
 
     .. note::
-      Individual features that have been marked "deprecated" are not enabled by this function. They can still be enabled manually by
-      a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
+      Individual features that have been marked "deprecated" are not enabled by this function. They can still be enabled
+      manually by a call to :py:func:`~radiomics.base.RadiomicsBase.enableFeatureByName()`,
       :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.enableFeaturesByName()`
       or in the parameter file (by specifying the feature by name, not when enabling all features).
       However, in most cases this will still result only in a deprecation warning.

@@ -747,7 +747,7 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)):
   original_shape = matrix.shape
   padding = tuple([(0, 1 if dim % 2 != 0 else 0) for dim in original_shape])
   data = matrix.copy()
-  data = numpy.pad(data, padding, 'constant')
+  data = numpy.pad(data, padding, 'wrap')
 
   if not isinstance(wavelet, pywt.Wavelet):
     wavelet = pywt.Wavelet(wavelet)

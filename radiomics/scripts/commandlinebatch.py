@@ -66,6 +66,10 @@ def main():
   # Initialize logging for script log messages
   logger = rLogger.getChild('batch')
 
+  logger.warning("This entry point is deprecated. It's enhanced functionality for batch extraction is now available "
+                 'in the "pyradiomics" entry point. See "http://pyradiomics.readthedocs.io/en/latest/usage.html" '
+                 'for more details.')
+
   # Load patient list
   flists = []
   try:

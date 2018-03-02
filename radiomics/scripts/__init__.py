@@ -82,6 +82,9 @@ def parse_args(custom_arguments=None):
                                  'WARNING and up are printed. By specifying this\n'
                                  'argument without a value, level INFO [4] is assumed.\n'
                                  'A higher value results in more verbose output.')
+  parser.add_argument('--label', '-l', metavar='N', default=None, type=int,
+                      help='(DEPRECATED) Value of label in mask to use for\n'
+                           'feature extraction.')
 
   parser.add_argument('--version', action='version', help='Print version and exit',
                       version='%(prog)s ' + radiomics.__version__)
@@ -175,6 +178,13 @@ def _processInput(args):
 def _buildGenerator(args, cases):
   global scriptlogger
   setting_overrides = _parseOverrides(args.setting)
+
+  # Section for deprecated argument label
+  if args.label is not None:
+    scriptlogger.warning('Argument "label" is deprecated. To specify a custom label, use argument "setting" as follows:'
+                         '"--setting=label:N", where N is the a label value.')
+    setting_overrides['label'] = args.label
+  # End deprecated section
 
   for case_idx, case in enumerate(cases, start=1):
     yield case_idx, case, args.param, setting_overrides

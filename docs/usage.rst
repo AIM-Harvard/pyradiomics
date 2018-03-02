@@ -36,10 +36,8 @@ Example
 Command Line Use
 ----------------
 
-* PyRadiomics has 2 commandline scripts, ``pyradiomics`` is for single image feature extraction and ``pyradiomicsbatch``
-  is for feature extraction from a batch of images and segmentations.
-
-* Both scripts can be run directly from a command line window, anywhere in your system.
+* PyRadiomics can be used directly from the commandline via the entry point ``pyradiomics``. Depending on the input
+  provided, PyRadiomics is run in either single-extraction or batch-extraction mode.
 
 * To extract features from a single image and segmentation run::
 
@@ -47,7 +45,7 @@ Command Line Use
 
 * To extract features from a batch run::
 
-    pyradiomicsbatch <path/to/input> <path/to/output>
+    pyradiomics <path/to/input> <path/to/output>
 
 * The input file for batch processing is a CSV file where the first row is contains headers and each subsequent row
   represents one combination of an image and a segmentation and contains at least 2 elements: 1) path/to/image,
@@ -62,17 +60,21 @@ Command Line Use
 
     All headers should be unique and different from headers provided by PyRadiomics (``<filter>_<class>_<feature>``).
 
+* Extraction can be customized by specifying a `parameter file <radiomics-parameter-file-label>` in the ``--param``
+  argument and/or by specifying override settings (only `type 3 customization <radiomics-settings-label>`) in the
+  ``--setting`` argument. Multiple overrides can be used by specifying ``--setting`` multiple times.
+
 * For more information on the possible command line arguments, run::
 
     pyradiomics -h
-    pyradiomicsbatch -h
 
 
 ---------------
 Interactive Use
 ---------------
 
-* (LINUX) Add pyradiomics to the environment variable PYTHONPATH:
+* (LINUX) To run from source code, add pyradiomics to the environment variable PYTHONPATH (Not necessary when
+  PyRadiomics is installed):
 
   *  ``setenv PYTHONPATH /path/to/pyradiomics/radiomics``
 
@@ -126,7 +128,8 @@ Using feature classes directly
 * This represents an example where feature classes are used directly, circumventing checks and preprocessing done by
   the radiomics feature extractor class, and is not intended as standard use example.
 
-* (LINUX) Add pyradiomics to the environment variable PYTHONPATH:
+* (LINUX) To run from source code, add pyradiomics to the environment variable PYTHONPATH (Not necessary when
+  PyRadiomics is installed):
 
   *  ``setenv PYTHONPATH /path/to/pyradiomics/radiomics``
 
@@ -170,9 +173,8 @@ Setting Up Logging
 ------------------
 
 PyRadiomics features extensive logging to help track down any issues with the extraction of features.
-By default PyRadiomics logging reports messages of level INFO and up (giving some information on progress during
-extraction and any warnings or errors that occur), and prints this to the output (stderr). By default, PyRadiomics does
-not create a log file.
+By default PyRadiomics logging reports messages of level WARNING and up (reporting any warnings or errors that occur),
+and prints this to the output (stderr). By default, PyRadiomics does not create a log file.
 
 To change the amount of information that is printed to the output, use :py:func:`~radiomics.setVerbosity` in interactive
 use and the optional ``--verbosity`` argument in commandline use.
@@ -193,4 +195,5 @@ handler to the pyradiomics logger::
     radiomics.logger.setLevel(logging.DEBUG)
 
 To store a log file when running pyradiomics from the commandline, specify a file location in the optional
-``--log-file`` argument. The amount of logging that is stored is controlled by the ``--log-level`` argument.
+``--log-file`` argument. The amount of logging that is stored is controlled by the ``--log-level`` argument
+(default level INFO and up).

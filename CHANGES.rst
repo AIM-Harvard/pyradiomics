@@ -6,12 +6,39 @@ Release Notes
 Next Release
 ------------
 
+Feature Calculation Changes
+###########################
+
+- Change calculation of filter coefficients to reflect absolute maximum (take into account negative values).
+  (`#319 <https://github.com/Radiomics/pyradiomics/pull/319>`_)
+- Mark duplicate features as 'deprecated' and document mathematical proof of the equality.
+  (`#321 <https://github.com/Radiomics/pyradiomics/pull/321>`_)
+
+New Features
+############
+
+- Add ``preCrop``, which crops the image onto the bounding box with an additional padding specified in ``padDistance``.
+  This is similar to cropping as performed during resampling and serves to decrease memory consumption and computation
+  time. N.B. To ensure calculated values are not changed, a sufficient padding is required when using filters which
+  include values outside of ROI (e.g. Wavelet, LoG). (`#317 <https://github.com/Radiomics/pyradiomics/pull/317>`_)
+- Add ``skip-nans`` as a commandline argument. If specified, features that compute NaN are removed from the output. In
+  batch mode, NaN is replaced by an empty string. (`#318 <https://github.com/Radiomics/pyradiomics/pull/318>`_)
+- Add support to configure the feature extractor using a JSON structured string.
+  (`#334 <https://github.com/Radiomics/pyradiomics/pull/334>`_)
+
 Bug fixes
 #########
 
 - Ensure PyKwalify has a log handler, which is needed when parameter file validation fails.
   (`#309 <https://github.com/Radiomics/pyradiomics/pull/309>`_)
 - Fix bug in error handling in :py:func:`~radiomics.imageoperations.checkMask` (compatibility issue between python 2 and 3).
+- Fix bug in GLCM (incorrect use of ``self.maskArray``) (`#322 <https://github.com/Radiomics/pyradiomics/pull/322>`_)
+- Fix bug in error handling during geometry checks of image and mask.
+  (`0257217 <https://github.com/Radiomics/pyradiomics/commit/0257217>`_)
+- Fix broken continuous testing integration due to unavailability of pip script.
+  (`#333 <https://github.com/Radiomics/pyradiomics/pull/333>`_)
+- Fix incorrect path separator in example scripts. (`c7c5d2e <https://github.com/Radiomics/pyradiomics/commit/c7c5d2e>`_)
+- Fix bug in the calculation of Wavelet. (`#346 <https://github.com/Radiomics/pyradiomics/pull/346>`_)
 
 Tests
 #####
@@ -24,6 +51,15 @@ Documentation
 
 - Update documentation of ``base.py`` (`#306 <https://github.com/Radiomics/pyradiomics/pull/306>`_)
 - Update notebooks to reflect most recent version of PyRadiomics.
+  (`ac66e6c <https://github.com/Radiomics/pyradiomics/commit/ac66e6c>`_)
+- Add documentation detailing rationale of enforcing a fixed bin width.
+  (`#320 <https://github.com/Radiomics/pyradiomics/pull/320>`_)
+- Update reference to official publication. (`b395904 <https://github.com/Radiomics/pyradiomics/commit/b395904>`_)
+- Update installation instructions for docker. (`#329 <https://github.com/Radiomics/pyradiomics/pull/329>`_)
+- Add version of NumPy, SimpleITK and PyWavelet to the additional information in the output.
+  (`#342 <https://github.com/Radiomics/pyradiomics/pull/342>`_)
+- Add documentation for the calculation of Laplacian of Gaussian.
+  (`#345 <https://github.com/Radiomics/pyradiomics/pull/345>`_)
 
 Examples
 ########
@@ -39,6 +75,8 @@ Internal API
   (`#307 <https://github.com/Radiomics/pyradiomics/pull/307>`_)
 - Remove support for 32-bits python, as memory errors can arise when extracting from many or large images in 32-bits
   python. (`#310 <https://github.com/Radiomics/pyradiomics/pull/310>`_)
+- Simplify Calculation of Wavelet Filter. Does not change output.
+  (`#323 <https://github.com/Radiomics/pyradiomics/pull/323>`_)
 
 -----------------
 PyRadiomics 1.3.0

@@ -149,7 +149,7 @@ def getImageTypes():
   return _imageTypes
 
 
-def getTestCase(testCase, repoDirectory=None):
+def getTestCase(testCase, dataDirectory=None):
   """
   This function provides an image and mask for testing PyRadiomics. One of five test cases can be selected:
 
@@ -179,23 +179,13 @@ def getTestCase(testCase, repoDirectory=None):
   # Use test cases included in the repository. If PyRadiomics is run from an installed version, the location of the
   # repository needs to be specified
   logger.debug('Looking for test case in repository')
-  if repoDirectory is not None:
-    dataDir = os.path.join(repoDirectory, 'data')
+  if dataDirectory is not None:
+    dataDir = dataDirectory
     imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
     maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
     if os.path.isfile(imageFile) and os.path.isfile(maskFile):
       logger.debug('Test case found in repository (repository specified)')
       return imageFile, maskFile
-
-  # No repository directory specified, check if running in development mode (code run from repository)
-  logger.debug('Repository not specified or test case not found, checking if running in development mode')
-  # This folder exists if radiomics is run from the repository:
-  dataDir = os.path.join(os.path.basename(__file__), '..', 'data')
-  imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
-  maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
-  if os.path.isfile(imageFile) and os.path.isfile(maskFile):
-    logger.debug('Test case found in repository (running development mode)')
-    return imageFile, maskFile
 
   # Data folder not found (most likely running from installed version). Check if test case has been downloaded.
   logger.debug('Test case or repository not found, checking temporary data')
@@ -206,27 +196,26 @@ def getTestCase(testCase, repoDirectory=None):
     logger.debug('Test case already downloaded')
     return imageFile, maskFile
 
-  logger.info("Test case not available locally, downloading test case...")
+  logger.info("Test case %s not available locally, downloading test case...", testCase)
 
-  # Testcase not found in temporary files, download them. First check if the folder is available
-  if not os.path.isdir(os.path.join(tempfile.gettempdir(), 'pyradiomics')):
-    os.mkdir(os.path.join(tempfile.gettempdir(), 'pyradiomics'))
+  # Test case not found in temporary files, download them. First check if the folder is available
   if not os.path.isdir(dataDir):
     logger.debug('Creating temporary directory: %s', dataDir)
-    os.mkdir(dataDir)
+    os.makedirs(dataDir)
 
   # Download the test case files (image and label)
-  url = r'https://github.com/Radiomics/pyradiomics/raw/master/data/%s_%s.nrrd'
+  url = r'https://github.com/Radiomics/pyradiomics/releases/download/v1.0/%s_%s.nrrd'
   try:
+    logger.debug('Retrieving image at %s', url % (testCase, 'image'), imageFile)
     urllib.request.urlretrieve(url % (testCase, 'image'), imageFile)
+    logger.debug('Retrieving mask at %s', url % (testCase, 'image'), maskFile)
     urllib.request.urlretrieve(url % (testCase, 'label'), maskFile)
+
+    logger.info('Test case %s downloaded', testCase)
+    return imageFile, maskFile
   except Exception:
     logger.error('Download failed!', exc_info=True)
     return None, None
-
-  logger.info('Test case %s downloaded', testCase)
-
-  return imageFile, maskFile
 
 
 def getParameterValidationFiles():

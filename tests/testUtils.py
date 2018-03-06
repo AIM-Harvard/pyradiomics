@@ -10,7 +10,7 @@ import numpy
 import SimpleITK as sitk
 import six
 
-from radiomics import imageoperations
+from radiomics import getTestCase, imageoperations
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func
 logger = logging.getLogger('testUtils')
@@ -67,7 +67,6 @@ class RadiomicsTestUtils:
     # set up file paths
     self._dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
     self._baselineDir = os.path.join(self._dataDir, 'baseline')
-    self._mappingDir = os.path.join(self._dataDir, 'mapping')
 
     self._baseline = {}
     self.readBaselineFiles()
@@ -131,8 +130,10 @@ class RadiomicsTestUtils:
       assert testCase in self.getTestCases()
       self._testedSet.add(testCase)
 
-      imageName = str(os.path.join(self._dataDir, testCase + '_image.nrrd'))
-      maskName = str(os.path.join(self._dataDir, testCase + '_label.nrrd'))
+      imageName, maskName = getTestCase(testCase)
+
+      assert imageName is not None
+      assert maskName is not None
 
       self._image = sitk.ReadImage(imageName)
       self._mask = sitk.ReadImage(maskName)

@@ -13,9 +13,8 @@ from testUtils import custom_name_func, RadiomicsTestUtils
 
 
 testUtils = RadiomicsTestUtils()
-defaultTestCases = testUtils.getTestCases()
 
-testCases = defaultTestCases
+testCases = ('brain1', 'brain2', 'breast1', 'lung1', 'lung2')
 
 featureClasses = getFeatureClasses()
 

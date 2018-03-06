@@ -13,7 +13,11 @@ import six
 from radiomics import getTestCase, imageoperations
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func
-logger = logging.getLogger('testUtils')
+logger = logging.getLogger('radiomics.testing')
+
+
+TEST_CASES = ('brain1', 'brain2', 'breast1', 'lung1', 'lung2')
+
 
 def custom_name_func(testcase_func, param_num, param):
   """
@@ -54,9 +58,7 @@ class RadiomicsTestUtils:
   by the test.
   """
   def __init__(self):
-    global logger
-
-    self._logger = logger
+    self._logger = logging.getLogger('radiomics.testing.utils')
 
     self._logger.debug('RadiomicsTestUtils')
 
@@ -64,40 +66,64 @@ class RadiomicsTestUtils:
     self._image = None
     self._mask = None
 
+    self._current_image = None
+    self._current_mask = None
+    self._bb = None
+    self._imageType = None
+
     # set up file paths
     self._dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
     self._baselineDir = os.path.join(self._dataDir, 'baseline')
 
+    self._tests = set()
+    self._test = None  # Test, specifies an image and mask and some configuration (settings)
+    self._testCase = None  # Test image and mask to use in configured test
+    self._testedSet = set()
+
     self._baseline = {}
     self.readBaselineFiles()
 
-    self._kwargs = {}
+    self._current_config = {}
     self._featureClassName = None
-
-    self._testCase = None
-    self._testedSet = set()
 
     self._results = {}
     self._diffs = {}
-    for testCase in self.getTestCases():
-      self._results[testCase] = {}
-      self._diffs[testCase] = {}
+    for test in self.getTests():
+      self._results[test] = {}
+      self._diffs[test] = {}
 
-  def getFeatureNames(self, className, testCase):
+  def readBaselineFiles(self):
+    """
+    Reads the 'baseline' folder contained in dataDir. All files starting with 'baseline_' are read as baseline files.
+    These files should therefore be named as follows: 'baseline_<className>.csv'.
+    """
+    baselineFiles = [fileName for fileName in os.listdir(self._baselineDir)
+                     if os.path.isfile(os.path.join(self._baselineDir, fileName)) and fileName.startswith('baseline_')]
+    assert len(baselineFiles) > 0
+    for baselineFile in baselineFiles:
+      newBaseline = PyRadiomicsBaseline(os.path.join(self._baselineDir, baselineFile))
+
+      cls = newBaseline.cls
+      self._logger.debug('Read baseline for class %s', cls)
+      self._baseline[cls] = newBaseline
+      self._tests |= newBaseline.tests
+
+  def getTests(self):
+    """
+    Return all the tests for which there are baseline information.
+    """
+    return self._tests
+
+  def getFeatureNames(self, className, test):
     """
     Gets all features for which a baseline value is available for the current class and test case. Returns a list
     containing the feature names (without image type and feature class specifiers, i.e. just the feature name).
     """
     if className not in self._baseline:
       return None  # No baseline available for specified class
-    if testCase not in self._baseline[className]:
-      return None  # No baseline available for specified test case
+    return self._baseline[className].getTestFeatures(test)
 
-    # Get all feature names in the baseline file, but exclude the test case identifier and general info columns
-    features = [f for f in self._baseline[className][testCase].keys() if f != "Patient ID" and "general_info" not in f]
-    return features
-
-  def setFeatureClassAndTestCase(self, className, testCase):
+  def setFeatureClassAndTestCase(self, className, test):
     """
     Set testing suite to specified testCase and feature class. Throws an assertion error if either class or test case
     are not recognized. These have to be set here together, as the settings with which the test case has to be loaded
@@ -109,28 +135,32 @@ class RadiomicsTestUtils:
     If feature class and test case are unchanged, nothing is reloaded and function returns False. If either feature
     class or test case is changed, function returns True.
     """
-    if self._featureClassName == className and self._testCase == testCase:
+    global TEST_CASES
+    if self._featureClassName == className and self._test == test:
       return False
+
+    self._test = test
+    self._testedSet.add(self._test)
 
     # First set featureClass if necessary, because if settings have changed, testCase needs te be reloaded
     if self._featureClassName != className:
       self._logger.debug('Setting feature class name to %s', className)
-      assert className in self.getFeatureClasses()
+      assert className in self._baseline.keys()  # Check if a baseline has been read for this class
 
       self._featureClassName = className
 
       # Check if test settings have changed
-      if self._kwargs != self.getBaselineSettings(className, testCase):
-        self._kwargs = self.getBaselineSettings(className, testCase)
+      if self._current_config != self._baseline[className].getTestConfig(test):
+        self._current_config = self._baseline[className].getTestConfig(test)
         self._testCase = None  # forces image to be reloaded (as settings have changed)
 
     # Next, set testCase if necessary
-    if self._testCase != testCase:
-      self._logger.info("Reading the image and mask for test case %s", testCase)
-      assert testCase in self.getTestCases()
-      self._testedSet.add(testCase)
+    if self._testCase != self._current_config['TestCase']:
+      self._testCase = self._current_config['TestCase']
+      self._logger.info("Reading the image and mask for test case %s", self._testCase)
+      assert self._current_config['TestCase'] in TEST_CASES
 
-      imageName, maskName = getTestCase(testCase)
+      imageName, maskName = getTestCase(self._testCase)
 
       assert imageName is not None
       assert maskName is not None
@@ -138,97 +168,76 @@ class RadiomicsTestUtils:
       self._image = sitk.ReadImage(imageName)
       self._mask = sitk.ReadImage(maskName)
 
-      interpolator = self._kwargs.get('interpolator', sitk.sitkBSpline)
-      resampledPixelSpacing = self._kwargs.get('resampledPixelSpacing', None)
+      if 'ImageHash' in self._current_config:
+        assert sitk.Hash(self._image) == self._current_config['ImageHash']
+      if 'MaskHash' in self._current_config:
+        assert sitk.Hash(self._mask) == self._current_config['MaskHash']
+
+      settings = self._current_config.get('Settings', {})
+
+      interpolator = settings.get('interpolator', sitk.sitkBSpline)
+      resampledPixelSpacing = settings.get('resampledPixelSpacing', None)
 
       if interpolator is not None and resampledPixelSpacing is not None:
         self._image, self._mask = imageoperations.resampleImage(self._image,
                                                                 self._mask,
                                                                 resampledPixelSpacing,
                                                                 interpolator,
-                                                                self._kwargs.get('label', 1),
-                                                                self._kwargs.get('padDistance', 5))
-      bb, correctedMask = imageoperations.checkMask(self._image, self._mask, **self._kwargs)
+                                                                settings.get('label', 1),
+                                                                settings.get('padDistance', 5))
+      self._bb, correctedMask = imageoperations.checkMask(self._image, self._mask, **settings)
       if correctedMask is not None:
         self._mask = correctedMask
-      self._image, self._mask = imageoperations.cropToTumorMask(self._image, self._mask, bb)
-      self._testCase = testCase
+
+      self._imageType = None
 
     return True
 
-  def getBaselineSettings(self, featureClass, testCase):
-    dictSeries = self._baseline[featureClass][testCase].get('general_info_GeneralSettings', None)
-    if dictSeries is not None:
-      return ast.literal_eval(dictSeries)
-    return {}
+  def getImage(self, imageType):
+    if self._imageType != imageType:
+      self._applyFilter(imageType)
+    return self._current_image
 
-  def getTestCase(self):
-    return self._testCase
+  def getMask(self, imageType):
+    if self._imageType != imageType:
+      self._applyFilter(imageType)
+    return self._current_mask
 
-  def getImage(self):
-    return self._image
+  def _applyFilter(self, imageType):
+    if imageType == 'original':
+      self._current_image, self._current_mask = imageoperations.cropToTumorMask(self._image, self._mask, self._bb)
+    else:
+      raise NotImplementedError()
 
-  def getMask(self):
-    return self._mask
+    self._imageType = imageType
 
   def getSettings(self):
-    return self._kwargs
-
-  def getTestCases(self):
-    """
-    Return all the test cases for which there are baseline information.
-    """
-    return self._baseline[list(self._baseline.keys())[0]].keys()
-
-  def getFeatureClasses(self):
-    """
-    Return all the feature classes for which there are baseline information.
-    """
-    return self._baseline.keys()
-
-  def readBaselineFiles(self):
-    """
-    Reads the 'baseline' folder contained in dataDir. All files starting with 'baseline_' are read as baseline files.
-    These files should therefore be named as follows: 'baseline_<className>.csv'.
-    """
-    baselineFiles = [fileName for fileName in os.listdir(self._baselineDir)
-                     if os.path.isfile(os.path.join(self._baselineDir, fileName)) and fileName.startswith('baseline_')]
-    assert len(baselineFiles) > 0
-    for baselineFile in baselineFiles:
-      cls = baselineFile[9:-4]
-      self._logger.debug('Reading baseline for class %s', cls)
-      self._baseline[cls] = {}
-      with open(os.path.join(self._baselineDir, baselineFile), 'r' if six.PY3 else 'rb') as baselineReader:
-        csvReader = csv.reader(baselineReader)
-        headers = six.next(csvReader)
-        for testRow in csvReader:
-          self._baseline[cls][testRow[0]] = {}
-          for val_idx, val in enumerate(testRow[1:], start=1):
-            self._baseline[cls][testRow[0]][headers[val_idx]] = val
+    return self._current_config.get('Settings', {})
 
   def checkResult(self, featureName, value):
     """
     Use utility methods to get and test the results against the expected baseline value for this key.
     """
 
-    longName = '%s_%s' % (self._featureClassName, featureName)
+    longName = '_'.join(featureName)
     if value is None:
-      self._diffs[self._testCase][longName] = None
-      self._results[self._testCase][longName] = None
+      self._diffs[self._test][longName] = None
+      self._results[self._test][longName] = None
     assert (value is not None)
 
     if math.isnan(value):
-      self._diffs[self._testCase][longName] = numpy.nan
-      self._results[self._testCase][longName] = numpy.nan
+      self._diffs[self._test][longName] = numpy.nan
+      self._results[self._test][longName] = numpy.nan
     assert (not math.isnan(value))
 
     # save the result using the baseline class and feature names
     self._logger.debug('checkResults: featureName = %s', featureName)
 
-    self._results[self._testCase][longName] = value
+    self._results[self._test][longName] = value
 
-    assert featureName in self._baseline[self._featureClassName][self._testCase]
-    baselineValue = float(self._baseline[self._featureClassName][self._testCase][featureName])
+    baselineValue = self._baseline[self._featureClassName].getBaselineValue(self._test, longName)
+    assert baselineValue is not None
+    baselineValue = float(baselineValue)
     self._logger.debug('checkResults: for featureName %s, got baseline value = %f', featureName, baselineValue)
 
     if baselineValue == 0.0:
@@ -241,7 +250,7 @@ class RadiomicsTestUtils:
       percentDiff = abs(1.0 - (value / baselineValue))
 
     # save the difference
-    self._diffs[self._testCase][longName] = percentDiff
+    self._diffs[self._test][longName] = percentDiff
 
     # check for a less than three percent difference
     if (percentDiff >= 0.03):
@@ -284,3 +293,66 @@ class RadiomicsTestUtils:
         self._logger.info('Wrote to file %s', fileName)
     else:
       self._logger.info('No test cases run, aborting file write to %s', fileName)
+
+
+class PyRadiomicsBaseline:
+
+  def __init__(self, baselineFile):
+    self._logger = logging.getLogger('radiomics.testing.baseline')
+
+    self.cls = os.path.basename(baselineFile)[9:-4]
+
+    self._logger.debug('Reading baseline for class %s', self.cls)
+    self._configuration = {}
+    self._baseline = {}
+
+    with open(baselineFile, 'r' if six.PY3 else 'rb') as baselineReader:
+      csvReader = csv.reader(baselineReader)
+      tests = six.next(csvReader)[1:]
+
+      for case in tests:
+        self._configuration[case] = {}
+        self._baseline[case] = {}
+
+      for testRow in csvReader:
+        for case_idx, case in enumerate(tests, start=1):
+          if 'general_info' in testRow[0]:
+            self._configuration[case][testRow[0]] = testRow[case_idx]
+          else:
+            self._baseline[case][testRow[0]] = testRow[case_idx]
+
+      self.tests = set(tests)
+
+  def getTestConfig(self, test):
+    if test not in self._configuration:
+      return {}  # This test is not present in the baseline for this class
+
+    config = {
+      'TestCase': self._configuration[test].get('general_info_TestCase', None),
+      'Settings': ast.literal_eval(self._configuration[test].get('general_info_GeneralSettings', '{}')),
+    }
+
+    if 'general_info_ImageHash' in self._configuration[test]:
+      config['ImageHash'] = self._configuration[test]['general_info_ImageHash']
+    if 'general_info_MaskHash' in self._configuration[test]:
+      config['MaskHash'] = self._configuration[test]['general_info_MaskHash']
+
+    if config['TestCase'] is None:
+      self._logger.error('Missing key "general_info_TestCase". Cannot configure!')
+      return None
+
+    return config
+
+  def getTestFeatures(self, test):
+    """
+    Gets all features for which a baseline value is available for the current class and test case. Returns a list
+    containing the feature names.
+    """
+    if test not in self._baseline:
+      return None  # This test is not present in the baseline for this class
+    return list(self._baseline[test].keys())
+
+  def getBaselineValue(self, test, featureName):
+    if test not in self._baseline:
+      return None
+    return self._baseline[test].get(featureName, None)

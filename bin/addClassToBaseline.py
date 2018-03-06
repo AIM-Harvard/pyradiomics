@@ -5,40 +5,25 @@ import collections
 import csv
 import os
 
-import six
+from radiomics import featureextractor, getTestCase, imageoperations
 
-from radiomics import featureextractor, imageoperations
+TEST_CASES = ('brain1', 'brain2', 'breast1', 'lung1', 'lung2')
 
 
 def main():
+  global TEST_CASES
   dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
   baselineDir = os.path.join(dataDir, "baseline")
-
-  testCases = []
 
   kwargs = {'binWidth': 25,
             'interpolator': None,
             'resampledPixelSpacing': None,
             'padDistance': 5,
             'voxelArrayShift': 2000,
-            'symmetricalGLCM': False,
             'weightingNorm': None,
             'gldm_a': 0}
 
   extractor = featureextractor.RadiomicsFeaturesExtractor(**kwargs)
-
-  for cls in extractor.getFeatureClassNames():
-    if os.path.exists(os.path.join(baselineDir, 'baseline_%s.csv' % (cls))):
-      with open(os.path.join(baselineDir, 'baseline_%s.csv' % (cls)), 'rb') as baselineFile:
-        csvReader = csv.reader(baselineFile)
-        six.next(csvReader)  # Skip header row
-        for testRow in csvReader:
-          testCases += [testRow[0]]
-      if len(testCases) > 0: break
-
-  if len(testCases) == 0:
-    print("No baselinefiles containing testcases found, exiting...")
-    exit(-1)
 
   newClasses = [cls for cls in extractor.getFeatureClassNames() if
                 not os.path.exists(os.path.join(baselineDir, 'baseline_%s.csv' % (cls)))]
@@ -51,9 +36,6 @@ def main():
 
   newBaseline = {}
 
-  # When C matrices is merged, force baseline to be build using the Python implementation of the functions.
-  # radiomics.pythonMatrixCalculation(True)
-
   extractor.disableAllFeatures()
   extractor.disableAllImageTypes()
 
@@ -63,42 +45,35 @@ def main():
     newBaseline[cls] = {}
 
   print("Computing new baseline")
-  for testCase in testCases:
+  for testCase in TEST_CASES:
     print("\tCalculating test case", testCase)
-    imagePath = os.path.join(dataDir, testCase + '_image.nrrd')
-    maskPath = os.path.join(dataDir, testCase + '_label.nrrd')
+    imagePath, maskPath = getTestCase(testCase)
     image, mask = extractor.loadImage(imagePath, maskPath)
     if image is None or mask is None:
       print("Error during loading of image/mask, testcase:", testCase)
       continue  # testImage or mask not found / error during loading
 
-    provenance = extractor.getProvenance(imagePath, maskPath, mask)
-
-    bb, correctedMask = imageoperations.checkMask(image, mask)
-    if correctedMask is not None:
-      mask = correctedMask
-    image, mask = imageoperations.cropToTumorMask(image, mask, bb)
     for cls in newClasses:
       print("\t\tCalculating class", cls)
+      extractor.disableAllFeatures()
+      extractor.enableFeatureClassByName(cls)
       newBaseline[cls][testCase] = collections.OrderedDict()
-      newBaseline[cls][testCase]["Patient ID"] = testCase
-      newBaseline[cls][testCase].update(provenance)
-      featureClass = extractor.featureClasses[cls](image, mask, **extractor.settings)
-      featureClass.enableAllFeatures()
-      featureClass.calculateFeatures()
-      newBaseline[cls][testCase].update(featureClass.featureValues)
+      newBaseline[cls][testCase]['general_info_TestCase'] = testCase
+      newBaseline[cls][testCase].update(extractor.execute(image, mask))
 
   print("Writing new baseline")
   for cls in newClasses:
     baselineFile = os.path.join(baselineDir, 'baseline_%s.csv' % (cls))
     with open(baselineFile, 'wb') as baseline:
       csvWriter = csv.writer(baseline)
-      header = newBaseline[cls][testCases[0]].keys()
+      header = ['featureName'] + list(TEST_CASES)
       csvWriter.writerow(header)
-      for testCase in testCases:
-        row = []
-        for h in header:
-          row += [newBaseline[cls][testCase][h]]
+
+      features = newBaseline[cls][TEST_CASES[0]].keys()
+      for f in features:
+        row = [f]
+        for testCase in TEST_CASES:
+          row.append(newBaseline[cls][testCase].get(f, ''))
         csvWriter.writerow(row)
     baseline.close()
 

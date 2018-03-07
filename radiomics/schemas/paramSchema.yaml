@@ -86,6 +86,8 @@ mapping:
       wavelet:
         type: str
         func: checkWavelet
+      gradientUseSpacing:
+        type: bool
       voxelArrayShift:
         type: int
       symmetricalGLCM:

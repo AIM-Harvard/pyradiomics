@@ -5,7 +5,7 @@ import collections
 import csv
 import os
 
-from radiomics import featureextractor, getTestCase, imageoperations
+from radiomics import featureextractor, getTestCase
 
 TEST_CASES = ('brain1', 'brain2', 'breast1', 'lung1', 'lung2')
 

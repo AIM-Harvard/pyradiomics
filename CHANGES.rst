@@ -87,6 +87,8 @@ Feature Calculation Changes
 
 - Remove feature *Sum Variance*, as this is mathematically equal to *Cluster Tendency*.
   (`#300 <https://github.com/Radiomics/pyradiomics/pull/300>`_)
+- Fix feature formula error in NGTDM (incorrect use of square in *Complexity* and *Contrast*).
+  (`#351 <https://github.com/Radiomics/pyradiomics/pull/351>`_)
 
 New Features
 ############

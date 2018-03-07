@@ -58,7 +58,8 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
 
   :math:`n_i` be the number of voxels in :math:`X_{gl}` with gray level :math:`i`
 
-  :math:`N_v` be the total number of voxels in :math:`X_{gl}` and equal to :math:`\sum{n_i}`
+  :math:`N_{v,p}` be the total number of voxels in :math:`X_{gl}` and equal to :math:`\sum{n_i}` (i.e. the number of voxels
+  with a valid region; at least 1 neighbor). :math:`N_{v,p} \leq N_p`, where :math:`N_p` is the total number of voxels in the ROI.
 
   :math:`p_i` be the gray level probability and equal to :math:`n_i/N_v`
 
@@ -168,9 +169,6 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     # Delete empty grey levels
     P_ngtdm = numpy.delete(P_ngtdm, numpy.where(P_ngtdm[:, 0] == 0), 0)
 
-    # Normalize P_ngtdm[:, 0] (= p_i)
-    P_ngtdm[:, 0] = P_ngtdm[:, 0] / self.coefficients['Np']
-
     return P_ngtdm
 
   def _calculateCMatrix(self):
@@ -182,13 +180,16 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     # Delete empty grey levels
     P_ngtdm = numpy.delete(P_ngtdm, numpy.where(P_ngtdm[:, 0] == 0), 0)
 
-    # Normalize P_ngtdm[:, 0] (= p_i)
-    P_ngtdm[:, 0] = P_ngtdm[:, 0] / self.coefficients['Np']
-
     return P_ngtdm
 
   def _calculateCoefficients(self):
-    self.coefficients['p_i'] = self.P_ngtdm[:, 0]
+    Nvp = numpy.sum(self.P_ngtdm[:, 0])  # = No of voxels that have a valid region, lesser equal to Np
+    self.coefficients['Nvp'] = Nvp
+    if Nvp < self.coefficients['Np']:
+      self.logger.debug('Detected %d voxels without valid neighbors', self.coefficients['Np'] - Nvp)
+
+    # Normalize P_ngtdm[:, 0] (= n_i) to obtain p_i
+    self.coefficients['p_i'] = self.P_ngtdm[:, 0] / Nvp
 
     self.coefficients['s_i'] = self.P_ngtdm[:, 1]
     self.coefficients['ivector'] = self.P_ngtdm[:, 2]
@@ -221,19 +222,19 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     Calculate and return the contrast.
 
     :math:`Contrast = \left(\frac{1}{N_{g,p}(N_{g,p}-1)}\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p_{i}p_{j}(i-j)^2}\right)
-    \left(\frac{1}{N_p^2}\displaystyle\sum^{N_g}_{i=1}{s_i}\right)\text{, where }p_i \neq 0, p_j \neq 0`
+    \left(\frac{1}{N_{v,p}}\displaystyle\sum^{N_g}_{i=1}{s_i}\right)\text{, where }p_i \neq 0, p_j \neq 0`
 
     Contrast is a measure of the spatial intensity change, but is also dependent on the overall gray level dynamic range.
     Contrast is high when both the dynamic range and the spatial change rate are high, i.e. an image with a large range
     of gray levels, with large changes between voxels and their neighbourhood.
     """
     Ngp = self.coefficients['Ngp']
-    Np = self.coefficients['Np']
+    Nvp = self.coefficients['Nvp']
     p_i = self.coefficients['p_i']
     s_i = self.coefficients['s_i']
     i = self.coefficients['ivector']
     contrast = (numpy.sum(p_i[:, None] * p_i[None, :] * (i[:, None] - i[None, :]) ** 2) / (Ngp * (Ngp - 1))) * \
-               ((numpy.sum(s_i)) / (Np ** 2))
+               ((numpy.sum(s_i)) / Nvp)
 
     return contrast
 
@@ -263,18 +264,18 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     r"""
     Calculate and return the complexity.
 
-    :math:`Complexity = \frac{1}{N_p^2}\displaystyle\sum^{N_g}_{i = 1}\displaystyle\sum^{N_g}_{j = 1}{|i - j|
+    :math:`Complexity = \frac{1}{N_{v,p}}\displaystyle\sum^{N_g}_{i = 1}\displaystyle\sum^{N_g}_{j = 1}{|i - j|
     \frac{p_{i}s_{i} + p_{j}s_{j}}{p_i + p_j}}\text{, where }p_i \neq 0, p_j \neq 0`
 
     An image is considered complex when there are many primitive components in the image, i.e. the image is non-uniform
     and there are many rapid changes in gray level intensity.
     """
-    Np = self.coefficients['Np']
+    Nvp = self.coefficients['Nvp']
     p_i = self.coefficients['p_i']
     s_i = self.coefficients['s_i']
     i = self.coefficients['ivector']
     complexity = numpy.sum(numpy.abs(i[:, None] - i[None, :]) * (
-      ((p_i * s_i)[:, None] + (p_i * s_i)[None, :]) / (p_i[:, None] + p_i[None, :]))) / Np ** 2
+      ((p_i * s_i)[:, None] + (p_i * s_i)[None, :]) / (p_i[:, None] + p_i[None, :]))) / Nvp
     return complexity
 
   def getStrengthFeatureValue(self):

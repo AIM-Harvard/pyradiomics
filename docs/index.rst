@@ -57,13 +57,13 @@ Feature Classes
 
 Currently supports the following feature classes:
 
-* :ref:`First Order Statistics <radiomics-firstorder-label>`
-* :ref:`Shape-based <radiomics-shape-label>`
-* :ref:`Gray Level Cooccurence Matrix <radiomics-glcm-label>` (GLCM)
-* :ref:`Gray Level Run Length Matrix <radiomics-glrlm-label>` (GLRLM)
-* :ref:`Gray Level Size Zone Matrix <radiomics-glszm-label>` (GLSZM)
-* :ref:`Neigbouring Gray Tone Difference Matrix <radiomics-ngtdm-label>` (NGTDM)
-* :ref:`Gray Level Dependence Matrix <radiomics-gldm-label>` (GLDM)
+* :py:class:`First Order Statistics <radiomics.firstorder.RadiomicsFirstOrder>`
+* :py:class:`Shape-based <radiomics.shape.RadiomicsShape>`
+* :py:class:`Gray Level Cooccurence Matrix <radiomics.glcm.RadiomicsGLCM>` (GLCM)
+* :py:class:`Gray Level Run Length Matrix <radiomics.glrlm.RadiomicsGLRLM>` (GLRLM)
+* :py:class:`Gray Level Size Zone Matrix <radiomics.glszm.RadiomicsGLSZM>` (GLSZM)
+* :py:class:`Neigbouring Gray Tone Difference Matrix <radiomics.ngtdm.RadiomicsNGTDM>` (NGTDM)
+* :py:class:`Gray Level Dependence Matrix <radiomics.gldm.RadiomicsGLDM>` (GLDM)
 
 On average, Pyradiomics extracts :math:`\approx 1500` features per image, which consist of the 16 shape descriptors and
 features extracted from original and derived images (LoG with 5 sigma levels, 1 level of Wavelet decomposistions

@@ -64,6 +64,8 @@ Currently available image types are:
 - Exponential: Takes the the exponential, where filtered intensity is e^(absolute intensity). Values are
   scaled to original range and negative original values are made negative again after application of filter.
 - Gradient: Returns the magnitude of the local gradient. See also :py:func:`~radiomics.imageoperations.getGradientImage`
+- LocalBinaryPattern2D: Computes the Local Binary Pattern in a by-slice operation (2D).
+  See also :py:func:`~radiomics.imageoperations.getLBP2DImage`
 
 .. _radiomics-feature-classes-label:
 
@@ -246,6 +248,15 @@ Filter Level
 
 - ``gradientUseSpacing`` [True]: Boolean, if true, image spacing is taken into account when computing the
   gradient magnitude in the image.
+
+*Local Binary Pattern 2D*
+
+- ``lbp2DRadius`` [1]: Float, specifies the radius in which the neighbours should be sampled
+- ``lbp2DSamples`` [9]: Integer, specifies the number of samples to use
+- ``lbp2DMethod`` ['uniform']: String, specifies the method for computing the LBP to use.
+
+.. warning::
+  Requires package ``skimage`` to function.
 
 Feature Class Level
 +++++++++++++++++++

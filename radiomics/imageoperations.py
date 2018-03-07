@@ -927,3 +927,55 @@ def getGradientImage(inputImage, **kwargs):
   gmif.SetUseImageSpacing(kwargs.get('gradientUseSpacing', True))
   im = gmif.Execute(inputImage)
   yield im, 'gradient', kwargs
+
+
+def getLBP2DImage(inputImage, **kwargs):
+  """
+  Compute and return the Local Binary Pattern (LBP) in 2D. If ``force2D`` is set to false (= feature extraction in 3D) a
+  warning is logged, as this filter processes the image in a by-slice operation. The plane in which the LBP is
+  applied can be controlled by the ``force2Ddimension`` parameter (see also :py:func:`generateAngles`).
+
+  Following settings are possible (in addition to ``force2Ddimension``):
+
+    - ``lbp2DRadius`` [1]: Float, specifies the radius in which the neighbours should be sampled
+    - ``lbp2DSamples`` [9]: Integer, specifies the number of samples to use
+    - ``lbp2DMethod`` ['uniform']: String, specifies the method for computing the LBP to use.
+
+  For more information see `scikit documentation
+  <http://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.local_binary_pattern>`_
+
+  :return: Yields LBP filtered image, 'lbp-2D' and ``kwargs`` (customized settings)
+
+  .. note::
+    LBP can often return only a very small number of different gray levels. A customized bin width is often needed.
+  .. warning::
+    Requires package ``skimage`` to function. If not available, this filter logs a warning and does not yield an image.
+  """
+  global logger
+  try:
+    from skimage.feature import local_binary_pattern
+  except ImportError:
+    logger.warning('Could not load required package "skimage", cannot implement filter')
+    return
+
+  # Warn the user if features are extracted in 3D, as this function calculates LBP in 2D
+  if not kwargs.get('force2D', False):
+    logger.warning('Calculating Local Binary Pattern in 2D, but extracting features in 3D. Use with caution!')
+
+  lbp_axis = kwargs.get('force2Ddimension', 0)
+
+  lbp_radius = kwargs.get('lbp2DRadius', 1)
+  lbp_samples = kwargs.get('lbp2DSamples', 8)
+  lbp_method = kwargs.get('lbp2DMethod', 'uniform')
+
+  im_arr = sitk.GetArrayFromImage(inputImage)
+
+  im_arr = im_arr.swapaxes(0, lbp_axis)
+  for idx in range(im_arr.shape[0]):
+    im_arr[idx, ...] = local_binary_pattern(im_arr[idx, ...], P=lbp_samples, R=lbp_radius, method=lbp_method)
+  im_arr = im_arr.swapaxes(0, lbp_axis)
+
+  im = sitk.GetImageFromArray(im_arr)
+  im.CopyInformation(inputImage)
+
+  yield im, 'lbp-2D', kwargs

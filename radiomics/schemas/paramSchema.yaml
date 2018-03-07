@@ -88,6 +88,17 @@ mapping:
         func: checkWavelet
       gradientUseSpacing:
         type: bool
+      lbp2DRadius:
+        type: float
+        range:
+          min-ex: 0
+      lbp2DSamples:
+        type: int
+        range:
+          min: 1
+      lbp2DMethod:
+        type: str
+        enum: ['default', 'ror', 'uniform', 'var']
       voxelArrayShift:
         type: int
       symmetricalGLCM:

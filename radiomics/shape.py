@@ -62,11 +62,17 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     # Compute eigenvalues and -vectors
     coordinates = numpy.array(self.labelledVoxelCoordinates, dtype='int').transpose((1, 0))  # Transpose equals zip(*a)
-    physicalCoordinates = [self.inputMask.TransformIndexToPhysicalPoint((idx.tolist())[::-1]) for idx in coordinates]
+    physicalCoordinates = coordinates * self.pixelSpacing[None, :]
     physicalCoordinates -= numpy.mean(physicalCoordinates, axis=0)  # Centered at 0
     physicalCoordinates /= numpy.sqrt(Np)
     covariance = numpy.dot(physicalCoordinates.T.copy(), physicalCoordinates)
     self.eigenValues, eigenVectors = numpy.linalg.eig(covariance)  # eigenVectors are not used
+
+    # Correct machine precision errors causing very small negative eigen values in case of some 2D segmentations
+    machine_errors = numpy.bitwise_and(self.eigenValues < 0, self.eigenValues > -1e-10)
+    if numpy.sum(machine_errors) > 0:
+      self.logger.warning('Encountered %d eigenvalues < 0 and > -1e-10, rounding to 0', numpy.sum(machine_errors))
+      self.eigenValues[machine_errors] = 0
 
     self.eigenValues.sort()  # Sort the eigenValues from small to large
 
@@ -393,6 +399,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{major axis} = 4 \sqrt{\lambda_{\text{major}}}
 
     """
+    if self.eigenValues[2] < 0:
+      self.logger.warning('Major axis eigenvalue negative! (%g)', self.eigenValues[2])
+      return numpy.nan
     return numpy.sqrt(self.eigenValues[2]) * 4
 
   def getMinorAxisFeatureValue(self):
@@ -403,6 +412,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{minor axis} = 4 \sqrt{\lambda_{\text{minor}}}
 
     """
+    if self.eigenValues[1] < 0:
+      self.logger.warning('Minor axis eigenvalue negative! (%g)', self.eigenValues[1])
+      return numpy.nan
     return numpy.sqrt(self.eigenValues[1]) * 4
 
   def getLeastAxisFeatureValue(self):
@@ -413,6 +425,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       \textit{least axis} = 4 \sqrt{\lambda_{\text{least}}}
 
     """
+    if self.eigenValues[0] < 0:
+      self.logger.warning('Least axis eigenvalue negative! (%g)', self.eigenValues[0])
+      return numpy.nan
     return numpy.sqrt(self.eigenValues[0]) * 4
 
   def getElongationFeatureValue(self):
@@ -429,6 +444,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     largest principal moments is circle-like (non-elongated)) and 0 (where the object is a single point or 1 dimensional
     line).
     """
+    if self.eigenValues[1] < 0 or self.eigenValues[2] < 0:
+      self.logger.warning('Elongation eigenvalue negative! (%g, %g)', self.eigenValues[1], self.eigenValues[2])
+      return numpy.nan
     return numpy.sqrt(self.eigenValues[1] / self.eigenValues[2])
 
   def getFlatnessFeatureValue(self):
@@ -443,6 +461,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{least}}` are the lengths of the largest and smallest
     principal component axes. The values range between 1 (non-flat, sphere-like) and 0 (a flat object).
     """
+    if self.eigenValues[0] < 0 or self.eigenValues[2] < 0:
+      self.logger.warning('Elongation eigenvalue negative! (%g, %g)', self.eigenValues[0], self.eigenValues[2])
+      return numpy.nan
     return numpy.sqrt(self.eigenValues[0] / self.eigenValues[2])
 
   def _interpolate(self, grid, p1, p2):

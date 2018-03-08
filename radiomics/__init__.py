@@ -159,15 +159,14 @@ def getTestCase(testCase, dataDirectory=None):
    - lung1
    - lung2
 
-  If the repository is available locally (including all five test cases, the path to the root folder of the repository
-  can be specified in ``repoDirectory``, preventing unnecessary downloads. If the repository is not found, or the
-  repository does not contain the requested test case, PyRadiomics checks if it is run in development mode (directly
-  from the source code in the repository), and if so, if it can find the test case relative to it's own location.
+  Checks if the test case (consisting of an image and mask file with signature <testCase>_image.nrrd and
+  <testCase>_label.nrrd, respectively) is available in the ``dataDirectory``. If not available, the testCase is
+  downloaded from the GitHub repository and stored in the ``dataDirectory``. Also creates the ``dataDirectory`` if
+  necessary.
+  If no ``dataDirectory`` has been specified, PyRadiomics will use a temporary directory: <TEMPDIR>/pyradiomics/data.
 
-  If the requested test case could not be found in the repository, PyRadiomics downloads the test case from the GitHub
-  repository and stores it in temporary files. If the test case was already downloaded, this is returned instead.
-
-  Returns a tuple of two strings: ``(path/to/image.nrrd, path/to/mask.nrrd)``
+  If the test case has been found or downloaded successfully, this function returns a tuple of two strings:
+  ``(path/to/image.nrrd, path/to/mask.nrrd)``. In case of an error ``(None, None)`` is returned.
   """
   global logger
   if testCase not in ['brain1', 'brain2', 'breast1', 'lung1', 'lung2']:
@@ -176,36 +175,29 @@ def getTestCase(testCase, dataDirectory=None):
 
   logger.debug('Getting test case %s', testCase)
 
-  # Use test cases included in the repository. If PyRadiomics is run from an installed version, the location of the
-  # repository needs to be specified
-  logger.debug('Looking for test case in repository')
-  if dataDirectory is not None:
-    dataDir = dataDirectory
-    imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
-    maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
-    if os.path.isfile(imageFile) and os.path.isfile(maskFile):
-      logger.debug('Test case found in repository (repository specified)')
-      return imageFile, maskFile
+  if dataDirectory is None:
+    dataDirectory = os.path.join(tempfile.gettempdir(), 'pyradiomics', 'data')
+    logger.debug('No data directory specified, using temporary directory "%s"', dataDirectory)
 
-  # Data folder not found (most likely running from installed version). Check if test case has been downloaded.
-  logger.debug('Test case or repository not found, checking temporary data')
-  dataDir = os.path.join(tempfile.gettempdir(), 'pyradiomics', 'data')
-  imageFile = os.path.join(dataDir, '%s_image.nrrd' % testCase)
-  maskFile = os.path.join(dataDir, '%s_label.nrrd' % testCase)
+  # Check if test case has already been downloaded.
+  imageFile = os.path.join(dataDirectory, '%s_image.nrrd' % testCase)
+  maskFile = os.path.join(dataDirectory, '%s_label.nrrd' % testCase)
   if os.path.isfile(imageFile) and os.path.isfile(maskFile):
-    logger.debug('Test case already downloaded')
+    logger.info('Test case already downloaded')
     return imageFile, maskFile
 
+  # Test case not found, so try to download it
   logger.info("Test case %s not available locally, downloading test case...", testCase)
 
-  # Test case not found in temporary files, download them. First check if the folder is available
-  if not os.path.isdir(dataDir):
-    logger.debug('Creating temporary directory: %s', dataDir)
-    os.makedirs(dataDir)
-
-  # Download the test case files (image and label)
-  url = r'https://github.com/Radiomics/pyradiomics/releases/download/v1.0/%s_%s.nrrd'
   try:
+    # First check if the folder is available
+    if not os.path.isdir(dataDirectory):
+      logger.debug('Creating data directory: %s', dataDirectory)
+      os.makedirs(dataDirectory)
+
+    # Download the test case files (image and label)
+    url = r'https://github.com/Radiomics/pyradiomics/releases/download/v1.0/%s_%s.nrrd'
+
     logger.debug('Retrieving image at %s', url % (testCase, 'image'), imageFile)
     urllib.request.urlretrieve(url % (testCase, 'image'), imageFile)
     logger.debug('Retrieving mask at %s', url % (testCase, 'image'), maskFile)

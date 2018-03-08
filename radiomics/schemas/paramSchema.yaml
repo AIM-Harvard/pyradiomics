@@ -99,6 +99,18 @@ mapping:
       lbp2DMethod:
         type: str
         enum: ['default', 'ror', 'uniform', 'var']
+      lbp3DLevels:
+        type: int
+        range:
+          min: 1
+      lbp3DIcosphereRadius:
+        type: float
+        range:
+          min-ex: 0
+      lbp3DIcosphereSubdivision:
+        type: int
+        range:
+          min: 0
       voxelArrayShift:
         type: int
       symmetricalGLCM:

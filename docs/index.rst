@@ -84,6 +84,7 @@ Aside from the feature classes, there are also some built-in optional filters:
 * :py:func:`Exponential <radiomics.imageoperations.getExponentialImage>`
 * :py:func:`Gradient <radiomics.imageoperations.getGradientImage>`
 * :py:func:`Local Binary Pattern (2D) <radiomics.imageoperations.getLBP2DImage>`
+* :py:func:`Local Binary Pattern (3D) <radiomics.imageoperations.getLBP3DImage>`
 
 For more information, see also :ref:`radiomics-imageoperations-label`.
 

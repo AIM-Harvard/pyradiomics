@@ -63,6 +63,7 @@ Currently available image types are:
   negative original values are made negative again after application of filter.
 - Exponential: Takes the the exponential, where filtered intensity is e^(absolute intensity). Values are
   scaled to original range and negative original values are made negative again after application of filter.
+- Gradient: Returns the magnitude of the local gradient. See also :py:func:`~radiomics.imageoperations.getGradientImage`
 
 .. _radiomics-feature-classes-label:
 

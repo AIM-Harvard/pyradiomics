@@ -82,6 +82,7 @@ Aside from the feature classes, there are also some built-in optional filters:
 * :py:func:`Square Root <radiomics.imageoperations.getSquareRootImage>`
 * :py:func:`Logarithm <radiomics.imageoperations.getLogarithmImage>`
 * :py:func:`Exponential <radiomics.imageoperations.getExponentialImage>`
+* :py:func:`Gradient <radiomics.imageoperations.getGradientImage>`
 
 For more information, see also :ref:`radiomics-imageoperations-label`.
 

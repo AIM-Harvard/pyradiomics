@@ -2,8 +2,6 @@
 
 from __future__ import print_function
 
-import os
-
 import numpy
 import SimpleITK as sitk
 import six
@@ -15,12 +13,9 @@ from radiomics import firstorder, getTestCase, glcm, glrlm, glszm, imageoperatio
 
 # Get some test data
 
-# repositoryRoot points to the root of the repository. The following line gets that location if this script is run
-# from it's default location in /pyradiomics/examples. Otherwise, it will point to some (invalid) folder, causing the
-# getTestCase function to fail to find the test case in the repository. In that case, a test case will be downloaded to
-# temporary files and it's location is returned.
-repositoryRoot = os.path.abspath(os.path.join(os.getcwd(), ".."))
-imageName, maskName = getTestCase('brain1', repositoryRoot)
+# Download the test case to temporary files and return it's location. If already downloaded, it is not downloaded again,
+# but it's location is still returned.
+imageName, maskName = getTestCase('brain1')
 
 if imageName is None or maskName is None:  # Something went wrong, in this case PyRadiomics will also log an error
   print('Error getting testcase!')

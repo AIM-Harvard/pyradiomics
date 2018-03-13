@@ -12,7 +12,7 @@ from radiomics.featureextractor import RadiomicsFeaturesExtractor
 from testUtils import custom_name_func, RadiomicsTestUtils
 
 testUtils = RadiomicsTestUtils()
-testCases = testUtils.getTestCases()
+tests = sorted(testUtils.getTests())
 
 extractor = RadiomicsFeaturesExtractor()
 
@@ -21,57 +21,63 @@ featureClass = None
 
 class TestFeatures:
   def generate_scenarios():
-    global testCases
+    global tests
     global extractor
 
-    for testCase in testCases:
+    for test in tests:
       for featureClassName in extractor.getFeatureClassNames():
         # Get all feature names for which there is a baseline with current test case
-        baselineFeatureNames = testUtils.getFeatureNames(featureClassName, testCase)
+        baselineFeatureNames = testUtils.getFeatureNames(featureClassName, test)
 
         assert (baselineFeatureNames is not None)
         assert (len(baselineFeatureNames) > 0)
+
+        uniqueFeatures = set([f.split('_')[-1] for f in baselineFeatureNames])
 
         # Get a list of all features for current class
         featureNames = extractor.featureClasses[featureClassName].getFeatureNames()
         # Get a list of all non-deprecated features
         activeFeatures = set([f for (f, deprecated) in six.iteritems(featureNames) if not deprecated])
         # Check if all active features have a baseline (exclude deprecated features from this set)
-        if len(activeFeatures - set(baselineFeatureNames)) > 0:
-          raise AssertionError('Missing baseline for active features %s', activeFeatures - set(baselineFeatureNames))
+        if len(activeFeatures - uniqueFeatures) > 0:
+          raise AssertionError('Missing baseline for active features %s', activeFeatures - uniqueFeatures)
+        if len(uniqueFeatures - activeFeatures) > 0:
+          raise AssertionError('Missing function(s) for baseline feature(s) %s', uniqueFeatures - activeFeatures)
 
         logging.debug('generate_scenarios: featureNames = %s', baselineFeatureNames)
         for featureName in baselineFeatureNames:
-          assert featureName in featureNames  # check if feature function exists
-          yield testCase, featureClassName, featureName
+          yield test, featureName
 
   global testUtils
 
   @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
-  def test_scenario(self, testCase, featureClassName, featureName):
+  def test_scenario(self, test, featureName):
     print("")
     global testUtils
     global extractor
 
-    logging.debug('test_scenario: testCase = %s, featureClassName = %s, featureName = %s', testCase, featureClassName,
-                  featureName)
+    featureName = featureName.split('_')
 
-    testCaseOrClassChanged = testUtils.setFeatureClassAndTestCase(featureClassName, testCase)
+    logging.debug('test_scenario: test = %s, featureClassName = %s, featureName = %s', test, featureName[1],
+                  featureName[-1])
+
+    testOrClassChanged = testUtils.setFeatureClassAndTestCase(featureName[1], test)
 
     global featureClass
-    testImage = testUtils.getImage()
-    testMask = testUtils.getMask()
-    if featureClass is None or testCaseOrClassChanged:
-      logging.debug('Init %s' % (featureClassName))
-      featureClass = extractor.featureClasses[featureClassName](testImage, testMask, **testUtils.getSettings())
+    testImage = testUtils.getImage(featureName[0])
+    testMask = testUtils.getMask(featureName[0])
+
+    if featureClass is None or testOrClassChanged:
+      logging.debug('Init %s' % featureName[1])
+      featureClass = extractor.featureClasses[featureName[1]](testImage, testMask, **testUtils.getSettings())
 
     assert (featureClass is not None)
 
     featureClass.disableAllFeatures()
-    featureClass.enableFeatureByName(featureName)
+    featureClass.enableFeatureByName(featureName[-1])
     featureClass.calculateFeatures()
     # get the result and test it
-    val = featureClass.featureValues[featureName]
+    val = featureClass.featureValues[featureName[-1]]
     testUtils.checkResult(featureName, val)
 
 

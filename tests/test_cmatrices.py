@@ -13,9 +13,8 @@ from testUtils import custom_name_func, RadiomicsTestUtils
 
 
 testUtils = RadiomicsTestUtils()
-defaultTestCases = testUtils.getTestCases()
 
-testCases = defaultTestCases
+testCases = ('brain1', 'brain2', 'breast1', 'lung1', 'lung2')
 
 featureClasses = getFeatureClasses()
 
@@ -34,18 +33,18 @@ class TestFeatures:
   global testUtils
 
   @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
-  def test_scenario(self, testCase, featureClassName):
+  def test_scenario(self, test, featureClassName):
     print("")
     global testUtils, featureClasses
 
-    logging.debug('test_scenario: testCase = %s, featureClassName = %s', testCase, featureClassName)
+    logging.debug('test_scenario: testCase = %s, featureClassName = %s', test, featureClassName)
 
     assert cMatsEnabled()
 
-    testUtils.setFeatureClassAndTestCase(featureClassName, testCase)
+    testUtils.setFeatureClassAndTestCase(featureClassName, test)
 
-    testImage = testUtils.getImage()
-    testMask = testUtils.getMask()
+    testImage = testUtils.getImage('original')
+    testMask = testUtils.getMask('original')
 
     featureClass = featureClasses[featureClassName](testImage, testMask, **testUtils.getSettings())
 

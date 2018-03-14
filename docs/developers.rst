@@ -84,10 +84,11 @@ Signature of an image type
 --------------------------
 
 All image types are defined in the :ref:`imageoperations module<radiomics-imageoperations-label>`, and identified by the
-signature ``get[Name]Image(inputImage, **kwargs)``. Here, ``[Name]`` represents the unique name for the image type,
-which is also used to identify the image type during extraction. The input of a image type function is fixed and
-consists of the ``inputImage``, a SimpleITK Image object of the original image and ``**kwargs``, which are the
-customized settings that should be used for the extraction of features from the derived image.
+signature ``get[Name]Image(inputImage, inputMask, **kwargs)``. Here, ``[Name]`` represents the unique name for the image
+type, which is also used to identify the image type during extraction. The input of a image type function is fixed and
+consists of the ``inputImage`` and ``inputMask``, SimpleITK Image objects of the original image and mask, respectively
+and ``**kwargs``, which are the customized settings that should be used for the extraction of features from the derived
+image.
 
 One or more derived images are returned using the 'yield' statement: ``yield derivedImage, imageTypeName, kwargs``.
 Here, ``derivedImage`` is one SimpleITK image object representing the filtered image, ``imageTypeName`` is a unique

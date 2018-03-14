@@ -7,13 +7,13 @@ Radiomic Features
 This section contains the definitions of the various features that can be extracted using PyRadiomics. They are
 subdivided into the following classes:
 
-* :ref:`radiomics-firstorder-label` (19 features)
-* :ref:`radiomics-shape-label` (16 features)
-* :ref:`radiomics-glcm-label` (23 features)
-* :ref:`radiomics-glszm-label` (16 features)
-* :ref:`radiomics-glrlm-label` (16 features)
-* :ref:`radiomics-ngtdm-label` (5 features)
-* :ref:`radiomics-gldm-label` (14 features)
+* :py:class:`First Order Statistics <radiomics.firstorder.RadiomicsFirstOrder>` (19 features)
+* :py:class:`Shape-based <radiomics.shape.RadiomicsShape>` (16 features)
+* :py:class:`Gray Level Cooccurence Matrix <radiomics.glcm.RadiomicsGLCM>` (23 features)
+* :py:class:`Gray Level Run Length Matrix <radiomics.glrlm.RadiomicsGLRLM>` (16 features)
+* :py:class:`Gray Level Size Zone Matrix <radiomics.glszm.RadiomicsGLSZM>` (16 features)
+* :py:class:`Neigbouring Gray Tone Difference Matrix <radiomics.ngtdm.RadiomicsNGTDM>` (5 features)
+* :py:class:`Gray Level Dependence Matrix <radiomics.gldm.RadiomicsGLDM>` (14 features)
 
 All feature classes, with the exception of shape can be calculated on either the original image and/or a derived image,
 obtained by applying one of several filters. The shape descriptors are independent of gray value, and are extracted from

@@ -615,7 +615,7 @@ def resegmentMask(imageNode, maskNode, resegmentRange, label=1):
   return newMask
 
 
-def getOriginalImage(inputImage, **kwargs):
+def getOriginalImage(inputImage, inputMask, **kwargs):
   """
   This function does not apply any filter, but returns the original image. This function is needed to
   dynamically expose the original image as a valid image type.
@@ -627,7 +627,7 @@ def getOriginalImage(inputImage, **kwargs):
   yield inputImage, 'original', kwargs
 
 
-def getLoGImage(inputImage, **kwargs):
+def getLoGImage(inputImage, inputMask, **kwargs):
   r"""
   Applies a Laplacian of Gaussian filter to the input image and yields a derived image for each sigma value specified.
 
@@ -708,7 +708,7 @@ def getLoGImage(inputImage, **kwargs):
       logger.warning('applyLoG: sigma must be greater than 0.0: %g', sigma)
 
 
-def getWaveletImage(inputImage, **kwargs):
+def getWaveletImage(inputImage, inputMask, **kwargs):
   """
   Applies wavelet filter to the input image and yields the decompositions and the approximation.
 
@@ -806,7 +806,7 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)):
   return approximation, ret
 
 
-def getSquareImage(inputImage, **kwargs):
+def getSquareImage(inputImage, inputMask, **kwargs):
   r"""
   Computes the square of the image intensities.
 
@@ -832,7 +832,7 @@ def getSquareImage(inputImage, **kwargs):
   yield im, 'square', kwargs
 
 
-def getSquareRootImage(inputImage, **kwargs):
+def getSquareRootImage(inputImage, inputMask, **kwargs):
   r"""
   Computes the square root of the absolute value of image intensities.
 
@@ -861,7 +861,7 @@ def getSquareRootImage(inputImage, **kwargs):
   yield im, 'squareroot', kwargs
 
 
-def getLogarithmImage(inputImage, **kwargs):
+def getLogarithmImage(inputImage, inputMask, **kwargs):
   r"""
   Computes the logarithm of the absolute value of the original image + 1.
 
@@ -891,7 +891,7 @@ def getLogarithmImage(inputImage, **kwargs):
   yield im, 'logarithm', kwargs
 
 
-def getExponentialImage(inputImage, **kwargs):
+def getExponentialImage(inputImage, inputMask, **kwargs):
   r"""
   Computes the exponential of the original image.
 
@@ -917,7 +917,7 @@ def getExponentialImage(inputImage, **kwargs):
   yield im, 'exponential', kwargs
 
 
-def getGradientImage(inputImage, **kwargs):
+def getGradientImage(inputImage, inputMask, **kwargs):
   r"""
   Compute and return the Gradient Magnitude in the image.
   By default, takes into account the image spacing, this can be switched off by specifying
@@ -927,3 +927,177 @@ def getGradientImage(inputImage, **kwargs):
   gmif.SetUseImageSpacing(kwargs.get('gradientUseSpacing', True))
   im = gmif.Execute(inputImage)
   yield im, 'gradient', kwargs
+
+
+def getLBP2DImage(inputImage, inputMask, **kwargs):
+  """
+  Compute and return the Local Binary Pattern (LBP) in 2D. If ``force2D`` is set to false (= feature extraction in 3D) a
+  warning is logged, as this filter processes the image in a by-slice operation. The plane in which the LBP is
+  applied can be controlled by the ``force2Ddimension`` parameter (see also :py:func:`generateAngles`).
+
+  Following settings are possible (in addition to ``force2Ddimension``):
+
+    - ``lbp2DRadius`` [1]: Float, specifies the radius in which the neighbours should be sampled
+    - ``lbp2DSamples`` [9]: Integer, specifies the number of samples to use
+    - ``lbp2DMethod`` ['uniform']: String, specifies the method for computing the LBP to use.
+
+  For more information see `scikit documentation
+  <http://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.local_binary_pattern>`_
+
+  :return: Yields LBP filtered image, 'lbp-2D' and ``kwargs`` (customized settings)
+
+  .. note::
+    LBP can often return only a very small number of different gray levels. A customized bin width is often needed.
+  .. warning::
+    Requires package ``skimage`` to function. If not available, this filter logs a warning and does not yield an image.
+  """
+  global logger
+  try:
+    from skimage.feature import local_binary_pattern
+  except ImportError:
+    logger.warning('Could not load required package "skimage", cannot implement filter LBP 2D')
+    return
+
+  # Warn the user if features are extracted in 3D, as this function calculates LBP in 2D
+  if not kwargs.get('force2D', False):
+    logger.warning('Calculating Local Binary Pattern in 2D, but extracting features in 3D. Use with caution!')
+
+  lbp_axis = kwargs.get('force2Ddimension', 0)
+
+  lbp_radius = kwargs.get('lbp2DRadius', 1)
+  lbp_samples = kwargs.get('lbp2DSamples', 8)
+  lbp_method = kwargs.get('lbp2DMethod', 'uniform')
+
+  im_arr = sitk.GetArrayFromImage(inputImage)
+
+  im_arr = im_arr.swapaxes(0, lbp_axis)
+  for idx in range(im_arr.shape[0]):
+    im_arr[idx, ...] = local_binary_pattern(im_arr[idx, ...], P=lbp_samples, R=lbp_radius, method=lbp_method)
+  im_arr = im_arr.swapaxes(0, lbp_axis)
+
+  im = sitk.GetImageFromArray(im_arr)
+  im.CopyInformation(inputImage)
+
+  yield im, 'lbp-2D', kwargs
+
+
+def getLBP3DImage(inputImage, inputMask, **kwargs):
+  """
+  Compute and return the Local Binary Pattern (LBP) in 3D using spherical harmonics.
+  If ``force2D`` is set to true (= feature extraction in 2D) a warning is logged.
+
+  LBP is only calculated for voxels segmented in the mask
+
+  Following settings are possible:
+
+    - ``lbp3DLevels`` [2]: integer, specifies the the number of levels in spherical harmonics to use.
+    - ``lbp3DIcosphereRadius`` [1]: Float, specifies the radius in which the neighbours should be sampled
+    - ``lbp3DIcosphereSubdivision`` [1]: Integer, specifies the number of subdivisions to apply in the icosphere
+
+  :return: Yields LBP filtered image for each level, 'lbp-3D-m<level>' and ``kwargs`` (customized settings).
+           Additionally yields the kurtosis image, 'lbp-3D-k' and ``kwargs``.
+
+  .. note::
+    LBP can often return only a very small number of different gray levels. A customized bin width is often needed.
+  .. warning::
+    Requires package ``scipy`` and ``trimesh`` to function. If not available, this filter logs a warning and does not
+    yield an image.
+  """
+  global logger
+  try:
+    from scipy.stats import kurtosis
+    from scipy.ndimage.interpolation import map_coordinates
+    from scipy.special import sph_harm
+    from trimesh.creation import icosphere
+  except ImportError:
+    logger.warning('Could not load required package "scipy" or "trimesh", cannot implement filter LBP 3D')
+    return
+
+  # Warn the user if features are extracted in 2D, as this function calculates LBP in 3D
+  if kwargs.get('force2D', False):
+    logger.warning('Calculating Local Binary Pattern in 3D, but extracting features in 2D. Use with caution!')
+
+  label = kwargs.get('label', 1)
+
+  lbp_levels = kwargs.get('lbp3DLevels', 2)
+  lbp_icosphereRadius = kwargs.get('lbp3DIcosphereRadius', 1)
+  lbp_icosphereSubdivision = kwargs.get('lbp3DIcosphereSubdivision', 1)
+
+  im_arr = sitk.GetArrayFromImage(inputImage)
+  ma_arr = sitk.GetArrayFromImage(inputMask)
+
+  # Variables used in the shape comments:
+  # Np Number of voxels
+  # Nv Number of vertices
+
+  # Vertices icosahedron for spherical sampling
+  coords_icosahedron = numpy.array(icosphere(lbp_icosphereSubdivision, lbp_icosphereRadius).vertices)  # shape(Nv, 3)
+
+  # Corresponding polar coordinates
+  theta = numpy.arccos(numpy.true_divide(coords_icosahedron[:, 2], lbp_icosphereRadius))
+  phi = numpy.arctan2(coords_icosahedron[:, 1], coords_icosahedron[:, 0])
+
+  # Corresponding spherical harmonics coefficients Y_{m, n, theta, phi}
+  Y = sph_harm(0, 0, theta, phi)  # shape(Nv,)
+  n_ix = numpy.array(0)
+
+  for n in range(1, lbp_levels):
+    for m in range(-n, n + 1):
+      n_ix = numpy.append(n_ix, n)
+      Y = numpy.column_stack((Y, sph_harm(m, n, theta, phi)))
+  # shape (Nv, x) where x is the number of iterations in the above loops + 1
+
+  # Get labelled coordinates
+  ROI_coords = numpy.where(ma_arr == label)  # shape(3, Np)
+
+  # Interpolate f (samples on the spheres across the entire volume)
+  coords = numpy.array(ROI_coords).T[None, :, :] + coords_icosahedron[:, None, :]  # shape(Nv, Np, 3)
+  f = map_coordinates(im_arr, coords.T, order=3)  # Shape(Np, Nv)  Note that 'Np' and 'Nv' are swapped due to .T
+
+  # Compute spherical Kurtosis
+  k = kurtosis(f, axis=1)  # shape(Np,)
+
+  # Apply sign function
+  f_centroids = im_arr[ROI_coords]  # Shape(Np,)
+  f = numpy.greater_equal(f, f_centroids[:, None]).astype(int)  # Shape(Np, Nv)
+
+  # Compute c_{m,n} coefficients
+  c = numpy.multiply(f[:, :, None], Y[None, :, :])  # Shape(Np, Nv, x)
+  c = c.sum(axis=1)  # Shape(Np, x)
+
+  # Integrate over m
+  f = numpy.multiply(c[:, None, n_ix == 0], Y[None, :, n_ix == 0])  # Shape (Np, Nv, 1)
+  for n in range(1, lbp_levels):
+    f = numpy.concatenate((f,
+                           numpy.sum(numpy.multiply(c[:, None, n_ix == n], Y[None, :, n_ix == n]),
+                                     axis=2, keepdims=True)
+                           ),
+                          axis=2)
+  # Shape f (Np, Nv, levels)
+
+  # Compute L2-Norm
+  f = numpy.sqrt(numpy.sum(f ** 2, axis=1))  # shape(Np, levels)
+
+  # Keep only Real Part
+  f = numpy.real(f)  # shape(Np, levels)
+  k = numpy.real(k)  # shape(Np,)
+
+  # Yield the derived images for each level
+  result = numpy.ndarray(im_arr.shape)
+  for l_idx in range(lbp_levels):
+    result[ROI_coords] = f[:, l_idx]
+
+    # Create a SimpleITK image
+    im = sitk.GetImageFromArray(result)
+    im.CopyInformation(inputImage)
+
+    yield im, 'lbp-3D-m%d' % (l_idx + 1), kwargs
+
+  # Yield Kurtosis
+  result[ROI_coords] = k
+
+  # Create a SimpleITK image
+  im = sitk.GetImageFromArray(result)
+  im.CopyInformation(inputImage)
+
+  yield im, 'lbp-3D-k', kwargs

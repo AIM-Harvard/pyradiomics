@@ -915,3 +915,15 @@ def getExponentialImage(inputImage, **kwargs):
 
   logger.debug('Yielding exponential image')
   yield im, 'exponential', kwargs
+
+
+def getGradientImage(inputImage, **kwargs):
+  r"""
+  Compute and return the Gradient Magnitude in the image.
+  By default, takes into account the image spacing, this can be switched off by specifying
+  ``gradientUseSpacing = False``.
+  """
+  gmif = sitk.GradientMagnitudeImageFilter()
+  gmif.SetUseImageSpacing(kwargs.get('gradientUseSpacing', True))
+  im = gmif.Execute(inputImage)
+  yield im, 'gradient', kwargs

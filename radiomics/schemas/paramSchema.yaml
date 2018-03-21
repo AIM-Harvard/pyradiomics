@@ -133,13 +133,7 @@ mapping:
 
   imageType:
     type: map
+    func: checkImageType
+    matching-rule: 'any'
     mapping:
-      # possible image types, it's value is a dictionary (holding image type specific settings) that follows the rules
-      # as in 'setting'
-      Original: *settings
-      LoG: *settings
-      Wavelet: *settings
-      Square: *settings
-      SquareRoot: *settings
-      Logarithm: *settings
-      Exponential: *settings
+       regex;(.+): *settings

@@ -1,9 +1,10 @@
 import pywt
 import six
 
-from radiomics import getFeatureClasses
+from radiomics import getFeatureClasses, getImageTypes
 
 featureClasses = getFeatureClasses()
+imageTypes = getImageTypes()
 
 def checkWavelet(value, rule_obj, path):
   if not isinstance(value, six.string_types):
@@ -64,5 +65,18 @@ def checkFeatureClass(value, rule_obj, path):
       unrecognizedFeatures = set(features) - set(featureClasses[className].getFeatureNames())
       if len(unrecognizedFeatures) > 0:
         raise ValueError('Feature Class %s contains unrecognized features: %s' % (className, str(unrecognizedFeatures)))
+
+  return True
+
+
+def checkImageType(value, rule_obj, path):
+  global imageTypes
+  if value is None:
+    raise TypeError('imageType dictionary cannot be None value')
+
+  for im_type in value:
+    if im_type not in imageTypes:
+      raise ValueError('Image Type %s is not recognized. Available image types are %s' %
+                       (im_type, imageTypes))
 
   return True

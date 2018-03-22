@@ -106,8 +106,8 @@ static PyObject *cshape_calculate_surfacearea(PyObject *self, PyObject *args)
   // Check if Image and Mask have 3 dimensions
   if (PyArray_NDIM(mask_arr) != 3)
   {
-    Py_DECREF(mask_arr);
-    Py_DECREF(spacing_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(spacing_arr);
     PyErr_SetString(PyExc_RuntimeError, "Expected a 3D array for mask.");
     return NULL;
   }
@@ -125,8 +125,8 @@ static PyObject *cshape_calculate_surfacearea(PyObject *self, PyObject *args)
   SA = calculate_surfacearea(mask, size, spacing);
 
   // Clean up
-  Py_DECREF(mask_arr);
-  Py_DECREF(spacing_arr);
+  Py_XDECREF(mask_arr);
+  Py_XDECREF(spacing_arr);
 
   if (SA < 0) // if SA < 0, an error has occurred
   {

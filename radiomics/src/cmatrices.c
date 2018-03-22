@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "cmatrices.h"
 
-int calculate_glcm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, int Na, double *glcm, int Ng)
+int calculate_glcm(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *glcm, int Ng)
 {
   /* Calculate GLCM: Count the number of voxels with gray level i is neighboured by a voxel with gray level j in
   *  direction and distance specified by a. Returns an asymmetrical GLCM matrix for each angle/distance
@@ -11,22 +11,24 @@ int calculate_glcm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, 
   int i = 0, j = 0;
   int iz, iy, ix;
   int a, glcm_idx;
-  for (iz = 0; iz < Sz; iz ++) // Iterate over all voxels in a row - column - slice order
+  for (iz = 0; iz < size[0]; iz ++) // Iterate over all voxels in a row - column - slice order
   {
-    for (iy = 0; iy < Sy; iy ++)
+    for (iy = 0; iy < size[1]; iy ++)
     {
-      for (ix = 0; ix < Sx; ix ++)
+      for (ix = 0; ix < size[2]; ix ++)
       {
         if (mask[i])  // Check if the current voxel is part of the segmentation
         {
           for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
           {
             // Check whether the neighbour index is not out of range (i.e. part of the image)
-            if (iz + angles[a * 3] >= 0 && iz + angles[a * 3] < Sz &&
-                iy + angles[a * 3 + 1] >= 0 && iy + angles[a * 3 + 1] < Sy &&
-                ix + angles[a * 3 + 2] >= 0 && ix + angles[a * 3 + 2] < Sx)
+            if (iz + angles[a * 3] >= 0 && iz + angles[a * 3] < size[0] &&
+                iy + angles[a * 3 + 1] >= 0 && iy + angles[a * 3 + 1] < size[1] &&
+                ix + angles[a * 3 + 2] >= 0 && ix + angles[a * 3 + 2] < size[2])
             {
-              j = i + angles[a * 3 + 2] + angles[a * 3 + 1] * Sx + angles[a * 3] * Sy * Sx;
+              j = i + angles[a * 3] * strides[0] +
+                  angles[a * 3 + 1] * strides[1] +
+                  angles[a * 3 + 2] * strides[2];
               if (mask[j])  // Check whether neighbour voxel is part of the segmentation
               {
                 glcm_idx = a + (image[j]-1) * Na + (image[i]-1) * Na * Ng;
@@ -45,9 +47,9 @@ int calculate_glcm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, 
   return 1;
 }
 
-int calculate_glszm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, int Na, int *tempData, int Ng, int Ns)
+int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles, int Na, int *tempData, int Ng, int Ns)
 {
-  int Ni = Sz * Sy * Sx;
+  int Ni = size[0] * size[1] * size[2];
   int maxSize = 0;
 
   int *regionStack;
@@ -86,21 +88,21 @@ int calculate_glszm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles,
         region++;
 
         // Generate neighbours for current voxel
-        cur_z = (cur_idx / (Sx * Sy));
-        cur_y = (cur_idx % (Sx * Sy)) / Sx;
-        cur_x = (cur_idx % (Sx * Sy)) % Sx;
+        cur_z = (cur_idx / strides[0]);
+        cur_y = (cur_idx % strides[0]) / strides[1];
+        cur_x = (cur_idx % strides[0]) % strides[1];
         for (d = 1; d >= -1; d -= 2) // Iterate over both directions for each angle
         {
           for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
           {
             // Check whether the neighbour index is not out of range (i.e. part of the image)
-            if (cur_z + d * angles[a * 3] >= 0 && cur_z + d * angles[a * 3] < Sz &&
-              cur_y + d * angles[a * 3 + 1] >= 0 && cur_y + d * angles[a * 3 + 1] < Sy &&
-              cur_x + d * angles[a * 3 + 2] >= 0 && cur_x + d * angles[a * 3 + 2] < Sx)
+            if (cur_z + d * angles[a * 3] >= 0 && cur_z + d * angles[a * 3] < size[0] &&
+              cur_y + d * angles[a * 3 + 1] >= 0 && cur_y + d * angles[a * 3 + 1] < size[1] &&
+              cur_x + d * angles[a * 3 + 2] >= 0 && cur_x + d * angles[a * 3 + 2] < size[2])
             {
-              j = cur_idx + d * angles[a * 3 + 2] +
-                d * angles[a * 3 + 1] * Sx +
-                d * angles[a * 3] * Sy * Sx;
+              j = cur_idx + d * angles[a * 3] * strides[0] +
+                            d * angles[a * 3 + 1] * strides[1] +
+                            d * angles[a * 3 + 2] * strides[2];
               // Check whether neighbour voxel is part of the current region and unprocessed
               if (mask[j] && (image[j] == gl))
               {
@@ -112,7 +114,7 @@ int calculate_glszm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles,
             }
           } // next a
         } // next d
-      }
+      }  // while (stackTop > -1)
 
       if (regionCounter >= max_region_idx)
       {
@@ -388,12 +390,13 @@ int run_diagonal(int *image, char *mask, int *size, int *strides, int *angles, i
   return elements;
 }
 
-int calculate_ngtdm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, int Na, double *ngtdm, int Ng)
+int calculate_ngtdm(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *ngtdm, int Ng)
 {
   int gl;
   int ngtdm_idx_max = Ng * 3;
   int i = 0, j = 0;
   int iz, iy, ix;
+  int offset[3];
   double count, sum, diff;
   int d, a;
   int ngtdm_idx;
@@ -403,15 +406,14 @@ int calculate_ngtdm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles,
   {
       ngtdm[gl*3 + 2] = gl + 1;
   }
-
   /* Calculate matrix: for each gray level, element 0 describes the number of voxels with gray level i and
   *  element 1 describes the sum of all differences between voxels with gray level i and their neighbourhood
   */
-  for (iz = 0; iz < Sz; iz ++) // Iterate over all voxels in a row - column - slice order
+  for (iz = 0; iz < size[0]; iz ++) // Iterate over all voxels in a row - column - slice order
   {
-    for (iy = 0; iy < Sy; iy ++)
+    for (iy = 0; iy < size[1]; iy ++)
     {
-      for (ix = 0; ix < Sx; ix ++)
+      for (ix = 0; ix < size[2]; ix ++)
       {
         if (mask[i])  // Check if the current voxel is part of the segmentation
         {
@@ -421,14 +423,18 @@ int calculate_ngtdm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles,
           {
             for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
             {
+              offset[0] = d * angles[a * 3];
+              offset[1] = d * angles[a * 3 + 1];
+              offset[2] = d * angles[a * 3 + 2];
+
               // Check whether the neighbour index is not out of range (i.e. part of the image)
-              if (iz + d * angles[a * 3] >= 0 && iz + d * angles[a * 3] < Sz &&
-                  iy + d * angles[a * 3 + 1] >= 0 && iy + d * angles[a * 3 + 1] < Sy &&
-                  ix + d * angles[a * 3 + 2] >= 0 && ix + d * angles[a * 3 + 2] < Sx)
+              if (iz + offset[0] >= 0 && iz + offset[0] < size[0] &&
+                  iy + offset[1] >= 0 && iy + offset[1] < size[1] &&
+                  ix + offset[2] >= 0 && ix + offset[2] < size[2])
               {
-                j = i + d * angles[a * 3 + 2] +
-                        d * angles[a * 3 + 1] * Sx +
-                        d * angles[a * 3] * Sy * Sx;
+                j = i + offset[0] * strides[0] +
+                        offset[1] * strides[1] +
+                        offset[2] * strides[2];
                 if (mask[j])  // Check whether neighbour voxel is part of the segmentation
                 {
                  count++;
@@ -456,7 +462,7 @@ int calculate_ngtdm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles,
   return 1;
 }
 
-int calculate_gldm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, int Na, double *gldm, int Ng, int alpha)
+int calculate_gldm(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *gldm, int Ng, int alpha)
 {
   /* Calculate GLDM: Count the number of voxels with gray level i, that have j dependent neighbours.
   *  A voxel is considered dependent if the absolute difference between the center voxel and the neighbour <= alpha
@@ -464,29 +470,34 @@ int calculate_gldm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, 
   int gldm_idx_max = Ng * (Na * 2 + 1);
   int i = 0, j = 0;
   int iz, iy, ix;
+  int offset[3];
   int dep, d, a, diff;
   int gldm_idx;
-  for (iz = 0; iz < Sz; iz ++) // Iterate over all voxels in a row - column - slice order
+  for (iz = 0; iz < size[0]; iz ++) // Iterate over all voxels in a row - column - slice order
   {
-    for (iy = 0; iy < Sy; iy ++)
+    for (iy = 0; iy < size[1]; iy ++)
     {
-      for (ix = 0; ix < Sx; ix ++)
+      for (ix = 0; ix < size[2]; ix ++)
       {
         if (mask[i])  // Check if the current voxel is part of the segmentation
         {
           dep = 0;
-          for (d = 1; d >= -1; d-=2) // Iterate over both directions for each angle
+          for (d = 1; d >= -1; d-=2) // Iterate over both directions for each angle d = {1, -1}
           {
             for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
             {
+              offset[0] = d * angles[a * 3];
+              offset[1] = d * angles[a * 3 + 1];
+              offset[2] = d * angles[a * 3 + 2];
+
               // Check whether the neighbour index is not out of range (i.e. part of the image)
-              if (iz + d * angles[a * 3] >= 0 && iz + d * angles[a * 3] < Sz &&
-                  iy + d * angles[a * 3 + 1] >= 0 && iy + d * angles[a * 3 + 1] < Sy &&
-                  ix + d * angles[a * 3 + 2] >= 0 && ix + d * angles[a * 3 + 2] < Sx)
+              if (iz + offset[0] >= 0 && iz + offset[0] < size[0] &&
+                  iy + offset[1] >= 0 && iy + offset[1] < size[1] &&
+                  ix + offset[2] >= 0 && ix + offset[2] < size[2])
               {
-                j = i + d * angles[a * 3 + 2] +
-                        d * angles[a * 3 + 1] * Sx +
-                        d * angles[a * 3] * Sy * Sx;
+                j = i + offset[0] * strides[0] +
+                        offset[1] * strides[1] +
+                        offset[2] * strides[2];
                 if (mask[j])  // Check whether neighbour voxel is part of the segmentation
                 {
                   diff = image[i] - image[j];
@@ -496,7 +507,7 @@ int calculate_gldm(int *image, char *mask, int Sx, int Sy, int Sz, int *angles, 
               }
             }
           }
-          gldm_idx = dep + (image[i]-1) * (Na * 2 + 1);
+          gldm_idx = dep + (image[i]-1) * (Na * 2 + 1);  // Row_idx (dep) + Col_idx (Gray level * Max dependency)
           if (gldm_idx >= gldm_idx_max) return 0; // Index out of range
           gldm[gldm_idx] ++;
         }

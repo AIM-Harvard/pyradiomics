@@ -51,7 +51,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
 
   Similar for gray values 3 and 5:
 
-  :math:`s_3 = |3-14/5| + |3-18/5| + |3-20/8| + |3-5/3| = 2.63 \\
+  :math:`s_3 = |3-12/5| + |3-18/5| + |3-20/8| + |3-5/3| = 3.03 \\
   s_5 = |5-14/5| + |5-18/5| + |5-20/8| + |5-11/5| = 10.075`
 
   Let:

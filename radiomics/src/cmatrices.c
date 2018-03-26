@@ -59,8 +59,7 @@ int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles
   int max_region_idx = Ns * 2;
 
   int gl, region;
-  int i = 0;
-  int d, a;
+  int i, a;
   int cur_idx, cur_x, cur_y, cur_z, j;
 
   regionStack = (int *)calloc(Ns, sizeof(int));
@@ -91,29 +90,26 @@ int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles
         cur_z = (cur_idx / strides[0]);
         cur_y = (cur_idx % strides[0]) / strides[1];
         cur_x = (cur_idx % strides[0]) % strides[1];
-        for (d = 1; d >= -1; d -= 2) // Iterate over both directions for each angle
+        for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
         {
-          for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
+          // Check whether the neighbour index is not out of range (i.e. part of the image)
+          if (cur_z + angles[a * 3] >= 0 && cur_z + angles[a * 3] < size[0] &&
+            cur_y + angles[a * 3 + 1] >= 0 && cur_y + angles[a * 3 + 1] < size[1] &&
+            cur_x + angles[a * 3 + 2] >= 0 && cur_x + angles[a * 3 + 2] < size[2])
           {
-            // Check whether the neighbour index is not out of range (i.e. part of the image)
-            if (cur_z + d * angles[a * 3] >= 0 && cur_z + d * angles[a * 3] < size[0] &&
-              cur_y + d * angles[a * 3 + 1] >= 0 && cur_y + d * angles[a * 3 + 1] < size[1] &&
-              cur_x + d * angles[a * 3 + 2] >= 0 && cur_x + d * angles[a * 3 + 2] < size[2])
+            j = cur_idx + angles[a * 3] * strides[0] +
+                          angles[a * 3 + 1] * strides[1] +
+                          angles[a * 3 + 2] * strides[2];
+            // Check whether neighbour voxel is part of the current region and unprocessed
+            if (mask[j] && (image[j] == gl))
             {
-              j = cur_idx + d * angles[a * 3] * strides[0] +
-                            d * angles[a * 3 + 1] * strides[1] +
-                            d * angles[a * 3 + 2] * strides[2];
-              // Check whether neighbour voxel is part of the current region and unprocessed
-              if (mask[j] && (image[j] == gl))
-              {
-                // Push the voxel index to the stack for further processing
-                regionStack[++stackTop] = j;
-                // Voxel belongs to current region, mark it as 'processed'
-                mask[j] = 0;
-              }
+              // Push the voxel index to the stack for further processing
+              regionStack[++stackTop] = j;
+              // Voxel belongs to current region, mark it as 'processed'
+              mask[j] = 0;
             }
-          } // next a
-        } // next d
+          }
+        } // next a
       }  // while (stackTop > -1)
 
       if (regionCounter >= max_region_idx)
@@ -398,7 +394,7 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *strides, int *angles
   int iz, iy, ix;
   int offset[3];
   double count, sum, diff;
-  int d, a;
+  int a;
   int ngtdm_idx;
 
   // Fill gray levels (empty slices gray levels are later deleted in python)
@@ -419,27 +415,24 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *strides, int *angles
         {
           count = 0;
           sum = 0;
-          for (d = 1; d >= -1; d-=2) // Iterate over both directions for each angle
+          for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
           {
-            for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
-            {
-              offset[0] = d * angles[a * 3];
-              offset[1] = d * angles[a * 3 + 1];
-              offset[2] = d * angles[a * 3 + 2];
+            offset[0] = angles[a * 3];
+            offset[1] = angles[a * 3 + 1];
+            offset[2] = angles[a * 3 + 2];
 
-              // Check whether the neighbour index is not out of range (i.e. part of the image)
-              if (iz + offset[0] >= 0 && iz + offset[0] < size[0] &&
-                  iy + offset[1] >= 0 && iy + offset[1] < size[1] &&
-                  ix + offset[2] >= 0 && ix + offset[2] < size[2])
+            // Check whether the neighbour index is not out of range (i.e. part of the image)
+            if (iz + offset[0] >= 0 && iz + offset[0] < size[0] &&
+                iy + offset[1] >= 0 && iy + offset[1] < size[1] &&
+                ix + offset[2] >= 0 && ix + offset[2] < size[2])
+            {
+              j = i + offset[0] * strides[0] +
+                      offset[1] * strides[1] +
+                      offset[2] * strides[2];
+              if (mask[j])  // Check whether neighbour voxel is part of the segmentation
               {
-                j = i + offset[0] * strides[0] +
-                        offset[1] * strides[1] +
-                        offset[2] * strides[2];
-                if (mask[j])  // Check whether neighbour voxel is part of the segmentation
-                {
-                 count++;
-                 sum += image[j];
-                }
+               count++;
+               sum += image[j];
               }
             }
           }
@@ -471,7 +464,7 @@ int calculate_gldm(int *image, char *mask, int *size, int *strides, int *angles,
   int i = 0, j = 0;
   int iz, iy, ix;
   int offset[3];
-  int dep, d, a, diff;
+  int dep, a, diff;
   int gldm_idx;
   for (iz = 0; iz < size[0]; iz ++) // Iterate over all voxels in a row - column - slice order
   {
@@ -482,28 +475,25 @@ int calculate_gldm(int *image, char *mask, int *size, int *strides, int *angles,
         if (mask[i])  // Check if the current voxel is part of the segmentation
         {
           dep = 0;
-          for (d = 1; d >= -1; d-=2) // Iterate over both directions for each angle d = {1, -1}
+          for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
           {
-            for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
-            {
-              offset[0] = d * angles[a * 3];
-              offset[1] = d * angles[a * 3 + 1];
-              offset[2] = d * angles[a * 3 + 2];
+            offset[0] = angles[a * 3];
+            offset[1] = angles[a * 3 + 1];
+            offset[2] = angles[a * 3 + 2];
 
-              // Check whether the neighbour index is not out of range (i.e. part of the image)
-              if (iz + offset[0] >= 0 && iz + offset[0] < size[0] &&
-                  iy + offset[1] >= 0 && iy + offset[1] < size[1] &&
-                  ix + offset[2] >= 0 && ix + offset[2] < size[2])
+            // Check whether the neighbour index is not out of range (i.e. part of the image)
+            if (iz + offset[0] >= 0 && iz + offset[0] < size[0] &&
+                iy + offset[1] >= 0 && iy + offset[1] < size[1] &&
+                ix + offset[2] >= 0 && ix + offset[2] < size[2])
+            {
+              j = i + offset[0] * strides[0] +
+                      offset[1] * strides[1] +
+                      offset[2] * strides[2];
+              if (mask[j])  // Check whether neighbour voxel is part of the segmentation
               {
-                j = i + offset[0] * strides[0] +
-                        offset[1] * strides[1] +
-                        offset[2] * strides[2];
-                if (mask[j])  // Check whether neighbour voxel is part of the segmentation
-                {
-                  diff = image[i] - image[j];
-                  if (diff < 0) diff *= -1;  // Get absolute difference
-                  if (diff <= alpha) dep++;
-                }
+                diff = image[i] - image[j];
+                if (diff < 0) diff *= -1;  // Get absolute difference
+                if (diff <= alpha) dep++;
               }
             }
           }
@@ -518,4 +508,114 @@ int calculate_gldm(int *image, char *mask, int *size, int *strides, int *angles,
     }
   }
   return 1;
+}
+
+int generate_angles(int *size, int *distances, int n_dim, int n_dist, char bidirectional, int force2Ddim, int **angles, int *n_a)
+{
+  int *offset_stride;
+  int max_distance, n_offsets, offset, a_dist;
+  int Na_d, Na_dd;  // Angles per distance
+  int dist_idx, dim_idx, a_idx, new_a_idx;
+
+  // First, determine the maximum distance and the number of angles to compute
+  // Number of angles to compute for distance Na_d = (2d + 1)^n_dim - (2d - 1)^n_dim
+  // The first term is temporarily stored in Na_d, the second in Na_dd
+  *n_a = 0;
+  max_distance = 0;  // Maximum offset specified, needed later on to generate the range of offsets
+  for (dist_idx = 0; dist_idx < n_dist; dist_idx++)
+  {
+    if (distances[dist_idx] < 1) return 1;  // invalid distance encountered
+
+    // Store maximum distance specified
+    if (max_distance < distances[dist_idx]) max_distance = distances[dist_idx];
+
+    Na_d = 1;
+    Na_dd = 1;
+    for (dim_idx = 0; dim_idx < n_dim; dim_idx++)
+    {
+        // Do not generate angles that move in the out-of-plane dimension
+        if (dim_idx == force2Ddim) continue;
+
+        // Check if the distance is within the image size for this dimension
+        if (distances[dist_idx] < size[dim_idx])
+        {
+          // Full range possible, in this dimension, so multiply by (2d + 1) and (2d -1)
+          Na_d *= (2 * distances[dist_idx] + 1);
+          Na_dd *= (2 * distances[dist_idx] - 1);
+        }
+        else
+        {
+          // Limited range possible, so multiply by (2 * (size - 1) + 1) (i.e. max possible distance for this size)
+          Na_d *= (2 *(size[dim_idx] - 1) + 1);
+          Na_dd *= (2 *(size[dim_idx] - 1) + 1);
+        }
+    }
+    *n_a += (Na_d - Na_dd);  // Add the number of angles to be generated for this distance to the grand total
+  }
+
+  // if only single direction is needed, divide Na by 2 (if bidirectional, Na will be even, and angles is a mirrored)
+  if (!bidirectional) (*n_a) /= 2;
+
+  // Initialize array to hold the angle offsets, shape (Na, n_dim), stored here as a flattened array
+  *angles = (int *)calloc(*n_a * n_dim, sizeof(int));
+
+  n_offsets = 2 * max_distance + 1;  // e.g. for max distance = 3, offsets = {-2, -1, 0, 1, 2}; ||offsets|| = 5
+
+  // offset_stride is used to generate the unique combinations of offsets for the angles
+  // For the last dimension the stride is 1, i.e. a different offset is used for each subsequent angle
+  // For the next-to-last dimension the stide is n_offsets, i.e. for each cycle through possible offsets in the last
+  // dimension, the offset in this dimension changes by 1.
+  // For subsequent dimensions, the stride is the previous stride multiplied by n_offsets, allowing the previous
+  // dimension to cycle through all possible offsets before advancing the offset in this dimension. e.g.:
+  // stride {9, 3, 1}. This reversed order ensures compatibility with Python generated angles
+  // angle   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
+  // dim 2  -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1
+  // dim 1  -1 -1 -1  0  0  0  1  1  1 -1 -1 -1  0  0  0  1  1  1 -1 -1 -1  0  0  0  1  1  1
+  // dim 0  -1 -1 -1 -1 -1 -1 -1 -1 -1  0  0  0  0  0  0  0  0  0  1  1  1  1  1  1  1  1  1
+  offset_stride = (int *)calloc(n_dim, sizeof(int));
+  offset_stride[n_dim - 1] = 1;
+  for (dim_idx = n_dim - 2; dim_idx >= 0; dim_idx--)
+  {
+    offset_stride[dim_idx] = offset_stride[dim_idx + 1] * n_offsets;
+  }
+
+  new_a_idx = 0;  // index used to generate new angle offset, increases during every loop
+  a_idx = 0;  // index in angles array of current angle being generated, increases only when a valid angle has been generated
+  while (a_idx < *n_a)
+  {
+    a_dist = 0;  // maximum offset of the angle, corresponds to the distance this angle belongs to (infinity norm)
+    // generate new angle
+    for (dim_idx = 0; dim_idx < n_dim; dim_idx++)
+    {
+      offset = max_distance - (new_a_idx / offset_stride[dim_idx]) % n_offsets;  // {max_d, ... , -max_d}, step 1
+      if ((dim_idx == force2Ddim && offset != 0) ||  // Moves in an invalid direction (out-of-plane dimension)
+          offset >= size[dim_idx] ||  // Offset (positive) larger than size
+          offset <= -size[dim_idx])   // Offset (negative) smaller than negative size
+      {
+        a_dist = -1;  // invalid angle
+        break;  // no need to generate offsets for other dimensions, angle is invalid
+      }
+      (*angles)[a_idx * n_dim + dim_idx] = offset;
+
+      if (a_dist < offset) a_dist = offset;  // offset positive
+      else if (a_dist < -offset) a_dist = -offset;  // offset negative
+    }
+
+    new_a_idx++;  // always advance new_a_idx, this controls the combination of offsets in generating the angle
+
+    // Check if the distance this angle is generated for is requested (i.e. present in distances)
+    // In case of an invalid angle, a_dist = -1, and therefore
+    if (a_dist < 1) continue; // Angle is invalid, i.e a_dist = -1 (failed check) or a_dist = 0 (angle (0, 0, 0))
+    for (dist_idx = 0; dist_idx < n_dist; dist_idx++)
+    {
+      if (a_dist == distances[dist_idx])
+      {
+        a_idx++; // Angle valid, store it and move to the next
+        break;  // No need to check the other distances
+      }
+    }
+  }
+  free(offset_stride);
+
+  return 0;
 }

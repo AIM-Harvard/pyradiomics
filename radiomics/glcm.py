@@ -170,10 +170,14 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   def _calculateCMatrix(self):
     self.logger.debug('Calculating GLCM matrix in C')
 
-    angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
     Ng = self.coefficients['Ng']
 
-    P_glcm = cMatrices.calculate_glcm(self.matrix, self.maskArray, angles, Ng)
+    P_glcm, angles = cMatrices.calculate_glcm(self.matrix,
+                                              self.maskArray,
+                                              numpy.array(self.kwargs.get('distances', [1])),
+                                              Ng,
+                                              self.kwargs.get('force2D', False),
+                                              self.kwargs.get('force2Ddimension', 0))
     P_glcm = self._applyMatrixOptions(P_glcm, angles)
 
     # Delete rows and columns that specify gray levels not present in the ROI

@@ -144,15 +144,15 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   def _calculateCMatrix(self):
     self.logger.debug('Calculating GLSZM matrix in C')
-
-    # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(self.boundingBoxSize,
-                                            force2D=self.kwargs.get('force2D', False),
-                                            force2Ddimension=self.kwargs.get('force2Ddimension', 0))
     Ng = self.coefficients['Ng']
     Ns = self.coefficients['Np']
 
-    P_glszm = cMatrices.calculate_glszm(self.matrix, self.maskArray, angles, Ng, Ns)
+    P_glszm, angles = cMatrices.calculate_glszm(self.matrix,
+                                                self.maskArray,
+                                                Ng,
+                                                Ns,
+                                                self.kwargs.get('force2D', False),
+                                                self.kwargs.get('force2Ddimension', 0))
 
     # Delete rows that specify gray levels not present in the ROI
     NgVector = range(1, Ng + 1)  # All possible gray values

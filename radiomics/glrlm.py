@@ -169,16 +169,12 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   def _calculateCMatrix(self):
     self.logger.debug('Calculating GLRLM matrix in C')
-
-    Ng = self.coefficients['Ng']
-    Nr = self.coefficients['Nr']
-
-    # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(self.boundingBoxSize,
-                                            force2D=self.kwargs.get('force2D', False),
-                                            force2Ddimension=self.kwargs.get('force2Ddimension', 0))
-
-    P_glrlm = cMatrices.calculate_glrlm(self.matrix, self.maskArray, angles, Ng, Nr)
+    P_glrlm, angles = cMatrices.calculate_glrlm(self.matrix,
+                                                self.maskArray,
+                                                self.coefficients['Ng'],
+                                                self.coefficients['Nr'],
+                                                self.kwargs.get('force2D', False),
+                                                self.kwargs.get('force2Ddimension', 0))
     P_glrlm = self._applyMatrixOptions(P_glrlm, angles)
 
     return P_glrlm

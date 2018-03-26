@@ -2,7 +2,7 @@ import numpy
 import SimpleITK as sitk
 from six.moves import range
 
-from radiomics import base, cMatsEnabled, cShape, deprecated, imageoperations
+from radiomics import base, cMatsEnabled, cShape, deprecated
 
 
 class RadiomicsShape(base.RadiomicsFeaturesBase):
@@ -87,7 +87,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     gridAngles = numpy.array([(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0),
                               (1, 0, 0), (1, 0, 1), (1, 1, 1), (1, 1, 0)])
     # instantiate lookup tables
-    edgeTable, triTable = self._getMarchingTables()
+    vertList, triTable = self._getMarchingTables()
 
     minBounds = numpy.array([numpy.min(self.labelledVoxelCoordinates[0]), numpy.min(self.labelledVoxelCoordinates[1]),
                              numpy.min(self.labelledVoxelCoordinates[2])])
@@ -115,35 +115,6 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
           if cube_idx & 128:
             cube_idx = cube_idx ^ 0xff
 
-          # lookup which edges contain vertices and calculate vertices coordinates
-          if edgeTable[cube_idx] == 0:
-            continue
-          vertList = numpy.zeros((12, 3), dtype='float64')
-          if edgeTable[cube_idx] & 1:
-            vertList[0] = self._interpolate(gridCell, 0, 1)
-          if edgeTable[cube_idx] & 2:
-            vertList[1] = self._interpolate(gridCell, 1, 2)
-          if edgeTable[cube_idx] & 4:
-            vertList[2] = self._interpolate(gridCell, 2, 3)
-          if edgeTable[cube_idx] & 8:
-            vertList[3] = self._interpolate(gridCell, 3, 0)
-          if edgeTable[cube_idx] & 16:
-            vertList[4] = self._interpolate(gridCell, 4, 5)
-          if edgeTable[cube_idx] & 32:
-            vertList[5] = self._interpolate(gridCell, 5, 6)
-          if edgeTable[cube_idx] & 64:
-            vertList[6] = self._interpolate(gridCell, 6, 7)
-          if edgeTable[cube_idx] & 128:
-            vertList[7] = self._interpolate(gridCell, 7, 4)
-          if edgeTable[cube_idx] & 256:
-            vertList[8] = self._interpolate(gridCell, 0, 4)
-          if edgeTable[cube_idx] & 512:
-            vertList[9] = self._interpolate(gridCell, 1, 5)
-          if edgeTable[cube_idx] & 1024:
-            vertList[10] = self._interpolate(gridCell, 2, 6)
-          if edgeTable[cube_idx] & 2048:
-            vertList[11] = self._interpolate(gridCell, 3, 7)
-
           # calculate triangles
           for triangle in triTable[cube_idx]:
             a = vertList[triangle[1]] - vertList[triangle[0]]
@@ -169,9 +140,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     """
     self.logger.debug('Calculating Maximum 3D diameter in C')
     Ns = len(self.labelledVoxelCoordinates[0])
-    boundingBoxSize = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
-    angles = imageoperations.generateAngles(boundingBoxSize)
-    return cShape.calculate_diameter(self.maskArray, self.pixelSpacing, angles, Ns)
+    return cShape.calculate_diameter(self.maskArray, self.pixelSpacing, Ns)
 
   def getVolumeFeatureValue(self):
     r"""
@@ -471,22 +440,10 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     return (grid[p1] + ((grid[p2] - grid[p1]) * diff)) * self.pixelSpacing
 
   def _getMarchingTables(self):
-    edgeTable = [0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
-                 0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
-                 0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
-                 0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
-                 0x230, 0x339, 0x33, 0x13a, 0x636, 0x73f, 0x435, 0x53c,
-                 0xa3c, 0xb35, 0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30,
-                 0x3a0, 0x2a9, 0x1a3, 0xaa, 0x7a6, 0x6af, 0x5a5, 0x4ac,
-                 0xbac, 0xaa5, 0x9af, 0x8a6, 0xfaa, 0xea3, 0xda9, 0xca0,
-                 0x460, 0x569, 0x663, 0x76a, 0x66, 0x16f, 0x265, 0x36c,
-                 0xc6c, 0xd65, 0xe6f, 0xf66, 0x86a, 0x963, 0xa69, 0xb60,
-                 0x5f0, 0x4f9, 0x7f3, 0x6fa, 0x1f6, 0xff, 0x3f5, 0x2fc,
-                 0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0,
-                 0x650, 0x759, 0x453, 0x55a, 0x256, 0x35f, 0x55, 0x15c,
-                 0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859, 0x950,
-                 0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0xcc,
-                 0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca, 0xac3, 0x9c9, 0x8c0]
+    vertList = numpy.array(((0, 0, 0.5), (0, 0.5, 1), (0, 1, 0.5), (0, 0.5, 0),
+                            (1, 0, 0.5), (1, 0.5, 1), (1, 1, 0.5), (1, 0.5, 0),
+                            (0.5, 0, 0), (0.5, 0, 1), (0.5, 1, 1), (0.5, 1, 0)), dtype='float64')
+    vertList *= self.pixelSpacing[None, :]
 
     triTable = [[],
                 [[0, 8, 3]],
@@ -616,4 +573,4 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
                 [[0, 9, 1], [11, 6, 7]],
                 [[7, 8, 0], [7, 0, 6], [3, 11, 0], [11, 6, 0]],
                 [[7, 11, 6]]]
-    return edgeTable, triTable
+    return vertList, triTable

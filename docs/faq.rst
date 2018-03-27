@@ -14,23 +14,23 @@ for python `here <https://wiki.python.org/moin/WindowsCompilers>`_.
 Error loading C extensions.
 ###########################
 
-I installed PyRadiomics successfully from the repository, but when I run the notebook, I get ``Error loading C extensions, switching to python calculation``
+When I try to run PyRadiomics, I get ``Error loading C extensions``
 
 When PyRadiomics is installed, the C extensions are compiled and copied to the installation folder, by default the
 ``site-packages`` folder. However, when the notebook is run form the repository, it is possible that PyRadiomics uses
 the source code directly (i.e. runs in development mode). You can check this by checking the ``radiomics.__path__``
 field, which will be something like ``['radiomics']`` when it is running in development mode and
 ``['path/to/python/Lib/site-packages']`` when running from the installed folder. If running in development mode, the C
-extensions are not available by default. To make them available in development mode, run ``python setup.py develop``
-from the commandline, which is similar to the ``install`` command, but installs pyradiomics to the source folder
-instead (i.e. does nothing to the python files, but compiles the C extensions and copies them to the source folder).
+extensions are not available by default. To make them available in development mode, run
+``python setup.py build_ext --inplace`` from the commandline, which is similar to the ``install`` command, but just
+compiles the C extensions end copies them to the source folder (making them available when running from the source tree).
 
 Which python versions is PyRadiomics compatible with?
 #####################################################
 
 PyRadiomics is compatible with both python 2 and python 3. The automated testing uses python versions 2.7, 3.4 and 3.5
-(only 64 bits architecture). Python < 2.6 is not supported. Other python versions may be compatible with PyRadiomics, but this
-is not actively tested and therefore not guaranteed to work.
+(only 64 bits architecture). Python < 2.6 is not supported. Other python versions may be compatible with PyRadiomics,
+but this is not actively tested and therefore not guaranteed to work.
 
 Input / Customization
 ---------------------
@@ -110,10 +110,10 @@ PyRadiomics does not support DICOM-RT struct as input directly. We recommend to 
 Usage
 -----
 
-How should the input file for ``pyradiomicsbatch`` be structured?
+How should the input file for ``pyradiomics`` in batch-mode be structured?
 #################################################################
 
-Currently, the input file for ``pyradiomicsbatch`` is a csv file specifying the combinations of images and masks for
+Currently, the batch input file for ``pyradiomics`` is a csv file specifying the combinations of images and masks for
 which to extract features. It must contain a header line, where at least header "Image" and "Mask" should be specified
 (capital sensitive). These identify the columns that contain the file location of the image and the mask, respectively.
 Each subsequent line represents one combination of an image and a mask. Additional columns are also allowed, these are
@@ -125,11 +125,13 @@ Radiomics module not found in jupyter notebook
 
 I installed PyRadiomics, but when I run the jupyter notebook, I get ``ImportError: No module named radiomics``
 
-This can have two possible causes: 1) When installing PyRadiomics from the repository, your python path variable will be
-updated to enable python to find the package. However, this value is only updated in commandline windows when they are
-restarted. If your jupyter notebook was running during installation, you first need to restart it. 2) Multiple versions
-of python can be installed on your machine simultaneously. Ensure PyRadiomics is installed on the same version you are
-using in your Jupyter notebook.
+This can have two possible causes:
+
+1) When installing PyRadiomics from the repository, your python path variable will be updated to enable python to find
+   the package. However, this value is only updated in commandline windows when they are restarted. If your jupyter
+   notebook was running during installation, you first need to restart it.
+2) Multiple versions of python can be installed on your machine simultaneously. Ensure PyRadiomics is installed on the
+   same version you are using in your Jupyter notebook.
 
 I'm missing features from my output. How can I see what went wrong?
 ###################################################################
@@ -140,7 +142,7 @@ out, or stored in a separate log file. The output is regulated by :py:func:`radi
 logger can be accessed via ``radiomics.logger``. See also :ref:`here <radiomics-logging-label>` and the examples
 included in the repository on how to set up logging.
 
-I'm able to extract features, but many are NaN, 0 or 1. What happend?
+I'm able to extract features, but many are NaN, 0 or 1. What happened?
 #####################################################################
 
 It is possible that the segmentation was too small to extract a valid texture. Check the value of ``VoxelNum``, which is

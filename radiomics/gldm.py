@@ -1,6 +1,6 @@
 import numpy
 
-from radiomics import base, cMatrices, cMatsEnabled, deprecated, imageoperations
+from radiomics import base, cMatrices, deprecated
 
 
 class RadiomicsGLDM(base.RadiomicsFeaturesBase):
@@ -52,6 +52,8 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
   The following class specific settings are possible:
 
+  - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
+    angles should be generated.
   - gldm_a [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is considered
     dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
   """
@@ -72,73 +74,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
-    if cMatsEnabled:
-      self.P_gldm = self._calculateCMatrix()
-    else:
-      self.P_gldm = self._calculateMatrix()
+    self.P_gldm = self._calculateMatrix()
 
     self.logger.debug('Feature class initialized, calculated GLDM with shape %s', self.P_gldm.shape)
 
   def _calculateMatrix(self):
-
-    self.matrix = self.matrix.astype('float')
-
-    # Set voxels outside delineation to padding value
-    padVal = numpy.nan
-    self.matrix[~self.maskArray] = padVal
-
-    angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
-    angles = numpy.concatenate((angles, angles * -1))
-
-    depMat = numpy.zeros(self.matrix.shape, dtype='int')
-
-    with self.progressReporter(angles, desc='Calculate shifted matrices (GLDM)') as bar:
-      for a in bar:
-        # create shifted array (by angle), so that for an index idx, angMat[idx] is the neigbour of self.matrix[idx]
-        # for the current angle.
-        angMat = numpy.roll(numpy.roll(numpy.roll(self.matrix, -a[0], 0), -a[1], 1), -a[2], 2) - self.matrix
-        if a[0] > 0:
-          angMat[-a[0]:, :, :] = padVal
-        elif a[0] < 0:
-          angMat[:-a[0], :, :] = padVal
-
-        if a[1] > 0:
-          angMat[:, -a[1]:, :] = padVal
-        elif a[1] < 0:
-          angMat[:, :-a[1], :] = padVal
-
-        if a[2] > 0:
-          angMat[:, :, -a[2]:] = padVal
-        elif a[2] < 0:
-          angMat[:, :, :-a[2]] = padVal
-
-        nanMask = numpy.isnan(angMat)
-        depMat[~nanMask] += (numpy.abs(angMat[~nanMask]) <= self.gldm_a)
-
-    grayLevels = self.coefficients['grayLevels']
-    dependenceSizes = numpy.unique(depMat[self.maskArray])
-    P_gldm = numpy.zeros((len(grayLevels), len(dependenceSizes)))
-
-    with self.progressReporter(grayLevels, desc='calculate GLDM') as bar:
-      for i_idx, i in enumerate(bar):
-        i_mat = (self.matrix == i)
-        for d_idx, d in enumerate(dependenceSizes):
-          # By multiplying i_mat and depMat == d, a boolean area is obtained,
-          # where the number of elements that are true (1) is equal to the number of voxels
-          # with gray level i and dependence d.
-          P_gldm[i_idx, d_idx] = numpy.sum(i_mat * (depMat == d))
-
-    pd = numpy.sum(P_gldm, 0)
-    pg = numpy.sum(P_gldm, 1)
-
-    self.coefficients['ivector'] = grayLevels
-    self.coefficients['jvector'] = dependenceSizes
-    self.coefficients['pd'] = pd
-    self.coefficients['pg'] = pg
-    return P_gldm
-
-  def _calculateCMatrix(self):
-
     P_gldm, angles = cMatrices.calculate_gldm(self.matrix,
                                               self.maskArray,
                                               numpy.array(self.kwargs.get('distances', [1])),

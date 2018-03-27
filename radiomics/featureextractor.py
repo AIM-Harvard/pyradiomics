@@ -11,7 +11,7 @@ import pykwalify.core
 import SimpleITK as sitk
 import six
 
-from radiomics import enableCExtensions, generalinfo, getFeatureClasses, getImageTypes, getParameterValidationFiles, \
+from radiomics import generalinfo, getFeatureClasses, getImageTypes, getParameterValidationFiles, \
   imageoperations
 
 
@@ -78,10 +78,10 @@ class RadiomicsFeaturesExtractor:
   @classmethod
   def _getDefaultSettings(cls):
     """
-    Returns a dictionary containg the default settings specified in this class. These settings cover global toolbox
-    settings, such as ``enableCExtensions``, as well as the image pre-processing settings (e.g. resampling). Feature
-    class specific are defined in the respective feature classes and and not included here. Similarly, filter specific
-    settings are defined in ``imageoperations.py`` and also not included here.
+    Returns a dictionary containg the default settings specified in this class. These settings cover global settings,
+    such as ``additionalInfo``, as well as the image pre-processing settings (e.g. resampling). Feature class specific
+    are defined in the respective feature classes and and not included here. Similarly, filter specific settings are
+    defined in ``imageoperations.py`` and also not included here.
     """
     return {'minimumROIDimensions': 1,
             'minimumROISize': None,  # Skip testing the ROI size by default
@@ -97,7 +97,6 @@ class RadiomicsFeaturesExtractor:
             'force2Ddimension': 0,
             'resegmentRange': None,  # No resegmentation by default
             'label': 1,
-            'enableCExtensions': True,
             'additionalInfo': True}
 
   def _setTolerance(self):
@@ -350,9 +349,6 @@ class RadiomicsFeaturesExtractor:
         is used. Default label is 1.
     :returns: dictionary containing calculated signature ("<imageType>_<featureClass>_<featureName>":value).
     """
-    # Enable or disable C extensions for high performance matrix calculation. Only logs a message (INFO) when setting is
-    # successfully changed. If an error occurs, full-python mode is forced and a warning is logged.
-    enableCExtensions(self.settings['enableCExtensions'])
     if self.geometryTolerance != self.settings.get('geometryTolerance'):
       self._setTolerance()
 

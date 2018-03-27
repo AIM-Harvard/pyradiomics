@@ -28,7 +28,7 @@ There are three ways you can use pyradiomics:
   * ``python setup.py install``
 
   To use your build for interactive use and development:
-  * ``python setup.py develop``
+  * ``python setup.py build_ext --inplace``
 
   * If you don't have sudo/admin rights on your machine, you need to locally install numpy, nose, tqdm, PyWavelets, SimpleITK (specified in requirements.txt).
     In a bash shell::

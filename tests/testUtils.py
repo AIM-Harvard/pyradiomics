@@ -101,7 +101,7 @@ class RadiomicsTestUtils:
                      if os.path.isfile(os.path.join(self._baselineDir, fileName)) and fileName.startswith('baseline_')]
     assert len(baselineFiles) > 0
     for baselineFile in baselineFiles:
-      newBaseline = PyRadiomicsBaseline(os.path.join(self._baselineDir, baselineFile))
+      newBaseline = PyRadiomicsBaseline.readBaselineFile(os.path.join(self._baselineDir, baselineFile))
 
       cls = newBaseline.cls
       self._logger.debug('Read baseline for class %s', cls)
@@ -297,48 +297,56 @@ class RadiomicsTestUtils:
 
 class PyRadiomicsBaseline:
 
-  def __init__(self, baselineFile):
-    self._logger = logging.getLogger('radiomics.testing.baseline')
+  def __init__(self, featureClassName):
+    self.logger = logging.getLogger('radiomics.testing.baseline')
 
-    self.cls = os.path.basename(baselineFile)[9:-4]
+    self.cls = featureClassName
 
-    self._logger.debug('Reading baseline for class %s', self.cls)
-    self._configuration = {}
-    self._baseline = {}
+    self.configuration = {}
+    self.baseline = {}
+    self.tests = set()
+
+  @classmethod
+  def readBaselineFile(cls, baselineFile):
+    featureClassName = os.path.basename(baselineFile)[9:-4]
+
+    new_baseline = cls(featureClassName)
+    new_baseline.logger.debug('Reading baseline for class %s', new_baseline.cls)
 
     with open(baselineFile, 'r' if six.PY3 else 'rb') as baselineReader:
       csvReader = csv.reader(baselineReader)
       tests = six.next(csvReader)[1:]
 
       for case in tests:
-        self._configuration[case] = {}
-        self._baseline[case] = {}
+        new_baseline.configuration[case] = {}
+        new_baseline.baseline[case] = {}
 
       for testRow in csvReader:
         for case_idx, case in enumerate(tests, start=1):
           if 'general_info' in testRow[0]:
-            self._configuration[case][testRow[0]] = testRow[case_idx]
+            new_baseline.configuration[case][testRow[0]] = testRow[case_idx]
           else:
-            self._baseline[case][testRow[0]] = testRow[case_idx]
+            new_baseline.baseline[case][testRow[0]] = testRow[case_idx]
 
-      self.tests = set(tests)
+      new_baseline.tests = set(tests)
+    return new_baseline
 
   def getTestConfig(self, test):
-    if test not in self._configuration:
+    if test not in self.configuration:
       return {}  # This test is not present in the baseline for this class
 
     config = {
-      'TestCase': self._configuration[test].get('general_info_TestCase', None),
-      'Settings': ast.literal_eval(self._configuration[test].get('general_info_GeneralSettings', '{}')),
+      'TestCase': self.configuration[test].get('general_info_TestCase', None),
+      'Settings': ast.literal_eval(self.configuration[test].get('general_info_GeneralSettings', '{}')),
     }
 
-    if 'general_info_ImageHash' in self._configuration[test]:
-      config['ImageHash'] = self._configuration[test]['general_info_ImageHash']
-    if 'general_info_MaskHash' in self._configuration[test]:
-      config['MaskHash'] = self._configuration[test]['general_info_MaskHash']
+    if 'general_info_ImageHash' in self.configuration[test]:
+      config['ImageHash'] = self.configuration[test]['general_info_ImageHash']
+    if 'general_info_MaskHash' in self.configuration[test]:
+      config['MaskHash'] = self.configuration[test]['general_info_MaskHash']
 
     if config['TestCase'] is None:
-      self._logger.error('Missing key "general_info_TestCase". Cannot configure!')
+      self.logger.error('Missing key "general_info_TestCase". Cannot configure!')
       return None
 
     return config
@@ -348,11 +356,33 @@ class PyRadiomicsBaseline:
     Gets all features for which a baseline value is available for the current class and test case. Returns a list
     containing the feature names.
     """
-    if test not in self._baseline:
+    if test not in self.baseline:
       return None  # This test is not present in the baseline for this class
-    return list(self._baseline[test].keys())
+    return list(self.baseline[test].keys())
 
   def getBaselineValue(self, test, featureName):
-    if test not in self._baseline:
+    if test not in self.baseline:
       return None
-    return self._baseline[test].get(featureName, None)
+    return self.baseline[test].get(featureName, None)
+
+  def writeBaselineFile(self, baselineDir):
+    baselineFile = os.path.join(baselineDir, 'baseline_%s.csv' % self.cls)
+    testCases = list(self.baseline.keys())
+    with open(baselineFile, 'wb') as baseline:
+      csvWriter = csv.writer(baseline)
+      header = ['featureName'] + testCases
+      csvWriter.writerow(header)
+
+      config = self.configuration[testCases[0]].keys()
+      for c in config:
+        row = [c]
+        for testCase in testCases:
+          row.append(str(self.configuration[testCase].get(c, '')))
+        csvWriter.writerow(row)
+
+      features = self.baseline[testCases[0]].keys()
+      for f in features:
+        row = [f]
+        for testCase in testCases:
+          row.append(str(self.baseline[testCase].get(f, '')))
+        csvWriter.writerow(row)

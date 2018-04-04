@@ -2,22 +2,24 @@
 #include <math.h>
 #include <stdlib.h>
 
+int *generate_angles(int *size, int *strides, int *a_strides, int *Na, int *mDim);
+
 // Declare the look-up tables, these are filled at the bottom of this code file.
 static const int gridAngles[8][3];
-static const int edgeTable[128];
+//static const int edgeTable[128];  // Not needed in this implementation
 static const int triTable[128][16];
+static const double vertList[12][3];
 
-double calculate_surfacearea(char *mask, int *size, double *spacing)
+double calculate_surfacearea(char *mask, int *size, int *strides, double *spacing)
 {
-  int iz, iy, ix, i, j, t, d;  // iterator indices
+  int iz, iy, ix, i, t, d;  // iterator indices
   unsigned char cube_idx;  // cube identifier, 8 bits signifying which corners of the cube belong to the segmentation
-  int ang;  // Angle index (8 'angles', one pointing to each corner of the marching cube
-  double vertList[12][3];  // array to hold location of isosurface vectors (points) on the marching cube edges.
+  int a_idx;  // Angle index (8 'angles', one pointing to each corner of the marching cube
   double sum;
   double surfaceArea = 0;  // Total surface area
   double a[3], b[3], c[3];  // 2 points of the triangle, relative to the third, and the cross product vector
 
-    // Iterate over all voxels, do not include last voxels in the three dimensions, as the cube includes voxels at pos +1
+  // Iterate over all voxels, do not include last voxels in the three dimensions, as the cube includes voxels at pos +1
   for (iz = 0; iz < (size[0] - 1); iz++)
   {
     for (iy = 0; iy < (size[1] - 1); iy++)
@@ -26,32 +28,22 @@ double calculate_surfacearea(char *mask, int *size, double *spacing)
       {
         // Get current cube_idx by analyzing each point of the current cube
         cube_idx = 0;
-        i = ix + iy * size[2] + iz * size[2] * size[1];  // voxel at cube corner (0, 0, 0)
-        for (ang = 0; ang < 8; ang++)
+        for (a_idx = 0; a_idx < 8; a_idx++)
         {
-          j = i + gridAngles[ang][0] * size[2] * size[1] + gridAngles[ang][1] * size[2] + gridAngles[ang][2];
-          if (mask[j]) cube_idx |= (1 << ang);
+          i = (iz + gridAngles[a_idx][0]) * strides[0] +
+              (iy + gridAngles[a_idx][1]) * strides[1] +
+              (ix + gridAngles[a_idx][2]) * strides[2];
+
+          if (mask[i]) cube_idx |= (1 << a_idx);
         }
+
         // Isosurface is symmetrical around the midpoint, flip the number if > 128
         // This enables look-up tables to be 1/2 the size.
         if (cube_idx & 0x80) cube_idx ^= 0xff;
 
-        // Exlcude cubes entirely outside or inside the segmentation. Also exclude potential invalid values (> 128).
+        // Exlcude cubes entirely outside or inside the segmentation. Also exclude potential invalid values (>= 128).
         if (cube_idx > 0 && cube_idx < 128)
         {
-          if (edgeTable[cube_idx] & 1) interpolate(vertList[0], 1, 0, spacing);
-          if (edgeTable[cube_idx] & 2) interpolate(vertList[1], 2, 1, spacing);
-          if (edgeTable[cube_idx] & 4) interpolate(vertList[2], 2, 3, spacing);
-          if (edgeTable[cube_idx] & 8) interpolate(vertList[3], 3, 0, spacing);
-          if (edgeTable[cube_idx] & 16) interpolate(vertList[4], 5, 4, spacing);
-          if (edgeTable[cube_idx] & 32) interpolate(vertList[5], 6, 5, spacing);
-          if (edgeTable[cube_idx] & 64) interpolate(vertList[6], 6, 7, spacing);
-          if (edgeTable[cube_idx] & 128) interpolate(vertList[7], 7, 4, spacing);
-          if (edgeTable[cube_idx] & 256) interpolate(vertList[8], 4, 0, spacing);
-          if (edgeTable[cube_idx] & 512) interpolate(vertList[9], 5, 1, spacing);
-          if (edgeTable[cube_idx] & 1024) interpolate(vertList[10], 6, 2, spacing);
-          if (edgeTable[cube_idx] & 2048) interpolate(vertList[11], 7, 3, spacing);
-
           t = 0;
           while (triTable[cube_idx][t*3] >= 0) // Exit loop when no more triangles are present (element at index = -1)
           {
@@ -59,7 +51,13 @@ double calculate_surfacearea(char *mask, int *size, double *spacing)
             {
                 a[d] = vertList[triTable[cube_idx][t*3 + 1]][d] - vertList[triTable[cube_idx][t*3]][d];
                 b[d] = vertList[triTable[cube_idx][t*3 + 2]][d] - vertList[triTable[cube_idx][t*3]][d];
+
+                // Factor in the spacing
+                a[d] *= spacing[d];
+                b[d] *= spacing[d];
             }
+
+            // Compute the cross-product
             c[0] = (a[1] * b[2]) - (b[1] * a[2]);
             c[1] = (a[2] * b[0]) - (b[2] * a[0]);
             c[2] = (a[0] * b[1]) - (b[0] * a[1]);
@@ -85,76 +83,62 @@ double calculate_surfacearea(char *mask, int *size, double *spacing)
   return surfaceArea;
 }
 
-void interpolate(double *vertEntry, int a1, int a2, double *spacing)
-{
-  int d;
-
-  for (d = 0; d < 3; d++)
-  {
-    if (gridAngles[a1][d] == 1 && gridAngles[a2][d] == 1) vertEntry[d] = spacing[d];
-    else if (gridAngles[a1][d] != gridAngles[a2][d] ) vertEntry[d] = 0.5 * spacing[d];
-    else vertEntry[d] = 0;
-  }
-}
-
-int calculate_diameter(char *mask, int *size, double *spacing, int *angles, int Na, int Ns, double *diameters)
+int calculate_diameter(char *mask, int *size, int *strides, double *spacing, int Ns, double *diameters)
 {
   int iz, iy, ix, i, j;
-  int a, d;
+  int a_idx, d_idx;
+  int Na, mDim;
+  int *angles;
+  int a_strides[3];
 
   int *stack;
-  int stack_top = 0;
-  char isborder;
+  int stack_top = -1;
 
   int idx, jz, jy, jx;
   double dz, dy, dx;
   double distance;
 
-  stack = calloc(Ns, sizeof(int));
+  angles = generate_angles(size, strides, a_strides, &Na, &mDim);
+  stack = (int *)calloc(Ns, sizeof(int));
 
   // First, get all the voxels on the border
   i = 0;
-  for (iz = 0; iz < size[0]; iz++) // Iterate over all voxels in a row - column - slice order
+  // Iterate over all voxels in a row - column - slice order
+  // As the mask is padded with 0's, no voxels on the edge of the image are part of the mask, so skip those...
+  for (iz = 1; iz < size[0] - 1; iz++)
   {
-    for (iy = 0; iy < size[1]; iy++)
+    for (iy = 1; iy < size[1] - 1; iy++)
     {
-      for (ix = 0; ix < size[2]; ix++)
+      for (ix = 1; ix < size[2] - 1; ix++)
       {
+        i = iz * strides[0] +
+            iy * strides[1] +
+            ix * strides[2];
         if (mask[i])
         {
-          isborder = 0;
-          for (d = 1; d >= -1; d -= 2)
+          for (a_idx = 0; a_idx < Na; a_idx++)
           {
-            for (a = 0; a < Na; a++)
+            j = i;
+            for (d_idx = 0; d_idx < mDim; d_idx++)
             {
-              if (iz + d * angles[a * 3] < 0 || iz + d * angles[a * 3] >= size[0] ||
-                iy + d * angles[a * 3 + 1] < 0 || iy + d * angles[a * 3 + 1] >= size[1] ||
-                ix + d * angles[a * 3 + 2] < 0 || ix + d * angles[a * 3 + 2] >= size[2])
-              {
-                // 'i' is on the edge of the ROI, therefore a border voxel
-                isborder = 1;
-                stack[stack_top++] = i;
-                break;
-              }
-              j = i + d * angles[a * 3 + 2] +
-                d * angles[a * 3 + 1] * size[2] +
-                d * angles[a * 3] * size[1] * size[2];
-              if (mask[j] == 0)
-              {
-                // neighbour not part of ROI, i.e. 'i' is border voxel
-                isborder = 1;
-                if (stack_top >= Ns) return 0;  // index out of bounds
-                stack[stack_top++] = i;
-                break;
-              }
+              j += angles[a_idx * mDim + d_idx] * a_strides[d_idx];
             }
-            if (isborder) break;
+
+            if (mask[j] == 0)
+            {
+              // neighbour not part of ROI, i.e. 'i' is border voxel
+              if (stack_top >= Ns) return 0;  // index out of bounds
+              stack[++stack_top] = i;
+              break;
+            }
           }
         }
-        i++;
       }
     }
 	}
+  stack_top++; // increment by 1, so when the first item is popped, it is the last item entered
+
+	free(angles);
 
   diameters[0] = 0;
   diameters[1] = 0;
@@ -164,17 +148,16 @@ int calculate_diameter(char *mask, int *size, double *spacing, int *angles, int 
   while (stack_top > 0)
   {
     // pop the last item from the stack, this prevents double processing and comparing the same voxels
-	stack_top--;
-	i = stack[stack_top];
-    iz = (i / (size[1] * size[2]));
-    iy = (i % (size[1] * size[2])) / size[2];
-    ix = (i % (size[1] * size[2])) % size[2];
+    i = stack[--stack_top];
+    iz = (i / strides[0]);
+    iy = (i % strides[0]) / strides[1];
+    ix = (i % strides[0]) % strides[1];
     for (idx = 0; idx < stack_top; idx++)  // calculate distance to all other voxels
     {
       j = stack[idx];
-	    jz = (j / (size[1] * size[2]));
-      jy = (j % (size[1] * size[2])) / size[2];
-      jx = (j % (size[1] * size[2])) % size[2];
+	    jz = (j / strides[0]);
+      jy = (j % strides[0]) / strides[1];
+      jx = (j % strides[0]) % strides[1];
 
       dz = (double)(iz - jz) * spacing[0];
       dy = (double)(iy - jy) * spacing[1];
@@ -201,8 +184,55 @@ int calculate_diameter(char *mask, int *size, double *spacing, int *angles, int 
   return 1;
 }
 
-static const int gridAngles[8][3] = { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, {0, 1, 0}, { 1, 0, 0 }, {1, 0, 1 }, { 1, 1, 1 }, { 1, 1, 0 }};
-static const int edgeTable[128] = {
+int *generate_angles(int *size, int *strides, int *a_strides, int *Na, int *mDim)
+{
+  static int *angles;  // return value, declare static so it can be returned
+
+  int offsets[3] = {-1, 0, 1};  // distance 1, both directions
+  int a_idx, d_idx, a_offset, stride;
+
+  // First, determine how many 'moving' dimensions there are, this determines the number of distinct angles to generate
+  // Na = 3 ** NDIM(Size > 3) - 1, i.e. each dimension triples the number of angles, -1 to exclude (0, 0, 0)
+  *Na = 1;
+  *mDim = 0;
+  for (d_idx = 0; d_idx < 3; d_idx++)  // assume mask is 3D
+  {
+    if (size[d_idx] > 3)  // mask is padded with 0's in all directions, i.e. bounding box size = size - 2
+    {
+      // Dimension is a moving dimension
+      a_strides[*mDim] = strides[d_idx];
+      *Na *= 3;
+      (*mDim)++;
+    }
+  }
+  (*Na)--;  // Don't generate angle for (0, 0, 0)
+
+  // Initialize array to hold the angles
+  angles = (int *)calloc(*Na * *mDim, sizeof(int));
+
+  // Fill the angles array
+  stride = 1;
+  for (d_idx = 0; d_idx < *mDim; d_idx++)  // Iterate over all moving dimensions
+  {
+    a_offset = 0;
+    for (a_idx = 0; a_idx < *Na; a_idx++)
+    {
+      if (a_idx == *Na / 2) a_offset = 1;  // Skip (0, 0, 0) angle
+
+      angles[a_idx * *mDim + d_idx] = offsets[((a_idx + a_offset) / stride) % 3];
+    }
+    stride *= 3;  // For next dimension, multiply stride by 3 (length offsets) --> {1, 3, 9, ...}
+  }
+  return angles;
+}
+
+// gridAngles define the 8 corners of the marching cube, relative to the origin of the cube
+static const int gridAngles[8][3] = { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, {0, 1, 0}, { 1, 0, 0 }, {1, 0, 1 }, { 1, 1, 1 }, { 1, 1, 0 } };
+
+// edgeTable defines which edges contain intersection points, for which the exact intersection point has to be
+// interpolated. However, as the intersection point is always 0.5, this can be defined beforehand, and this table is not
+// needed
+/*static const int edgeTable[128] = {
   0x000, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c, 0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
   0x190, 0x099, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c, 0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
   0x230, 0x339, 0x033, 0x13a, 0x636, 0x73f, 0x435, 0x53c, 0xa3c, 0xb35, 0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30,
@@ -211,7 +241,11 @@ static const int edgeTable[128] = {
   0x5f0, 0x4f9, 0x7f3, 0x6fa, 0x1f6, 0x0ff, 0x3f5, 0x2fc, 0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0,
   0x650, 0x759, 0x453, 0x55a, 0x256, 0x35f, 0x055, 0x15c, 0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859, 0x950,
   0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0x0cc, 0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca, 0xac3, 0x9c9, 0x8c0
-};
+};*/
+
+// triTable defines which triangles (defined by their points as defined in vertList) are present in the cube.
+// The first dimension indicates the specific cube to look up, the second dimension contains sets of 3 points (1 for
+// each triangle), with the elements set to -1 after all triangles have been defined (max. no of triangles: 5)
 static const int triTable[128][16] = {
   { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
@@ -342,3 +376,14 @@ static const int triTable[128][16] = {
   { 7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0, -1, -1, -1, -1 },
   { 7, 11, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
 };
+
+// Vertlist represents the location of some point somewhere on an edge of the cube, relative to the origin (0, 0, 0).
+// As the points on the cube are always either 0 or 1 (masked/not-masked) that other point is always halfway.
+// Therefore, vertlist is constant and can be defined static (only works when the intersection point is constant
+// (in this case the intersection point is always 0.5). The edge represented is defined by the gridAngle points as follows:
+// { { 1, 0 }, { 2, 1 }, { 3, 2 }, { 3, 0 },
+//   { 5, 4 }, { 6, 5 }, { 7, 6 }, { 7, 4 },
+//   { 4, 0 }, { 5, 1 }, { 6, 2 }, { 7, 0 } }
+static const double vertList[12][3] = { { 0, 0, 0.5 }, { 0, 0.5, 1 }, { 0, 1, 0.5 }, { 0, 0.5, 0 },
+                                        { 1, 0, 0.5 }, { 1, 0.5, 1 }, { 1, 1, 0.5 }, { 1, 0.5, 0 },
+                                        { 0.5, 0, 0 }, { 0.5, 0, 1 }, { 0.5, 1, 1 }, { 0.5, 1, 0 } };

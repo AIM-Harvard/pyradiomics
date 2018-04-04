@@ -138,10 +138,14 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     return P_gldm
 
   def _calculateCMatrix(self):
-    angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
-    Ng = self.coefficients['Ng']
 
-    P_gldm = cMatrices.calculate_gldm(self.matrix, self.maskArray, angles, Ng, self.gldm_a)
+    P_gldm, angles = cMatrices.calculate_gldm(self.matrix,
+                                              self.maskArray,
+                                              numpy.array(self.kwargs.get('distances', [1])),
+                                              self.coefficients['Ng'],
+                                              self.gldm_a,
+                                              self.kwargs.get('force2D', False),
+                                              self.kwargs.get('force2Ddimension', 0))
 
     jvector = numpy.arange(1, P_gldm.shape[1] + 1, dtype='float64')
 

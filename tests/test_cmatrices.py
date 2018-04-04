@@ -67,5 +67,10 @@ class TestFeatures:
       pyMat = featureClass._calculateMatrix()
       assert pyMat is not None
 
+      if len(pyMat.shape) == 3:
+        # specific matrices per angle, so ensure angles are in the same order for python and C calculated matrices
+        pyMat = numpy.array([pyMat[:, :, x] for x in (12, 11, 10, 8, 7, 6, 4, 3, 2, 9, 5, 1, 0)])
+        pyMat = pyMat.transpose((1, 2, 0))
+
       # Check if the calculated arrays match
       assert numpy.max(numpy.abs(pyMat - cMat)) < 1e-3

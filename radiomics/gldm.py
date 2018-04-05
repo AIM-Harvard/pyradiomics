@@ -213,7 +213,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     r"""
     **3. Gray Level Non-Uniformity (GLN)**
 
-    ..math::
+    .. math::
       GLN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{N_z}
 
     Measures the similarity of gray-level intensity values in the image, where a lower GLN value

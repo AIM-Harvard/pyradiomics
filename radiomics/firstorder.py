@@ -278,7 +278,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       \textit{standard deviation} = \sqrt{\frac{1}{N_p}\sum^{N_p}_{i=1}{(\textbf{X}(i)-\bar{X})^2}}
 
     Standard Deviation measures the amount of variation or dispersion from the Mean Value. By definition,
-    :math:\textit{standard deviation} = \sqrt{\textit{variance}}
+    :math:`\textit{standard deviation} = \sqrt{\textit{variance}}`
 
     .. note::
       As this feature is correlated with variance, it is marked so it is not enabled by default.

@@ -5,8 +5,8 @@ import sys
 import numpy
 import six
 
-from radiomics import getFeatureClasses, generalinfo
-from testUtils import RadiomicsTestUtils, PyRadiomicsBaseline
+from radiomics import generalinfo, getFeatureClasses
+from testUtils import PyRadiomicsBaseline, RadiomicsTestUtils
 
 
 class AddBaseline:

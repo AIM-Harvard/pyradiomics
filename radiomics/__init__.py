@@ -256,9 +256,11 @@ logger.addHandler(handler)
 setVerbosity(logging.WARNING)
 
 # 2. Attempt to load and enable the C extensions.
+cMatrices = None  # set cMatrices to None to prevent an import error in the feature classes.
+cShape = None
 try:
-  from radiomics import _cmatrices as cMatrices
-  from radiomics import _cshape as cShape
+  from radiomics import _cmatrices as cMatrices  # noqa: F401
+  from radiomics import _cshape as cShape  # noqa: F401
 except ImportError as e:
   if os.path.isdir(os.path.join(os.path.dirname(__file__), '..', 'data')):
     # It looks like PyRadiomics is run from source (in which case "setup.py develop" must have been run)

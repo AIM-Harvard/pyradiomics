@@ -772,8 +772,11 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)): 
   if matrix.ndim != 3:
     raise ValueError('Expected 3D data array')
 
-  original_shape = matrix.shape  #original_shape becomes a tuple (?,?,?) containing the number of rows, columns, and slices of the image
-  padding = tuple([(0, 1 if dim % 2 != 0 else 0) for dim in original_shape])  # padding is necessary because of pywt.swtn (see function Notes)
+  original_shape = matrix.shape  
+  # original_shape becomes a tuple (?,?,?) containing the number of rows, columns, and slices of the image
+  
+  padding = tuple([(0, 1 if dim % 2 != 0 else 0) for dim in original_shape])  
+  # padding is necessary because of pywt.swtn (see function Notes)
   data = matrix.copy()  #creates a modifiable copy of "matrix" and we call it "data"
   data = numpy.pad(data, padding, 'wrap')  #padding the tuple "padding" previously computed
 
@@ -781,7 +784,9 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)): 
     wavelet = pywt.Wavelet(wavelet)
 
   for i in range(0, start_level):  # if start_level = 0 this for loop never gets executed
-    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0]  # computes all possible decompositions as saves them in "dec" dict
+    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0] 
+    # computes all possible decompositions as saves them in "dec" dict
+    
     data = dec['a' * len(axes)].copy()  # copies in "data" just the "aaa" decomposition (if len(axes) = 3) 
 
   ret = []  # initialize empty list
@@ -795,7 +800,9 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)): 
       decTemp = decTemp[[slice(None, -1 if dim % 2 != 0 else None) for dim in original_shape]]
       sitkImage = sitk.GetImageFromArray(decTemp)
       sitkImage.CopyInformation(inputImage)
-      dec_im[str(decName).replace('a', 'L').replace('d', 'H')] = sitkImage  # modifies 'a' with 'L' (Low-pass filter) and 'd' with 'H' (High-pass filter)
+      
+      dec_im[str(decName).replace('a', 'L').replace('d', 'H')] = sitkImage  
+      # modifies 'a' with 'L' (Low-pass filter) and 'd' with 'H' (High-pass filter)
 
     ret.append(dec_im)  # appending all the filtered sitk images (stored in "dec_im") to the "ret" list
 

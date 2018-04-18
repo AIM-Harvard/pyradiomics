@@ -768,26 +768,24 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
 
 def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)):  # Stationary Wavelet Transform 3D
   matrix = sitk.GetArrayFromImage(inputImage)  # This function gets a numpy array from the SimpleITK Image "inputImage"
-  matrix = numpy.asarray(matrix)  # The function np.asarray converts the variable "matrix" (which could be also a tuple) into an array. No copy is performed if "matrix" is already an array with matching type and order
+  matrix = numpy.asarray(matrix) # The function np.asarray converts "matrix" (which could be also a tuple) into an array.
   if matrix.ndim != 3:
     raise ValueError('Expected 3D data array')
 
   original_shape = matrix.shape  
   # original_shape becomes a tuple (?,?,?) containing the number of rows, columns, and slices of the image
   
-  padding = tuple([(0, 1 if dim % 2 != 0 else 0) for dim in original_shape])  
+  padding = tuple([(0, 1 if dim % 2 != 0 else 0) for dim in original_shape])
   # padding is necessary because of pywt.swtn (see function Notes)
-  data = matrix.copy()  #creates a modifiable copy of "matrix" and we call it "data"
-  data = numpy.pad(data, padding, 'wrap')  #padding the tuple "padding" previously computed
+  data = matrix.copy()  # creates a modifiable copy of "matrix" and we call it "data"
+  data = numpy.pad(data, padding, 'wrap')  # padding the tuple "padding" previously computed
 
   if not isinstance(wavelet, pywt.Wavelet):
     wavelet = pywt.Wavelet(wavelet)
 
   for i in range(0, start_level):  # if start_level = 0 this for loop never gets executed
-    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0] 
-    # computes all possible decompositions as saves them in "dec" dict
-    
-    data = dec['a' * len(axes)].copy()  # copies in "data" just the "aaa" decomposition (if len(axes) = 3) 
+    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0] # computes all decompositions and saves them in "dec" dict
+    data = dec['a' * len(axes)].copy()  # copies in "data" just the "aaa" decomposition (if len(axes) = 3)
 
   ret = []  # initialize empty list
   for i in range(start_level, start_level + level):
@@ -801,7 +799,7 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)): 
       sitkImage = sitk.GetImageFromArray(decTemp)
       sitkImage.CopyInformation(inputImage)
       
-      dec_im[str(decName).replace('a', 'L').replace('d', 'H')] = sitkImage  
+      dec_im[str(decName).replace('a', 'L').replace('d', 'H')] = sitkImage
       # modifies 'a' with 'L' (Low-pass filter) and 'd' with 'H' (High-pass filter)
 
     ret.append(dec_im)  # appending all the filtered sitk images (stored in "dec_im") to the "ret" list

@@ -6,8 +6,6 @@ mapping:
   setting: &settings
     type: map
     mapping:
-      enableCExtensions:
-        type: bool
       minimumROIDimensions:
         type: int
         range:

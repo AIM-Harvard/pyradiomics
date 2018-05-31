@@ -120,24 +120,28 @@ class GeneralInfo():
     else:
       return None
 
+  @classmethod
   def getVersionValue(self):
     """
     Return the current version of this package.
     """
     return radiomics.__version__
 
+  @classmethod
   def getNumpyVersionValue(self):
     """
     Return the current version of the numpy package, used for feature calculation.
     """
     return numpy.__version__
 
+  @classmethod
   def getSimpleITKVersionValue(self):
     """
     Return the current version of the SimpleITK package, used for image processing.
     """
     return sitk.Version().VersionString()
 
+  @classmethod
   def getPyWaveletVersionValue(self):
     """
     Return the current version of the PyWavelet package, used to apply the wavelet filter.

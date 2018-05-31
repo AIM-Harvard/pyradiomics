@@ -1,7 +1,7 @@
 import numpy
 from six.moves import range
 
-from radiomics import base, cMatrices, cMatsEnabled, imageoperations
+from radiomics import base, cMatrices
 
 
 class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
@@ -69,10 +69,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
-    if cMatsEnabled():
-      self.P_glszm = self._calculateCMatrix()
-    else:
-      self.P_glszm = self._calculateMatrix()
+    self.P_glszm = self._calculateMatrix()
 
     self._calculateCoefficients()
 
@@ -85,64 +82,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
     For 3D-images this concerns a 26-connected region, for 2D an 8-connected region
     """
-    self.logger.debug('Calculating GLSZM matrix in Python')
-
-    Np = self.coefficients['Np']
-    # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(self.boundingBoxSize,
-                                            force2D=self.kwargs.get('force2D', False),
-                                            force2Ddimension=self.kwargs.get('force2Ddimension', 0))
-
-    grayLevels = self.coefficients['grayLevels']
-
-    # Empty GLSZ matrix
-    P_glszm = numpy.zeros((len(grayLevels), Np))
-    maxRegion = 0
-
-    # If verbosity > INFO, or no progress reporter is set in radiomics.progressReporter, _dummyProgressReporter is used,
-    # which just iterates over the iterator without reporting progress
-    with self.progressReporter(grayLevels, desc='calculate GLSZM') as bar:
-      # Iterate over all gray levels in the image
-      for i_idx, i in enumerate(bar):
-        ind = zip(*numpy.where(self.matrix == i))
-        ind = list(set(ind).intersection(set(zip(*self.labelledVoxelCoordinates))))
-
-        while ind:  # check if ind is not empty: unprocessed regions for current gray level
-          # Pop first coordinate of an unprocessed zone, start new stack
-          ind_region = [ind.pop()]
-
-          # Define regionSize
-          regionSize = 0
-
-          # Grow zone for item popped from stack of region indices, loop until stack of region indices is exhausted
-          # Each loop represents one voxel belonging to current zone. Therefore, count number of loops as regionSize
-          while ind_region:
-            regionSize += 1
-
-            # Use pop to remove next node for set of unprocessed region indices
-            ind_node = ind_region.pop()
-
-            # get all coordinates in the 26-connected region, 2 voxels per angle
-            region_full = [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles]
-            region_full += [tuple(sum(a) for a in zip(ind_node, angle_i)) for angle_i in angles * -1]
-
-            # get all unprocessed coordinates in the 26-connected region with same gray level
-            region_level = list(set(ind).intersection(set(region_full)))
-
-            # Remove already processed indices to prevent reprocessing
-            ind = list(set(ind) - set(region_level))
-
-            # Add all found neighbours to the total stack of unprocessed neighbours
-            ind_region.extend(region_level)
-
-          # Update the gray level size zone matrix
-          P_glszm[i_idx, regionSize - 1] += 1
-          if maxRegion < regionSize:
-            maxRegion = regionSize
-
-    return P_glszm[:, 0:maxRegion]
-
-  def _calculateCMatrix(self):
     self.logger.debug('Calculating GLSZM matrix in C')
     Ng = self.coefficients['Ng']
     Ns = self.coefficients['Np']

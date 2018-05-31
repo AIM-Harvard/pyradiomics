@@ -214,8 +214,6 @@ Feature Extractor Level
 
 *Miscellaneous*
 
-- ``enableCExtensions`` [True]: Boolean, set to False to force calculation to full-python mode. See also
-  :py:func:`~radiomics.enableCExtensions()`.
 - ``additionalInfo`` [True]: boolean, set to False to disable inclusion of additional information on the extraction in the
   output. See also :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.addProvenance()`.
 
@@ -284,12 +282,11 @@ Feature Class Level
 
 - ``force2D`` [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
   the 'slice' can be defined in ``force2Ddimension``. If input ROI is already a 2D ROI, features are automatically
-  extracted in 2D. See also :py:func:`~radiomics.imageoperations.generateAngles`
+  extracted in 2D.
 - ``force2Ddimension`` [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. Value 0
   identifies the 'z' dimension (axial plane feature extraction), and features will be extracted from the xy plane.
   Similarly, 1 identifies the y dimension (coronal plane) and 2 the x dimension (saggital plane). if
-  ``force2Dextraction`` is set to False, this parameter has no effect. See also
-  :py:func:`~radiomics.imageoperations.generateAngles`
+  ``force2Dextraction`` is set to False, this parameter has no effect.
 
 *Texture matrix weighting*
 
@@ -312,7 +309,7 @@ Feature Class Level
 *Distance to neighbour*
 
 - ``distances`` [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
-  angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles`
+  angles should be generated.
 
 .. note::
 

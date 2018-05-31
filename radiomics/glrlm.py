@@ -1,9 +1,6 @@
-from itertools import chain
-
 import numpy
-from six.moves import range
 
-from radiomics import base, cMatrices, cMatsEnabled, imageoperations
+from radiomics import base, cMatrices
 
 
 class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
@@ -92,82 +89,13 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.coefficients['Nr'] = numpy.max(self.matrix.shape)
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
-    if cMatsEnabled():
-      self.P_glrlm = self._calculateCMatrix()
-    else:
-      self.P_glrlm = self._calculateMatrix()
+    self.P_glrlm = self._calculateMatrix()
 
     self._calculateCoefficients()
 
     self.logger.debug('GLRLM feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
 
   def _calculateMatrix(self):
-    self.logger.debug('Calculating GLRLM matrix in Python')
-
-    Ng = self.coefficients['Ng']
-    Nr = self.coefficients['Nr']
-
-    padVal = -2000  # use eps or NaN to pad matrix
-    self.matrix[(self.maskArray == 0)] = padVal
-
-    matrixDiagonals = []
-
-    # Do not pass kwargs directly, as distances may be specified, which must be forced to [1] for this class
-    angles = imageoperations.generateAngles(self.boundingBoxSize,
-                                            force2D=self.kwargs.get('force2D', False),
-                                            force2Ddimension=self.kwargs.get('force2Ddimension', 0))
-
-    self.logger.debug('Calculating diagonals')
-    for angle in angles:
-      staticDims, = numpy.where(angle == 0)  # indices for static dimensions for current angle (z, y, x)
-      movingDims, = numpy.where(angle != 0)  # indices for moving dimensions for current angle (z, y, x)
-
-      if len(movingDims) == 1:  # movement in one dimension, e.g. angle (0, 0, 1)
-        T = tuple(numpy.append(staticDims, movingDims))
-        diags = chain.from_iterable(numpy.transpose(self.matrix, T))
-
-      elif len(movingDims) == 2:  # movement in two dimension, e.g. angle (0, 1, 1)
-        d1 = movingDims[0]
-        d2 = movingDims[1]
-        direction = numpy.where(angle < 0, -1, 1)
-        diags = chain.from_iterable([self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, d1, d2)
-                                     for a in range(-self.matrix.shape[d1] + 1, self.matrix.shape[d2])])
-
-      else:  # movement in 3 dimensions, e.g. angle (1, 1, 1)/
-        diags = []
-        direction = numpy.where(angle < 0, -1, 1)
-        for h in [self.matrix[::direction[0], ::direction[1], ::direction[2]].diagonal(a, 0, 1)
-                  for a in range(-self.matrix.shape[0] + 1, self.matrix.shape[1])]:
-          diags.extend([h.diagonal(b, 0, 1) for b in range(-h.shape[0] + 1, h.shape[1])])
-
-      matrixDiagonals.append(filter(lambda diag: numpy.any(diag != padVal), diags))
-
-    P_glrlm = numpy.zeros((Ng, Nr, int(len(matrixDiagonals))))
-
-    # Run-Length Encoding (rle) for the list of diagonals
-    # (1 list per direction/angle)
-    self.logger.debug('Calculating run lengths')
-    for angle_idx, angle in enumerate(matrixDiagonals):
-      P = P_glrlm[:, :, angle_idx]
-      # Check whether delineation is 2D for current angle (all diagonals contain 0 or 1 non-pad value)
-      isMultiElement = False
-      for diagonal in angle:
-        if not isMultiElement and numpy.sum(diagonal != padVal) > 1:
-          isMultiElement = True
-        pos, = numpy.where(numpy.diff(diagonal) != 0)
-        pos = numpy.concatenate(([0], pos + 1, [len(diagonal)]))
-        rle = zip([int(n) for n in diagonal[pos[:-1]]], pos[1:] - pos[:-1])
-        for level, run_length in rle:
-          if level != padVal:
-            P[level - 1, run_length - 1] += 1
-      if not isMultiElement:
-        P[:] = 0
-
-    P_glrlm = self._applyMatrixOptions(P_glrlm, angles)
-
-    return P_glrlm
-
-  def _calculateCMatrix(self):
     self.logger.debug('Calculating GLRLM matrix in C')
     P_glrlm, angles = cMatrices.calculate_glrlm(self.matrix,
                                                 self.maskArray,
@@ -175,16 +103,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
                                                 self.coefficients['Nr'],
                                                 self.kwargs.get('force2D', False),
                                                 self.kwargs.get('force2Ddimension', 0))
-    P_glrlm = self._applyMatrixOptions(P_glrlm, angles)
 
-    return P_glrlm
-
-  def _applyMatrixOptions(self, P_glrlm, angles):
-    """
-    Further process the calculated matrix by cropping the matrix to between minimum and maximum observed gray-levels and
-    up to maximum observed run-length. Optionally apply a weighting factor. Finally delete empty angles and store the
-    sum of the matrix in ``self.coefficients``.
-    """
     self.logger.debug('Process calculated matrix')
 
     # Optionally apply a weighting factor

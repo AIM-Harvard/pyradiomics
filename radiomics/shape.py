@@ -1,8 +1,7 @@
 import numpy
 import SimpleITK as sitk
-from six.moves import range
 
-from radiomics import base, cMatsEnabled, cShape, deprecated
+from radiomics import base, cShape, deprecated
 
 
 class RadiomicsShape(base.RadiomicsFeaturesBase):
@@ -55,10 +54,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.Volume = Np * (z * x * y)
 
     # Compute Surface Area
-    if cMatsEnabled():
-      self.SurfaceArea = self._calculateCSurfaceArea()
-    else:
-      self.SurfaceArea = self._calculateSurfaceArea()
+    self.SurfaceArea = self._calculateSurfaceArea()
 
     # Compute eigenvalues and -vectors
     coordinates = numpy.array(self.labelledVoxelCoordinates, dtype='int').transpose((1, 0))  # Transpose equals zip(*a)
@@ -81,55 +77,11 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.logger.debug('Shape feature class initialized')
 
   def _calculateSurfaceArea(self):
-    self.logger.debug('Calculating Surface Area in Python')
-
-    # define relative locations of the 8 voxels of a sampling cube
-    gridAngles = numpy.array([(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0),
-                              (1, 0, 0), (1, 0, 1), (1, 1, 1), (1, 1, 0)])
-    # instantiate lookup tables
-    vertList, triTable = self._getMarchingTables()
-
-    minBounds = numpy.array([numpy.min(self.labelledVoxelCoordinates[0]), numpy.min(self.labelledVoxelCoordinates[1]),
-                             numpy.min(self.labelledVoxelCoordinates[2])])
-    maxBounds = numpy.array([numpy.max(self.labelledVoxelCoordinates[0]), numpy.max(self.labelledVoxelCoordinates[1]),
-                             numpy.max(self.labelledVoxelCoordinates[2])])
-    minBounds = numpy.where(minBounds < 1, 1, minBounds)
-    maxBounds = numpy.where(maxBounds > self.maskArray.shape, self.maskArray.shape, maxBounds)
-
-    S_A = 0.0
-    # iterate over all voxels which may border segmentation or are a part of it
-    for v_z in range(minBounds[0] - 1, maxBounds[0] + 1):
-      for v_y in range(minBounds[1] - 1, maxBounds[1] + 1):
-        for v_x in range(minBounds[2] - 1, maxBounds[2] + 1):
-          # indices to corners of current sampling cube
-          gridCell = gridAngles + [v_z, v_y, v_x]
-
-          # generate lookup index for current cube
-          cube_idx = 0
-          for p_idx, p in enumerate(gridCell):
-            if self.maskArray[tuple(p)] == 0:
-              cube_idx |= 1 << p_idx
-
-          # full lookup tables are symmetrical, if cube_idx >= 128, take the XOR,
-          # this allows for lookup tables to be half the size.
-          if cube_idx & 128:
-            cube_idx = cube_idx ^ 0xff
-
-          # calculate triangles
-          for triangle in triTable[cube_idx]:
-            a = vertList[triangle[1]] - vertList[triangle[0]]
-            b = vertList[triangle[2]] - vertList[triangle[0]]
-            c = numpy.cross(a, b)
-            S_A += .5 * numpy.sqrt(numpy.sum(c ** 2))
-
-    return S_A
-
-  def _calculateCSurfaceArea(self):
     self.logger.debug('Calculating Surface Area in C')
 
     return cShape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
 
-  def _calculateCDiameters(self):
+  def calculateDiameters(self):
     """
     Calculate maximum diameters in 2D and 3D using C extension. Function returns a tuple with 4 elements:
 
@@ -138,7 +90,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     2. Maximum 2D diameter Row (ZY Plane, Sagittal)
     3. Maximum 3D diameter
     """
-    self.logger.debug('Calculating Maximum 3D diameter in C')
+    self.logger.debug('Calculating Maximum diameters in C')
     Ns = len(self.labelledVoxelCoordinates[0])
     return cShape.calculate_diameter(self.maskArray, self.pixelSpacing, Ns)
 
@@ -293,15 +245,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     .. warning::
       This feature is only available when C Extensions are enabled
     """
-
-    if cMatsEnabled():
-      if self.diameters is None:
-        self.diameters = self._calculateCDiameters()
-      return self.diameters[3]
-    else:
-      self.logger.warning('For computational reasons, this feature is only implemented in C. Enable C extensions to '
-                          'calculate this feature.')
-      return numpy.nan
+    if self.diameters is None:
+      self.diameters = self.calculateDiameters()
+    return self.diameters[3]
 
   def getMaximum2DDiameterSliceFeatureValue(self):
     r"""
@@ -313,14 +259,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     .. warning::
       This feature is only available when C Extensions are enabled
     """
-    if cMatsEnabled():
-      if self.diameters is None:
-        self.diameters = self._calculateCDiameters()
-      return self.diameters[0]
-    else:
-      self.logger.warning('For computational reasons, this feature is only implemented in C. Enable C extensions to '
-                          'calculate this feature.')
-      return numpy.nan
+    if self.diameters is None:
+      self.diameters = self.calculateDiameters()
+    return self.diameters[0]
 
   def getMaximum2DDiameterColumnFeatureValue(self):
     r"""
@@ -332,14 +273,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     .. warning::
       This feature is only available when C Extensions are enabled
     """
-    if cMatsEnabled():
-      if self.diameters is None:
-        self.diameters = self._calculateCDiameters()
-      return self.diameters[1]
-    else:
-      self.logger.warning('For computational reasons, this feature is only implemented in C. Enable C extensions to '
-                          'calculate this feature.')
-      return numpy.nan
+    if self.diameters is None:
+      self.diameters = self.calculateDiameters()
+    return self.diameters[1]
 
   def getMaximum2DDiameterRowFeatureValue(self):
     r"""
@@ -351,14 +287,9 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     .. warning::
       This feature is only available when C Extensions are enabled
     """
-    if cMatsEnabled():
-      if self.diameters is None:
-        self.diameters = self._calculateCDiameters()
-      return self.diameters[2]
-    else:
-      self.logger.warning('For computational reasons, this feature is only implemented in C. Enable C extensions to '
-                          'calculate this feature.')
-      return numpy.nan
+    if self.diameters is None:
+      self.diameters = self.calculateDiameters()
+    return self.diameters[2]
 
   def getMajorAxisFeatureValue(self):
     r"""

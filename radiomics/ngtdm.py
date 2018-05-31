@@ -1,6 +1,6 @@
 import numpy
 
-from radiomics import base, cMatrices, cMatsEnabled, imageoperations
+from radiomics import base, cMatrices
 
 
 class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
@@ -75,7 +75,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
   The following class specific settings are possible:
 
   - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
-    angles should be generated. See also :py:func:`~radiomics.imageoperations.generateAngles`
+    angles should be generated.
 
   References
 
@@ -96,82 +96,10 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     self._applyBinning()
 
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
-    if cMatsEnabled:
-      self.P_ngtdm = self._calculateCMatrix()
-    else:
-      self.P_ngtdm = self._calculateMatrix()
+    self.P_ngtdm = self._calculateMatrix()
     self._calculateCoefficients()
 
   def _calculateMatrix(self):
-    Ng = self.coefficients['Ng']
-
-    self.matrix = self.matrix.astype('float')
-
-    # Set voxels outside delineation to padding value
-    padVal = numpy.nan
-    self.matrix[(self.maskArray == 0)] = padVal
-
-    angles = imageoperations.generateAngles(self.boundingBoxSize, **self.kwargs)
-    angles = numpy.concatenate((angles, angles * -1))
-
-    dataTemp = numpy.zeros(self.matrix.shape, dtype='float')
-    countMat = numpy.zeros(self.matrix.shape, dtype='int')
-
-    with self.progressReporter(angles, desc='Calculate shifted matrices (NGTDM)') as bar:
-      for a in bar:
-        # create shifted array (by angle), so that for an index idx, angMat[idx] is the neigbour of self.matrix[idx]
-        # for the current angle.
-        angMat = numpy.roll(numpy.roll(numpy.roll(self.matrix, -a[0], 0), -a[1], 1), -a[2], 2)
-        if a[0] > 0:
-          angMat[-a[0]:, :, :] = padVal
-        elif a[0] < 0:
-          angMat[:-a[0], :, :] = padVal
-
-        if a[1] > 0:
-          angMat[:, -a[1]:, :] = padVal
-        elif a[1] < 0:
-          angMat[:, :-a[1], :] = padVal
-
-        if a[2] > 0:
-          angMat[:, :, -a[2]:] = padVal
-        elif a[2] < 0:
-          angMat[:, :, :-a[2]] = padVal
-        nanmask = numpy.isnan(angMat)
-        dataTemp[~nanmask] += angMat[~nanmask]
-        countMat[~nanmask] += 1
-
-    # Average neighbourhood is the dataTemp (which is the sum of gray levels of neighbours that are non-NaN) divided by
-    # the countMat (which is the number of neighbours that are non-NaN)
-    nZeroMask = countMat > 0  # Prevent division by 0
-    dataTemp[nZeroMask] = dataTemp[nZeroMask] / countMat[nZeroMask]
-
-    # Only consider voxels that are part of the Mask AND have a neighbourhood
-    validMask = nZeroMask * self.maskArray.astype('bool')
-    dataTemp[validMask] = numpy.abs(dataTemp[validMask] - self.matrix[validMask])  # Calculate the absolute difference
-
-    P_ngtdm = numpy.zeros((Ng, 3), dtype='float')
-
-    # For each gray level present in self.matrix:
-    # element 0 = probability of gray level (p_i),
-    # element 1 = sum of the absolute differences (s_i),
-    # element 2 = gray level (i)
-    grayLevels = self.coefficients['grayLevels']
-    with self.progressReporter(grayLevels, desc='Calculate NGTDM') as bar:
-      for i in bar:
-        if not numpy.isnan(i):
-          i_ind = numpy.where(self.matrix == i)
-          P_ngtdm[int(i - 1), 0] = len(i_ind[0])
-          P_ngtdm[int(i - 1), 1] = numpy.sum(dataTemp[i_ind])
-
-    # Fill in gray levels (needed as empty gray level slices will be deleted)
-    P_ngtdm[:, 2] = numpy.arange(1, Ng + 1)
-
-    # Delete empty grey levels
-    P_ngtdm = numpy.delete(P_ngtdm, numpy.where(P_ngtdm[:, 0] == 0), 0)
-
-    return P_ngtdm
-
-  def _calculateCMatrix(self):
     P_ngtdm, angles = cMatrices.calculate_ngtdm(self.matrix,
                                                 self.maskArray,
                                                 numpy.array(self.kwargs.get('distances', [1])),

@@ -105,14 +105,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
     self.P_glcm = None
-
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
-    super(RadiomicsGLCM, self)._initSegmentBasedCalculation()
-
     self._applyBinning()
 
+  def _initCalculation(self):
     self.P_glcm = self._calculateMatrix()
 
     self._calculateCoefficients()
@@ -132,10 +127,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     P_glcm, angles = cMatrices.calculate_glcm(self.matrix,
                                               self.maskArray,
-                                              numpy.array(self.kwargs.get('distances', [1])),
+                                              numpy.array(self.settings.get('distances', [1])),
                                               Ng,
-                                              self.kwargs.get('force2D', False),
-                                              self.kwargs.get('force2Ddimension', 0))
+                                              self.settings.get('force2D', False),
+                                              self.settings.get('force2Ddimension', 0))
 
     self.logger.debug('Process calculated matrix')
 

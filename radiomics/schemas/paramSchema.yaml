@@ -121,6 +121,18 @@ mapping:
         range:
           min: 0
 
+  voxelSetting:
+    type: map
+    mapping:
+      kernelRadius:
+        type: int
+        range:
+          min-ex: 0
+      maskedKernel:
+        type: bool
+      initValue:
+        type: float
+
   featureClass:
     type: map
     func: checkFeatureClass

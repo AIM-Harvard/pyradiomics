@@ -59,14 +59,9 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLSZM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.P_glszm = None
-
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
-    super(RadiomicsGLSZM, self)._initSegmentBasedCalculation()
-
     self._applyBinning()
 
+  def _initCalculation(self):
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     self.P_glszm = self._calculateMatrix()
@@ -90,8 +85,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
                                                 self.maskArray,
                                                 Ng,
                                                 Ns,
-                                                self.kwargs.get('force2D', False),
-                                                self.kwargs.get('force2Ddimension', 0))
+                                                self.settings.get('force2D', False),
+                                                self.settings.get('force2Ddimension', 0))
 
     # Delete rows that specify gray levels not present in the ROI
     NgVector = range(1, Ng + 1)  # All possible gray values

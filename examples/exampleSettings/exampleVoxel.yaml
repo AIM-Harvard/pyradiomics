@@ -1,0 +1,17 @@
+
+imageType:
+  Original: {}
+
+featureClass:
+  glcm:
+    - JointEntropy
+
+setting:
+  binWidth: 25
+  force2D: true
+  label: 1
+
+voxelSetting:
+  kernelRadius: 2
+  maskedKernel: true
+  initValue: nan

@@ -34,9 +34,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     self.pixelSpacing = inputImage.GetSpacing()
     self.voxelArrayShift = kwargs.get('voxelArrayShift', 0)
 
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
+  def _initCalculation(self):
     super(RadiomicsFirstOrder, self)._initSegmentBasedCalculation()
     self.targetVoxelArray = self.imageArray[self.labelledVoxelCoordinates].astype('float')
 

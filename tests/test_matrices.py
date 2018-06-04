@@ -49,6 +49,7 @@ class TestFeatures:
     testMask = testUtils.getMask('original')
 
     featureClass = featureClasses[featureClassName](testImage, testMask, **testUtils.getSettings())
+    featureClass._initCalculation()
 
     cMat = getattr(featureClass, 'P_%s' % featureClassName)
     assert cMat is not None

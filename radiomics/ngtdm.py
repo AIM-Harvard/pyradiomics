@@ -87,14 +87,9 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     super(RadiomicsNGTDM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.P_ngtdm = None
-
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
-    super(RadiomicsNGTDM, self)._initSegmentBasedCalculation()
-
     self._applyBinning()
 
+  def _initCalculation(self):
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
     self.P_ngtdm = self._calculateMatrix()
     self._calculateCoefficients()
@@ -102,10 +97,10 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
   def _calculateMatrix(self):
     P_ngtdm, angles = cMatrices.calculate_ngtdm(self.matrix,
                                                 self.maskArray,
-                                                numpy.array(self.kwargs.get('distances', [1])),
+                                                numpy.array(self.settings.get('distances', [1])),
                                                 self.coefficients['Ng'],
-                                                self.kwargs.get('force2D', False),
-                                                self.kwargs.get('force2Ddimension', 0))
+                                                self.settings.get('force2D', False),
+                                                self.settings.get('force2Ddimension', 0))
 
     # Delete empty grey levels
     P_ngtdm = numpy.delete(P_ngtdm, numpy.where(P_ngtdm[:, 0] == 0), 0)

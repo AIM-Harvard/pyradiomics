@@ -64,14 +64,9 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.gldm_a = kwargs.get('gldm_a', 0)
 
     self.P_gldm = None
-
-    self._initSegmentBasedCalculation()
-
-  def _initSegmentBasedCalculation(self):
-    super(RadiomicsGLDM, self)._initSegmentBasedCalculation()
-
     self._applyBinning()
 
+  def _initCalculation(self):
     self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
 
     self.P_gldm = self._calculateMatrix()
@@ -81,11 +76,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
   def _calculateMatrix(self):
     P_gldm, angles = cMatrices.calculate_gldm(self.matrix,
                                               self.maskArray,
-                                              numpy.array(self.kwargs.get('distances', [1])),
+                                              numpy.array(self.settings.get('distances', [1])),
                                               self.coefficients['Ng'],
                                               self.gldm_a,
-                                              self.kwargs.get('force2D', False),
-                                              self.kwargs.get('force2Ddimension', 0))
+                                              self.settings.get('force2D', False),
+                                              self.settings.get('force2Ddimension', 0))
 
     jvector = numpy.arange(1, P_gldm.shape[1] + 1, dtype='float64')
 

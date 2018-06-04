@@ -75,7 +75,7 @@ class TestFeatures:
 
     featureClass.disableAllFeatures()
     featureClass.enableFeatureByName(featureName[-1])
-    featureClass.calculateFeatures()
+    featureClass.execute()
     # get the result and test it
     val = featureClass.featureValues[featureName[-1]]
     testUtils.checkResult(featureName, val)

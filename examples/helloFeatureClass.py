@@ -60,11 +60,11 @@ for f in firstOrderFeatures.enabledFeatures.keys():
   print(getattr(firstOrderFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating first order features...')
-firstOrderFeatures.calculateFeatures()
+results = firstOrderFeatures.execute()
 print('done')
 
 print('Calculated first order features: ')
-for (key, val) in six.iteritems(firstOrderFeatures.featureValues):
+for (key, val) in six.iteritems(results):
   print('  ', key, ':', val)
 
 #
@@ -79,11 +79,11 @@ for f in shapeFeatures.enabledFeatures.keys():
   print(getattr(shapeFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating Shape features...')
-shapeFeatures.calculateFeatures()
+results = shapeFeatures.execute()
 print('done')
 
 print('Calculated Shape features: ')
-for (key, val) in six.iteritems(shapeFeatures.featureValues):
+for (key, val) in six.iteritems(results):
   print('  ', key, ':', val)
 
 #
@@ -98,11 +98,11 @@ for f in glcmFeatures.enabledFeatures.keys():
   print(getattr(glcmFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating GLCM features...')
-glcmFeatures.calculateFeatures()
+results = glcmFeatures.execute()
 print('done')
 
 print('Calculated GLCM features: ')
-for (key, val) in six.iteritems(glcmFeatures.featureValues):
+for (key, val) in six.iteritems(results):
   print('  ', key, ':', val)
 
 #
@@ -117,11 +117,11 @@ for f in glrlmFeatures.enabledFeatures.keys():
   print(getattr(glrlmFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating GLRLM features...')
-glrlmFeatures.calculateFeatures()
+results = glrlmFeatures.execute()
 print('done')
 
 print('Calculated GLRLM features: ')
-for (key, val) in six.iteritems(glrlmFeatures.featureValues):
+for (key, val) in six.iteritems(results):
   print('  ', key, ':', val)
 
 #
@@ -136,11 +136,11 @@ for f in glszmFeatures.enabledFeatures.keys():
   print(getattr(glszmFeatures, 'get%sFeatureValue' % f).__doc__)
 
 print('Calculating GLSZM features...')
-glszmFeatures.calculateFeatures()
+results = glszmFeatures.execute()
 print('done')
 
 print('Calculated GLSZM features: ')
-for (key, val) in six.iteritems(glszmFeatures.featureValues):
+for (key, val) in six.iteritems(results):
   print('  ', key, ':', val)
 
 #
@@ -151,8 +151,8 @@ if applyLog:
   for logImage, imageTypeName, inputKwargs in imageoperations.getLoGImage(image, mask, sigma=sigmaValues):
     logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **inputKwargs)
     logFirstorderFeatures.enableAllFeatures()
-    logFirstorderFeatures.calculateFeatures()
-    for (key, val) in six.iteritems(logFirstorderFeatures.featureValues):
+    results = logFirstorderFeatures.execute()
+    for (key, val) in six.iteritems(results):
       laplacianFeatureName = '%s_%s' % (imageTypeName, key)
       print('  ', laplacianFeatureName, ':', val)
 #
@@ -162,8 +162,8 @@ if applyWavelet:
   for decompositionImage, decompositionName, inputKwargs in imageoperations.getWaveletImage(image, mask):
     waveletFirstOrderFeaturs = firstorder.RadiomicsFirstOrder(decompositionImage, mask, **inputKwargs)
     waveletFirstOrderFeaturs.enableAllFeatures()
-    waveletFirstOrderFeaturs.calculateFeatures()
+    results = waveletFirstOrderFeaturs.execute()
     print('Calculated firstorder features with wavelet ', decompositionName)
-    for (key, val) in six.iteritems(waveletFirstOrderFeaturs.featureValues):
+    for (key, val) in six.iteritems(results):
       waveletFeatureName = '%s_%s' % (str(decompositionName), key)
       print('  ', waveletFeatureName, ':', val)

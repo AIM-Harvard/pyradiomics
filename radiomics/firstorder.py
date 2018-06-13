@@ -375,8 +375,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     .. math::
       \textit{uniformity} = \displaystyle\sum^{N_g}_{i=1}{p(i)^2}
 
-    Uniformity is a measure of the sum of the squares of each intensity value. This is a measure of the heterogeneity of
-    the image array, where a greater uniformity implies a greater heterogeneity or a greater range of discrete intensity
+    Uniformity is a measure of the sum of the squares of each intensity value. This is a measure of the homogeneity of
+    the image array, where a greater uniformity implies a greater homogeneity or a smaller range of discrete intensity
     values.
 
     .. note::

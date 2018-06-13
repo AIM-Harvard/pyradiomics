@@ -9,8 +9,10 @@ import pykwalify.core
 
 from radiomics import getParameterValidationFiles
 
+
 def exampleSettings_name_func(testcase_func, param_num, param):
   return '%s_%s' % (testcase_func.__name__, os.path.splitext(os.path.basename(param.args[0]))[0])
+
 
 class TestExampleSettings:
   def __init__(self):

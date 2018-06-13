@@ -20,7 +20,7 @@ tests = sorted(testUtils.getTests())
 featureClasses = getFeatureClasses()
 
 
-class TestFeatures:
+class TestMatrices:
 
   def generate_scenarios():
     global tests, featureClasses

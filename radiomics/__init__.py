@@ -117,13 +117,15 @@ def getImageTypes():
 
 def getTestCase(testCase, dataDirectory=None):
   """
-  This function provides an image and mask for testing PyRadiomics. One of five test cases can be selected:
+  This function provides an image and mask for testing PyRadiomics. One of seven test cases can be selected:
 
    - brain1
    - brain2
    - breast1
    - lung1
    - lung2
+   - test_wavelet_64x64x64
+   - test_wavelet_37x37x37
 
   Checks if the test case (consisting of an image and mask file with signature <testCase>_image.nrrd and
   <testCase>_label.nrrd, respectively) is available in the ``dataDirectory``. If not available, the testCase is
@@ -134,8 +136,8 @@ def getTestCase(testCase, dataDirectory=None):
   If the test case has been found or downloaded successfully, this function returns a tuple of two strings:
   ``(path/to/image.nrrd, path/to/mask.nrrd)``. In case of an error ``(None, None)`` is returned.
   """
-  global logger
-  if testCase not in ['brain1', 'brain2', 'breast1', 'lung1', 'lung2']:
+  global logger, testCases
+  if testCase not in testCases:
     logger.error('Testcase "%s" not recognized!', testCase)
     return None, None
 
@@ -164,10 +166,16 @@ def getTestCase(testCase, dataDirectory=None):
     # Download the test case files (image and label)
     url = r'https://github.com/Radiomics/pyradiomics/releases/download/v1.0/%s_%s.nrrd'
 
-    logger.debug('Retrieving image at %s', url % (testCase, 'image'), imageFile)
-    urllib.request.urlretrieve(url % (testCase, 'image'), imageFile)
-    logger.debug('Retrieving mask at %s', url % (testCase, 'image'), maskFile)
-    urllib.request.urlretrieve(url % (testCase, 'label'), maskFile)
+    logger.debug('Retrieving image at %s', url % (testCase, 'image'))
+    fname, headers = urllib.request.urlretrieve(url % (testCase, 'image'), imageFile)
+    if headers.get('status', '') == '404 Not Found':
+      logger.warning('Unable to download image file at %s!', url % (testCase, 'image'))
+      return None, None
+
+    logger.debug('Retrieving mask at %s', url % (testCase, 'label'))
+    fname, headers = urllib.request.urlretrieve(url % (testCase, 'label'), maskFile)
+    if headers.get('status', '') == '404 Not Found':
+      logger.warning('Unable to download mask file at %s!', url % (testCase, 'label'))
 
     logger.info('Test case %s downloaded', testCase)
     return imageFile, maskFile
@@ -255,7 +263,10 @@ logger.addHandler(handler)
 # force level=WARNING for stderr handler, in case logging default is set differently (issue 102)
 setVerbosity(logging.WARNING)
 
-# 2. Attempt to load and enable the C extensions.
+# 2. Define the available test cases
+testCases = ('brain1', 'brain2', 'breast1', 'lung1', 'lung2', 'test_wavelet_64x64x64', 'test_wavelet_37x37x37')
+
+# 3. Attempt to load and enable the C extensions.
 cMatrices = None  # set cMatrices to None to prevent an import error in the feature classes.
 cShape = None
 try:
@@ -272,13 +283,13 @@ except ImportError as e:
     logger.critical('Error loading C extensions', exc_info=True)
     raise e
 
-# 3. Enumerate implemented feature classes and input image types available in PyRadiomics
+# 4. Enumerate implemented feature classes and input image types available in PyRadiomics
 _featureClasses = None
 _imageTypes = None
 getFeatureClasses()
 getImageTypes()
 
-# 4. Set the version using the versioneer scripts
+# 5. Set the version using the versioneer scripts
 from ._version import get_versions  # noqa: I202
 
 __version__ = get_versions()['version']

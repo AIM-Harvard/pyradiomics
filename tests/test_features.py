@@ -20,6 +20,7 @@ featureClass = None
 
 
 class TestFeatures:
+
   def generate_scenarios():
     global tests
     global extractor

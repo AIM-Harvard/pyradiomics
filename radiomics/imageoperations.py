@@ -896,7 +896,7 @@ def getLBP2DImage(inputImage, inputMask, **kwargs):
   .. note::
     LBP can often return only a very small number of different gray levels. A customized bin width is often needed.
   .. warning::
-    Requires package ``skimage`` to function. If not available, this filter logs a warning and does not yield an image.
+    Requires package ``scikit-image`` to function. If not available, this filter logs a warning and does not yield an image.
 
   References:
 

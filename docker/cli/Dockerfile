@@ -93,6 +93,9 @@ RUN git clone https://github.com/radiomics/pyradiomics.git && \
   python get-pip.py && \
   pip install wheel>=0.29.0 && \
   pip install setuptools>=28.0.0 && \
+  pip install scipy && \
+  pip install trimesh && \
+  pip install scikit-image && \
   pip install --trusted-host www.itk.org -f https://itk.org/SimpleITKDoxygen/html/PyDownloadPage.html SimpleITK>=0.9.1 && \
   python -c "import SimpleITK; print('SimpleITK Version:' + SimpleITK.Version_VersionString())" && \
   pip install -r requirements.txt && \

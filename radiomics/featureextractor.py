@@ -407,8 +407,7 @@ class RadiomicsFeaturesExtractor:
           for feature in enabledFeatures:
             shapeClass.enableFeatureByName(feature)
 
-        shapeClass.calculateFeatures()
-        for (featureName, featureValue) in six.iteritems(shapeClass.featureValues):
+        for (featureName, featureValue) in six.iteritems(shapeClass.execute()):
           newFeatureName = 'original_shape_%s' % featureName
           featureVector[newFeatureName] = featureValue
 

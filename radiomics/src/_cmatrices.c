@@ -157,7 +157,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
     Py_XDECREF(distances_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expecting calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error calculating angles.");
     return NULL;
   }
 
@@ -168,6 +168,17 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   dims[0] = Ng;
   dims[1] = Ng;
   dims[2] = n_a;
+
+  // Check that the maximum size of the array won't overflow the index variable (int32)
+  if (dims[0] * dims[1] * dims[2] > 2147483648)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLCM would overflow index variable! Increase bin width or decrease number of angles to prevent this error.");
+    return NULL;
+  }
+
   glcm_arr = (PyArrayObject *)PyArray_SimpleNew(3, dims, NPY_DOUBLE);
 
   // Get arrays in Ctype
@@ -243,7 +254,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expecting calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error calculating angles.");
     return NULL;
   }
 
@@ -285,6 +296,16 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   if (maxRegion == 0) maxRegion = 1;
   dims[0] = Ng;
   dims[1] = maxRegion;
+
+  // Check that the maximum size of the array won't overflow the index variable (int32)
+  if (dims[0] * dims[1] > 2147483648)
+  {
+    free(tempData);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLSZM would overflow index variable! Increase bin width to prevent this error.");
+    return NULL;
+  }
+
   glszm_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
   glszm = (double *)PyArray_DATA(glszm_arr);
 
@@ -351,7 +372,7 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expecting calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error calculating angles.");
     return NULL;
   }
 
@@ -359,6 +380,17 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   dims[0] = Ng;
   dims[1] = Nr;
   dims[2] = n_a;
+
+  // Check that the maximum size of the array won't overflow the index variable (int32)
+  if (dims[0] * dims[1] * dims[2] > 2147483648)
+  {
+    free(angles);
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLRLM would overflow index variable! Increase bin width or decrease number of angles to prevent this error.");
+    return NULL;
+  }
+
   glrlm_arr = (PyArrayObject *)PyArray_SimpleNew(3, dims, NPY_DOUBLE);
 
   // Get arrays in Ctype
@@ -439,7 +471,7 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
     Py_XDECREF(distances_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expecting distances array to be 1-dimensional.");
+    PyErr_SetString(PyExc_RuntimeError, "Error distances array to be 1-dimensional.");
     return NULL;
   }
 
@@ -466,6 +498,17 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   // Initialize output array (elements not set)
   dims[0] = Ng;
   dims[1] = 3;
+
+  // Check that the maximum size of the array won't overflow the index variable (int32)
+  if (dims[0] * dims[1] > 2147483648)
+  {
+    free(angles);
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Number of elements in NGTDM would overflow index variable! Increase bin width to prevent this error.");
+    return NULL;
+  }
+
   ngtdm_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
   // Get arrays in Ctype
@@ -563,7 +606,7 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
     Py_XDECREF(distances_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expecting calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error calculating angles.");
     return NULL;
   }
 
@@ -573,6 +616,17 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   // Initialize output array (elements not set)
   dims[0] = Ng;
   dims[1] = n_a * 2 + 1;  // No of possible dependency values = Na *2 + 1 (Na angels, 2 directions and +1 for no dependency)
+
+  // Check that the maximum size of the array won't overflow the index variable (int32)
+  if (dims[0] * dims[1] > 2147483648)
+  {
+    free(angles);
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLDM would overflow index variable! Increase bin width or decrease number of angles to prevent this error.");
+    return NULL;
+  }
+
   gldm_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
 
   // Get arrays in Ctype

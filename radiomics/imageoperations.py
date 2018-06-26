@@ -683,9 +683,9 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
 
   logger.debug('Generating Wavelet images')
 
-  axes = {2, 1, 0}  # set
+  axes = [2, 1, 0]
   if kwargs.get('force2D', False):
-    axes -= {kwargs.get('force2Ddimension', 0)}  # set
+    axes.remove(kwargs.get('force2Ddimension', 0))
 
   approx, ret = _swt3(inputImage, kwargs.get('wavelet', 'coif1'), kwargs.get('level', 1), kwargs.get('start_level', 0), axes=tuple(axes))
 

@@ -47,10 +47,6 @@ def getBinEdges(binwidth, parameterValues):
   if len(binEdges) == 1:  # Flat region, ensure that there is 1 bin
     binEdges = [binEdges[0] - .5, binEdges[0] + .5]  # Simulates binEdges returned by numpy.histogram if bins = 1
 
-  if len(binEdges) > 7000:
-    raise ValueError('Too many (%i) bins calculated! Absolute maximum number of bins is 7000, '
-                     'but ~100 bins is advised. Please increase bin width.' % len(binEdges))
-
   logger.debug('Calculated %d bins for bin width %g with edges: %s)', len(binEdges) - 1, binwidth, binEdges)
 
   return binEdges  # numpy.histogram(parameterValues, bins=binedges)

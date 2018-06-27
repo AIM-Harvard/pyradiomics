@@ -69,7 +69,7 @@ moduleinit(void)
                        module_methods, module_docstring);
 #endif
 
-  if (m == NULL)
+  if (!m)
       return NULL;
 
   return m;
@@ -127,7 +127,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   // Interpret the distance object as numpy array
   distances_arr = (PyArrayObject *)PyArray_FROM_OTF(distances_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
 
-  if (distances_arr == NULL)
+  if (!distances_arr)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -170,7 +170,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   dims[2] = n_a;
 
   // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] * dims[2] > 2147483648)
+  if (dims[0] * dims[1] * dims[2] > INT_MAX)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -180,6 +180,14 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   }
 
   glcm_arr = (PyArrayObject *)PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+  if (!glcm_arr)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Failed to initialize output array for GLCM");
+    return NULL;
+  }
 
   // Get arrays in Ctype
   image = (int *)PyArray_DATA(image_arr);
@@ -262,12 +270,12 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   // add +1 to the size so in the case every voxel represents a separate region,
   // tempData still contains a -1 element at the end
   tempData = (int *)calloc((2 * Ns) + 1, sizeof(int));
-  if (tempData == NULL)  // No memory allocated
+  if (!tempData)  // No memory allocated
   {
 	  Py_XDECREF(image_arr);
 	  Py_XDECREF(mask_arr);
 	  free(angles);
-	  PyErr_SetString(PyExc_RuntimeError, "Failed to allocate memory for tempData");
+	  PyErr_SetString(PyExc_RuntimeError, "Failed to allocate memory for tempData (GLSZM)");
 	  return NULL;
   }
 
@@ -298,7 +306,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   dims[1] = maxRegion;
 
   // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] > 2147483648)
+  if (dims[0] * dims[1] > INT_MAX)
   {
     free(tempData);
     free(angles);
@@ -307,6 +315,14 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   }
 
   glszm_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  if (!glszm_arr)
+  {
+    free(tempData);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Failed to initialize output array for GLSZM");
+    return NULL;
+  }
+
   glszm = (double *)PyArray_DATA(glszm_arr);
 
   // Set all elements to 0
@@ -382,7 +398,7 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   dims[2] = n_a;
 
   // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] * dims[2] > 2147483648)
+  if (dims[0] * dims[1] * dims[2] > INT_MAX)
   {
     free(angles);
     Py_XDECREF(image_arr);
@@ -392,6 +408,14 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   }
 
   glrlm_arr = (PyArrayObject *)PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+  if (!glrlm_arr)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Failed to initialize output array for GLRLM");
+    return NULL;
+  }
 
   // Get arrays in Ctype
   image = (int *)PyArray_DATA(image_arr);
@@ -458,7 +482,7 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   // Interpret the distance object as numpy array
   distances_arr = (PyArrayObject *)PyArray_FROM_OTF(distances_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
 
-  if (distances_arr == NULL)
+  if (!distances_arr)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -500,7 +524,7 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   dims[1] = 3;
 
   // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] > 2147483648)
+  if (dims[0] * dims[1] > INT_MAX)
   {
     free(angles);
     Py_XDECREF(image_arr);
@@ -510,6 +534,14 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   }
 
   ngtdm_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  if (!ngtdm_arr)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Failed to initialize output array for NGTDM");
+    return NULL;
+  }
 
   // Get arrays in Ctype
   image = (int *)PyArray_DATA(image_arr);
@@ -576,7 +608,7 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   // Interpret the distance object as numpy array
   distances_arr = (PyArrayObject *)PyArray_FROM_OTF(distances_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
 
-  if (distances_arr == NULL)
+  if (!distances_arr)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -618,7 +650,7 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   dims[1] = n_a * 2 + 1;  // No of possible dependency values = Na *2 + 1 (Na angels, 2 directions and +1 for no dependency)
 
   // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] > 2147483648)
+  if (dims[0] * dims[1] > INT_MAX)
   {
     free(angles);
     Py_XDECREF(image_arr);
@@ -628,6 +660,14 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   }
 
   gldm_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+  if (!gldm_arr)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Failed to initialize output array for GLDM");
+    return NULL;
+  }
 
   // Get arrays in Ctype
   image = (int *)PyArray_DATA(image_arr);
@@ -685,7 +725,7 @@ static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args)
   size_arr = (PyArrayObject *)PyArray_FROM_OTF(size_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
   distances_arr = (PyArrayObject *)PyArray_FROM_OTF(distances_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
 
-  if (size_arr == NULL || distances_arr == NULL)
+  if (!size_arr || !distances_arr)
   {
     Py_XDECREF(size_arr);
     Py_XDECREF(distances_arr);
@@ -738,7 +778,7 @@ static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args)
 
 int check_arrays(PyArrayObject *image_arr, PyArrayObject *mask_arr, int *size, int *strides)
 {
-  if (image_arr == NULL || mask_arr == NULL)
+  if (!image_arr || !mask_arr)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);

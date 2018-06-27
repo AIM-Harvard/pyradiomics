@@ -66,6 +66,9 @@ class RadiomicsFeaturesBase(object):
     self.settings = kwargs
 
     self.binWidth = kwargs.get('binWidth', 25)
+    # Although binCount is available, we advise use of binWidth!
+    # See documentation/FAQ/Input-Customization for more details.
+    self.binCount = kwargs.get('binCount', None)
     self.label = kwargs.get('label', 1)
     self.voxelBased = kwargs.get('voxelBased', False)
     self.initValue = kwargs.get('initValue', 0)
@@ -176,7 +179,8 @@ class RadiomicsFeaturesBase(object):
   def _applyBinning(self):
     self.matrix, self.binEdges = imageoperations.binImage(self.binWidth,
                                                           self.imageArray,
-                                                          self.maskArray)
+                                                          self.maskArray,
+                                                          self.settings.get('binCount', None))
     self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.maskArray])
     self.coefficients['Ng'] = int(numpy.max(self.coefficients['grayLevels']))  # max gray level in the ROI
 

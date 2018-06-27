@@ -75,6 +75,8 @@ used as input for PyRadiomics. Please note that only one file location can be pr
 provide the image in DICOM format, load the DICOM images using SimpleITK functionality and pass the resultant image
 object instead.
 
+.. _radiomics_geometry_mismatch:
+
 Geometry mismatch between image and mask
 ########################################
 
@@ -141,6 +143,62 @@ happens inside the toolbox, PyRadiomics provides extensive debug logging. You ca
 out, or stored in a separate log file. The output is regulated by :py:func:`radiomics.setVerbosity` and the PyRadiomics
 logger can be accessed via ``radiomics.logger``. See also :ref:`here <radiomics-logging-label>` and the examples
 included in the repository on how to set up logging.
+
+I'm unable to calculate texture matrices and getting a RunTimeError instead
+###########################################################################
+
+This error means that something went wrong during the calculation of the matrices in the C extensions.
+There are several potential causes for this error:
+
+- "Error parsing array arguments."
+
+This error is thrown when either the Image or the Mask provided to the function could not be interpreted as a numpy array.
+
+- "Expected a 3D array for image and mask."
+
+Thrown when either the Image or Mask Provided did not have 3 dimensions (in case of a single slice calculation, the
+input arrays should still have 3 dimensions, although one of them will then have a size of 1).
+
+- "Dimensions of image and mask do not match."
+
+This means that the size of the mask array does not match the size of the image array. Because numpy arrays do not
+contain information on the transformation to the physical world, input arrays of differing sizes cannot be matched.
+You can solve this error by resampling the SimplITK-Image object of the Mask to the geometry of the Image before
+converting them to their respective numpy arrays for feature calculation. See also :ref:`radiomics_geometry_mismatch`.
+
+- "Error parsing distances array."
+
+This error is shown if the C extension was not able to interpret the distances argument that was provided. In the
+settings, the ``distances`` parameter should be either a tuple or a list of values.
+
+- "Expecting distances array to be 1-dimensional."
+
+Again an error in the provided distances. The list provided should be 1 dimensional (i.e. no nested lists).
+
+- "Error calculating angles."
+
+This error means there was an issue in generating the angles based on the distances provided. Currently, this only
+occurs when distances < 1 are provided.
+
+- "Number of elements in <Matrix> would overflow index variable! (...)"
+
+This error is shown when the size of the (flattened) output array would be larger than the maximum integer value
+(~2 mln). This is generally caused by a too large number of bins after discretization, resulting in a too large range of
+gray values in the discretized image used for texture calculation. We generally advise to chose a bin width so, that the
+number of bins after discretization does not exceed 150-200. Running the code with DEBUG logging enabled shows the
+number of bins that are generated and may help to give an indication as to how large your matrices are.
+
+- "Failed to initialize output array for <Matrix>"
+
+This means that the computer was unable to allocate memory for the output. This is most likely due to a too large output
+size or too little free memory being available. Similar as above, run with DEBUG logging to see how many bins are
+generated (giving an indication on how large the output matrices are).
+
+- "Calculation of <Matrix> Failed."
+
+This error means there was a problem in the calculation of the matrix itself. It is generally thrown if the code tries
+to set an element in the output array that is out-of-range. This can happen if there are voxels inside the ROI that
+have gray values that are larger than the ``Ng`` parameter that is provided when calling the C function from Python.
 
 I'm able to extract features, but many are NaN, 0 or 1. What happened?
 ######################################################################

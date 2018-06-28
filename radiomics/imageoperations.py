@@ -741,6 +741,11 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)): 
 
     dec_im = {}  # initialize empty dict
     for decName, decImage in six.iteritems(dec):
+      # Returning the approximiation is done only for the last loop,
+      # and is handled separately below (by building it from `data`)
+      # There for, skip it here
+      if decName == 'a' * len(axes):
+        continue
       decTemp = decImage.copy()
       decTemp = decTemp[[slice(None, -1 if dim % 2 != 0 else None) for dim in original_shape]]
       sitkImage = sitk.GetImageFromArray(decTemp)

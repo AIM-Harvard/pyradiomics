@@ -85,6 +85,9 @@ setup(
     ]},
 
   description='Radiomics features library for python',
+  long_description=long_description,
+  long_description_content_type='text/markdown',
+
   license='BSD License',
 
   classifiers=[

@@ -97,8 +97,9 @@ jobs:
             python -m pip install --no-cache-dir -r requirements-dev.txt
             python setup.py install
       - run:
-          name: install twine, auditwheel
+          name: appget patchelf, install twine, auditwheel
           command: |
+            apt-get install patchelf
             python -m pip install auditwheel
             python -m pip install twine
       - run:

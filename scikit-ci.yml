@@ -39,18 +39,7 @@ before_build:
 
 build:
   commands:
-    - python setup.py sdist
-    - $<RUN_ENV> python setup.py bdist_wheel
-
-#  circle:
-#    commands:
-#      - |
-#        # Since there are no external shared libraries to bundle into the wheels
-#        # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
-#        for whl in dist/*$(uname -p).whl; do
-#            auditwheel repair $whl -w ./dist/
-#            rm $whl
-#        done
+    - $<RUN_ENV> python setup.py build_ext
 
 test:
   commands:
@@ -59,4 +48,20 @@ test:
   circleci:
     commands:
       - cp nosetests.xml $CIRCLE_TEST_REPORTS
+
+after_test:
+  commands:
+    - $<RUN_ENV> python setup.py bdist_wheel
+
+  circle:
+    commands:
+      # only build source distribution for Linux build (only one needed for publication)
+      - python setup.py sdist
+      # Since there are no external shared libraries to bundle into the wheels
+      # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
+      - |
+        for whl in dist/*$(uname -p).whl; do
+            auditwheel repair $whl -w ./dist/
+            rm $whl
+        done
 

@@ -1,25 +1,46 @@
+.. _radiomics-installation-label:
+
 ============
 Installation
 ============
 
 There are three ways you can use pyradiomics:
-1. Install from source
-2. Use 3D Slicer Radiomics extension
-3. Use pyradiomics Docker
+1. Install via pip
+2. Install from source
+3. Use 3D Slicer Radiomics extension
+4. Use pyradiomics Docker
+
+------------------
+1. Install via pip
+------------------
+
+As of version 2.0.0, PyRadiomics will be available for installation via pip. For the python versions
+mentioned below, wheels are automatically generated for each release of PyRadiomics, allowing you to
+install pyradiomics without having to compile anything. For other python versions, a source distribution
+is also available, but this requires compiling the C extensions.
+
+* Ensure that you have ``python`` installed on your machine, version 2.7, 3.4, 3.5 or 3.6 (64-bits).
+
+* Install PyRadiomics:
+
+    * ``python -m pip install pyradiomics``
 
 ----------------------
-1. Install from source
+2. Install from source
 ----------------------
+
+PyRadiomics can also be installed from source code. This allows for the bleeding edge version, but does
+require you to have a compiler set up for python, as PyRadiomics comes with C extensions for the calculation
+of texture matrices and some shape features.
 
 * Ensure you have the version control system ``git`` installed on your machine.
 
-* Ensure that you have ``python`` installed on your machine, at least version 2.7 or 3.4.
+* Ensure that you have ``python`` installed on your machine, at least version 2.7 or 3.4 (64-bits).
 
 * Clone the repository:
 
   * ``git clone git://github.com/Radiomics/pyradiomics``
 
-.. _installation-label:
 
 * For unix like systems (MacOSX, linux):
 
@@ -44,8 +65,12 @@ There are three ways you can use pyradiomics:
   * ``python -m pip install -r requirements.txt``
   * ``python setup.py install``
 
+* If the installation fails, check out the :ref:`radiomics-faq-label`. If your error is not listed there,
+  contact us by `creating an issue <https://github.com/Radiomics/pyradiomics/issues/new>`_ on the PyRadiomics
+  Github.
+
 ------------------------------------
-2. Use 3D Slicer Radiomics extension
+3. Use 3D Slicer Radiomics extension
 ------------------------------------
 
 3D Slicer is a free open source research platform for medical image computing. Learn more and download 3D Slicer binary for your platform here: http://slicer.org.
@@ -57,7 +82,7 @@ of tools in 3D Slicer to automate your segmentation tasks.
 More detailed instructions about installing 3D Slicer Radiomics extension are available here: https://github.com/Radiomics/SlicerRadiomics
 
 -------------------------
-3. Use pyradiomics Docker
+4. Use pyradiomics Docker
 -------------------------
 
 This approach may be preferred if you are interested in using pyradiomics from the command line, but have difficulties installing the library on your system.

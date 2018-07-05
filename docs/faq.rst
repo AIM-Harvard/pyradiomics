@@ -1,3 +1,5 @@
+.. _radiomics-faq-label:
+
 ==========================
 Frequently Asked Questions
 ==========================
@@ -28,9 +30,9 @@ compiles the C extensions end copies them to the source folder (making them avai
 Which python versions is PyRadiomics compatible with?
 #####################################################
 
-PyRadiomics is compatible with both python 2 and python 3. The automated testing uses python versions 2.7, 3.4 and 3.5
-(only 64 bits architecture). Python < 2.6 is not supported. Other python versions may be compatible with PyRadiomics,
-but this is not actively tested and therefore not guaranteed to work.
+PyRadiomics is compatible with both python 2 and python 3. The automated testing uses python versions 2.7, 3.4, 3.5 and
+3.6 (only 64 bits architecture). Python < 2.6 is not supported. Other python versions may be compatible with
+PyRadiomics, but this is not actively tested and therefore not guaranteed to work.
 
 Input / Customization
 ---------------------

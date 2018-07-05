@@ -110,20 +110,14 @@ See also the `requirements file <https://github.com/Radiomics/pyradiomics/blob/m
 Installation
 ------------
 
-PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4.
+PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4. As of version 2.0,
+PyRadiomics releases are also made available on PyPi. To install PyRadiomics, ensure you have python
+installed and run:
 
-* Clone the repository
+*  ``python -m pip install pyradiomics``
 
-  * ``git clone git://github.com/Radiomics/pyradiomics``
-
-* Install on your system (Linux, Mac OSX), with prerequisites:
-
-  * ``cd pyradiomics``
-  * ``python -m pip install -r requirements.txt``
-  * ``python setup.py install``
-
-* For more detailed installation instructions and installation on Windows see
-  :ref:`Installation Details<installation-label>`
+For more detailed installation instructions and building from source,
+see :ref:`radiomics-installation-label` section.
 
 Pyradiomics Indices and Tables
 ------------------------------

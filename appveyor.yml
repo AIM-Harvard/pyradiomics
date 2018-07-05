@@ -20,6 +20,11 @@ environment:
       PYTHON_ARCH: "64"
       BLOCK: "0"
 
+    - PYTHON_DIR: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.x"
+      PYTHON_ARCH: "64"
+      BLOCK: "0"
+
 init:
   - python -m pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0
   - python -m ci_addons --install ../addons

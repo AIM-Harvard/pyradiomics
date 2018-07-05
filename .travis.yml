@@ -5,25 +5,31 @@ language: python
 matrix:
   include:
 
-#    - os: osx
-#      language: generic
-#      env:
-#        - PYTHON_VERSION=3.5.2
-
-#    - os: osx
-#      language: generic
-#      env:
-#        - PYTHON_VERSION=3.4.5
-
     - os: osx
       language: generic
       env:
         - PYTHON_VERSION=2.7.12
 
+    - os: osx
+      language: generic
+      env:
+        - PYTHON_VERSION=3.4.8
+
+    - os: osx
+      language: generic
+      env:
+        - PYTHON_VERSION=3.5.5
+
+    - os: osx
+      language: generic
+      env:
+        - PYTHON_VERSION=3.6.5
+
 cache:
   directories:
-    - $HOME/.pyenv/versions/3.5.2
-    - $HOME/.pyenv/versions/3.4.5
+    - $HOME/.pyenv/versions/3.6.5
+    - $HOME/.pyenv/versions/3.5.5
+    - $HOME/.pyenv/versions/3.4.8
     - $HOME/.pyenv/versions/2.7.12
     - $HOME/downloads
 

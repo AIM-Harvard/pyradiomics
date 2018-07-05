@@ -1,4 +1,4 @@
-# pyradiomics v1.3.0
+# pyradiomics v2.0.0
 
 ## Build Status
 

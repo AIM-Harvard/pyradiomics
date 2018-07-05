@@ -6,6 +6,10 @@ Release Notes
 Next Release
 ------------
 
+-----------------
+PyRadiomics 2.0.0
+-----------------
+
 Feature Calculation Changes
 ###########################
 
@@ -29,6 +33,8 @@ New Features
   (`#334 <https://github.com/Radiomics/pyradiomics/pull/334>`_)
 - Add Gradient Magnitude Filter. (`#356 <https://github.com/Radiomics/pyradiomics/pull/356>`_)
 - Add Local Binary Pattern Filter (2D/3D). (`#357 <https://github.com/Radiomics/pyradiomics/pull/357>`_)
+- Add support for Gray Value discretization using a fixed bin count.
+  (`#386 <https://github.com/Radiomics/pyradiomics/pull/386>`_)
 
 Bug fixes
 #########
@@ -47,12 +53,23 @@ Bug fixes
   (`#355 <https://github.com/Radiomics/pyradiomics/pull/355>`_)
 - Update validation rule for image filters (remove hardcoded filters by package-detected filters).
   (`#364 <https://github.com/Radiomics/pyradiomics/pull/364>`_)
+- Add missing requirements for LBP filters in the dockerfile.
+  (`#389 <https://github.com/Radiomics/pyradiomics/pull/389>`_)
+- Fix deprecation error in feature extractor. (`da1fc16 <https://github.com/Radiomics/pyradiomics/commit/da1fc16>`_)
+- Fix axis definition in wavelet. (`4027a52 <https://github.com/Radiomics/pyradiomics/commit/4027a52>`_)
+- Fix erroneous double return of wavelet approximation.
+  (`c8ceee2 <https://github.com/Radiomics/pyradiomics/commit/c8ceee2>`_)
 
 Tests
 #####
 
 - Improve testing badge layout. (`#312 <https://github.com/Radiomics/pyradiomics/pull/312>`_)
 - Remove unused testing configuration files. (`#313 <https://github.com/Radiomics/pyradiomics/pull/313>`_)
+- Add testing for wavelet output. (`#387 <https://github.com/Radiomics/pyradiomics/pull/387>`_)
+- Integrate publication to PyPi into the Continuous Integration, revise the CI workflow to test
+  python 2.7, 3.4, 3.5 and 3.6 for all 3 platforms (Windows, Mac and Linux).
+  **N.B. This makes PyRadiomics installable via pip**
+  (`#394 <https://github.com/Radiomics/pyradiomics/pull/394>`_)
 
 Documentation
 #############
@@ -68,6 +85,10 @@ Documentation
   (`#342 <https://github.com/Radiomics/pyradiomics/pull/342>`_)
 - Add documentation for the calculation of Laplacian of Gaussian.
   (`#345 <https://github.com/Radiomics/pyradiomics/pull/345>`_)
+- Add refrences for the newly implemented filters
+  (`4464d1c <https://github.com/Radiomics/pyradiomics/commit/4464d1c>`_)
+- Fix an error in the firstorder-Uniformity documentation.
+  (`da7321d <https://github.com/Radiomics/pyradiomics/commit/da7321d>`_)
 
 Examples
 ########
@@ -91,6 +112,9 @@ Internal API
 - Reconfigur testing to allow the removal of testcases from the repository itself (still available as binary data
   attached to release 1.0.0) and store the baseline in a different format (allowing for easier change-tracking)
   (`#353 <https://github.com/Radiomics/pyradiomics/pull/353>`_)
+- Add a check for number of bins generated (preventing construction of too large matrices in C)
+  (`#391 <https://github.com/Radiomics/pyradiomics/pull/391>`_,
+  `#393 <https://github.com/Radiomics/pyradiomics/pull/393>`_)
 
 -----------------
 PyRadiomics 1.3.0

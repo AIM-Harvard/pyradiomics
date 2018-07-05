@@ -132,7 +132,7 @@ jobs:
             done
       - run:
           name: Deploy source and linux wheels
-          command: twine upload --repository-url https://test.pypi.org/legacy/ ./dist/*.whl ./dist/*.tar.gz -u $PYPI_USER -p $PYPI_PASSWORD
+          command: twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_USER -p $PYPI_PASSWORD
 
 workflows:
   version: 2

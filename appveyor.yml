@@ -55,7 +55,7 @@ deploy_script:
   - echo "checking deployment"
   - ps: if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?\d(\.\d)*(-rc\d+)?$') { appveyor exit }
   - echo "starting deployment"
-  - twine upload --repository-url https://test.pypi.org/legacy/ dist/*.whl -u %PYPI_USER% -p %PYPI_PASSWORD%
+  - twine upload dist/*.whl -u %PYPI_USER% -p %PYPI_PASSWORD%
   - echo "finished deployment"
 
 matrix:

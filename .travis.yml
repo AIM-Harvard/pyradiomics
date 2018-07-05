@@ -52,7 +52,7 @@ before_deploy:
 deploy:
   provider: script
   skip_cleanup: true
-  script: twine upload --repository-url https://test.pypi.org/legacy/ dist/*.whl -u $PYPI_USER -p $PYPI_PASSWORD
+  script: twine upload dist/*.whl -u $PYPI_USER -p $PYPI_PASSWORD
   on:
     tags: true
     condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(-rc[0-9]+)?$

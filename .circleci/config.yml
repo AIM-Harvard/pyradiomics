@@ -4,19 +4,22 @@
 
 version: 2
 jobs:
-  build:
+  test-notebooks:
     working_directory: /pyradiomics
     docker:
       - image: jupyter/datascience-notebook
         user: root
     steps:
-      - checkout
       - run:
           # CircleCI says we need SSH and the docker doesn't have it installed
           name: Update
           command: |
             apt-get update
             apt-get install -y openssh-client openssh-server
+      - run:
+          name: Avoid hosts unknown for github
+          command: echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > /etc/ssh/ssh_config
+      - checkout
       - run:
           # Jupyter datascience notebook does not support python 2 anymore, install it manually.
           # See also https://github.com/jupyter/docker-stacks/issues/432
@@ -40,18 +43,128 @@ jobs:
             python -m pip install --no-cache-dir -r requirements-dev.txt
             python setup.py install
       - run:
-          name: Run tests in Python 2
-          command: |
-            source activate python2
-            nosetests
-      - run:
-          name: Run tests in Python 3
-          command: |
-            source activate root
-            nosetests
-      - run:
           name: test notebooks in python 2 and 3
           command: |
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
-
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
+
+  build-2.7: &build_template
+    working_directory: /pyradiomics
+    docker:
+      - image: circleci/python:2.7-jessie
+        user: root
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /pyradiomics
+      - run:
+          name: Setup SciKit-CI
+          command: |
+            pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0
+            ci_addons --install ../addons
+      - run:
+          name: Install
+          command: ci install
+      - run:
+          name: Test
+          command: ci test
+      - run:
+          name: Build Distribution
+          command: ci after_test
+      - persist_to_workspace:
+          root: .
+          paths: dist
+
+  build-3.4:
+    <<: *build_template
+    docker:
+      - image: circleci/python:3.4-jessie
+        user: root
+
+  build-3.5:
+    <<: *build_template
+    docker:
+      - image: circleci/python:3.5-jessie
+        user: root
+
+  build-3.6:
+    <<: *build_template
+    docker:
+      - image: circleci/python:3.6-jessie
+        user: root
+
+  deploy:
+    working_directory: /pyradiomics
+    docker:
+      - image: circleci/python:3.6-jessie
+        user: root
+    steps:
+      - checkout
+      - run:
+          name: Setup SciKit-CI
+          command: |
+            pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0
+            ci_addons --install ../addons
+      - run:
+          name: Install
+          command: ci install
+      - run:
+          name: Install patchelf auditwheel, twine
+          command: |
+            apt-get install patchelf  # needed to run auditwheel
+            python -m pip install auditwheel
+            python -m pip install twine
+      # only attach the workspace at this point to prevent the removal of source distributions
+      - attach_workspace:
+          at: /pyradiomics
+      - run:
+          name: Create sdist
+          command: python setup.py sdist
+      - run:
+          name: Fix Distribution Wheels
+          command: |
+            ls ./dist/*-linux_$(uname -m).whl  # This will prevent further deployment if no wheels are found
+            # Since there are no external shared libraries to bundle into the wheels
+            # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
+            for whl in $(ls ./dist/*-linux_$(uname -m).whl); do
+                auditwheel repair $whl -w ./dist/
+                rm $whl
+            done
+      - run:
+          name: Deploy source and linux wheels
+          command: twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_USER -p $PYPI_PASSWORD
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build-2.7: &build_job_template
+          filters:
+            tags:
+              only:
+                - /^v?[0-9]+(\.[0-9]+)*(-rc[0-9]+)?/
+      - build-3.4:
+          <<: *build_job_template
+      - build-3.5:
+          <<: *build_job_template
+      - build-3.6:
+          <<: *build_job_template
+      - test-notebooks:
+          requires:
+            - build-2.7
+            - build-3.4
+            - build-3.5
+            - build-3.6
+      - deploy:
+          requires:
+            - build-2.7
+            - build-3.4
+            - build-3.5
+            - build-3.6
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^v?[0-9]+(\.[0-9]+)*(-rc[0-9]+)?/

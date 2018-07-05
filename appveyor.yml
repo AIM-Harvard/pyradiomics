@@ -1,7 +1,3 @@
-branches:
- only:
-  - master
-
 version: "0.0.1.{build}"
 
 environment:
@@ -24,9 +20,15 @@ environment:
       PYTHON_ARCH: "64"
       BLOCK: "0"
 
+    - PYTHON_DIR: "C:\\Python36-x64"
+      PYTHON_VERSION: "3.6.x"
+      PYTHON_ARCH: "64"
+      BLOCK: "0"
+
 init:
   - python -m pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0
   - python -m ci_addons --install ../addons
+  - python -m pip install twine
 
   - ps: ../addons/appveyor/rolling-build.ps1
 
@@ -42,8 +44,19 @@ test_script:
 after_test:
   - python -m ci after_test
 
+artifacts:
+  - path: dist/*
+    name: pypiartefacts
+
 on_finish:
   - ps: ../addons/appveyor/enable-worker-remote-access.ps1 -check_for_block
+
+deploy_script:
+  - echo "checking deployment"
+  - ps: if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?\d(\.\d)*(-rc\d+)?$') { appveyor exit }
+  - echo "starting deployment"
+  - twine upload dist/*.whl -u %PYPI_USER% -p %PYPI_PASSWORD%
+  - echo "finished deployment"
 
 matrix:
   fast_finish: false

@@ -25,6 +25,9 @@ with open('requirements-dev.txt', 'r') as fp:
 with open('requirements-setup.txt', 'r') as fp:
   setup_requirements = list(filter(bool, (line.strip() for line in fp)))
 
+with open('README.md', 'r') as fp:
+  long_description = fp.read()
+
 
 class NoseTestCommand(TestCommand):
   """Command to run unit tests using nose driver after in-place build"""
@@ -82,6 +85,9 @@ setup(
     ]},
 
   description='Radiomics features library for python',
+  long_description=long_description,
+  long_description_content_type='text/markdown',
+
   license='BSD License',
 
   classifiers=[

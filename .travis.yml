@@ -1,33 +1,35 @@
 # Config file for automatic testing at travis-ci.org
 
-branches:
- only:
-  - master
-
 language: python
 
 matrix:
   include:
-
-#    - os: osx
-#      language: generic
-#      env:
-#        - PYTHON_VERSION=3.5.2
-
-#    - os: osx
-#      language: generic
-#      env:
-#        - PYTHON_VERSION=3.4.5
 
     - os: osx
       language: generic
       env:
         - PYTHON_VERSION=2.7.12
 
+    - os: osx
+      language: generic
+      env:
+        - PYTHON_VERSION=3.4.8
+
+    - os: osx
+      language: generic
+      env:
+        - PYTHON_VERSION=3.5.5
+
+    - os: osx
+      language: generic
+      env:
+        - PYTHON_VERSION=3.6.5
+
 cache:
   directories:
-    - $HOME/.pyenv/versions/3.5.2
-    - $HOME/.pyenv/versions/3.4.5
+    - $HOME/.pyenv/versions/3.6.5
+    - $HOME/.pyenv/versions/3.5.5
+    - $HOME/.pyenv/versions/3.4.8
     - $HOME/.pyenv/versions/2.7.12
     - $HOME/downloads
 
@@ -44,3 +46,13 @@ script:
 
 after_success:
   - ci after_test
+
+before_deploy:
+  - sudo pip install twine  # Twine installation requires sudo to get access to /usr/local/man
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: twine upload dist/*.whl -u $PYPI_USER -p $PYPI_PASSWORD
+  on:
+    tags: true
+    condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(-rc[0-9]+)?$

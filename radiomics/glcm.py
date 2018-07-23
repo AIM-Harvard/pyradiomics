@@ -520,7 +520,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      \textit{IMC 1} = \frac{HXY-HXY1}{\max\{HX,HY\}}
+      \textit{IMC 1} = \displaystyle\frac{HXY-HXY1}{\max\{HX,HY\}}
 
     .. note::
 
@@ -546,7 +546,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     .. math::
 
-      \textit{IMC 2} = \sqrt{1-e^{-2(HXY2-HXY)}}
+      \textit{IMC 2} = \displaystyle\sqrt{1-e^{-2(HXY2-HXY)}}
 
     .. note::
 

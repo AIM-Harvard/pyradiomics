@@ -91,7 +91,7 @@ def binImage(binwidth, parameterMatrix, parameterMatrixCoordinates=None, bincoun
     parameterMatrix = numpy.digitize(parameterMatrix, binEdges)
   else:
     if bincount is not None:
-      binEdges = numpy.histogram(parameterMatrix[parameterMatrixCoordinates], bincount)
+      binEdges = numpy.histogram(parameterMatrix[parameterMatrixCoordinates], bincount)[1]
     else:
       binEdges = getBinEdges(binwidth, parameterMatrix[parameterMatrixCoordinates])
     parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterMatrix[parameterMatrixCoordinates], binEdges)

@@ -50,7 +50,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     # Volume, Surface Area and eigenvalues are pre-calculated
     # Compute volume
-    z, x, y = self.pixelSpacing
+    z, y, x = self.pixelSpacing
     Np = len(self.labelledVoxelCoordinates[0])
     self.Volume = Np * (z * x * y)
 

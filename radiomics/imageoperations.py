@@ -703,9 +703,9 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
       yield decompositionImage, inputImageName, kwargs
 
   if len(ret) == 1:
-    inputImageName = 'wavelet-LLL'
+    inputImageName = 'wavelet-%s' % ('L' * len(axes))
   else:
-    inputImageName = 'wavelet%s-LLL' % (len(ret))
+    inputImageName = 'wavelet%s-%s' % (len(ret), ('L' * len(axes)))
   logger.debug('Yielding approximation (%s) image', inputImageName)
   yield approx, inputImageName, kwargs
 
@@ -743,7 +743,7 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)): 
       if decName == 'a' * len(axes):
         continue
       decTemp = decImage.copy()
-      decTemp = decTemp[[slice(None, -1 if dim % 2 != 0 else None) for dim in original_shape]]
+      decTemp = decTemp[tuple(slice(None, -1 if dim % 2 != 0 else None) for dim in original_shape)]
       sitkImage = sitk.GetImageFromArray(decTemp)
       sitkImage.CopyInformation(inputImage)
       dec_im[str(decName).replace('a', 'L').replace('d', 'H')] = sitkImage
@@ -751,7 +751,7 @@ def _swt3(inputImage, wavelet='coif1', level=1, start_level=0, axes=(2, 1, 0)): 
 
     ret.append(dec_im)  # appending all the filtered sitk images (stored in "dec_im") to the "ret" list
 
-  data = data[[slice(None, -1 if dim % 2 != 0 else None) for dim in original_shape]]
+  data = data[tuple(slice(None, -1 if dim % 2 != 0 else None) for dim in original_shape)]
   approximation = sitk.GetImageFromArray(data)
   approximation.CopyInformation(inputImage)
 

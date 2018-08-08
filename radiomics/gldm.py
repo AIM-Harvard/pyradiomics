@@ -56,6 +56,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     angles should be generated.
   - gldm_a [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is considered
     dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
+
+  References:
+
+  - Sun C, Wee WG. Neighboring Gray Level Dependence Matrix for Texture Classification. Comput Vision,
+    Graph Image Process. 1983;23:341-352
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):

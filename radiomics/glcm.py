@@ -516,7 +516,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getImc1FeatureValue(self):
     r"""
-    **13. Informal Measure of Correlation (IMC) 1**
+    **13. Informational Measure of Correlation (IMC) 1**
 
     .. math::
 
@@ -525,7 +525,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. note::
 
       In the case where both HX and HY are 0 (as is the case in a flat region), an arbitrary value of 0 is returned to
-      prevent a division by 0. This is done on a per-angle basis
+      prevent a division by 0. This is done on a per-angle basis.
     """
     eps = self.coefficients['eps']
     HX = self.coefficients['HX']
@@ -542,7 +542,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getImc2FeatureValue(self):
     r"""
-    **14. Informal Measure of Correlation (IMC) 2**
+    **14. Informational Measure of Correlation (IMC) 2**
 
     .. math::
 

@@ -45,7 +45,7 @@ Command Line Use
 
 * To extract features from a batch run::
 
-    pyradiomics <path/to/input> <path/to/output>
+    pyradiomics <path/to/input>
 
 * The input file for batch processing is a CSV file where the first row is contains headers and each subsequent row
   represents one combination of an image and a segmentation and contains at least 2 elements: 1) path/to/image,
@@ -59,6 +59,13 @@ Command Line Use
   .. note::
 
     All headers should be unique and different from headers provided by PyRadiomics (``<filter>_<class>_<feature>``).
+
+* By default, results are printed out to the console window. To store the results in a CSV-structured text file, add the
+  ``-o <PATH>`` and ``-f csv`` arguments, where ``<PATH>`` specifies the filepath where the results should be stored.
+  e.g.::
+
+    pyradiomics <path/to/image> <path/to/segmentation> -o results.csv -f csv
+    pyradiomics <path/to/input> -o results.csv -f csv
 
 * Extraction can be customized by specifying a `parameter file <radiomics-parameter-file-label>` in the ``--param``
   argument and/or by specifying override settings (only `type 3 customization <radiomics-settings-label>`) in the

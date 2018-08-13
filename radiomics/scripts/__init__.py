@@ -58,11 +58,11 @@ def parse_args(custom_arguments=None):
                                 'invalid result (NaN)')
   outputGroup.add_argument('--format', '-f', choices=['csv', 'json', 'txt'], default='txt',
                            help='Format for the output.\n'
-                                '"csv" (Default): one row of feature names, followed by one row of\n'
-                                'feature values per case.\n'
+                                '"txt" (Default): one feature per line in format "case-N_name:value"\n'
                                 '"json": Features are written in a JSON format dictionary\n'
                                 '(1 dictionary per case, 1 case per line) "{name:value}"\n'
-                                '"txt": one feature per line in format "case-N_name:value"')
+                                '"csv": one row of feature names, followed by one row of\n'
+                                'feature values per case.')
   outputGroup.add_argument('--format-path', choices=['absolute', 'relative', 'basename'], default='absolute',
                            help='Controls input image and mask path formatting in the output.\n'
                                 '"absolute" (Default): Absolute file paths.\n'

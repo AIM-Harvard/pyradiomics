@@ -297,7 +297,7 @@ def _checkROI(imageNode, maskNode, label):
   if numpy.any(numpy.min(ROIBounds, axis=0) < (- .5 - tolerance)) or \
      numpy.any(numpy.max(ROIBounds, axis=0) > (numpy.array(imageNode.GetSize()) - .5 + tolerance)):
     logger.error('Bounding box of ROI is larger than image space:\n\t'
-                 'ROI bounds (image coordinate space) %s\n\tImage Size %s', ROIBounds, imageNode.GetSize())
+                 'ROI bounds (x, y, z image coordinate space) %s\n\tImage Size %s', ROIBounds, imageNode.GetSize())
     return None
 
   logger.debug('ROI valid, calculating resampling grid')

@@ -6,9 +6,11 @@ RUN yum update -y && \
   yum install -y curl \
    curl-devel \
    coreutils \
+   freetype-devel \
    gcc \
    gcc-c++ \
    gettext \
+   libpng-devel \
    openssl-devel \
    perl \
    perl-CPAN \
@@ -84,11 +86,9 @@ RUN git clone https://github.com/martine/ninja.git && \
   mv ninja /usr/bin/ && \
   cd .. && rm -rf ninja
 
-# Install pyradiomics
+# Setup necessary python packages
 WORKDIR /usr/src
-RUN git clone https://github.com/radiomics/pyradiomics.git && \
-  cd pyradiomics && \
-  python --version && \
+RUN python --version && \
   wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py && \
   python get-pip.py && \
   pip install wheel>=0.29.0 && \
@@ -97,7 +97,12 @@ RUN git clone https://github.com/radiomics/pyradiomics.git && \
   pip install trimesh && \
   pip install scikit-image && \
   pip install --trusted-host www.itk.org -f https://itk.org/SimpleITKDoxygen/html/PyDownloadPage.html SimpleITK>=0.9.1 && \
-  python -c "import SimpleITK; print('SimpleITK Version:' + SimpleITK.Version_VersionString())" && \
+  python -c "import SimpleITK; print('SimpleITK Version:' + SimpleITK.Version_VersionString())"
+
+# Install PyRadiomics
+WORKDIR /usr/src
+RUN git clone https://github.com/radiomics/pyradiomics.git && \
+  cd pyradiomics && \
   pip install -r requirements.txt && \
   python setup.py install
 

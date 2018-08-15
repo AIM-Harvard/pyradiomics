@@ -24,10 +24,10 @@ class AddBaseline:
     self.baselineDir = os.path.join(dataDir, "baseline")
 
   def generate_scenarios(self):
-    for test in self.testCases:
-      for className, featureClass in six.iteritems(self.featureClasses):
-        if not os.path.exists(os.path.join(self.baselineDir, 'baseline_%s.csv' % (className))):
-          self.logger.debug('generate_scenarios: featureClass = %s', className)
+    for className, featureClass in six.iteritems(self.featureClasses):
+      if not os.path.exists(os.path.join(self.baselineDir, 'baseline_%s.csv' % className)):
+        self.logger.debug('generate_scenarios: featureClass = %s', className)
+        for test in self.testCases:
           yield test, className
 
   def process_testcase(self, test, featureClassName):

@@ -9,13 +9,11 @@ from nose_parameterized import parameterized
 import numpy
 import six
 
-from radiomics import getFeatureClasses
+from radiomics import getFeatureClasses, testCases
 from testUtils import custom_name_func, RadiomicsTestUtils
 
 
 testUtils = RadiomicsTestUtils()
-
-tests = sorted(testUtils.getTests())
 
 featureClasses = getFeatureClasses()
 
@@ -23,9 +21,11 @@ featureClasses = getFeatureClasses()
 class TestMatrices:
 
   def generate_scenarios():
-    global tests, featureClasses
+    global featureClasses
 
-    for testCase in tests:
+    for testCase in testCases:
+      if testCase.startswith('test'):
+        continue
       for className, featureClass in six.iteritems(featureClasses):
         assert(featureClass is not None)
         if "_calculateMatrix" in dir(featureClass):

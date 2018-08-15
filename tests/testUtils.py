@@ -10,7 +10,7 @@ import numpy
 import SimpleITK as sitk
 import six
 
-from radiomics import getTestCase, imageoperations, testCases
+from radiomics import featureextractor, getTestCase, imageoperations, testCases
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func
 logger = logging.getLogger('radiomics.testing')
@@ -169,16 +169,35 @@ class RadiomicsTestUtils:
       if 'MaskHash' in self._current_config:
         assert sitk.Hash(self._mask) == self._current_config['MaskHash']
 
+      imageTypes = self._current_config.get('EnabledImageTypes', {'Original': {}})
       settings = self._current_config.get('Settings', {})
 
-      interpolator = settings.get('interpolator', sitk.sitkBSpline)
-      resampledPixelSpacing = settings.get('resampledPixelSpacing', None)
+      extractor = featureextractor.RadiomicsFeaturesExtractor({'imageType': imageTypes, 'setting': settings})
+      self._image, self._mask = extractor.loadImage(self._image, self._mask)
 
-      if interpolator is not None and resampledPixelSpacing is not None:
-        self._image, self._mask = imageoperations.resampleImage(self._image, self._mask, **settings)
+      assert self._image is not None
+      assert self._mask is not None
+
       self._bb, correctedMask = imageoperations.checkMask(self._image, self._mask, **settings)
       if correctedMask is not None:
         self._mask = correctedMask
+
+      assert self._bb is not None
+
+      resegmentRange = settings.get('resegmentRange', None)
+      if resegmentRange is not None:
+        resegmentedMask = imageoperations.resegmentMask(self._image, self._mask, **settings)
+
+        # Recheck to see if the mask is still valid
+        self._bb, correctedMask = imageoperations.checkMask(self._image, resegmentedMask, **settings)
+        # Update the mask if it had to be resampled
+        if correctedMask is not None:
+          resegmentedMask = correctedMask
+
+        assert self._bb is not None
+
+        # Resegmentation successful
+        self._mask = resegmentedMask
 
       self._imageType = None
 
@@ -355,6 +374,7 @@ class PyRadiomicsBaseline:
     config = {
       'TestCase': self.configuration[test].get('general_info_TestCase', None),
       'Settings': ast.literal_eval(self.configuration[test].get('general_info_GeneralSettings', '{}')),
+      'EnabledImageTypes': ast.literal_eval(self.configuration[test].get('general_info_EnabledImageTypes', '{}'))
     }
 
     if 'general_info_ImageHash' in self.configuration[test]:

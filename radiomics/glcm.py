@@ -199,9 +199,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i, j = numpy.meshgrid(NgVector, NgVector, indexing='ij', sparse=True)
 
     # shape = (2*Ng-1)
-    kValuesSum = numpy.arange(2, (Ng * 2) + 1)
+    kValuesSum = numpy.arange(2, (Ng * 2) + 1, dtype='float')
     # shape = (Ng-1)
-    kValuesDiff = numpy.arange(0, Ng)
+    kValuesDiff = numpy.arange(0, Ng, dtype='float')
 
     # marginal row probabilities #shape = (Ng, 1, angles)
     px = self.P_glcm.sum(1, keepdims=True)
@@ -566,16 +566,15 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     **15. Inverse Difference Moment (IDM)**
 
     .. math::
-
-      \textit{IDM} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{p(i,j)}{1+|i-j|^2} }
+      \textit{IDM} = \displaystyle\sum^{N_g-1}_{k=0}{\frac{p_{x-y}(k)}{1+k^2}}
 
     IDM (a.k.a Homogeneity 2) is a measure of the local
     homogeneity of an image. IDM weights are the inverse of the Contrast
     weights (decreasing exponentially from the diagonal i=j in the GLCM).
     """
-    i = self.coefficients['i']
-    j = self.coefficients['j']
-    idm = numpy.sum((self.P_glcm / (1 + ((numpy.abs(i - j))[:, :, None] ** 2))), (0, 1))
+    pxSuby = self.coefficients['pxSuby']
+    kValuesDiff = self.coefficients['kValuesDiff']
+    idm = numpy.sum(pxSuby / (1 + (kValuesDiff[:, None] ** 2)), 0)
     return idm.mean()
 
   def getIdmnFeatureValue(self):
@@ -583,9 +582,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     **16. Inverse Difference Moment Normalized (IDMN)**
 
     .. math::
-
-      \textit{IDMN} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
-      { \frac{p(i,j)}{1+\left(\frac{|i-j|^2}{N_g^2}\right)} }
+      \textit{IDMN} = \displaystyle\sum^{N_g-1}_{k=0}{ \frac{p_{x-y}(k)}{1+\left(\frac{k^2}{N_g^2}\right)} }
 
     IDMN (inverse difference moment normalized)  is a measure of the local
     homogeneity of an image. IDMN weights are the inverse of the Contrast
@@ -594,10 +591,10 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     neighboring intensity values by dividing over the square of the total
     number of discrete intensity values.
     """
-    i = self.coefficients['i']
-    j = self.coefficients['j']
+    pxSuby = self.coefficients['pxSuby']
+    kValuesDiff = self.coefficients['kValuesDiff']
     Ng = self.coefficients['Ng']
-    idmn = numpy.sum((self.P_glcm / (1 + (((numpy.abs(i - j))[:, :, None] ** 2) / (Ng ** 2)))), (0, 1))
+    idmn = numpy.sum(pxSuby / (1 + ((kValuesDiff[:, None] ** 2) / (Ng ** 2))), 0)
     return idmn.mean()
 
   def getIdFeatureValue(self):
@@ -605,15 +602,14 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     **17. Inverse Difference (ID)**
 
     .. math::
-
-      \textit{ID} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{ \frac{p(i,j)}{1+|i-j|} }
+      \textit{ID} = \displaystyle\sum^{N_g-1}_{k=0}{\frac{p_{x-y}(k)}{1+k}}
 
     ID (a.k.a. Homogeneity 1) is another measure of the local homogeneity of an image.
     With more uniform gray levels, the denominator will remain low, resulting in a higher overall value.
     """
-    i = self.coefficients['i']
-    j = self.coefficients['j']
-    invDiff = numpy.sum((self.P_glcm / (1 + (numpy.abs(i - j))[:, :, None])), (0, 1))
+    pxSuby = self.coefficients['pxSuby']
+    kValuesDiff = self.coefficients['kValuesDiff']
+    invDiff = numpy.sum(pxSuby / (1 + kValuesDiff[:, None]), 0)
     return invDiff.mean()
 
   def getIdnFeatureValue(self):
@@ -621,19 +617,17 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     **18. Inverse Difference Normalized (IDN)**
 
     .. math::
-
-      \textit{IDN} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}
-      { \frac{p(i,j)}{1+\left(\frac{|i-j|}{N_g}\right)} }
+      \textit{IDN} = \displaystyle\sum^{N_g-1}_{k=0}{ \frac{p_{x-y}(k)}{1+\left(\frac{k}{N_g}\right)} }
 
     IDN (inverse difference normalized) is another measure of the local
     homogeneity of an image. Unlike Homogeneity1, IDN normalizes the difference
     between the neighboring intensity values by dividing over the total number
     of discrete intensity values.
     """
-    i = self.coefficients['i']
-    j = self.coefficients['j']
+    pxSuby = self.coefficients['pxSuby']
+    kValuesDiff = self.coefficients['kValuesDiff']
     Ng = self.coefficients['Ng']
-    idn = numpy.sum((self.P_glcm / (1 + ((numpy.abs(i - j))[:, :, None] / Ng))), (0, 1))
+    idn = numpy.sum(pxSuby / (1 + (kValuesDiff[:, None] / Ng)), 0)
     return idn.mean()
 
   def getInverseVarianceFeatureValue(self):
@@ -641,14 +635,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     **19. Inverse Variance**
 
     .. math::
+      \textit{inverse variance} = \displaystyle\sum^{N_g-1}_{k=1}{\frac{p_{x-y}(k)}{k^2}}
 
-      \textit{inverse variance} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{\frac{p(i,j)}{|i-j|^2}},
-      i \neq j
+    Note that :math:`k=0` is skipped, as this would result in a division by 0.
     """
-    i = self.coefficients['i']
-    j = self.coefficients['j']
-    maskDiags = numpy.abs(i - j) > 0
-    inv = numpy.sum((self.P_glcm[maskDiags] / ((numpy.abs(i - j))[:, :, None] ** 2)[maskDiags]), 0)
+    pxSuby = self.coefficients['pxSuby']
+    kValuesDiff = self.coefficients['kValuesDiff']
+    inv = numpy.sum(pxSuby[1:, :] / kValuesDiff[1:, None] ** 2, 0)  # Skip k = 0 (division by 0)
     return inv.mean()
 
   def getMaximumProbabilityFeatureValue(self):

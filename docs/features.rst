@@ -9,7 +9,7 @@ subdivided into the following classes:
 
 * :py:class:`First Order Statistics <radiomics.firstorder.RadiomicsFirstOrder>` (19 features)
 * :py:class:`Shape-based <radiomics.shape.RadiomicsShape>` (16 features)
-* :py:class:`Gray Level Cooccurence Matrix <radiomics.glcm.RadiomicsGLCM>` (23 features)
+* :py:class:`Gray Level Cooccurence Matrix <radiomics.glcm.RadiomicsGLCM>` (24 features)
 * :py:class:`Gray Level Run Length Matrix <radiomics.glrlm.RadiomicsGLRLM>` (16 features)
 * :py:class:`Gray Level Size Zone Matrix <radiomics.glszm.RadiomicsGLSZM>` (16 features)
 * :py:class:`Neigbouring Gray Tone Difference Matrix <radiomics.ngtdm.RadiomicsNGTDM>` (5 features)

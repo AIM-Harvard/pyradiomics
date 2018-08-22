@@ -63,7 +63,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     physicalCoordinates -= numpy.mean(physicalCoordinates, axis=0)  # Centered at 0
     physicalCoordinates /= numpy.sqrt(Np)
     covariance = numpy.dot(physicalCoordinates.T.copy(), physicalCoordinates)
-    self.eigenValues, eigenVectors = numpy.linalg.eig(covariance)  # eigenVectors are not used
+    self.eigenValues = numpy.linalg.eigvals(covariance)
 
     # Correct machine precision errors causing very small negative eigen values in case of some 2D segmentations
     machine_errors = numpy.bitwise_and(self.eigenValues < 0, self.eigenValues > -1e-10)

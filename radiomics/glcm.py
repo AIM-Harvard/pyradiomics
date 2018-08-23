@@ -522,10 +522,35 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       \textit{IMC 1} = \displaystyle\frac{HXY-HXY1}{\max\{HX,HY\}}
 
+    IMC1 assesses the correlation between the probability distributions of :math:`i` and :math:`j` (quantifying the
+    complexity of the texture), using mutual information I(x, y):
+
+    .. math::
+
+      I(i, j) = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)\log_2\big(\frac{p(i,j)}{p_x(i)p_y(j)}\big)}
+
+              = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)\big(\log_2 (p(i,j)) - \log_2 (p_x(i)p_y(j))\big)}
+
+              = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)\log_2 \big(p(i,j)\big)} -
+                \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)\log_2 \big(p_x(i)p_y(j)\big)}
+
+              = -HXY + HXY1
+
+    However, in this formula, the numerator is defined as HXY - HXY1 (i.e. :math:`-I(x, y)`), and is
+    therefore :math:`\leq 0`. This reflects how this feature is defined in the original Haralick paper.
+
+    In the case where the distributions are independent, there is no mutual information and the result will therefore be
+    0. In the case of uniform distribution with complete dependence, mutual information will be equal to
+    :math:`\log_2(N_g)`.
+
+    Finally, :math:`HXY - HXY1` is divided by the maximum of the 2 marginal entropies, where in the latter case of
+    complete dependence (not necessarily uniform; low complexity) it will result in :math:`IMC1 = -1`, as
+    :math:`HX = HY = I(i, j)`.
+
     .. note::
 
       In the case where both HX and HY are 0 (as is the case in a flat region), an arbitrary value of 0 is returned to
-      prevent a division by 0. This is done on a per-angle basis.
+      prevent a division by 0. This is done on a per-angle basis (i.e. prior to any averaging).
     """
     eps = self.coefficients['eps']
     HX = self.coefficients['HX']
@@ -548,10 +573,18 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       \textit{IMC 2} = \displaystyle\sqrt{1-e^{-2(HXY2-HXY)}}
 
+    IMC2 also assesses the correlation between the probability distributions of :math:`i` and :math:`j` (quantifying the
+    complexity of the texture). Of interest is to note that :math:`HXY1 = HXY2` and that :math:`HXY2 - HXY \geq 0`
+    represents the mutual information of the 2 distributions. Therefore, the range of IMC2 = [0, 1), with 0 representing
+    the case of 2 independent distributions (no mutual information) and the maximum value representing the case of 2
+    fully dependent and uniform distributions (maximal mutual information, equal to :math:`\log_2(N_g)`). In this latter
+    case, the maximum value is then equal to :math:`\displaystyle\sqrt{1-e^{-2\log_2(N_g)}}`, approaching 1.
+
     .. note::
 
-      In the case where HXY = HXY2, an arbitrary value of 0 is returned to prevent returning complex numbers. This is
-      done on a per-angle basis.
+      Due to machine precision errors, it is possble that HXY > HXY2, which would result in returning complex numbers.
+      In these cases, a value of 0 is returned for IMC2. This is done on a per-angle basis (i.e. prior to any
+      averaging).
     """
     HXY = self.coefficients['HXY']
     HXY2 = self.coefficients['HXY2']
@@ -581,7 +614,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     r"""
     **16. Maximal Correlation Coefficient (MCC)**
 
-    ..math::
+    .. math::
       \textit{MCC} = \sqrt{\text{second largest eigenvalue of Q}}
 
       Q(i, j) = \displaystyle\sum^{N_g}_{k=0}{\frac{p(i,k)p(j, k)}{p_x(i)p_y(k)}}

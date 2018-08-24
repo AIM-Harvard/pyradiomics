@@ -74,7 +74,7 @@ def getBinEdges(parameterValues, **kwargs):
   \mod W = 0`, the maximum intensity will be encoded as numBins + 1, therefore the maximum number of gray
   level intensities in the ROI after binning is number of bins + 1.
 
-  If dynamic binning is enabled (parameter `dynamicBinning`), and no custom binwidth has been defined for the filter,
+  If dynamic binning is enabled (parameter ``dynamicBinning``), and no custom binwidth has been defined for the filter,
   the actual bin width used (:math:`W_{dyn}`) is defined as:
 
   .. math::
@@ -118,6 +118,7 @@ def getBinEdges(parameterValues, **kwargs):
   global logger
   binWidth = kwargs.get('binWidth', 25)
   binCount = kwargs.get('binCount')
+  dynamic_ref_range = kwargs.get('dynamic_ref_range', None)
 
   if binCount is not None:
     binEdges = numpy.histogram(parameterValues, binCount)[1]
@@ -125,6 +126,11 @@ def getBinEdges(parameterValues, **kwargs):
   else:
     minimum = min(parameterValues)
     maximum = max(parameterValues)
+    if dynamic_ref_range is not None and dynamic_ref_range > 0 and minimum < maximum:
+      range_scale = (maximum - minimum) / dynamic_ref_range
+      binWidth = binWidth * range_scale
+      logger.debug('Applied dynamic binning (reference range %g, current range %g), scaled bin width to %g',
+                   dynamic_ref_range, maximum - minimum, binWidth)
 
     # Start binning form the first value lesser than or equal to the minimum value and evenly dividable by binwidth
     lowBound = minimum - (minimum % binWidth)

@@ -510,24 +510,19 @@ int calculate_gldm(int *image, char *mask, int *size, int *strides, int *angles,
   return 1;
 }
 
-int generate_angles(int *size, int *distances, int n_dim, int n_dist, char bidirectional, int force2Ddim, int **angles, int *n_a)
+int get_angle_count(int *size, int *distances, int n_dim, int n_dist, char bidirectional, int force2Ddim)
 {
-  int *offset_stride;
-  int max_distance, n_offsets, offset, a_dist;
+  int n_a;
   int Na_d, Na_dd;  // Angles per distance
-  int dist_idx, dim_idx, a_idx, new_a_idx;
+  int dist_idx, dim_idx;
 
   // First, determine the maximum distance and the number of angles to compute
   // Number of angles to compute for distance Na_d = (2d + 1)^n_dim - (2d - 1)^n_dim
   // The first term is temporarily stored in Na_d, the second in Na_dd
-  *n_a = 0;
-  max_distance = 0;  // Maximum offset specified, needed later on to generate the range of offsets
+  n_a = 0;
   for (dist_idx = 0; dist_idx < n_dist; dist_idx++)
   {
-    if (distances[dist_idx] < 1) return 1;  // invalid distance encountered
-
-    // Store maximum distance specified
-    if (max_distance < distances[dist_idx]) max_distance = distances[dist_idx];
+    if (distances[dist_idx] < 1) return 0;  // invalid distance encountered
 
     Na_d = 1;
     Na_dd = 1;
@@ -550,16 +545,32 @@ int generate_angles(int *size, int *distances, int n_dim, int n_dist, char bidir
           Na_dd *= (2 *(size[dim_idx] - 1) + 1);
         }
     }
-    *n_a += (Na_d - Na_dd);  // Add the number of angles to be generated for this distance to the grand total
+    n_a += (Na_d - Na_dd);  // Add the number of angles to be generated for this distance to the grand total
   }
 
   // if only single direction is needed, divide Na by 2 (if bidirectional, Na will be even, and angles is a mirrored)
-  if (!bidirectional) (*n_a) /= 2;
+  if (!bidirectional) n_a /= 2;
 
-  // Initialize array to hold the angle offsets, shape (Na, n_dim), stored here as a flattened array
-  *angles = (int *)calloc(*n_a * n_dim, sizeof(int));
+  return n_a;
+}
 
-  n_offsets = 2 * max_distance + 1;  // e.g. for max distance = 3, offsets = {-2, -1, 0, 1, 2}; ||offsets|| = 5
+int build_angles(int *size, int *distances, int n_dim, int n_dist, int force2Ddim, int n_a, int *angles)
+{
+  int *offset_stride;
+  int max_distance, n_offsets, offset, a_dist;
+  int dist_idx, dim_idx, a_idx, new_a_idx;
+
+  max_distance = 0;  // Maximum offset specified, needed later on to generate the range of offsets
+  for (dist_idx = 0; dist_idx < n_dist; dist_idx++)
+  {
+      if (distances[dist_idx] < 1) return 1;  // invalid distance encountered
+
+      // Store maximum distance specified
+      if (max_distance < distances[dist_idx])
+        max_distance = distances[dist_idx];
+  }
+
+  n_offsets = 2 * max_distance + 1;  // e.g. for max distance = 2, offsets = {-2, -1, 0, 1, 2}; ||offsets|| = 5
 
   // offset_stride is used to generate the unique combinations of offsets for the angles
   // For the last dimension the stride is 1, i.e. a different offset is used for each subsequent angle
@@ -581,7 +592,7 @@ int generate_angles(int *size, int *distances, int n_dim, int n_dist, char bidir
 
   new_a_idx = 0;  // index used to generate new angle offset, increases during every loop
   a_idx = 0;  // index in angles array of current angle being generated, increases only when a valid angle has been generated
-  while (a_idx < *n_a)
+  while (a_idx < n_a)
   {
     a_dist = 0;  // maximum offset of the angle, corresponds to the distance this angle belongs to (infinity norm)
     // generate new angle
@@ -595,17 +606,16 @@ int generate_angles(int *size, int *distances, int n_dim, int n_dist, char bidir
         a_dist = -1;  // invalid angle
         break;  // no need to generate offsets for other dimensions, angle is invalid
       }
-      (*angles)[a_idx * n_dim + dim_idx] = offset;
+      angles[a_idx * n_dim + dim_idx] = offset;
 
       if (a_dist < offset) a_dist = offset;  // offset positive
       else if (a_dist < -offset) a_dist = -offset;  // offset negative
     }
-
     new_a_idx++;  // always advance new_a_idx, this controls the combination of offsets in generating the angle
 
-    // Check if the distance this angle is generated for is requested (i.e. present in distances)
-    // In case of an invalid angle, a_dist = -1, and therefore
     if (a_dist < 1) continue; // Angle is invalid, i.e a_dist = -1 (failed check) or a_dist = 0 (angle (0, 0, 0))
+
+    // Check if the distance this angle is generated for is requested (i.e. present in distances)
     for (dist_idx = 0; dist_idx < n_dist; dist_idx++)
     {
       if (a_dist == distances[dist_idx])
@@ -615,7 +625,7 @@ int generate_angles(int *size, int *distances, int n_dim, int n_dist, char bidir
       }
     }
   }
-  free(offset_stride);
 
+  free(offset_stride);
   return 0;
 }

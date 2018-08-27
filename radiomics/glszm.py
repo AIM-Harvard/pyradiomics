@@ -81,12 +81,12 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Ng = self.coefficients['Ng']
     Ns = self.coefficients['Np']
 
-    P_glszm, angles = cMatrices.calculate_glszm(self.matrix,
-                                                self.maskArray,
-                                                Ng,
-                                                Ns,
-                                                self.settings.get('force2D', False),
-                                                self.settings.get('force2Ddimension', 0))
+    P_glszm = cMatrices.calculate_glszm(self.matrix,
+                                        self.maskArray,
+                                        Ng,
+                                        Ns,
+                                        self.settings.get('force2D', False),
+                                        self.settings.get('force2Ddimension', 0))
 
     # Delete rows that specify gray levels not present in the ROI
     NgVector = range(1, Ng + 1)  # All possible gray values

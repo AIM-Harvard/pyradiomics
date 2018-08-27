@@ -95,12 +95,12 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     self._calculateCoefficients()
 
   def _calculateMatrix(self):
-    P_ngtdm, angles = cMatrices.calculate_ngtdm(self.matrix,
-                                                self.maskArray,
-                                                numpy.array(self.settings.get('distances', [1])),
-                                                self.coefficients['Ng'],
-                                                self.settings.get('force2D', False),
-                                                self.settings.get('force2Ddimension', 0))
+    P_ngtdm = cMatrices.calculate_ngtdm(self.matrix,
+                                        self.maskArray,
+                                        numpy.array(self.settings.get('distances', [1])),
+                                        self.coefficients['Ng'],
+                                        self.settings.get('force2D', False),
+                                        self.settings.get('force2Ddimension', 0))
 
     # Delete empty grey levels
     P_ngtdm = numpy.delete(P_ngtdm, numpy.where(P_ngtdm[:, 0] == 0), 0)

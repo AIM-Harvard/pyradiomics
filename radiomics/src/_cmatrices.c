@@ -152,12 +152,30 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   if(!force2D) force2Ddimension = -1;
 
   // Generate the angles needed for texture matrix calculation
-  if (generate_angles(size, distances, 3, n_dist, 0, force2Ddimension, &angles, &n_a) > 0)  // 3D, mono-directional
+  n_a = get_angle_count(size, distances, 3, n_dist, 0, force2Ddimension);  // 3D, mono-directional
+  if (n_a == 0)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
     Py_XDECREF(distances_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Error calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error getting angle count.");
+    return NULL;
+  }
+
+  // Wrap angles in a numpy array
+  dims[0] = n_a;
+  dims[1] = 3;
+
+  angles_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_INT);
+  angles = (int *)PyArray_DATA(angles_arr);
+
+  if(build_angles(size, distances, 3, n_dist, force2Ddimension, n_a, angles) > 0)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(distances_arr);
+    Py_XDECREF(angles_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Error building angles.");
     return NULL;
   }
 
@@ -174,7 +192,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
-    free(angles);
+    Py_XDECREF(angles_arr);
     PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLCM would overflow index variable! Increase bin width or decrease number of angles to prevent this error.");
     return NULL;
   }
@@ -184,7 +202,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
-    free(angles);
+    Py_XDECREF(angles_arr);
     PyErr_SetString(PyExc_RuntimeError, "Failed to initialize output array for GLCM");
     return NULL;
   }
@@ -203,7 +221,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
     Py_XDECREF(glcm_arr);
-    free(angles);
+    Py_XDECREF(angles_arr);
     PyErr_SetString(PyExc_RuntimeError, "Calculation of GLCM Failed.");
     return NULL;
   }
@@ -212,15 +230,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   Py_XDECREF(image_arr);
   Py_XDECREF(mask_arr);
 
-  // Wrap angles in a numpy array
-  dims[0] = n_a;
-  dims[1] = 3;
-  angles_arr = (PyArrayObject *)PyArray_SimpleNewFromData(2, dims, NPY_INT, angles);
-
-  // Ensure the Angles array owns the data, so it get's de-allocated when the array is dereferenced
-  PyArray_ENABLEFLAGS(angles_arr, NPY_ARRAY_OWNDATA);
-
-  return Py_BuildValue("OO", PyArray_Return(glcm_arr), PyArray_Return(angles_arr));
+  return Py_BuildValue("NN", PyArray_Return(glcm_arr), PyArray_Return(angles_arr));
 }
 
 static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
@@ -232,7 +242,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   int size[3];
   int strides[3];
   npy_intp dims[2];
-  PyArrayObject *glszm_arr, *angles_arr;
+  PyArrayObject *glszm_arr;
   int *image;
   char *mask;
   int distances[1] = {1};
@@ -258,11 +268,23 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   if(!force2D) force2Ddimension = -1;
 
   // Generate the angles needed for texture matrix calculation
-  if (generate_angles(size, distances, 3, 1, 1, force2Ddimension, &angles, &n_a) > 0)  // 3D, dist 1, bi-directional
+  n_a = get_angle_count(size, distances, 3, 1, 1, force2Ddimension);  // 3D, dist 1, bi-directional
+  if (n_a == 0)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Error calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error getting angle count.");
+    return NULL;
+  }
+
+  angles = (int *)calloc(n_a * 3, sizeof(int));
+
+  if(build_angles(size, distances, 3, 1, force2Ddimension, n_a, angles) > 0)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Error building angles.");
     return NULL;
   }
 
@@ -299,6 +321,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   // Clean up image, mask and angles arrays (not needed anymore)
   Py_XDECREF(image_arr);
   Py_XDECREF(mask_arr);
+  free(angles);
 
   // Initialize output array (elements not set)
   if (maxRegion == 0) maxRegion = 1;
@@ -309,7 +332,6 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   if (dims[0] * dims[1] > INT_MAX)
   {
     free(tempData);
-    free(angles);
     PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLSZM would overflow index variable! Increase bin width to prevent this error.");
     return NULL;
   }
@@ -318,7 +340,6 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   if (!glszm_arr)
   {
     free(tempData);
-    free(angles);
     PyErr_SetString(PyExc_RuntimeError, "Failed to initialize output array for GLSZM");
     return NULL;
   }
@@ -331,24 +352,15 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   if (!fill_glszm(tempData, glszm, Ng, maxRegion))
   {
     free(tempData);
-    free(angles);
     Py_XDECREF(glszm_arr);
     PyErr_SetString(PyExc_RuntimeError, "Error filling GLSZM.");
     return NULL;
   }
 
-  // Clean up tempData
+  // Clean up
   free(tempData);
 
-  // Wrap angles in a numpy array
-  dims[0] = n_a;
-  dims[1] = 3;
-  angles_arr = (PyArrayObject *)PyArray_SimpleNewFromData(2, dims, NPY_INT, angles);
-
-  // Ensure the Angles array owns the data, so it get's de-allocated when the array is dereferenced
-  PyArray_ENABLEFLAGS(angles_arr, NPY_ARRAY_OWNDATA);
-
-  return Py_BuildValue("OO", PyArray_Return(glszm_arr), PyArray_Return(angles_arr));
+  return PyArray_Return(glszm_arr);
 }
 
 static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
@@ -384,11 +396,28 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   if(!force2D) force2Ddimension = -1;
 
   // Generate the angles needed for texture matrix calculation
-  if (generate_angles(size, distances, 3, 1, 0, force2Ddimension, &angles, &n_a) > 0)  // 3D, dist 1, mono-directional
+  n_a = get_angle_count(size, distances, 3, 1, 0, force2Ddimension);  // 3D, dist 1, mono-directional
+  if (n_a == 0)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Error calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error getting angle count.");
+    return NULL;
+  }
+
+  // Wrap angles in a numpy array
+  dims[0] = n_a;
+  dims[1] = 3;
+
+  angles_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_INT);
+  angles = (int *)PyArray_DATA(angles_arr);
+
+  if(build_angles(size, distances, 3, 1, force2Ddimension, n_a, angles) > 0)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(angles_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Error building angles.");
     return NULL;
   }
 
@@ -400,9 +429,9 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   // Check that the maximum size of the array won't overflow the index variable (int32)
   if (dims[0] * dims[1] * dims[2] > INT_MAX)
   {
-    free(angles);
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
+    Py_XDECREF(angles_arr);
     PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLRLM would overflow index variable! Increase bin width or decrease number of angles to prevent this error.");
     return NULL;
   }
@@ -412,7 +441,7 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
-    free(angles);
+    Py_XDECREF(angles_arr);
     PyErr_SetString(PyExc_RuntimeError, "Failed to initialize output array for GLRLM");
     return NULL;
   }
@@ -431,7 +460,7 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
     Py_XDECREF(glrlm_arr);
-    free(angles);
+    Py_XDECREF(angles_arr);
     PyErr_SetString(PyExc_RuntimeError, "Calculation of GLRLM Failed.");
     return NULL;
   }
@@ -440,15 +469,7 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   Py_XDECREF(image_arr);
   Py_XDECREF(mask_arr);
 
-  // Wrap angles in a numpy array
-  dims[0] = n_a;
-  dims[1] = 3;
-  angles_arr = (PyArrayObject *)PyArray_SimpleNewFromData(2, dims, NPY_INT, angles);
-
-  // Ensure the Angles array owns the data, so it get's de-allocated when the array is dereferenced
-  PyArray_ENABLEFLAGS(angles_arr, NPY_ARRAY_OWNDATA);
-
-  return Py_BuildValue("OO", PyArray_Return(glrlm_arr), PyArray_Return(angles_arr));
+  return Py_BuildValue("NN", PyArray_Return(glrlm_arr), PyArray_Return(angles_arr));
 }
 
 static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
@@ -460,7 +481,7 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   int size[3];
   int strides[3];
   npy_intp dims[2];
-  PyArrayObject *ngtdm_arr, *angles_arr;
+  PyArrayObject *ngtdm_arr;
   int *image;
   char *mask;
   int *distances, *angles;
@@ -507,12 +528,25 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   if(!force2D) force2Ddimension = -1;
 
   // Generate the angles needed for texture matrix calculation
-  if (generate_angles(size, distances, 3, n_dist, 1, force2Ddimension, &angles, &n_a) > 0)  // 3D bi-directional
+  n_a = get_angle_count(size, distances, 3, n_dist, 1, force2Ddimension);  // 3D, bi-directional
+  if (n_a == 0)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
     Py_XDECREF(distances_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expecting calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error getting angle count.");
+    return NULL;
+  }
+
+  angles = (int *)calloc(n_a * 3, sizeof(int));
+
+  if(build_angles(size, distances, 3, n_dist, force2Ddimension, n_a, angles) > 0)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(distances_arr);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Error building angles.");
     return NULL;
   }
 
@@ -526,9 +560,9 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   // Check that the maximum size of the array won't overflow the index variable (int32)
   if (dims[0] * dims[1] > INT_MAX)
   {
-    free(angles);
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
+    free(angles);
     PyErr_SetString(PyExc_RuntimeError, "Number of elements in NGTDM would overflow index variable! Increase bin width to prevent this error.");
     return NULL;
   }
@@ -565,16 +599,9 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   // Clean up
   Py_XDECREF(image_arr);
   Py_XDECREF(mask_arr);
+  free(angles);
 
-  // Wrap angles in a numpy array
-  dims[0] = n_a;
-  dims[1] = 3;
-  angles_arr = (PyArrayObject *)PyArray_SimpleNewFromData(2, dims, NPY_INT, angles);
-
-  // Ensure the Angles array owns the data, so it get's de-allocated when the array is dereferenced
-  PyArray_ENABLEFLAGS(angles_arr, NPY_ARRAY_OWNDATA);
-
-  return Py_BuildValue("OO", PyArray_Return(ngtdm_arr), PyArray_Return(angles_arr));
+  return PyArray_Return(ngtdm_arr);
 }
 
 static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
@@ -586,7 +613,7 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   int size[3];
   int strides[3];
   npy_intp dims[2];
-  PyArrayObject *gldm_arr, *angles_arr;
+  PyArrayObject *gldm_arr;
   int *image;
   char *mask;
   int *distances, *angles;
@@ -633,12 +660,25 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   if(!force2D) force2Ddimension = -1;
 
   // Generate the angles needed for texture matrix calculation
-  if (generate_angles(size, distances, 3, n_dist, 1, force2Ddimension, &angles, &n_a) > 0)  // 3D bi-directional
+  n_a = get_angle_count(size, distances, 3, n_dist, 1, force2Ddimension);  // 3D, bi-directional
+  if (n_a == 0)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
     Py_XDECREF(distances_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Error calculating angles.");
+    PyErr_SetString(PyExc_RuntimeError, "Error getting angle count.");
+    return NULL;
+  }
+
+  angles = (int *)calloc(n_a * 3, sizeof(int));
+
+  if(build_angles(size, distances, 3, n_dist, force2Ddimension, n_a, angles) > 0)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(distances_arr);
+    free(angles);
+    PyErr_SetString(PyExc_RuntimeError, "Error building angles.");
     return NULL;
   }
 
@@ -652,9 +692,9 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   // Check that the maximum size of the array won't overflow the index variable (int32)
   if (dims[0] * dims[1] > INT_MAX)
   {
-    free(angles);
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
+    free(angles);
     PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLDM would overflow index variable! Increase bin width or decrease number of angles to prevent this error.");
     return NULL;
   }
@@ -691,16 +731,9 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   // Clean up
   Py_XDECREF(image_arr);
   Py_XDECREF(mask_arr);
+  free(angles);
 
-  // Wrap angles in a numpy array
-  dims[0] = n_a;
-  dims[1] = 3;
-  angles_arr = (PyArrayObject *)PyArray_SimpleNewFromData(2, dims, NPY_INT, angles);
-
-  // Ensure the Angles array owns the data, so it get's de-allocated when the array is dereferenced
-  PyArray_ENABLEFLAGS(angles_arr, NPY_ARRAY_OWNDATA);
-
-  return Py_BuildValue("OO", PyArray_Return(gldm_arr), PyArray_Return(angles_arr));
+  return PyArray_Return(gldm_arr);
 }
 
 static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args)
@@ -712,8 +745,6 @@ static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args)
   int n_dim, n_dist, n_a;
   int *size, *distances;
   int *angles;
-  int *angles_data;
-  int idx;
   npy_intp dims[2];
   PyArrayObject *angles_arr;
 
@@ -750,28 +781,34 @@ static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args)
 
   if (!force2D) force2Ddimension = -1;
 
-  if (generate_angles(size, distances, n_dim, n_dist, bidirectional, force2Ddimension, &angles, &n_a) > 0)
+  // Generate the angles needed for texture matrix calculation
+  n_a = get_angle_count(size, distances, n_dim, n_dist, bidirectional, force2Ddimension);  // 3D, mono-directional
+  if (n_a == 0)
   {
     Py_XDECREF(size_arr);
     Py_XDECREF(distances_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Error calculcating angles");
+    PyErr_SetString(PyExc_RuntimeError, "Error getting angle count.");
+    return NULL;
+  }
+
+  // Wrap angles in a numpy array
+  dims[0] = n_a;
+  dims[1] = n_dim;
+
+  angles_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_INT);
+  angles = (int *)PyArray_DATA(angles_arr);
+
+  if(build_angles(size, distances, n_dim, n_dist, force2Ddimension, n_a, angles) > 0)
+  {
+    Py_XDECREF(size_arr);
+    Py_XDECREF(distances_arr);
+    Py_XDECREF(angles_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Error building angles.");
     return NULL;
   }
 
   Py_XDECREF(size_arr);
   Py_XDECREF(distances_arr);
-
-  dims[0] = n_a;
-  dims[1] = n_dim;
-
-  // Create a numpy output array for the angles and store the data
-  // PyArraySimpleNewFromData is not used here, as it caused reference errors, crashing
-  // the program when called many times...
-  angles_arr = (PyArrayObject *)PyArray_SimpleNew(2, dims, NPY_INT);
-  angles_data = (int *)PyArray_DATA(angles_arr);
-  for (idx = 0; idx < n_a*n_dim; idx++)
-    angles_data[idx] = angles[idx];
-  free(angles); // free the (temporary) array
 
   return PyArray_Return(angles_arr);
 }

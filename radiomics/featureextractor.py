@@ -419,7 +419,9 @@ class RadiomicsFeaturesExtractor:
     # 5. Resegment the mask if enabled (parameter regsegmentMask is not None)
     resegmentRange = self.settings.get('resegmentRange', None)
     if resegmentRange is not None:
-      resegmentedMask = imageoperations.resegmentMask(image, mask, resegmentRange, self.settings['label'])
+      resegmentMode = self.settings.get('resegmentMode', 'absolute')
+      resegmentedMask = imageoperations.resegmentMask(image, mask, resegmentRange, resegmentMode,
+                                                      self.settings['label'])
 
       # Recheck to see if the mask is still valid
       boundingBox, correctedMask = imageoperations.checkMask(image, resegmentedMask, **self.settings)

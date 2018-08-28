@@ -521,30 +521,63 @@ def normalizeImage(image, scale=1, outliers=None):
   return image
 
 
-def resegmentMask(imageNode, maskNode, resegmentRange, label=1):
+def resegmentMask(imageNode, maskNode, resegmentRange, resegmentMode='absolute', label=1):
   """
-  Resegment the Mask based on the range specified in ``resegmentRange``. All voxels with a gray level outside the
-  range specified are removed from the mask. The resegmented mask is therefore always equal or smaller in size than
-  the original mask. The resegemented mask is then checked for size (as specified by parameter ``minimumROISize``,
-  defaults to minimum size 1). When this check fails, an error is logged and maskArray is reset to the original mask.
+  Resegment the Mask based on the range specified by the threshold(s) in ``resegmentRange``. Either 1 or 2 thresholds
+  can be defined. In case of 1 threshold, all values equal to or higher than that threshold are included. If there are
+  2 thresholds, all voxels with a value inside the closed-range defined by these thresholds is included
+  (i.e. a voxels is included if :math:`T_{lower} \leq X_gl \leq T_{upper}`).
+  The resegmented mask is therefore always equal or smaller in size than the original mask.
+  In the case where either resegmentRange or resegmentMode contains illigal values, a ValueError is raised.
+
+  There are 3 modes for defining the threshold:
+
+  1. absolute (default): The values in resegmentRange define  as absolute values (i.e. corresponding to the gray values
+     in the image
+  2. relative: The values in resegmentRange define the threshold as relative to the maximum value found in the ROI.
+     (e.g. 0.5 indicates a threshold at 50% of maximum gray value)
+  3. sigma: The threshold is defined as the number of sigma from the mean. (e.g. resegmentRange [-3, 3] will include
+     all voxels that have a value that differs 3 or less standard deviations from the mean).
+
   """
   global logger
 
   if resegmentRange is None:
-    return maskNode
+    raise ValueError('resegmentRange is None.')
+  if len(resegmentRange) == 0 or len(resegmentRange) > 2:
+    raise ValueError('Length %i is not allowed for resegmentRange' % len(resegmentRange))
 
-  logger.debug('Resegmenting mask (range %s)', resegmentRange)
+  logger.debug('Resegmenting mask (range %s, mode %s)', resegmentRange, resegmentMode)
 
   im_arr = sitk.GetArrayFromImage(imageNode)
   ma_arr = (sitk.GetArrayFromImage(maskNode) == label)  # boolean array
 
   oldSize = numpy.sum(ma_arr)
-  # Get a boolean array specifying per voxel if its gray value is inside the range specified by resegmentRange.
-  intensitySegmentation = numpy.logical_and(im_arr >= resegmentRange[0],
-                                            im_arr <= resegmentRange[1])
-  # Then, take the intersection between voxels segmented (ma_arr) and
-  # voxels inside specified range (intensitySegmentation)
-  ma_arr = numpy.logical_and(ma_arr, intensitySegmentation)
+
+  if resegmentMode == 'absolute':
+    logger.debug('Resegmenting in absolute mode')
+    thresholds = sorted(resegmentRange)
+  elif resegmentMode == 'relative':
+    max_gl = numpy.max(im_arr[ma_arr])
+    logger.debug('Resegmenting in relative mode, max %g', max_gl)
+    thresholds = [max_gl * th for th in sorted(resegmentRange)]
+  elif resegmentMode == 'sigma':
+    mean_gl = numpy.mean(im_arr[ma_arr])
+    sd_gl = numpy.std(im_arr[ma_arr])
+    logger.debug('Resegmenting in sigma mode, mean %g, std %g', mean_gl, sd_gl)
+    thresholds = [mean_gl + sd_gl * th for th in sorted(resegmentRange)]
+  else:
+    raise ValueError('Resegment mode %s not recognized.' % resegmentMode)
+
+  # Apply lower threshold
+  logger.debug('Applying lower threshold (%g)', thresholds[0])
+  ma_arr[ma_arr] = im_arr[ma_arr] >= thresholds[0]
+
+  # If 2 thresholds are defined, also apply an upper threshold
+  if len(thresholds) == 2:
+    logger.debug('Applying upper threshold (%g)', thresholds[1])
+    ma_arr[ma_arr] = im_arr[ma_arr] <= thresholds[1]
+
   roiSize = numpy.sum(ma_arr)
 
   # Transform the boolean array back to an image with the correct voxels set to the label value

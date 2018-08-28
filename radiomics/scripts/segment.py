@@ -28,6 +28,8 @@ def extractSegment(case_idx, case, config, config_override):
     imageFilepath = case['Image']  # Required
     maskFilepath = case['Mask']  # Required
     label = case.get('Label', None)  # Optional
+    if isinstance(label, six.string_types):
+      label = int(label)
 
     # Instantiate Radiomics Feature extractor
     extractor = featureextractor.RadiomicsFeaturesExtractor(config, **config_override)
@@ -183,7 +185,7 @@ def _configurParallelExtraction(parallel_config):
     # those from radiomics.script, but warnings and errors from the entire library are also printed to the output.
     # This does not affect the amount of logging stored in the log file.
     outputhandler = rLogger.handlers[0]  # Handler printing to the output
-    outputhandler.addFilter(info_filter('radiomics.batch'))
+    outputhandler.addFilter(info_filter('radiomics.script'))
 
   # Ensures that log messages are being passed to the filter with the specified level
   setVerbosity(parallel_config.get('verbosity', logging.INFO))

@@ -118,10 +118,10 @@ def checkMask(imageNode, maskNode, **kwargs):
   4. Optional. Check if there are at least N voxels in the ROI. N is defined in ``minimumROISize``, this test is skipped
      if ``minimumROISize = None``.
 
-  This function returns a tuple of two items. The first item (if not None) is the bounding box of the mask. The second
-  item is the mask that has been corrected by resampling to the input image geometry (if that resampling was successful).
+  This function returns a tuple of two items. The first item is the bounding box of the mask. The second item is the
+  mask that has been corrected by resampling to the input image geometry (if that resampling was successful).
 
-  If a check fails, an error is logged and a (None,None) tuple is returned. No features will be extracted for this mask.
+  If a check fails, a ValueError is raised. No features will be extracted for this mask.
   If the mask passes all tests, this function returns the bounding box, which is used in the :py:func:`cropToTumorMask`
   function.
 
@@ -155,7 +155,6 @@ def checkMask(imageNode, maskNode, **kwargs):
   """
   global logger
 
-  boundingBox = None
   correctedMask = None
 
   label = kwargs.get('label', 1)
@@ -172,36 +171,32 @@ def checkMask(imageNode, maskNode, **kwargs):
     # If lsif fails, and mask is corrected, it includes a check whether the label is present. Therefore, perform
     # this test here only if lsif does not fail on the first attempt.
     if label not in lsif.GetLabels():
-      logger.error('Label (%g) not present in mask', label)
-      return (boundingBox, correctedMask)
+      raise ValueError('Label (%g) not present in mask', label)
   except RuntimeError as e:
     # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
     if not kwargs.get('correctMask', False):
       if "Both images for LabelStatisticsImageFilter don't match type or dimension!" in e.args[0]:
-        logger.error('Image/Mask datatype or size mismatch. Potential solution: enable correctMask, see '
-                     'Documentation:Usage:Customizing the Extraction:Settings:correctMask for more information')
         logger.debug('Additional information on error.', exc_info=True)
+        raise ValueError('Image/Mask datatype or size mismatch. Potential fix: enable correctMask, see '
+                         'Documentation:Usage:Customizing the Extraction:Settings:correctMask for more information')
       elif "Inputs do not occupy the same physical space!" in e.args[0]:
-        logger.error('Image/Mask geometry mismatch. Potential solution: increase tolerance using geometryTolerance, '
-                     'see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more '
-                     'information')
         logger.debug('Additional information on error.', exc_info=True)
-      return (boundingBox, correctedMask)
+        raise ValueError('Image/Mask geometry mismatch. Potential fix: increase tolerance using geometryTolerance, '
+                         'see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more '
+                         'information')
+      else:
+        raise e  # unhandled error
 
     logger.warning('Image/Mask geometry mismatch, attempting to correct Mask')
 
-    correctedMask = _correctMask(imageNode, maskNode, label)
-    if correctedMask is None:  # Resampling failed (ROI outside image physical space
-      logger.error('Image/Mask correction failed, ROI invalid (not found or outside of physical image bounds)')
-      return boundingBox, correctedMask
+    correctedMask = _correctMask(imageNode, maskNode, label)  # Raises Value error if ROI outside image physical space
 
-    # Resampling succesful, try to calculate boundingbox
+    # Resampling successful, try to calculate boundingbox
     try:
       lsif.Execute(imageNode, correctedMask)
     except RuntimeError:
-      logger.error('Calculation of bounding box failed, for more information run with DEBUG logging and check log')
       logger.debug('Bounding box calculation with resampled mask failed', exc_info=True)
-      return boundingBox, correctedMask
+      raise ValueError('Calculation of bounding box failed, for more information run with DEBUG logging and check log')
 
   # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
   boundingBox = numpy.array(lsif.GetBoundingBox(label))
@@ -209,15 +204,13 @@ def checkMask(imageNode, maskNode, **kwargs):
   logger.debug('Checking minimum number of dimensions requirements (%d)', minDims)
   ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
   if ndims < minDims:
-    logger.error('mask has too few dimensions (number of dimensions %d, minimum required %d)', ndims, minDims)
-    return None, correctedMask
+    raise ValueError('mask has too few dimensions (number of dimensions %d, minimum required %d)' % (ndims, minDims))
 
   if minSize is not None:
     logger.debug('Checking minimum size requirements (minimum size: %d)', minSize)
     roiSize = lsif.GetCount(label)
     if roiSize <= minSize:
-      logger.error('Size of the ROI is too small (minimum size: %g, ROI size: %g', minSize, roiSize)
-      return None, correctedMask
+      raise ValueError('Size of the ROI is too small (minimum size: %g, ROI size: %g' % (minSize, roiSize))
 
   return boundingBox, correctedMask
 
@@ -238,8 +231,7 @@ def _correctMask(imageNode, maskNode, label):
   global logger
   logger.debug('Resampling mask to image geometry')
 
-  if _checkROI(imageNode, maskNode, label) is None:  # ROI invalid
-    return None
+  _checkROI(imageNode, maskNode, label)  # Raises a value error if ROI is invalid
 
   rif = sitk.ResampleImageFilter()
   rif.SetReferenceImage(imageNode)
@@ -260,7 +252,7 @@ def _checkROI(imageNode, maskNode, label):
   For the second check, a tolerance of 1e-3 is allowed.
 
   If the ROI is valid, the bounding box (lower bounds and size in 3 directions: L_X, L_Y, L_Z, S_X, S_Y, S_Z) is
-  returned. Otherwise, ``None`` is returned.
+  returned. Otherwise, a ValueError is raised.
   """
   global logger
   logger.debug('Checking ROI validity')
@@ -271,8 +263,7 @@ def _checkROI(imageNode, maskNode, label):
 
   logger.debug('Checking if label %d is persent in the mask', label)
   if label not in lssif.GetLabels():
-    logger.error('Label (%d) not present in mask', label)
-    return None
+    raise ValueError('Label (%d) not present in mask', label)
 
   # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
   bb = numpy.array(lssif.GetBoundingBox(label))
@@ -296,9 +287,9 @@ def _checkROI(imageNode, maskNode, label):
   tolerance = 1e-3  # Define a tolerance to correct for machine precision errors
   if numpy.any(numpy.min(ROIBounds, axis=0) < (- .5 - tolerance)) or \
      numpy.any(numpy.max(ROIBounds, axis=0) > (numpy.array(imageNode.GetSize()) - .5 + tolerance)):
-    logger.error('Bounding box of ROI is larger than image space:\n\t'
-                 'ROI bounds (x, y, z image coordinate space) %s\n\tImage Size %s', ROIBounds, imageNode.GetSize())
-    return None
+    raise ValueError('Bounding box of ROI is larger than image space:\n\t'
+                     'ROI bounds (x, y, z image coordinate space) %s\n\tImage Size %s' %
+                     (ROIBounds, imageNode.GetSize()))
 
   logger.debug('ROI valid, calculating resampling grid')
 
@@ -390,7 +381,7 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   logger.debug('Resampling image and mask')
 
   if imageNode is None or maskNode is None:
-    return None, None  # this function is expected to always return a tuple of 2 elements
+    raise ValueError('Requires both image and mask to resample')
 
   maskSpacing = numpy.array(maskNode.GetSpacing())
   imageSpacing = numpy.array(imageNode.GetSpacing())
@@ -403,9 +394,6 @@ def resampleImage(imageNode, maskNode, resampledPixelSpacing, interpolator=sitk.
   # Check if the maskNode contains a valid ROI. If ROI is valid, the bounding box needed to calculate the resampling
   # grid is returned.
   bb = _checkROI(imageNode, maskNode, label)
-
-  if bb is None:  # ROI invalid
-    return None, None
 
   # Do not resample in those directions where labelmap spans only one slice.
   maskSize = numpy.array(maskNode.GetSize())

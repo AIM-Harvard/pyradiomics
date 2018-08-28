@@ -45,6 +45,8 @@ class RadiomicsFeaturesExtractor:
 
     self.featureClasses = getFeatureClasses()
 
+    self.generalInfo = None
+
     self.settings = {}
     self._enabledImagetypes = {}
     self._enabledFeatures = {}
@@ -359,6 +361,13 @@ class RadiomicsFeaturesExtractor:
     if label is not None:
       self.settings['label'] = label
 
+    if self.settings['additionalInfo']:
+      self.generalInfo = generalinfo.GeneralInfo()
+      self.generalInfo.addGeneralSettings(self.settings)
+      self.generalInfo.addEnabledImageTypes(self._enabledImagetypes)
+    else:
+      self.generalInfo = None
+
     self.settings['voxelBased'] = voxelBased
     if voxelBased:
       self.logger.info('Starting voxel based extraction')
@@ -377,27 +386,36 @@ class RadiomicsFeaturesExtractor:
     featureVector = collections.OrderedDict()
     image, mask = self.loadImage(imageFilepath, maskFilepath)
 
-    if image is None or mask is None:
-      # No features can be extracted, return the empty featureVector
-      return featureVector
-
     # 2. Check whether loaded mask contains a valid ROI for feature extraction and get bounding box
+    # Raises a ValueError if the ROI is invalid
     boundingBox, correctedMask = imageoperations.checkMask(image, mask, **self.settings)
 
     # Update the mask if it had to be resampled
     if correctedMask is not None:
+      if self.generalInfo is not None:
+        self.generalInfo.addMaskElements(image, correctedMask, self.settings['label'], 'corrected')
       mask = correctedMask
-
-    if boundingBox is None:
-      # Mask checks failed, do not extract features and return the empty featureVector
-      return featureVector
 
     self.logger.debug('Image and Mask loaded and valid, starting extraction')
 
+    # 5. Resegment the mask if enabled (parameter regsegmentMask is not None)
+    resegmentedMask = None
+    resegmentRange = self.settings.get('resegmentRange', None)
+    if resegmentRange is not None:
+      resegmentMode = self.settings.get('resegmentMode', 'absolute')
+      resegmentedMask = imageoperations.resegmentMask(image, mask, resegmentRange, resegmentMode,
+                                                      self.settings['label'])
+
+      # Recheck to see if the mask is still valid, raises a ValueError if not
+      boundingBox, correctedMask = imageoperations.checkMask(image, resegmentedMask, **self.settings)
+
+      if self.generalInfo is not None:
+        self.generalInfo.addMaskElements(image, resegmentedMask, self.settings['label'], 'resegmented')
+
     if not voxelBased:
       # 3. Add the additional information if enabled
-      if self.settings['additionalInfo']:
-        featureVector.update(self.getProvenance(imageFilepath, maskFilepath, mask))
+      if self.generalInfo is not None:
+        featureVector.update(self.generalInfo.getGeneralInfo())
 
       # 4. If shape descriptors should be calculated, handle it separately here
       if 'shape' in self._enabledFeatures.keys():
@@ -416,24 +434,8 @@ class RadiomicsFeaturesExtractor:
           newFeatureName = 'original_shape_%s' % featureName
           featureVector[newFeatureName] = featureValue
 
-    # 5. Resegment the mask if enabled (parameter regsegmentMask is not None)
-    resegmentRange = self.settings.get('resegmentRange', None)
-    if resegmentRange is not None:
-      resegmentMode = self.settings.get('resegmentMode', 'absolute')
-      resegmentedMask = imageoperations.resegmentMask(image, mask, resegmentRange, resegmentMode,
-                                                      self.settings['label'])
-
-      # Recheck to see if the mask is still valid
-      boundingBox, correctedMask = imageoperations.checkMask(image, resegmentedMask, **self.settings)
-      # Update the mask if it had to be resampled
-      if correctedMask is not None:
-        resegmentedMask = correctedMask
-
-      if boundingBox is None:
-        # Mask checks failed, do not extract features and return the empty featureVector
-        return featureVector
-
-      # Resegmentation successful
+    # Only use resegemented mask for feature classes other than shape
+    if resegmentedMask is not None:
       mask = resegmentedMask
 
     # 6. Calculate other enabled feature classes using enabled image types
@@ -476,16 +478,18 @@ class RadiomicsFeaturesExtractor:
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       image = ImageFilePath
     else:
-      self.logger.warning('Error reading image Filepath or SimpleITK object')
-      return None, None  # this function is expected to always return a tuple of 2 elements
+      raise ValueError('Error reading image Filepath or SimpleITK object')
 
     if isinstance(MaskFilePath, six.string_types) and os.path.isfile(MaskFilePath):
       mask = sitk.ReadImage(MaskFilePath)
     elif isinstance(MaskFilePath, sitk.SimpleITK.Image):
       mask = MaskFilePath
     else:
-      self.logger.warning('Error reading mask Filepath or SimpleITK object')
-      return None, None  # this function is expected to always return a tuple of 2 elements
+      raise ValueError('Error reading mask Filepath or SimpleITK object')
+
+    if self.generalInfo is not None:
+      self.generalInfo.addImageElements(image)
+      self.generalInfo.addMaskElements(image, mask, self.settings.get('label', 1))
 
     # This point is only reached if image and mask loaded correctly
     if self.settings['normalize']:
@@ -497,6 +501,10 @@ class RadiomicsFeaturesExtractor:
                                                   self.settings['interpolator'],
                                                   self.settings['label'],
                                                   self.settings['padDistance'])
+      if self.generalInfo is not None:
+        self.generalInfo.addImageElements(image, 'interpolated')
+        self.generalInfo.addMaskElements(image, mask, self.settings.get('label', 1), 'interpolated')
+
     elif self.settings['preCrop']:
       bb, correctedMask = imageoperations.checkMask(image, mask, **self.settings)
       if correctedMask is not None:
@@ -504,28 +512,11 @@ class RadiomicsFeaturesExtractor:
         mask = correctedMask
       if bb is None:
         # Mask checks failed
-        return None, None
+        raise ValueError('Mask checks failed during pre-crop')
+
       image, mask = imageoperations.cropToTumorMask(image, mask, bb, self.settings['padDistance'])
 
     return image, mask
-
-  def getProvenance(self, imageFilepath, maskFilepath, mask):
-    """
-    Generates provenance information for reproducibility. Takes the original image & mask filepath, as well as the
-    resampled mask which is passed to the feature classes. Returns a dictionary with keynames coded as
-    "general_info_<item>". For more information on generated items, see :ref:`generalinfo<radiomics-generalinfo-label>`
-    """
-    self.logger.info('Adding additional extraction information')
-
-    provenanceVector = collections.OrderedDict()
-    generalinfoClass = generalinfo.GeneralInfo(imageFilepath,
-                                               maskFilepath,
-                                               mask,
-                                               self.settings,
-                                               self._enabledImagetypes)
-    for k, v in six.iteritems(generalinfoClass.execute()):
-      provenanceVector['general_info_%s' % k] = v
-    return provenanceVector
 
   def computeFeatures(self, image, mask, imageTypeName, **kwargs):
     """

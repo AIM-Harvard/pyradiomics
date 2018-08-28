@@ -1,0 +1,41 @@
+# This is an example of how a PyRadiomics Model looks like.
+# It consists of 2 main parts: "extraction" and "model"
+#
+# "extraction": this part defines the settings PyRadiomics needs to extract the required features for the input.
+# A model can incorporate features extracted from different images (e.g. multiple time points, or different MR
+# sequences). For each image, a customized extraction may be defined by providing the image name as a key, and the
+# customization as a value. This customization value must adhere to the same rules as a parameter file.
+# In addition, extraction parameters that are common to all input images can be defined under "general". Be aware,
+# "general" is therefore not allowed as an image name.
+# If an image name is provided in the model, but not included in the extraction settings, no additional customization
+# is applied for that image (just the general settings, if present)
+#
+# "model": this part provides all needed information to build the model. In this case, a simple linear regression model
+# is shown. Both the "name" key (identifying the model type) and "parameters" key (providing model specific parameters)
+# are required. What kind of parameters are possible/required depends on the model. In this case, only the intercept of
+# the model and the betas (slopes) of the included features are required.
+
+extraction:
+  general:
+    setting:
+      binWidth: 25
+    imageType:
+      Original: {}
+
+  image1:
+    featureClass:
+      glcm:
+        - Dissimilarity
+
+  image2:
+    featureClass:
+      firstorder:
+        - Mean
+
+model:
+  name: linearregression
+  parameters:
+    intercept: 0.334
+    betas:
+      image1_original_glcm_Dissimilarity: 0.1
+      image2_original_firstorder_Mean: 0.3

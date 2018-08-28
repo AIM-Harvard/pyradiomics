@@ -10,6 +10,7 @@ import sys
 import tempfile
 
 import numpy  # noqa: F401
+from pykwalify.compat import yaml
 from six.moves import urllib
 
 from . import imageoperations
@@ -184,17 +185,36 @@ def getTestCase(testCase, dataDirectory=None):
     return None, None
 
 
-def getParameterValidationFiles():
+def getParameterValidationFiles(is_model_validation=False):
   """
   Returns file locations for the parameter schema and custom validation functions, which are needed when validating
   a parameter file using ``PyKwalify.core``.
-  This functions returns a tuple with the file location of the schema as first and python script with custom validation
-  functions as second element.
+  This functions returns a tuple with a dictionary representing the schema and the file location of a python script
+  containing the custom validation functions.
   """
   dataDir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'schemas'))
   schemaFile = os.path.join(dataDir, 'paramSchema.yaml')
+  modelFile = os.path.join(dataDir, 'modelSchema.yaml')
   schemaFuncs = os.path.join(dataDir, 'schemaFuncs.py')
-  return schemaFile, schemaFuncs
+
+  if not (os.path.isfile(schemaFile) and os.path.isfile(schemaFuncs)):
+    raise IOError('Customization Validation Files not Found!')
+
+  with open(schemaFile) as schema:
+    schema_data = yaml.load(schema)
+
+  if is_model_validation:
+    if not os.path.isfile(modelFile):
+      raise IOError('Model Validation File not Found!')
+
+    # Add the additional validation requirements of the model schema
+    with open(modelFile) as model_schema:
+      schema_data.update(yaml.load(model_schema))
+  else:
+    # Add the include to ensure that the customization_schema is applied
+    schema_data.update({'include': 'customization_schema'})
+
+  return schema_data, schemaFuncs
 
 
 class _DummyProgressReporter(object):

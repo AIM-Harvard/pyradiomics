@@ -101,6 +101,36 @@ class GeneralInfo():
     else:
       return None
 
+  def getCenterOfMassIndexValue(self):
+    """
+    Returns z, y and x coordinates of the center of mass of the ROI in terms of the image coordinate space (continuous index).
+
+    Calculation is based on the original (non-resampled) mask.
+
+    .. note::
+      Because this represents the continuous index, the order of x, y and z is reversed, i.e. the first element is the z index, the second
+      the y index and the last element is the x index.
+    """
+    if self.mask is not None:
+      maskArray = sitk.GetArrayFromImage(self.mask)
+      maskCoordinates = numpy.array(numpy.where(maskArray == self.label))
+      center_index = numpy.mean(maskCoordinates, axis=1)
+      return tuple(center_index)
+    else:
+      return None
+
+  def getCenterOfMassValue(self):
+    """
+    Returns the real-world x, y and z coordinates of the center of mass of the ROI. This is the real-world transformation of
+    :py:func:`~radiomics.generalinfo.getCenterOfMassIndexValue()`, taking into account the spacing, direction and origin of the mask.
+
+    Calculation is based on the original (non-resampled) mask.
+    """
+    if self.mask is not None:
+      return self.mask.TransformContinuousIndexToPhysicalPoint(self.getCenterOfMassIndexValue())
+    else:
+      return None
+
   def getEnabledImageTypesValue(self):
     """
     Return a string representation of the enabled image types and any custom settings for each image type.

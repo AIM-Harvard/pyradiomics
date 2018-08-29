@@ -7,6 +7,45 @@ Next Release
 ------------
 
 -----------------
+PyRadiomics 2.0.1
+-----------------
+
+New Features
+############
+
+- Add Center of Mass to general info output. (`#416 <https://github.com/Radiomics/pyradiomics/pull/416>`_)
+
+Bug fixes
+#########
+
+- Fix invocation of numpy.histogram when using a fixed bin count.
+  (`2a9fd79 <https://github.com/Radiomics/pyradiomics/commit/2a9fd79>`_)
+- Fix assignment of x and y pixelspacing in shape (no changes in results).
+  (`#404 <https://github.com/Radiomics/pyradiomics/pull/404>`_)
+- Fix generation of approximation name (LLL or LL) in wavelet.
+  (`#405 <https://github.com/Radiomics/pyradiomics/pull/405>`_)
+- Add missing requirements for new filters in Docker CLI file.
+  (`#409 <https://github.com/Radiomics/pyradiomics/pull/409>`_)
+- Fix memory leak in C extensions. (`#419 <https://github.com/Radiomics/pyradiomics/pull/419>`_)
+- Fix Label column parsing in batch processing. (`217a840 <https://github.com/Radiomics/pyradiomics/commit/217a840>`_)
+
+Documentation
+#############
+
+- Fix math rendering in GLCM. (`c6a1f21 <https://github.com/Radiomics/pyradiomics/commit/c6a1f21>`_)
+- Add reference to GLDM feature class. (`9f9361a <https://github.com/Radiomics/pyradiomics/commit/9f9361a>`_)
+- Correct typo in IMC1 and 2 formulas. (`4ba909a <https://github.com/Radiomics/pyradiomics/commit/4ba909a>`_)
+- Update warning message in ROI check.  (`1f16b9e <https://github.com/Radiomics/pyradiomics/commit/1f16b9e>`_)
+- Update usage section in documentation on command line usage.
+  (`fe0e2c3 <https://github.com/Radiomics/pyradiomics/commit/fe0e2c3>`_)
+
+Internal API
+############
+
+- Simplify calculation of various GLCM features (no changes in results).
+  (`#407 <https://github.com/Radiomics/pyradiomics/pull/407>`_)
+
+-----------------
 PyRadiomics 2.0.0
 -----------------
 

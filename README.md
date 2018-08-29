@@ -17,7 +17,6 @@
 [travisci-lnk]: https://travis-ci.org/Radiomics/pyradiomics
 
 ## Radiomics feature extraction in Python
-
 This is an open-source python package for the extraction of Radiomics features from medical imaging.
 
 With this package we aim to establish a reference standard for Radiomic Analysis, and provide a tested and maintained
@@ -63,7 +62,6 @@ output. This information contains information on used image and mask, as well as
 and filters, thereby enabling fully reproducible feature extraction.
 
 ### Documentation
-
 For more information, see the sphinx generated documentation available [here](http://pyradiomics.readthedocs.io/).
 
 Alternatively, you can generate the documentation by checking out the master branch and running from the root directory:
@@ -75,8 +73,7 @@ The documentation can then be viewed in a browser by opening `PACKAGE_ROOT\build
 Furthermore, an instruction video is available [here](http://radiomics.io/pyradiomics.html).
 
 ### Installation
-
-PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4. As of version 2.0,
+PyRadiomics is OS independent and compatible with both Python 2.7 and Python 3.4, 3.5 and 3.6. As of version 2.0,
 PyRadiomics releases are also made available on PyPi. To install PyRadiomics, ensure you have python
 installed and run:
 
@@ -86,10 +83,13 @@ Detailed installation instructions, as well as instructions for building PyRadio
 [documentation](http://pyradiomics.readthedocs.io/en/latest/installation.html).
 
 ### Docker
+PyRadiomics also supports [Dockers](https://www.docker.com/).  Currently, 2 dockers are available:
 
-PyRadiomics also supports [Dockers](https://www.docker.com/).  Currently, the only docker available is a [Jupyter notebook](http://jupyter.org/) with PyRadiomics pre-installed with example Notebooks. To build the Docker:
+The first one is a [Jupyter notebook](http://jupyter.org/) with PyRadiomics pre-installed with example Notebooks. 
 
-    docker build -t radiomics/notebook .
+To get the Docker:
+
+    docker pull radiomics/pyradiomics:latest
 
 The `radiomics/notebook` Docker has an exposed volume (`/data`) that can be mapped to the host system directory.  For example, to mount the current directory:
 
@@ -101,21 +101,32 @@ or for a less secure notebook, skip the randomly generated token
 
 and open the local webpage at http://localhost:8888/ with the current directory at http://localhost:8888/tree/data.
 
-### Usage
+The second is a docker which exposes the PyRadiomics CLI interface. To get the CLI-Docker:
 
+    docker pull radiomics/pyradiomics:CLI
+
+You can then use the PyRadiomics CLI as follows:
+
+    docker run radiomics/pyradiomics:CLI --help
+
+For more information on using docker, see
+[here](https://pyradiomics.readthedocs.io/en/latest/installation.html#use-pyradiomics-docker)
+
+### Usage
 PyRadiomics can be easily used in a Python script through the `featureextractor`
-module. Furthermore, PyRadiomics provides two commandline scripts, `pyradiomics`
-and `pyradiomicsbatch`, for single image extraction and batchprocessing, respectively.
-Finally, a convenient front-end interface is provided as the 'Radiomics'
+module. Furthermore, PyRadiomics provides a commandline script, `pyradiomics`, for both single image extraction and 
+batchprocessing. Finally, a convenient front-end interface is provided as the 'Radiomics'
 extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRadiomics).
 
 ### 3rd-party packages used in pyradiomics:
-
  - SimpleITK (Image loading and preprocessing)
  - numpy (Feature calculation)
  - PyWavelets (Wavelet filter)
  - pykwalify (Enabling yaml parameters file checking)
  - six (Python 3 Compatibility)
+ - scipy (Only for LBP filter, install seperately to enable this filter)
+ - scikit-image (Only for LBP filter, install seperately to enable this filter)
+ - trimesh (Only for LBP filter, install seperately to enable this filter)
 
 See also the [requirements file](requirements.txt).
 
@@ -144,7 +155,6 @@ This package is covered by the open source [3-clause BSD License](LICENSE.txt).
 <sup>6</sup>Isomics
 
 ### Contact
-
 We are happy to help you with any questions. Please contact us on the [pyradiomics email list](https://groups.google.com/forum/#!forum/pyradiomics).
 
 We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.rst) on how to

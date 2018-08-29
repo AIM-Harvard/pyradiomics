@@ -66,6 +66,12 @@ setup(
   name='pyradiomics',
 
   url='http://github.com/Radiomics/pyradiomics#readme',
+  project_urls={
+    'Radiomics.io': 'https://www.radiomics.io/',
+    'Documentation': 'https://pyradiomics.readthedocs.io/en/latest/index.html',
+    'Docker': 'https://hub.docker.com/r/radiomics/pyradiomics/',
+    'Github': 'https://github.com/Radiomics/pyradiomics'
+  },
 
   author='pyradiomics community',
   author_email='pyradiomics@googlegroups.com',
@@ -102,6 +108,7 @@ setup(
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.4',
     'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
     'Topic :: Scientific/Engineering :: Bio-Informatics',
   ],
 

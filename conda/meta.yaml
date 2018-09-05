@@ -1,0 +1,51 @@
+package:
+  name: "pyradiomics"
+  version: "2.0.1"
+
+source:
+  path: ../
+
+build:
+  number: "{{ GIT_DESCRIBE_NUMBER }}"
+  entry_points:
+    - pyradiomics=radiomics.scripts.__init__:parse_args
+
+requirements:
+  build:
+    - git
+    - {{ compiler('cxx') }} # [not linux]
+  host:
+    - python
+    - numpy >=1.9.2
+    - pip
+    - pykwalify >=1.6.0
+    - pywavelets >=0.4.0
+    - SimpleITK ==0.9.1 # [not py36]
+    - SimpleITK ==1.0.1 # [py36]
+    - six >=1.10.0
+  run:
+    - python
+    - numpy >=1.9.2
+    - pykwalify >=1.6.0
+    - pywavelets >=0.4.0
+    - SimpleITK ==0.9.1
+    - six >=1.10.0
+    - scipy
+    - scikit-learn
+    - trimesh
+
+about:
+  home: http://github.com/Radiomics/pyradiomics#readme
+  license: BSD
+  license_family: BSD
+  license_file: LICENSE.txt
+  summary: Radiomics features library for python
+  doc_url: https://pyradiomics.readthedocs.io/en/latest/
+  dev_url: 
+
+extra:
+  recipe-maintainers:
+    - JoostJM
+    - fedorov
+    - pieper
+    - hugoaerts

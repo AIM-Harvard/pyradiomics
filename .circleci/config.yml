@@ -134,6 +134,46 @@ jobs:
           name: Deploy source and linux wheels
           command: twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_USER -p $PYPI_PASSWORD
 
+  deploy_conda:
+    working_directory: /pyradiomics
+    docker:
+      - image: circleci/python:3.6-jessie
+        user: root
+    steps:
+      - checkout
+      - run:
+          name: Install Miniconda
+          command: |
+            wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+            bash miniconda.sh -b -p $HOME/miniconda
+            hash -r
+            echo 'export PATH=$HOME/miniconda/bin:$PATH' >> $BASH_ENV
+      - run:
+          name: Configure Miniconda
+          command: |
+            conda config --set always_yes yes --set changeps1 no
+            conda config --set anaconda_upload no
+            conda config --add channels simpleitk
+            conda config --add channels conda-forge
+            conda install gcc libgcc
+            conda install conda-build
+            conda install anaconda-client
+            conda update -q conda
+
+      - run:
+          name: Build Conda packages
+          command: |
+            mkdir  /conda-bld
+            conda build ./conda --python=2.7 --croot /conda-bld --prefix-length 2
+            conda build ./conda --python=3.4 --croot /conda-bld --prefix-length 2
+            conda build ./conda --python=3.5 --croot /conda-bld --prefix-length 2
+            conda build ./conda --python=3.6 --croot /conda-bld --prefix-length 2
+      - run:
+          name: Deploy Conda packages
+          command: |
+            ls /conda-bld
+            ls /conda-bld/linux-64  # For now, just list the contents of the conda build dir
+
 workflows:
   version: 2
   build_and_deploy:
@@ -155,6 +195,8 @@ workflows:
             - build-3.4
             - build-3.5
             - build-3.6
+      - deploy_conda:
+          <<: *build_job_template
       - deploy:
           requires:
             - build-2.7

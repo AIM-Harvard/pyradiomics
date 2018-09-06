@@ -159,19 +159,17 @@ jobs:
             conda install conda-build
             conda install anaconda-client
             conda update -q conda
-
       - run:
           name: Build Conda packages
           command: |
             mkdir  /conda-bld
-            conda build ./conda --python=2.7 --croot /conda-bld --prefix-length 2
-            conda build ./conda --python=3.4 --croot /conda-bld --prefix-length 2
-            conda build ./conda --python=3.5 --croot /conda-bld --prefix-length 2
-            conda build ./conda --python=3.6 --croot /conda-bld --prefix-length 2
+            conda build ./conda --python=2.7 --croot /conda-bld
+            conda build ./conda --python=3.4 --croot /conda-bld
+            conda build ./conda --python=3.5 --croot /conda-bld
+            conda build ./conda --python=3.6 --croot /conda-bld
       - run:
           name: Deploy Conda packages
           command: |
-            ls /conda-bld
             ls /conda-bld/linux-64  # For now, just list the contents of the conda build dir
 
 workflows:

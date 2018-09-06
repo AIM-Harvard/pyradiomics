@@ -12,23 +12,22 @@ build:
 
 requirements:
   build:
+    - python
     - git
-    - {{ compiler('cxx') }} # [not linux]
   host:
     - python
     - numpy >=1.9.2
     - pip
     - pykwalify >=1.6.0
     - pywavelets >=0.4.0
-    - SimpleITK ==0.9.1 # [not py36]
-    - SimpleITK ==1.0.1 # [py36]
+    - SimpleITK !=1.1.0
     - six >=1.10.0
   run:
     - python
     - numpy >=1.9.2
     - pykwalify >=1.6.0
     - pywavelets >=0.4.0
-    - SimpleITK ==0.9.1
+    - SimpleITK !=1.1.0
     - six >=1.10.0
     - scipy
     - scikit-learn

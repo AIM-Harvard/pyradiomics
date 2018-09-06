@@ -9,21 +9,25 @@ matrix:
       language: generic
       env:
         - PYTHON_VERSION=2.7.12
+        - PYTHON_SHORT_VERSION=2.7
 
     - os: osx
       language: generic
       env:
         - PYTHON_VERSION=3.4.8
+        - PYTHON_SHORT_VERSION=3.4
 
     - os: osx
       language: generic
       env:
         - PYTHON_VERSION=3.5.5
+        - PYTHON_SHORT_VERSION=3.5
 
     - os: osx
       language: generic
       env:
         - PYTHON_VERSION=3.6.5
+        - PYTHON_SHORT_VERSION=3.6
 
 cache:
   directories:
@@ -46,6 +50,20 @@ script:
 
 after_success:
   - ci after_test
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - hash -r
+  - export PATH=$HOME/miniconda/bin:$PATH
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --set anaconda_upload no
+  - conda config --add channels simpleitk
+  - conda config --add channels conda-forge
+  - conda install gcc libgcc
+  - conda install conda-build
+  - conda install anaconda-client
+  - conda update -q conda
+  - conda build ./conda --python=$PYTHON_SHORT_VERSION --croot $HOME/conda-bld
+  - ls $HOME/conda-bld/osx-64
 
 before_deploy:
   - sudo pip install twine  # Twine installation requires sudo to get access to /usr/local/man

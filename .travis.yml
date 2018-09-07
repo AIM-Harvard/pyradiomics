@@ -60,7 +60,7 @@ deploy:
     script: twine upload dist/*.whl -u $PYPI_USER -p $PYPI_PASSWORD
     on:
       tags: true
-      condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?$
+      condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?$ && $TRAVIS_REPO_SLUG == Radiomics/pyradiomics
   - provider: script
     script:
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
@@ -72,4 +72,4 @@ deploy:
       anaconda -t $ANACONDA_TOKEN upload -u Radiomics $HOME/conda-bld/osx-64/pyradiomics-*.tar.bz2 --force
     on:
       tags: true
-      condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(((rc)|b)[0-9]+)?$
+      condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?$ && $TRAVIS_REPO_SLUG == Radiomics/pyradiomics

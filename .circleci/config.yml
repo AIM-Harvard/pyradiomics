@@ -99,6 +99,9 @@ jobs:
       - image: circleci/python:3.6-jessie
         user: root
     steps:
+      - run:
+          name: Check Repo User
+          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
       - checkout
       - run:
           name: Setup SciKit-CI
@@ -140,6 +143,9 @@ jobs:
       - image: circleci/python:3.6-jessie
         user: root
     steps:
+      - run:
+          name: Check Repo User
+          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
       - checkout
       - run:
           name: Install Miniconda
@@ -185,15 +191,7 @@ workflows:
             - build-3.4
             - build-3.5
             - build-3.6
-      - deploy_conda:
-          filters:
-            branches:
-              ignore:
-                - /.*/
-            tags:
-              only:
-                - /^v?[0-9]+(\.[0-9]+)*(((rc)|b)[0-9]+)?$/
-      - deploy:
+      - deploy: &deploy_template
           requires:
             - build-2.7
             - build-3.4
@@ -206,3 +204,5 @@ workflows:
             tags:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
+      - deploy_conda:
+          <<: *deploy_template

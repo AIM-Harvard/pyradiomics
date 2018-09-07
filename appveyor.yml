@@ -58,16 +58,14 @@ on_finish:
 
 deploy_script:
   - echo "checking deployment"
-  - ps: >-
-      if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?\d(\.\d)*(b\d+)?$') {
-        $env:MINICONDA_PATH="C:\Miniconda3-x64\Scripts";
-        if ($env:PYTHON_SHORT_VERSION -eq '2.7') { $env:MINICONDA_PATH="C:\Miniconda-x64\Scripts" };
-        $env:PATH=$env:MINICONDA_PATH;$env:PATH;
-        ./conda/configure_conda.bat;
-        conda build ./conda --python=$env:PYTHON_SHORT_VERSION --croot C:/conda-bld
-      }
+  - ps: if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?[0-9]+(\.[0-9]+)*(((rc)|b)[0-9]+)?$') { appveyor exit }
+  - SET MINICONDA_PATH=C:\Miniconda3-x64\Scripts
+  - IF /I "%PYTHON_SHORT_VERSION%"=="2.7" SET MINICONDA_PATH=C:\Miniconda-x64\Scripts
+  - SET PATH=%MINICONDA_PATH%;%PATH%
+  - ./conda/configure_conda.bat && conda build ./conda --python=%PYTHON_SHORT_VERSION% --croot C:/conda-bld
+  - anaconda -t %ANACONDA_TOKEN% upload -u Radiomics C:/conda-bld/win-64/pyradiomics-*.tar.bz2 --force
+  - ps: if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?[0-9]+(\.[0-9]+)*(rc\d+)?$') { appveyor exit }
   - ps: if ($env:APPVEYOR_REPO_NAME -notmatch 'Radiomics/pyradiomics') { appveyor exit }
-  - ps: if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?\d(\.\d)*(-rc\d+)?$') { appveyor exit }
   - echo "starting deployment"
   - twine upload dist/*.whl -u %PYPI_USER% -p %PYPI_PASSWORD%
   - echo "finished deployment"

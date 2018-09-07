@@ -150,15 +150,7 @@ jobs:
             echo 'export PATH=$HOME/miniconda/bin:$PATH' >> $BASH_ENV
       - run:
           name: Configure Miniconda
-          command: |
-            conda config --set always_yes yes --set changeps1 no
-            conda config --set anaconda_upload no
-            conda config --add channels simpleitk
-            conda config --add channels conda-forge
-            conda install gcc libgcc
-            conda install conda-build
-            conda install anaconda-client
-            conda update -q conda
+          command: bash ./conda/configure_conda.sh
       - run:
           name: Build Conda packages
           command: |
@@ -194,7 +186,13 @@ workflows:
             - build-3.5
             - build-3.6
       - deploy_conda:
-          <<: *build_job_template
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^v?[0-9]+(\.[0-9]+)*(b[0-9]+)?/
       - deploy:
           requires:
             - build-2.7
@@ -207,4 +205,4 @@ workflows:
                 - /.*/
             tags:
               only:
-                - /^v?[0-9]+(\.[0-9]+)*(-rc[0-9]+)?/
+                - /^v?[0-9]+(\.[0-9]+)*(-?rc[0-9]+)?/

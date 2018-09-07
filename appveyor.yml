@@ -55,20 +55,17 @@ artifacts:
 
 on_finish:
   - ps: ../addons/appveyor/enable-worker-remote-access.ps1 -check_for_block
-  - SET MINICONDA_PATH=C:\Miniconda3-x64\Scripts
-  - IF /I "%PYTHON_SHORT_VERSION%"=="2.7" SET MINICONDA_PATH=C:\Miniconda-x64\Scripts
-  - SET PATH=%MINICONDA_PATH%;%PATH%
-  - conda config --set always_yes yes --set changeps1 no
-  - conda config --set anaconda_upload no
-  - conda config --add channels simpleitk
-  - conda config --add channels conda-forge
-  - conda install conda-build
-  - conda install anaconda-client
-  - conda update -q conda
-  - conda build ./conda --python=%PYTHON_SHORT_VERSION% --croot C:/conda-bld
 
 deploy_script:
   - echo "checking deployment"
+  - ps: >-
+      if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?\d(\.\d)*(b\d+)?$') {
+        $env:MINICONDA_PATH="C:\Miniconda3-x64\Scripts";
+        if ($env:PYTHON_SHORT_VERSION -eq '2.7') { $env:MINICONDA_PATH="C:\Miniconda-x64\Scripts" };
+        $env:PATH=$env:MINICONDA_PATH;$env:PATH;
+        ./conda/configure_conda.bat;
+        conda build ./conda --python=$env:PYTHON_SHORT_VERSION --croot C:/conda-bld
+      }
   - ps: if ($env:APPVEYOR_REPO_NAME -notmatch 'Radiomics/pyradiomics') { appveyor exit }
   - ps: if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?\d(\.\d)*(-rc\d+)?$') { appveyor exit }
   - echo "starting deployment"

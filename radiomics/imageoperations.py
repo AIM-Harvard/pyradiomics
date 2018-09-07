@@ -159,7 +159,7 @@ def checkMask(imageNode, maskNode, **kwargs):
   correctedMask = None
 
   label = kwargs.get('label', 1)
-  minDims = kwargs.get('minimumROIDimensions', 1)
+  minDims = kwargs.get('minimumROIDimensions', 2)
   minSize = kwargs.get('minimumROISize', None)
 
   logger.debug('Checking mask with label %d', label)
@@ -208,7 +208,7 @@ def checkMask(imageNode, maskNode, **kwargs):
 
   logger.debug('Checking minimum number of dimensions requirements (%d)', minDims)
   ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
-  if ndims <= minDims:
+  if ndims < minDims:
     logger.error('mask has too few dimensions (number of dimensions %d, minimum required %d)', ndims, minDims)
     return None, correctedMask
 

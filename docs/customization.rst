@@ -201,7 +201,7 @@ Feature Extractor Level
 
 *Mask validation*
 
-- ``minimumROIDimensions`` [1]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively).
+- ``minimumROIDimensions`` [2]: Integer, range 1-3, specifies the minimum dimensions (1D, 2D or 3D, respectively).
   Single-voxel segmentations are always excluded.
 - ``minimumROISize`` [None]: Integer, > 0, specifies the minimum number of voxels required. Test is skipped
   if this parameter is omitted (specifying it as None in the parameter file will throw an error).

@@ -83,7 +83,7 @@ class RadiomicsFeaturesExtractor:
     are defined in the respective feature classes and and not included here. Similarly, filter specific settings are
     defined in ``imageoperations.py`` and also not included here.
     """
-    return {'minimumROIDimensions': 1,
+    return {'minimumROIDimensions': 2,
             'minimumROISize': None,  # Skip testing the ROI size by default
             'normalize': False,
             'normalizeScale': 1,

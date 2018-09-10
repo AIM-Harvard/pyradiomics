@@ -9,21 +9,25 @@ matrix:
       language: generic
       env:
         - PYTHON_VERSION=2.7.12
+        - PYTHON_SHORT_VERSION=2.7
 
     - os: osx
       language: generic
       env:
         - PYTHON_VERSION=3.4.8
+        - PYTHON_SHORT_VERSION=3.4
 
     - os: osx
       language: generic
       env:
         - PYTHON_VERSION=3.5.5
+        - PYTHON_SHORT_VERSION=3.5
 
     - os: osx
       language: generic
       env:
         - PYTHON_VERSION=3.6.5
+        - PYTHON_SHORT_VERSION=3.6
 
 cache:
   directories:
@@ -49,10 +53,23 @@ after_success:
 
 before_deploy:
   - sudo pip install twine  # Twine installation requires sudo to get access to /usr/local/man
+
 deploy:
-  provider: script
-  skip_cleanup: true
-  script: twine upload dist/*.whl -u $PYPI_USER -p $PYPI_PASSWORD
-  on:
-    tags: true
-    condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(-rc[0-9]+)?$
+  - provider: script
+    skip_cleanup: true
+    script: twine upload dist/*.whl -u $PYPI_USER -p $PYPI_PASSWORD
+    on:
+      tags: true
+      condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?$ && $TRAVIS_REPO_SLUG == Radiomics/pyradiomics
+  - provider: script
+    script:
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+      bash miniconda.sh -b -p $HOME/miniconda;
+      hash -r;
+      export PATH=$HOME/miniconda/bin:$PATH;
+      bash ./conda/configure_conda.sh;
+      conda build ./conda --python=$PYTHON_SHORT_VERSION --croot $HOME/conda-bld;
+      anaconda -t $ANACONDA_TOKEN upload -u Radiomics $HOME/conda-bld/osx-64/pyradiomics-*.tar.bz2 --force
+    on:
+      tags: true
+      condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?$ && $TRAVIS_REPO_SLUG == Radiomics/pyradiomics

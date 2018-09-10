@@ -99,6 +99,9 @@ jobs:
       - image: circleci/python:3.6-jessie
         user: root
     steps:
+      - run:
+          name: Check Repo User
+          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
       - checkout
       - run:
           name: Setup SciKit-CI
@@ -134,6 +137,39 @@ jobs:
           name: Deploy source and linux wheels
           command: twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_USER -p $PYPI_PASSWORD
 
+  deploy_conda:
+    working_directory: /pyradiomics
+    docker:
+      - image: circleci/python:3.6-jessie
+        user: root
+    steps:
+      - run:
+          name: Check Repo User
+          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
+      - checkout
+      - run:
+          name: Install Miniconda
+          command: |
+            wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+            bash miniconda.sh -b -p $HOME/miniconda
+            hash -r
+            echo 'export PATH=$HOME/miniconda/bin:$PATH' >> $BASH_ENV
+      - run:
+          name: Configure Miniconda
+          command: bash ./conda/configure_conda.sh
+      - run:
+          name: Build Conda packages
+          command: |
+            mkdir  /conda-bld
+            conda build ./conda --python=2.7 --croot /conda-bld
+            conda build ./conda --python=3.4 --croot /conda-bld
+            conda build ./conda --python=3.5 --croot /conda-bld
+            conda build ./conda --python=3.6 --croot /conda-bld
+      - run:
+          name: Deploy Conda packages
+          command: |
+            anaconda -t $ANACONDA_TOKEN upload -u Radiomics /conda-bld/linux-64/pyradiomics-*.tar.bz2 --force
+
 workflows:
   version: 2
   build_and_deploy:
@@ -142,7 +178,7 @@ workflows:
           filters:
             tags:
               only:
-                - /^v?[0-9]+(\.[0-9]+)*(-rc[0-9]+)?/
+                - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
       - build-3.4:
           <<: *build_job_template
       - build-3.5:
@@ -155,7 +191,7 @@ workflows:
             - build-3.4
             - build-3.5
             - build-3.6
-      - deploy:
+      - deploy: &deploy_template
           requires:
             - build-2.7
             - build-3.4
@@ -167,4 +203,6 @@ workflows:
                 - /.*/
             tags:
               only:
-                - /^v?[0-9]+(\.[0-9]+)*(-rc[0-9]+)?/
+                - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
+      - deploy_conda:
+          <<: *deploy_template

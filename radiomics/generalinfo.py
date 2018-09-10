@@ -1,207 +1,147 @@
 import collections
 import logging
+import sys
 
 import numpy
 import pywt
 import SimpleITK as sitk
-import six
 
 import radiomics
 
 
-class GeneralInfo():
-  def __init__(self, imagePath, maskPath, resampledMask, settings, enabledImageTypes):
+class GeneralInfo:
+  def __init__(self):
     self.logger = logging.getLogger(self.__module__)
 
-    self.elements = self._getElementNames()
+    self.generalInfo_prefix = 'general_info_'
 
-    if isinstance(imagePath, six.string_types):
-      self.image = sitk.ReadImage(imagePath)
-    elif isinstance(imagePath, sitk.Image):
-      self.image = imagePath
-    else:
-      self.logger.warning('Error reading image Filepath or SimpleITK object')
-      self.image = None
+    self.generalInfo = collections.OrderedDict()
+    self.addStaticElements()
 
-    if isinstance(maskPath, six.string_types):
-      self.mask = sitk.ReadImage(maskPath)
-    elif isinstance(maskPath, sitk.Image):
-      self.mask = maskPath
-    else:
-      self.logger.warning('Error reading mask Filepath or SimpleITK object')
-      self.mask = None
-
-    self.resampledMask = resampledMask
-
-    self._settings = settings
-    self._enabledImageTypes = enabledImageTypes
-
-    self.label = self._settings.get('label', 1)
-
-    if resampledMask is not None:
-      self.lssif = sitk.LabelShapeStatisticsImageFilter()
-      self.lssif.Execute(resampledMask)
-    else:
-      self.lssif = None
-
-  def _getElementNames(self):
-    return [member[3: -5] for member in dir(self) if member.startswith('get') and member.endswith('Value')]
-
-  def execute(self):
+  def getGeneralInfo(self):
     """
     Return a dictionary containing all general info items. Format is <info_item>:<value>, where the type
     of the value is preserved. For CSV format, this will result in conversion to string and quotes where necessary, for
     JSON, the values will be interpreted and stored as JSON strings.
     """
-    generalInfo = collections.OrderedDict()
-    for el in self.elements:
-      generalInfo[el] = getattr(self, 'get%sValue' % el)()
-    return generalInfo
+    return self.generalInfo
 
-  def getBoundingBoxValue(self):
+  def addStaticElements(self):
     """
-    Calculate and return the boundingbox extracted using the specified label.
-    Elements 0, 1 and 2 are the x, y and z coordinates of the lower bound, respectively.
-    Elements 3, 4 and 5 are the size of the bounding box in x, y and z direction, respectively.
+    Adds the following elements to the general info:
 
-    Values are based on the resampledMask.
+    - Version: current version of PyRadiomics
+    - NumpyVersion: version of numpy used
+    - SimpleITKVersion: version SimpleITK used
+    - PyWaveletVersion: version of PyWavelet used
+    - PythonVersion: version of the python interpreter running PyRadiomics
     """
-    if self.lssif is not None:
-      return self.lssif.GetBoundingBox(self.label)
-    else:
-      return None
 
-  def getGeneralSettingsValue(self):
+    self.generalInfo[self.generalInfo_prefix + 'Version'] = radiomics.__version__
+    self.generalInfo[self.generalInfo_prefix + 'NumpyVersion'] = numpy.__version__
+    self.generalInfo[self.generalInfo_prefix + 'SimpleITKVersion'] = sitk.Version().VersionString()
+    self.generalInfo[self.generalInfo_prefix + 'PyWaveletVersion'] = pywt.__version__
+    self.generalInfo[self.generalInfo_prefix + 'PythonVersion'] = '%i.%i.%i' % sys.version_info[:3]
+
+  def addImageElements(self, image, prefix='original'):
     """
-    Return a string representation of the general settings.
+    Calculates provenance info for the image
+
+    Adds the following:
+    - ImageHash: sha1 hash of the mask, which can be used to check if the same mask was used during reproducibility
+      tests. (Only added when prefix is "original")
+    - Spacing: Pixel spacing (x, y, z) in mm.
+    - Size: Dimensions (x, y, z) of the image in number of voxels.
+    - Mean: Mean intensity value over all voxels in the image.
+    - Minimum: Minimum intensity value among all voxels in the image.
+    - Maximum: Maximum intensity value among all voxels in the image.
+
+    A prefix is added to indicate what type of image is described:
+
+    - original: Image as loaded, without pre-processing.
+    - interpolated: Image after it has been resampled to a new spacing (includes cropping).
+    """
+    if prefix == 'original':
+      self.generalInfo[self.generalInfo_prefix + 'ImageHash'] = sitk.Hash(image)
+
+    self.generalInfo[self.generalInfo_prefix + prefix + 'Spacing'] = image.GetSpacing()
+    self.generalInfo[self.generalInfo_prefix + prefix + 'Size'] = image.GetSize()
+    im_arr = sitk.GetArrayFromImage(image)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'Mean'] = numpy.mean(im_arr)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'Minimum'] = numpy.max(im_arr)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'Maximum'] = numpy.min(im_arr)
+
+  def addMaskElements(self, image, mask, label, prefix='original'):
+    """
+    Calculates provenance info for the mask
+
+    Adds the following:
+
+    - MaskHash: sha1 hash of the mask, which can be used to check if the same mask was used during reproducibility
+      tests. (Only added when prefix is "original")
+    - BoundingBox: bounding box of the ROI defined by the specified label:
+      Elements 0, 1 and 2 are the x, y and z coordinates of the lower bound, respectively.
+      Elements 3, 4 and 5 are the size of the bounding box in x, y and z direction, respectively.
+    - VoxelNum: Number of voxels included in the ROI defined by the specified label.
+    - VolumeNum: Number of fully connected (26-connectivity) volumes in the ROI defined by the specified label.
+    - CenterOfMassIndex: x, y and z coordinates of the center of mass of the ROI in terms of the image coordinate space (continuous index).
+    - CenterOfMass: the real-world x, y and z coordinates of the center of mass of the ROI
+    - ROIMean: Mean intensity value over all voxels in the ROI defined by the specified label.
+    - ROIMinimum: Minimum intensity value among all voxels in the ROI defined by the specified label.
+    - ROIMaximum: Maximum intensity value among all voxels in the ROI defined by the specified label.
+
+    A prefix is added to indicate what type of mask is described:
+
+    - original: Mask as loaded, without pre-processing.
+    - corrected: Mask after it has been corrected by :py:func:`imageoperations.checkMask`.
+    - interpolated: Mask after it has been resampled to a new spacing (includes cropping).
+    - resegmented: Mask after resegmentation has been applied.
+    """
+    if mask is None:
+      return
+
+    if prefix == 'original':
+      self.generalInfo[self.generalInfo_prefix + 'MaskHash'] = sitk.Hash(mask)
+
+    lssif = sitk.LabelShapeStatisticsImageFilter()
+    lssif.Execute(mask)
+
+    self.generalInfo[self.generalInfo_prefix + prefix + 'BoundingBox'] = lssif.GetBoundingBox(label)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'VoxelNum'] = lssif.GetNumberOfPixels(label)
+
+    labelMap = (mask == label)
+    ccif = sitk.ConnectedComponentImageFilter()
+    ccif.FullyConnectedOn()
+    ccif.Execute(labelMap)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'VolumeNum'] = ccif.GetObjectCount()
+
+    ma_arr = sitk.GetArrayFromImage(labelMap) == 1
+    maskCoordinates = numpy.array(numpy.where(ma_arr))
+    center_index = tuple(numpy.mean(maskCoordinates, axis=1)[::-1])  # also convert z, y, x to x, y, z order
+
+    self.generalInfo[self.generalInfo_prefix + prefix + 'CenterOfMassIndex'] = center_index
+
+    self.generalInfo[self.generalInfo_prefix + prefix + 'CenterOfMass'] = mask.TransformContinuousIndexToPhysicalPoint(center_index)
+
+    if image is None:
+      return
+
+    im_arr = sitk.GetArrayFromImage(image)
+    targetvoxels = im_arr[ma_arr]
+    self.generalInfo[self.generalInfo_prefix + prefix + 'ROIMean'] = numpy.mean(targetvoxels)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'ROIMinimum'] = numpy.min(targetvoxels)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'ROIMaximum'] = numpy.max(targetvoxels)
+
+  def addGeneralSettings(self, settings):
+    """
+    Add a string representation of the general settings.
     Format is {<settings_name>:<value>, ...}.
     """
-    return self._settings
+    self.generalInfo[self.generalInfo_prefix + 'GeneralSettings'] = settings
 
-  def getImageHashValue(self):
+  def addEnabledImageTypes(self, enabledImageTypes):
     """
-    Returns the sha1 hash of the image. This enables checking whether two images are the same,
-    regardless of the file location.
-
-    If the reading of the image fails, an empty string is returned.
-    """
-    if self.image is not None:
-      return sitk.Hash(self.image)
-    else:
-      return None
-
-  def getImageSpacingValue(self):
-    """
-    Returns the original spacing (before any resampling) of the image.
-
-    If the reading of the image fails, an empty string is returned.
-    """
-    if self.image is not None:
-      return self.image.GetSpacing()
-    else:
-      return None
-
-  def getCenterOfMassIndexValue(self):
-    """
-    Returns z, y and x coordinates of the center of mass of the ROI in terms of the image coordinate space (continuous index).
-
-    Calculation is based on the original (non-resampled) mask.
-
-    .. note::
-      Because this represents the continuous index, the order of x, y and z is reversed, i.e. the first element is the z index, the second
-      the y index and the last element is the x index.
-    """
-    if self.mask is not None:
-      maskArray = sitk.GetArrayFromImage(self.mask)
-      maskCoordinates = numpy.array(numpy.where(maskArray == self.label))
-      center_index = numpy.mean(maskCoordinates, axis=1)
-      return tuple(center_index)
-    else:
-      return None
-
-  def getCenterOfMassValue(self):
-    """
-    Returns the real-world x, y and z coordinates of the center of mass of the ROI. This is the real-world transformation of
-    :py:func:`~radiomics.generalinfo.getCenterOfMassIndexValue()`, taking into account the spacing, direction and origin of the mask.
-
-    Calculation is based on the original (non-resampled) mask.
-    """
-    if self.mask is not None:
-      return self.mask.TransformContinuousIndexToPhysicalPoint(self.getCenterOfMassIndexValue())
-    else:
-      return None
-
-  def getEnabledImageTypesValue(self):
-    """
-    Return a string representation of the enabled image types and any custom settings for each image type.
+    Add a string representation of the enabled image types and any custom settings for each image type.
     Format is {<imageType_name>:{<setting_name>:<value>, ...}, ...}.
     """
-    return self._enabledImageTypes
-
-  def getMaskHashValue(self):
-    """
-    Returns the sha1 hash of the mask. This enables checking whether two masks are the same,
-    regardless of the file location.
-
-    If the reading of the mask fails, an empty string is returned. Uses the original mask, specified in maskPath.
-    """
-    if self.mask is not None:
-      return sitk.Hash(self.mask)
-    else:
-      return None
-
-  @classmethod
-  def getVersionValue(self):
-    """
-    Return the current version of this package.
-    """
-    return radiomics.__version__
-
-  @classmethod
-  def getNumpyVersionValue(self):
-    """
-    Return the current version of the numpy package, used for feature calculation.
-    """
-    return numpy.__version__
-
-  @classmethod
-  def getSimpleITKVersionValue(self):
-    """
-    Return the current version of the SimpleITK package, used for image processing.
-    """
-    return sitk.Version().VersionString()
-
-  @classmethod
-  def getPyWaveletVersionValue(self):
-    """
-    Return the current version of the PyWavelet package, used to apply the wavelet filter.
-    """
-    return pywt.__version__
-
-  def getVolumeNumValue(self):
-    """
-    Calculate and return the number of zones within the mask for the specified label.
-    A zone is defined as a group of connected neighbours that are segmented with the specified label, and a voxel is
-    considered a neighbour using 26-connectedness for 3D and 8-connectedness for 2D.
-
-    Values are based on the resampledMask.
-    """
-    if self.resampledMask is not None:
-      labelMap = (self.resampledMask == self.label)
-      ccif = sitk.ConnectedComponentImageFilter()
-      ccif.FullyConnectedOn()
-      ccif.Execute(labelMap)
-      return ccif.GetObjectCount()
-    else:
-      return None
-
-  def getVoxelNumValue(self):
-    """
-    Calculate and return the number of voxels that have been segmented using the specified label.
-
-    Values are based on the resampledMask.
-    """
-    if self.lssif is not None:
-      return self.lssif.GetNumberOfPixels(self.label)
-    else:
-      return None
+    self.generalInfo[self.generalInfo_prefix + 'EnabledImageTypes'] = enabledImageTypes

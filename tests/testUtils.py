@@ -149,10 +149,10 @@ class RadiomicsTestUtils:
 
       self._featureClassName = className
 
-      # Check if test settings have changed
-      if self._current_config != self._baseline[className].getTestConfig(test):
-        self._current_config = self._baseline[className].getTestConfig(test)
-        self._testCase = None  # forces image to be reloaded (as settings have changed)
+    # Check if test settings have changed
+    if self._current_config != self._baseline[className].getTestConfig(test):
+      self._current_config = self._baseline[className].getTestConfig(test)
+      self._testCase = None  # forces image to be reloaded (as settings have changed)
 
     # Next, set testCase if necessary
     if self._testCase != self._current_config['TestCase']:
@@ -367,7 +367,7 @@ class PyRadiomicsBaseline:
 
   def writeBaselineFile(self, baselineDir):
     baselineFile = os.path.join(baselineDir, 'baseline_%s.csv' % self.cls)
-    testCases = list(self.baseline.keys())
+    testCases = sorted(self.baseline.keys())
     with open(baselineFile, 'wb') as baseline:
       csvWriter = csv.writer(baseline)
       header = ['featureName'] + testCases

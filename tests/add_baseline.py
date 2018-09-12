@@ -40,22 +40,20 @@ class AddBaseline:
 
     featureClass = self.featureClasses[featureClassName](testImage, testMask, **self.testUtils.getSettings())
 
+    featureClass.enableAllFeatures()
+    featureClass.execute()
+
     if "_calculateMatrix" in dir(featureClass):
       cMat = getattr(featureClass, 'P_%s' % featureClassName)
       if cMat is not None:
         numpy.save(os.path.join(self.baselineDir, '%s_%s.npy' % (test, featureClassName)), cMat)
 
-    featureClass.enableAllFeatures()
-    featureClass.calculateFeatures()
-
     imageTypeName = 'original'
 
     # Update versions to reflect which configuration generated the baseline
-    versions = {}
-    versions['general_info_Version'] = generalinfo.GeneralInfo.getVersionValue()
-    versions['general_info_NumpyVersion'] = generalinfo.GeneralInfo.getNumpyVersionValue()
-    versions['general_info_SimpleITKVersion'] = generalinfo.GeneralInfo.getSimpleITKVersionValue()
-    versions['general_info_PyWaveletVersion'] = generalinfo.GeneralInfo.getPyWaveletVersionValue()
+    self.generalInfo = generalinfo.GeneralInfo()
+
+    versions = self.generalInfo.getGeneralInfo()
     self.new_baselines[featureClassName].configuration[test].update(versions)
 
     self.new_baselines[featureClassName].baseline[test] = {'%s_%s_%s' % (imageTypeName, featureClassName, key): val
@@ -70,7 +68,7 @@ class AddBaseline:
         if newClass not in self.new_baselines:
           self.logger.info('Adding class %s to the baseline', newClass)
           self.new_baselines[newClass] = PyRadiomicsBaseline(newClass)
-          self.new_baselines[newClass].config = config
+          self.new_baselines[newClass].configuration = config
           # add the new baseline to test utils so it's config can be used during processing
           self.testUtils._baseline[newClass] = self.new_baselines[newClass]
 
@@ -85,7 +83,7 @@ class AddBaseline:
       else:
         # Feature class not yet present in the baseline, generate a new one
         self.new_baselines[featureClass] = PyRadiomicsBaseline(featureClass)
-        self.new_baselines[featureClass].config = config
+        self.new_baselines[featureClass].configuration = config
 
       for test in self.testCases:
         self.process_testcase(test, featureClass)

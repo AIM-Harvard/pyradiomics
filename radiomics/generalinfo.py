@@ -68,8 +68,8 @@ class GeneralInfo:
     self.generalInfo[self.generalInfo_prefix + prefix + 'Size'] = image.GetSize()
     im_arr = sitk.GetArrayFromImage(image)
     self.generalInfo[self.generalInfo_prefix + prefix + 'Mean'] = numpy.mean(im_arr)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'Minimum'] = numpy.max(im_arr)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'Maximum'] = numpy.min(im_arr)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'Minimum'] = numpy.min(im_arr)
+    self.generalInfo[self.generalInfo_prefix + prefix + 'Maximum'] = numpy.max(im_arr)
 
   def addMaskElements(self, image, mask, label, prefix='original'):
     """

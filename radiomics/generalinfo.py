@@ -103,6 +103,9 @@ class GeneralInfo:
     if prefix == 'original':
       self.generalInfo[self.generalInfo_prefix + 'MaskHash'] = sitk.Hash(mask)
 
+    self.generalInfo[self.generalInfo_prefix + prefix + 'ROISpacing'] = mask.GetSpacing()
+    self.generalInfo[self.generalInfo_prefix + prefix + 'ROISize'] = mask.GetSize()
+
     lssif = sitk.LabelShapeStatisticsImageFilter()
     lssif.Execute(mask)
 

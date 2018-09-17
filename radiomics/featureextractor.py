@@ -489,7 +489,9 @@ class RadiomicsFeaturesExtractor:
 
     if self.generalInfo is not None:
       self.generalInfo.addImageElements(image)
-      self.generalInfo.addMaskElements(image, mask, self.settings.get('label', 1))
+      # Do not include the image here, as the overlap between image and mask have not been checked
+      # It is therefore possible that image and mask do not align, or even have different sizes.
+      self.generalInfo.addMaskElements(None, mask, self.settings.get('label', 1))
 
     # This point is only reached if image and mask loaded correctly
     if self.settings['normalize']:

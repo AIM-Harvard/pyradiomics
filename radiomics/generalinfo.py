@@ -13,7 +13,7 @@ class GeneralInfo:
   def __init__(self):
     self.logger = logging.getLogger(self.__module__)
 
-    self.generalInfo_prefix = 'general_info_'
+    self.generalInfo_prefix = 'diagnostics_'
 
     self.generalInfo = collections.OrderedDict()
     self.addStaticElements()
@@ -37,11 +37,11 @@ class GeneralInfo:
     - PythonVersion: version of the python interpreter running PyRadiomics
     """
 
-    self.generalInfo[self.generalInfo_prefix + 'Version'] = radiomics.__version__
-    self.generalInfo[self.generalInfo_prefix + 'NumpyVersion'] = numpy.__version__
-    self.generalInfo[self.generalInfo_prefix + 'SimpleITKVersion'] = sitk.Version().VersionString()
-    self.generalInfo[self.generalInfo_prefix + 'PyWaveletVersion'] = pywt.__version__
-    self.generalInfo[self.generalInfo_prefix + 'PythonVersion'] = '%i.%i.%i' % sys.version_info[:3]
+    self.generalInfo[self.generalInfo_prefix + 'Versions_PyRadiomics'] = radiomics.__version__
+    self.generalInfo[self.generalInfo_prefix + 'Versions_Numpy'] = numpy.__version__
+    self.generalInfo[self.generalInfo_prefix + 'Versions_SimpleITK'] = sitk.Version().VersionString()
+    self.generalInfo[self.generalInfo_prefix + 'Versions_PyWavelet'] = pywt.__version__
+    self.generalInfo[self.generalInfo_prefix + 'Versions_Python'] = '%i.%i.%i' % sys.version_info[:3]
 
   def addImageElements(self, image, prefix='original'):
     """
@@ -62,14 +62,14 @@ class GeneralInfo:
     - interpolated: Image after it has been resampled to a new spacing (includes cropping).
     """
     if prefix == 'original':
-      self.generalInfo[self.generalInfo_prefix + 'ImageHash'] = sitk.Hash(image)
+      self.generalInfo[self.generalInfo_prefix + 'Image-original_Hash'] = sitk.Hash(image)
 
-    self.generalInfo[self.generalInfo_prefix + prefix + 'Spacing'] = image.GetSpacing()
-    self.generalInfo[self.generalInfo_prefix + prefix + 'Size'] = image.GetSize()
+    self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Spacing'] = image.GetSpacing()
+    self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Size'] = image.GetSize()
     im_arr = sitk.GetArrayFromImage(image)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'Mean'] = numpy.mean(im_arr)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'Minimum'] = numpy.min(im_arr)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'Maximum'] = numpy.max(im_arr)
+    self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Mean'] = numpy.mean(im_arr)
+    self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Minimum'] = numpy.min(im_arr)
+    self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Maximum'] = numpy.max(im_arr)
 
   def addMaskElements(self, image, mask, label, prefix='original'):
     """
@@ -101,50 +101,50 @@ class GeneralInfo:
       return
 
     if prefix == 'original':
-      self.generalInfo[self.generalInfo_prefix + 'MaskHash'] = sitk.Hash(mask)
+      self.generalInfo[self.generalInfo_prefix + 'Mask-original_Hash'] = sitk.Hash(mask)
 
-    self.generalInfo[self.generalInfo_prefix + prefix + 'ROISpacing'] = mask.GetSpacing()
-    self.generalInfo[self.generalInfo_prefix + prefix + 'ROISize'] = mask.GetSize()
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_Spacing'] = mask.GetSpacing()
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_Size'] = mask.GetSize()
 
     lssif = sitk.LabelShapeStatisticsImageFilter()
     lssif.Execute(mask)
 
-    self.generalInfo[self.generalInfo_prefix + prefix + 'BoundingBox'] = lssif.GetBoundingBox(label)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'VoxelNum'] = lssif.GetNumberOfPixels(label)
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_BoundingBox'] = lssif.GetBoundingBox(label)
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_VoxelNum'] = lssif.GetNumberOfPixels(label)
 
     labelMap = (mask == label)
     ccif = sitk.ConnectedComponentImageFilter()
     ccif.FullyConnectedOn()
     ccif.Execute(labelMap)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'VolumeNum'] = ccif.GetObjectCount()
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_VolumeNum'] = ccif.GetObjectCount()
 
     ma_arr = sitk.GetArrayFromImage(labelMap) == 1
     maskCoordinates = numpy.array(numpy.where(ma_arr))
     center_index = tuple(numpy.mean(maskCoordinates, axis=1)[::-1])  # also convert z, y, x to x, y, z order
 
-    self.generalInfo[self.generalInfo_prefix + prefix + 'CenterOfMassIndex'] = center_index
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_CenterOfMassIndex'] = center_index
 
-    self.generalInfo[self.generalInfo_prefix + prefix + 'CenterOfMass'] = mask.TransformContinuousIndexToPhysicalPoint(center_index)
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_CenterOfMass'] = mask.TransformContinuousIndexToPhysicalPoint(center_index)
 
     if image is None:
       return
 
     im_arr = sitk.GetArrayFromImage(image)
     targetvoxels = im_arr[ma_arr]
-    self.generalInfo[self.generalInfo_prefix + prefix + 'ROIMean'] = numpy.mean(targetvoxels)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'ROIMinimum'] = numpy.min(targetvoxels)
-    self.generalInfo[self.generalInfo_prefix + prefix + 'ROIMaximum'] = numpy.max(targetvoxels)
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_Mean'] = numpy.mean(targetvoxels)
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_Minimum'] = numpy.min(targetvoxels)
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_Maximum'] = numpy.max(targetvoxels)
 
   def addGeneralSettings(self, settings):
     """
     Add a string representation of the general settings.
     Format is {<settings_name>:<value>, ...}.
     """
-    self.generalInfo[self.generalInfo_prefix + 'GeneralSettings'] = settings
+    self.generalInfo[self.generalInfo_prefix + 'Configuration_Settings'] = settings
 
   def addEnabledImageTypes(self, enabledImageTypes):
     """
     Add a string representation of the enabled image types and any custom settings for each image type.
     Format is {<imageType_name>:{<setting_name>:<value>, ...}, ...}.
     """
-    self.generalInfo[self.generalInfo_prefix + 'EnabledImageTypes'] = enabledImageTypes
+    self.generalInfo[self.generalInfo_prefix + 'Configuration_EnabledImageTypes'] = enabledImageTypes

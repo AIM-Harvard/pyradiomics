@@ -91,7 +91,7 @@ static PyObject *cshape_calculate_surfacearea(PyObject *self, PyObject *args)
   int strides[3];
   char *mask;
   double *spacing;
-  double SA;
+  double SA, Volume;
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OO", &mask_obj, &spacing_obj))
     return NULL;
@@ -106,20 +106,20 @@ static PyObject *cshape_calculate_surfacearea(PyObject *self, PyObject *args)
   mask = (char *)PyArray_DATA(mask_arr);
   spacing = (double *)PyArray_DATA(spacing_arr);
 
-  //Calculate Surface Area
-  SA = calculate_surfacearea(mask, size, strides, spacing);
+  //Calculate Surface Area and volume
+  if (calculate_surfacearea(mask, size, strides, spacing, &SA, &Volume)) // if SA < 0, an error has occurred
+  {
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(spacing_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Calculation of Surface Area Failed.");
+    return NULL;
+  }
 
   // Clean up
   Py_XDECREF(mask_arr);
   Py_XDECREF(spacing_arr);
 
-  if (SA < 0) // if SA < 0, an error has occurred
-  {
-    PyErr_SetString(PyExc_RuntimeError, "Calculation of Surface Area Failed.");
-    return NULL;
-  }
-
-  return Py_BuildValue("f", SA);
+  return Py_BuildValue("ff", SA, Volume);
 }
 
 static PyObject *cshape_calculate_diameter(PyObject *self, PyObject *args)

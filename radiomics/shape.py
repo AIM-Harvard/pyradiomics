@@ -49,15 +49,12 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     self.logger.debug('Pre-calculate Volume, Surface Area and Eigenvalues')
 
     # Volume, Surface Area and eigenvalues are pre-calculated
-    # Compute volume
-    z, y, x = self.pixelSpacing
-    Np = len(self.labelledVoxelCoordinates[0])
-    self.Volume = Np * (z * x * y)
 
-    # Compute Surface Area
-    self.SurfaceArea = self._calculateSurfaceArea()
+    # Compute Surface Area and volume
+    self.SurfaceArea, self.Volume = self._calculateSurfaceArea()
 
     # Compute eigenvalues and -vectors
+    Np = len(self.labelledVoxelCoordinates[0])
     coordinates = numpy.array(self.labelledVoxelCoordinates, dtype='int').transpose((1, 0))  # Transpose equals zip(*a)
     physicalCoordinates = coordinates * self.pixelSpacing[None, :]
     physicalCoordinates -= numpy.mean(physicalCoordinates, axis=0)  # Centered at 0
@@ -100,17 +97,35 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     **1. Volume**
 
     .. math::
-      V = \displaystyle\sum^{N}_{i=1}{V_i}
+      V_{f} = \displaystyle\frac{a \dot (b \times c)}{6} (1)
 
-    The volume of the ROI :math:`V` is approximated by multiplying the number of voxels in the ROI by the volume of a
-    single voxel :math:`V_i`.
+      V = \displaystyle\sum^{N_f}_{f=1}{V_f} (2)
+
+    The volume of the ROI :math:`V` is calculated from the triangle mesh of the ROI. First the volume is calculated of
+    the tetrahedron that is defined by face f and the origin of the image (1) for all :math:`N_f` faces that make up the
+    triangle mesh. This mesh is also used for the calculation of surface area. By ensuring that the normals (obtained
+    from the cross product) have a consistent orientation (outward or inward facing), the volumes obtained are signed.
+    All sub-volumes are then summed (2), yielding the volume of the ROI.
 
     .. note::
-      In the IBSI feature definitions, a more precise approximation of the volume is used. That method uses tetrahedrons
-      consisting of the origin and faces in the ROI. Although the method implemented here overestimates the volume,
-      especially in small volumes, the difference will be negligible in large ROIs.
+      For more extensive documentation on how the volume is obtained using the surface mesh, see the IBSI document on
+      the calculation of Volume.
     """
     return self.Volume
+
+  def getApproximateVolumeFeatureValue(self):
+    r"""
+    **1. Volume**
+
+    .. math::
+      V_{approx} = \displaystyle\sum^{N}_{i=1}{V_i}
+
+    The volume of the ROI :math:`V` is approximated by multiplying the number of voxels in the ROI by the volume of a
+    single voxel :math:`V_i`. This is a less precise approximation of the volume and is not used in subsequent features.
+    """
+    z, y, x = self.pixelSpacing
+    Np = len(self.labelledVoxelCoordinates[0])
+    return Np * (z * x * y)
 
   def getSurfaceAreaFeatureValue(self):
     r"""
@@ -126,7 +141,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     :math:`\text{a}_i\text{b}_i` and :math:`\text{a}_i\text{c}_i` are the edges of the :math:`i^{\text{th}}` triangle
     formed by points :math:`\text{a}_i`, :math:`\text{b}_i` and :math:`\text{c}_i`
 
-    Surface Area is an approximation of the surface of the ROI in mm2, calculated using a marching cubes algorithm.
+    Surface Area is an approximation of the surface of the ROI in mm2, calculated using a the triangle mesh generated
+    using the marching cubes algorithm.
 
     References:
 

@@ -36,15 +36,16 @@ settings = {'binWidth': 25,
 
 #
 # If enabled, resample image (resampled image is automatically cropped.
-# If resampling is not enabled, crop image instead
 #
-if settings['interpolator'] is not None and settings['resampledPixelSpacing'] is not None:
-  image, mask = imageoperations.resampleImage(image, mask, settings['resampledPixelSpacing'], settings['interpolator'])
-else:
-  bb, correctedMask = imageoperations.checkMask(image, mask)
-  if correctedMask is not None:
-    mask = correctedMask
-  image, mask = imageoperations.cropToTumorMask(image, mask, bb)
+interpolator = settings.get('interpolator')
+resampledPixelSpacing = settings.get('resampledPixelSpacing')
+if interpolator is not None and resampledPixelSpacing is not None:
+  image, mask = imageoperations.resampleImage(image, mask, **settings)
+
+bb, correctedMask = imageoperations.checkMask(image, mask)
+if correctedMask is not None:
+  mask = correctedMask
+image, mask = imageoperations.cropToTumorMask(image, mask, bb)
 
 #
 # Show the first order feature calculations

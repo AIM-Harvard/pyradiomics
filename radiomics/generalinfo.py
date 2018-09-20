@@ -84,7 +84,8 @@ class GeneralInfo:
       Elements 3, 4 and 5 are the size of the bounding box in x, y and z direction, respectively.
     - VoxelNum: Number of voxels included in the ROI defined by the specified label.
     - VolumeNum: Number of fully connected (26-connectivity) volumes in the ROI defined by the specified label.
-    - CenterOfMassIndex: x, y and z coordinates of the center of mass of the ROI in terms of the image coordinate space (continuous index).
+    - CenterOfMassIndex: x, y and z coordinates of the center of mass of the ROI in terms of the image coordinate space
+      (continuous index).
     - CenterOfMass: the real-world x, y and z coordinates of the center of mass of the ROI
     - ROIMean: Mean intensity value over all voxels in the ROI defined by the specified label.
     - ROIMinimum: Minimum intensity value among all voxels in the ROI defined by the specified label.

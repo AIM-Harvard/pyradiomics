@@ -32,7 +32,6 @@ class RadiomicsFeaturesBase(object):
   The following variables are instantiated at initialization:
 
   - kwargs: dictionary holding all customized settings passed to this feature class.
-  - binWidth: bin width, as specified in ``**kwargs``. If key is not present, a default value of 25 is used.
   - label: label value of Region of Interest (ROI) in labelmap. If key is not present, a default value of 1 is used.
   - featureNames: list containing the names of features defined in the feature class. See :py:func:`getFeatureNames`
   - inputImage: SimpleITK image object of the input image (dimensions x, y, z)
@@ -61,17 +60,16 @@ class RadiomicsFeaturesBase(object):
   def __init__(self, inputImage, inputMask, **kwargs):
     self.logger = logging.getLogger(self.__module__)
     self.logger.debug('Initializing feature class')
+
+    if inputImage is None or inputMask is None:
+      raise ValueError('Missing input image or mask')
+
     self.progressReporter = getProgressReporter
 
     self.settings = kwargs
 
-    self.binWidth = kwargs.get('binWidth', 25)
-    # Although binCount is available, we advise use of binWidth!
-    # See documentation/FAQ/Input-Customization for more details.
-    self.binCount = kwargs.get('binCount', None)
     self.label = kwargs.get('label', 1)
     self.voxelBased = kwargs.get('voxelBased', False)
-    self.initValue = kwargs.get('initValue', 0)
 
     self.coefficients = {}
 
@@ -83,10 +81,6 @@ class RadiomicsFeaturesBase(object):
 
     self.inputImage = inputImage
     self.inputMask = inputMask
-
-    if inputImage is None or inputMask is None:
-      self.logger.warning('Missing input image or mask')
-      return
 
     if self.voxelBased:
       self._initVoxelBasedCalculation()
@@ -177,10 +171,7 @@ class RadiomicsFeaturesBase(object):
     pass
 
   def _applyBinning(self):
-    self.matrix, self.binEdges = imageoperations.binImage(self.binWidth,
-                                                          self.imageArray,
-                                                          self.maskArray,
-                                                          self.settings.get('binCount', None))
+    self.matrix, _ = imageoperations.binImage(self.imageArray, self.maskArray, **self.settings)
     self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.maskArray])
     self.coefficients['Ng'] = int(numpy.max(self.coefficients['grayLevels']))  # max gray level in the ROI
 
@@ -256,10 +247,11 @@ class RadiomicsFeaturesBase(object):
     self.execute()
 
   def _calculateVoxels(self):
-    # Initialize the output with empyt numpy arrays
+    initValue = self.settings.get('initValue', 0)
+    # Initialize the output with empty numpy arrays
     for feature, enabled in six.iteritems(self.enabledFeatures):
       if enabled:
-        self.featureValues[feature] = numpy.full(self.imageArray.shape, self.initValue, dtype='float')
+        self.featureValues[feature] = numpy.full(self.imageArray.shape, initValue, dtype='float')
 
     # Calculate the feature values for all enabled features
     with self.progressReporter(self.kernels, 'Calculating voxels') as bar:

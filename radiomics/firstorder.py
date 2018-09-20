@@ -41,7 +41,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     self.logger.debug('First order feature class initialized')
 
-  def _moment(self, a, moment=1, axis=0):
+  @staticmethod
+  def _moment(a, moment=1, axis=0):
     r"""
     Calculate n-order moment of an array for a given axis
     """
@@ -55,10 +56,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
   def _getDiscretizedTargetVoxelArray(self):
     if self.discretizedTargetVoxelArray is None:
-      if self.binCount is not None:
-        binEdges = self.binCount
-      else:
-        binEdges = imageoperations.getBinEdges(self.binWidth, self.targetVoxelArray)
+      binEdges = imageoperations.getBinEdges(self.targetVoxelArray, **self.settings)
 
       self.discretizedTargetVoxelArray = numpy.histogram(self.targetVoxelArray, binEdges)[0]
 

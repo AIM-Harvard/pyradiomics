@@ -355,24 +355,28 @@ class RadiomicsFeaturesExtractor:
         is used. Default label is 1.
     :returns: dictionary containing calculated signature ("<imageType>_<featureClass>_<featureName>":value).
     """
-    if self.geometryTolerance != self.settings.get('geometryTolerance'):
-      self._setTolerance()
-
+    geometryTolerance = self.settings.get('geometryTolerance')
+    additionalInfo = self.settings.get('additionalInfo', False)
     if label is not None:
       self.settings['label'] = label
+    else:
+      label = self.settings.get('label', 1)
 
-    if self.settings['additionalInfo']:
+    if self.geometryTolerance != geometryTolerance:
+      self._setTolerance()
+
+    if additionalInfo:
       self.generalInfo = generalinfo.GeneralInfo()
       self.generalInfo.addGeneralSettings(self.settings)
       self.generalInfo.addEnabledImageTypes(self._enabledImagetypes)
     else:
       self.generalInfo = None
 
-    self.settings['voxelBased'] = voxelBased
     if voxelBased:
+      self.settings['voxelBased'] = True
       self.logger.info('Starting voxel based extraction')
 
-    self.logger.info('Calculating features with label: %d', self.settings['label'])
+    self.logger.info('Calculating features with label: %d', label)
     self.logger.debug('Enabled images types: %s', self._enabledImagetypes)
     self.logger.debug('Enabled features: %s', self._enabledFeatures)
     self.logger.debug('Current settings: %s', self.settings)
@@ -393,24 +397,21 @@ class RadiomicsFeaturesExtractor:
     # Update the mask if it had to be resampled
     if correctedMask is not None:
       if self.generalInfo is not None:
-        self.generalInfo.addMaskElements(image, correctedMask, self.settings['label'], 'corrected')
+        self.generalInfo.addMaskElements(image, correctedMask, label, 'corrected')
       mask = correctedMask
 
     self.logger.debug('Image and Mask loaded and valid, starting extraction')
 
     # 5. Resegment the mask if enabled (parameter regsegmentMask is not None)
     resegmentedMask = None
-    resegmentRange = self.settings.get('resegmentRange', None)
-    if resegmentRange is not None:
-      resegmentMode = self.settings.get('resegmentMode', 'absolute')
-      resegmentedMask = imageoperations.resegmentMask(image, mask, resegmentRange, resegmentMode,
-                                                      self.settings['label'])
+    if self.settings.get('resegmentRange', None) is not None:
+      resegmentedMask = imageoperations.resegmentMask(image, mask, **self.settings)
 
       # Recheck to see if the mask is still valid, raises a ValueError if not
       boundingBox, correctedMask = imageoperations.checkMask(image, resegmentedMask, **self.settings)
 
       if self.generalInfo is not None:
-        self.generalInfo.addMaskElements(image, resegmentedMask, self.settings['label'], 'resegmented')
+        self.generalInfo.addMaskElements(image, resegmentedMask, label, 'resegmented')
 
     if not voxelBased:
       # 3. Add the additional information if enabled
@@ -472,6 +473,12 @@ class RadiomicsFeaturesExtractor:
     If resampling is enabled, both image and mask are resampled and cropped to the tumor mask (with additional
     padding as specified in padDistance) after assignment of image and mask.
     """
+    normalize = self.settings.get('normalize', False)
+    interpolator = self.settings.get('interpolator')
+    resampledPixelSpacing = self.settings.get('resampledPixelSpacing')
+    preCrop = self.settings.get('preCrop', False)
+    label = self.settings.get('label', 1)
+
     self.logger.info('Loading image and mask')
     if isinstance(ImageFilePath, six.string_types) and os.path.isfile(ImageFilePath):
       image = sitk.ReadImage(ImageFilePath)
@@ -491,23 +498,19 @@ class RadiomicsFeaturesExtractor:
       self.generalInfo.addImageElements(image)
       # Do not include the image here, as the overlap between image and mask have not been checked
       # It is therefore possible that image and mask do not align, or even have different sizes.
-      self.generalInfo.addMaskElements(None, mask, self.settings.get('label', 1))
+      self.generalInfo.addMaskElements(None, mask, label)
 
     # This point is only reached if image and mask loaded correctly
-    if self.settings['normalize']:
-      image = imageoperations.normalizeImage(image, self.settings['normalizeScale'], self.settings['removeOutliers'])
+    if normalize:
+      image = imageoperations.normalizeImage(image, **self.settings)
 
-    if self.settings['interpolator'] is not None and self.settings['resampledPixelSpacing'] is not None:
-      image, mask = imageoperations.resampleImage(image, mask,
-                                                  self.settings['resampledPixelSpacing'],
-                                                  self.settings['interpolator'],
-                                                  self.settings['label'],
-                                                  self.settings['padDistance'])
+    if interpolator is not None and resampledPixelSpacing is not None:
+      image, mask = imageoperations.resampleImage(image, mask, **self.settings)
       if self.generalInfo is not None:
         self.generalInfo.addImageElements(image, 'interpolated')
         self.generalInfo.addMaskElements(image, mask, self.settings.get('label', 1), 'interpolated')
 
-    elif self.settings['preCrop']:
+    elif preCrop:
       bb, correctedMask = imageoperations.checkMask(image, mask, **self.settings)
       if correctedMask is not None:
         # Update the mask if it had to be resampled
@@ -516,7 +519,7 @@ class RadiomicsFeaturesExtractor:
         # Mask checks failed
         raise ValueError('Mask checks failed during pre-crop')
 
-      image, mask = imageoperations.cropToTumorMask(image, mask, bb, self.settings['padDistance'])
+      image, mask = imageoperations.cropToTumorMask(image, mask, bb, **self.settings)
 
     return image, mask
 

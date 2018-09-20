@@ -179,12 +179,7 @@ class RadiomicsTestUtils:
       resampledPixelSpacing = settings.get('resampledPixelSpacing', None)
 
       if interpolator is not None and resampledPixelSpacing is not None:
-        self._image, self._mask = imageoperations.resampleImage(self._image,
-                                                                self._mask,
-                                                                resampledPixelSpacing,
-                                                                interpolator,
-                                                                settings.get('label', 1),
-                                                                settings.get('padDistance', 5))
+        self._image, self._mask = imageoperations.resampleImage(self._image, self._mask, **settings)
       self._bb, correctedMask = imageoperations.checkMask(self._image, self._mask, **settings)
       if correctedMask is not None:
         self._mask = correctedMask

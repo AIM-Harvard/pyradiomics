@@ -350,7 +350,7 @@ class PyRadiomicsBaseline:
 
       for testRow in csvReader:
         for case_idx, case in enumerate(tests, start=1):
-          if 'general_info' in testRow[0]:
+          if 'diagnostics' in testRow[0]:
             new_baseline.configuration[case][testRow[0]] = testRow[case_idx]
           else:
             new_baseline.baseline[case][testRow[0]] = testRow[case_idx]
@@ -372,19 +372,19 @@ class PyRadiomicsBaseline:
       return {}  # This test is not present in the baseline for this class
 
     config = {
-      'TestCase': self.configuration[test].get('general_info_TestCase', None),
-      'Settings': ast.literal_eval(self.configuration[test].get('general_info_GeneralSettings', '{}')),
-      'EnabledImageTypes': ast.literal_eval(self.configuration[test].get('general_info_EnabledImageTypes', '{}'))
+      'TestCase': self.configuration[test].get('diagnostics_Configuration_TestCase', None),
+      'Settings': ast.literal_eval(self.configuration[test].get('diagnostics_Configuration_Settings', '{}')),
+      'EnabledImageTypes': ast.literal_eval(self.configuration[test].get('diagnostics_Configuration_EnabledImageTypes', '{}'))
     }
 
-    if 'general_info_ImageHash' in self.configuration[test]:
-      config['ImageHash'] = self.configuration[test]['general_info_ImageHash']
-    if 'general_info_MaskHash' in self.configuration[test]:
-      config['MaskHash'] = self.configuration[test]['general_info_MaskHash']
-
     if config['TestCase'] is None:
-      self.logger.error('Missing key "general_info_TestCase". Cannot configure!')
+      self.logger.error('Missing key "diagnostics_Configuration_TestCase". Cannot configure!')
       return None
+
+    if 'diagnostics_Image-original_Hash' in self.configuration[test]:
+      config['ImageHash'] = self.configuration[test]['diagnostics_Image-original_Hash']
+    if 'diagnostics_Mask-original_Hash' in self.configuration[test]:
+      config['MaskHash'] = self.configuration[test]['diagnostics_Mask-original_Hash']
 
     return config
 

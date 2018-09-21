@@ -51,9 +51,9 @@ class AddBaseline:
     imageTypeName = 'original'
 
     # Update versions to reflect which configuration generated the baseline
-    self.generalInfo = generalinfo.GeneralInfo()
+    generalInfo = generalinfo.GeneralInfo()
 
-    versions = self.generalInfo.getGeneralInfo()
+    versions = generalInfo.getGeneralInfo()
     self.new_baselines[featureClassName].configuration[test].update(versions)
 
     self.new_baselines[featureClassName].baseline[test] = {'%s_%s_%s' % (imageTypeName, featureClassName, key): val

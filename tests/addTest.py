@@ -38,8 +38,8 @@ def main(argv=None):
     try:
       assert args.TestName not in testutils.getTests()
       assert args.TestCase in radiomics.testCases
-    except AssertionError as e:
-      logger.error('Input not valid, cancelling addTest! (%s)', e.message)
+    except AssertionError:
+      logger.error('Input not valid, cancelling addTest!')
       exit(1)
 
     logger.debug('Initializing extractor')
@@ -52,7 +52,7 @@ def main(argv=None):
     baselines = {}
 
     for k, v in six.iteritems(featurevector):
-      if 'general_info' in k:
+      if 'diagnostics' in k:
         configuration[k] = v
       else:
         image_filter, feature_class, feature_name = k.split('_')
@@ -60,7 +60,7 @@ def main(argv=None):
           baselines[feature_class] = {}
         baselines[feature_class][k] = v
 
-    configuration['general_info_TestCase'] = args.TestCase
+    configuration['diagnostics_Configuration_TestCase'] = args.TestCase
 
     testutils.addTest(args.TestName, configuration, baselines)
 

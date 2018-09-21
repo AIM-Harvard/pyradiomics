@@ -620,6 +620,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       Q(i, j) = \displaystyle\sum^{N_g}_{k=0}{\frac{p(i,k)p(j, k)}{p_x(i)p_y(k)}}
 
     The Maximal Correlation Coefficient is a measure of complexity of the texture and :math:`0 \leq MCC \leq 1`.
+
+    In case of a flat region, each GLCM matrix has shape (1, 1), resulting in just 1 eigenvalue. In this case, an
+    arbitrary value of 1 is returned.
     """
     px = self.coefficients['px']
     py = self.coefficients['py']
@@ -634,9 +637,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     Q_eigenValue = numpy.linalg.eigvals(Q.transpose((2, 0, 1)))
     Q_eigenValue.sort()  # sorts along last axis --> eigenvalues, low to high
 
+    if Q_eigenValue.shape[1] < 2:
+      return 1  # flat region
+
     MCC = numpy.sqrt(Q_eigenValue[:, -2])
 
-    return numpy.mean(MCC)  # 2nd highest eigenvalue
+    return float(numpy.mean(MCC))  # 2nd highest eigenvalue
 
   def getIdmnFeatureValue(self):
     r"""

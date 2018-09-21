@@ -1,8 +1,9 @@
 #include "cshape.h"
 #include <math.h>
 #include <stdlib.h>
+#include <Python.h>
 
-int *generate_angles(int *size, int *strides, int *a_strides, int *Na, int *mDim);
+void calculate_meshDiameter(double *vertices, int v_idx, double *diameters);
 
 // Declare the look-up tables, these are filled at the bottom of this code file.
 static const int gridAngles[8][3];
@@ -10,17 +11,29 @@ static const int gridAngles[8][3];
 static const int triTable[128][16];
 static const double vertList[12][3];
 
-double calculate_surfacearea(char *mask, int *size, int *strides, double *spacing, double *surfaceArea, double *volume)
+int calculate_coefficients(char *mask, int *size, int *strides, double *spacing,
+                           double *surfaceArea, double *volume, double *diameters)
 {
   int iz, iy, ix, i, t, d;  // iterator indices
   unsigned char cube_idx;  // cube identifier, 8 bits signifying which corners of the cube belong to the segmentation
   int a_idx;  // Angle index (8 'angles', one pointing to each corner of the marching cube
+
+  static const int points_edges[2][3] = {{6, 4, 3}, {6, 7, 11}};
+  int v_idx = -1;
+  int v_max = 0;
+  double *vertices;
+
   double sum;
-  double a[3], b[3], c[3], ab[3];  // 2 points of the triangle, relative to the third, and the cross product vector
+  double a[3], b[3], c[3], ab[3];  // 3 points of the triangle, and the cross product vector
   int sign_correction;
 
   *surfaceArea = 0;  // Total surface area
-  *volume = 0;
+  *volume = 0;  // Total volume
+
+  // create a stack to hold the found vertices. For each cube, a maximum of 3 vertices are stored (with x, y and z
+  // coordinates). This prevents double storing of the vertices.
+  v_max = (size[0] - 1) * (size[1] - 1) * (size[2] - 1) * 9;
+  vertices = (double *)calloc(v_max, sizeof(double));
 
   // Iterate over all voxels, do not include last voxels in the three dimensions, as the cube includes voxels at pos +1
   for (iz = 0; iz < (size[0] - 1); iz++)
@@ -31,7 +44,6 @@ double calculate_surfacearea(char *mask, int *size, int *strides, double *spacin
       {
         // Get current cube_idx by analyzing each point of the current cube
         cube_idx = 0;
-        sign_correction = -1;
         for (a_idx = 0; a_idx < 8; a_idx++)
         {
           i = (iz + gridAngles[a_idx][0]) * strides[0] +
@@ -44,221 +56,163 @@ double calculate_surfacearea(char *mask, int *size, int *strides, double *spacin
 
         // Isosurface is symmetrical around the midpoint, flip the number if > 128
         // This enables look-up tables to be 1/2 the size.
+        // However, the sign for the volume then needs to be flipped too.
         if (cube_idx & 0x80)
+        {
           cube_idx ^= 0xff;
+          sign_correction = -1;
+        }
         else
           sign_correction = 1;
 
-        // Exlcude cubes entirely outside or inside the segmentation. Also exclude potential invalid values (>= 128).
-        if (cube_idx > 0 && cube_idx < 128)
+        // ************************
+        // Store vertices for diameter calculation
+        // ************************
+
+        // check if there are vertices on edges 6, 7 and 11
+        // Because of the symmetry around the midpoint and the flip if cube_idx > 128, the 8th point will never appear
+        // as segmented at this point. Therefore, to check if there are vertices on the adjacent edges (6, 7 and 11),
+        // one only needs to check if the corresponding points (7th, 5th and 4th, respectively) are segmented.
+        if (v_idx + 9 >= v_max) // Overflow!
         {
-          t = 0;
-          while (triTable[cube_idx][t*3] >= 0) // Exit loop when no more triangles are present (element at index = -1)
+          free(vertices);
+          return 1;
+        }
+
+        for (t = 0; t < 3; t++)
+        {
+          if (cube_idx & (1 << points_edges[0][t]))
           {
-            a[0] = b[0] = c[0] = iz;
-            a[1] = b[1] = c[1] = iy;
-            a[2] = b[2] = c[2] = ix;
-            for (d = 0; d < 3; d++)
-            {
-                a[d] += vertList[triTable[cube_idx][t*3]][d];
-                b[d] += vertList[triTable[cube_idx][t*3 + 1]][d];
-                c[d] += vertList[triTable[cube_idx][t*3 + 2]][d];
-                // Factor in the spacing
-                a[d] *= spacing[d];
-                b[d] *= spacing[d];
-                c[d] *= spacing[d];
-            }
-
-            // ************Calculate volume************
-            // Calculate the cross product
-            ab[0] = (a[1] * b[2]) - (b[1] * a[2]);
-            ab[1] = (a[2] * b[0]) - (b[2] * a[0]);
-            ab[2] = (a[0] * b[1]) - (b[0] * a[1]);
-
-            // Calculate the dot-product and add it to the volume total. The division by 6 is performed at the end.
-            *volume += sign_correction * (ab[0] * c[0] + ab[1] * c[1] + ab[2] * c[2]);
-
-            // ************Calculate surface area************
-            for (d = 0; d < 3; d++)
-            {
-              a[d] -= c[d];
-              b[d] -= c[d];
-            }
-
-            // Compute the surface, which is equal to 1/2 magnitude of the cross product, where
-            // The magnitude is obtained by calculating the euclidean distance between (0, 0, 0)
-            // and the location of c
-
-            // Compute the cross-product
-            ab[0] = (a[1] * b[2]) - (b[1] * a[2]);
-            ab[1] = (a[2] * b[0]) - (b[2] * a[0]);
-            ab[2] = (a[0] * b[1]) - (b[0] * a[1]);
-
-            // Get the euclidean distance by computing the square and then the square root of the sum.
-            ab[0] = ab[0] * ab[0];
-            ab[1] = ab[1] * ab[1];
-            ab[2] = ab[2] * ab[2];
-
-            sum = ab[0] + ab[1] + ab[2];
-            sum = sqrt(sum);
-
-            // multiply by 0.5 (1/2 the magnitude of the cross product)
-            sum = 0.5 * sum;
-
-            // Add the surface area of the face to the grand total.
-            *surfaceArea += sum;
-            t++;
+            vertices[++v_idx] = (((double)iz) + vertList[points_edges[1][t]][0]) * spacing[0];
+            vertices[++v_idx] = (((double)iy) + vertList[points_edges[1][t]][1]) * spacing[1];
+            vertices[++v_idx] = (((double)ix) + vertList[points_edges[1][t]][2]) * spacing[2];
           }
+        }
+
+        // Exlcude cubes entirely outside or inside the segmentation (cube_idx = 0).
+        if (cube_idx == 0)
+          continue;
+
+        // Process all triangles for this cube
+        t = 0;
+        while (triTable[cube_idx][t*3] >= 0) // Exit loop when no more triangles are present (element at index = -1)
+        {
+          a[0] = b[0] = c[0] = iz;
+          a[1] = b[1] = c[1] = iy;
+          a[2] = b[2] = c[2] = ix;
+          for (d = 0; d < 3; d++)
+          {
+              a[d] += vertList[triTable[cube_idx][t*3]][d];
+              b[d] += vertList[triTable[cube_idx][t*3 + 1]][d];
+              c[d] += vertList[triTable[cube_idx][t*3 + 2]][d];
+              // Factor in the spacing
+              a[d] *= spacing[d];
+              b[d] *= spacing[d];
+              c[d] *= spacing[d];
+          }
+
+          // ************************
+          // Calculate volume
+          // ************************
+
+          // Calculate the cross product
+          ab[0] = (a[1] * b[2]) - (b[1] * a[2]);
+          ab[1] = (a[2] * b[0]) - (b[2] * a[0]);
+          ab[2] = (a[0] * b[1]) - (b[0] * a[1]);
+
+          // Calculate the dot-product and add it to the volume total. The division by 6 is performed at the end.
+          *volume += sign_correction * (ab[0] * c[0] + ab[1] * c[1] + ab[2] * c[2]);
+
+          // ************************
+          // Calculate surface area
+          // ************************
+
+          // Compute the surface, which is equal to 1/2 magnitude of the cross product, where
+          // The magnitude is obtained by calculating the euclidean distance between (0, 0, 0)
+          // and the location of c
+          for (d = 0; d < 3; d++)
+          {
+            a[d] -= c[d];
+            b[d] -= c[d];
+          }
+
+          // Compute the cross-product
+          ab[0] = (a[1] * b[2]) - (b[1] * a[2]);
+          ab[1] = (a[2] * b[0]) - (b[2] * a[0]);
+          ab[2] = (a[0] * b[1]) - (b[0] * a[1]);
+
+          // Get the euclidean distance by computing the square and then the square root of the sum.
+          ab[0] = ab[0] * ab[0];
+          ab[1] = ab[1] * ab[1];
+          ab[2] = ab[2] * ab[2];
+
+          sum = ab[0] + ab[1] + ab[2];
+          sum = sqrt(sum);
+
+          // multiply by 0.5 (1/2 the magnitude of the cross product)
+          sum = 0.5 * sum;
+
+          // Add the surface area of the face to the grand total.
+          *surfaceArea += sum;
+          t++;
         }
       }
     }
   }
-
   *volume = *volume / 6;
+
+  // ************************
+  // Calculate Diameters using found vertices
+  // ************************
+  calculate_meshDiameter(vertices, v_idx, diameters);
+  free(vertices);
   return 0;
 }
 
-int calculate_diameter(char *mask, int *size, int *strides, double *spacing, int Ns, double *diameters)
+void calculate_meshDiameter(double *points, int stack_top, double *diameters)
 {
-  int iz, iy, ix, i, j;
-  int a_idx, d_idx;
-  int Na, mDim;
-  int *angles;
-  int a_strides[3];
-
-  int *stack;
-  int stack_top = -1;
-
-  int idx, jz, jy, jx;
-  double dz, dy, dx;
+  double a[3], b[3], ab[3];
   double distance;
-
-  angles = generate_angles(size, strides, a_strides, &Na, &mDim);
-  stack = (int *)calloc(Ns, sizeof(int));
-
-  // First, get all the voxels on the border
-  i = 0;
-  // Iterate over all voxels in a row - column - slice order
-  // As the mask is padded with 0's, no voxels on the edge of the image are part of the mask, so skip those...
-  for (iz = 1; iz < size[0] - 1; iz++)
-  {
-    for (iy = 1; iy < size[1] - 1; iy++)
-    {
-      for (ix = 1; ix < size[2] - 1; ix++)
-      {
-        i = iz * strides[0] +
-            iy * strides[1] +
-            ix * strides[2];
-        if (mask[i])
-        {
-          for (a_idx = 0; a_idx < Na; a_idx++)
-          {
-            j = i;
-            for (d_idx = 0; d_idx < mDim; d_idx++)
-            {
-              j += angles[a_idx * mDim + d_idx] * a_strides[d_idx];
-            }
-
-            if (mask[j] == 0)
-            {
-              // neighbour not part of ROI, i.e. 'i' is border voxel
-              if (stack_top >= Ns) return 0;  // index out of bounds
-              stack[++stack_top] = i;
-              break;
-            }
-          }
-        }
-      }
-    }
-	}
-  stack_top++; // increment by 1, so when the first item is popped, it is the last item entered
-
-	free(angles);
+  int idx;
 
   diameters[0] = 0;
   diameters[1] = 0;
   diameters[2] = 0;
   diameters[3] = 0;
 
-  while (stack_top > 0)
+  stack_top++; // increment by 1, so when the first item is popped, it is the last item entered
+  while(stack_top > 0)
   {
-    // pop the last item from the stack, this prevents double processing and comparing the same voxels
-    i = stack[--stack_top];
-    iz = (i / strides[0]);
-    iy = (i % strides[0]) / strides[1];
-    ix = (i % strides[0]) % strides[1];
-    for (idx = 0; idx < stack_top; idx++)  // calculate distance to all other voxels
+    a[2] = points[--stack_top];
+    a[1] = points[--stack_top];
+    a[0] = points[--stack_top];
+
+    for (idx = 0; idx < stack_top; idx += 3)
     {
-      j = stack[idx];
-	    jz = (j / strides[0]);
-      jy = (j % strides[0]) / strides[1];
-      jx = (j % strides[0]) % strides[1];
+      b[0] = points[idx];
+      b[1] = points[idx + 1];
+      b[2] = points[idx + 2];
 
-      dz = (double)(iz - jz) * spacing[0];
-      dy = (double)(iy - jy) * spacing[1];
-      dx = (double)(ix - jx) * spacing[2];
+      ab[0] = a[0] - b[0];
+      ab[1] = a[1] - b[1];
+      ab[2] = a[2] - b[2];
 
-      dz *= dz;
-      dy *= dy;
-      dx *= dx;
+      ab[0] *= ab[0];
+      ab[1] *= ab[1];
+      ab[2] *= ab[2];
 
-      distance = dz + dy + dx;
-      if (iz == jz && distance > diameters[0]) diameters[0] = distance;
-      if (iy == jy && distance > diameters[1]) diameters[1] = distance;
-      if (ix == jx && distance > diameters[2]) diameters[2] = distance;
+      distance = ab[0] + ab[1] + ab[2];
+      if (a[0] == b[0] && distance > diameters[0]) diameters[0] = distance;
+      if (a[1] == b[1] && distance > diameters[1]) diameters[1] = distance;
+      if (a[2] == b[2] && distance > diameters[2]) diameters[2] = distance;
       if (distance > diameters[3]) diameters[3] = distance;
     }
   }
-  free(stack);
 
   diameters[0] = sqrt(diameters[0]);
   diameters[1] = sqrt(diameters[1]);
   diameters[2] = sqrt(diameters[2]);
   diameters[3] = sqrt(diameters[3]);
-
-  return 1;
-}
-
-int *generate_angles(int *size, int *strides, int *a_strides, int *Na, int *mDim)
-{
-  static int *angles;  // return value, declare static so it can be returned
-
-  int offsets[3] = {-1, 0, 1};  // distance 1, both directions
-  int a_idx, d_idx, a_offset, stride;
-
-  // First, determine how many 'moving' dimensions there are, this determines the number of distinct angles to generate
-  // Na = 3 ** NDIM(Size > 3) - 1, i.e. each dimension triples the number of angles, -1 to exclude (0, 0, 0)
-  *Na = 1;
-  *mDim = 0;
-  for (d_idx = 0; d_idx < 3; d_idx++)  // assume mask is 3D
-  {
-    if (size[d_idx] > 3)  // mask is padded with 0's in all directions, i.e. bounding box size = size - 2
-    {
-      // Dimension is a moving dimension
-      a_strides[*mDim] = strides[d_idx];
-      *Na *= 3;
-      (*mDim)++;
-    }
-  }
-  (*Na)--;  // Don't generate angle for (0, 0, 0)
-
-  // Initialize array to hold the angles
-  angles = (int *)calloc(*Na * *mDim, sizeof(int));
-
-  // Fill the angles array
-  stride = 1;
-  for (d_idx = 0; d_idx < *mDim; d_idx++)  // Iterate over all moving dimensions
-  {
-    a_offset = 0;
-    for (a_idx = 0; a_idx < *Na; a_idx++)
-    {
-      if (a_idx == *Na / 2) a_offset = 1;  // Skip (0, 0, 0) angle
-
-      angles[a_idx * *mDim + d_idx] = offsets[((a_idx + a_offset) / stride) % 3];
-    }
-    stride *= 3;  // For next dimension, multiply stride by 3 (length offsets) --> {1, 3, 9, ...}
-  }
-  return angles;
 }
 
 // gridAngles define the 8 corners of the marching cube, relative to the origin of the cube

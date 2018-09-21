@@ -42,8 +42,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     self.inputMask = cpif.Execute(self.inputMask)
 
-    # Reassign self.maskArray using the now-padded self.inputMask and force and interger datatype
-    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label).astype('int')
+    # Reassign self.maskArray using the now-padded self.inputMask
+    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)
     self.labelledVoxelCoordinates = numpy.where(self.maskArray != 0)
 
     self.logger.debug('Pre-calculate Volume, Surface Area and Eigenvalues')
@@ -51,7 +51,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     # Volume, Surface Area and eigenvalues are pre-calculated
 
     # Compute Surface Area and volume
-    self.SurfaceArea, self.Volume = self._calculateSurfaceArea()
+    self.SurfaceArea, self.Volume, self.diameters = cShape.calculate_coefficients(self.maskArray, self.pixelSpacing)
 
     # Compute eigenvalues and -vectors
     Np = len(self.labelledVoxelCoordinates[0])
@@ -70,27 +70,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     self.eigenValues.sort()  # Sort the eigenValues from small to large
 
-    self.diameters = None  # Do not precompute diameters, but instantiate the variable for lazy assignment
-
     self.logger.debug('Shape feature class initialized')
-
-  def _calculateSurfaceArea(self):
-    self.logger.debug('Calculating Surface Area in C')
-
-    return cShape.calculate_surfacearea(self.maskArray, self.pixelSpacing)
-
-  def calculateDiameters(self):
-    """
-    Calculate maximum diameters in 2D and 3D using C extension. Function returns a tuple with 4 elements:
-
-    0. Maximum 2D diameter Slice (XY Plane, Axial)
-    1. Maximum 2D diameter Column (ZX Plane, Coronal)
-    2. Maximum 2D diameter Row (ZY Plane, Sagittal)
-    3. Maximum 3D diameter
-    """
-    self.logger.debug('Calculating Maximum diameters in C')
-    Ns = len(self.labelledVoxelCoordinates[0])
-    return cShape.calculate_diameter(self.maskArray, self.pixelSpacing, Ns)
 
   def getVolumeFeatureValue(self):
     r"""
@@ -255,57 +235,38 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
     r"""
     **8. Maximum 3D diameter**
 
-    Maximum 3D diameter is defined as the largest pairwise Euclidean distance between surface voxels in the ROI.
+    Maximum 3D diameter is defined as the largest pairwise Euclidean distance between tumor surface mesh
+    vertices.
 
     Also known as Feret Diameter.
-
-    .. warning::
-      This feature is only available when C Extensions are enabled
     """
-    if self.diameters is None:
-      self.diameters = self.calculateDiameters()
     return self.diameters[3]
 
   def getMaximum2DDiameterSliceFeatureValue(self):
     r"""
     **9. Maximum 2D diameter (Slice)**
 
-    Maximum 2D diameter (Slice) is defined as the largest pairwise Euclidean distance between tumor surface voxels in
-    the row-column (generally the axial) plane.
-
-    .. warning::
-      This feature is only available when C Extensions are enabled
+    Maximum 2D diameter (Slice) is defined as the largest pairwise Euclidean distance between tumor surface mesh
+    vertices in the row-column (generally the axial) plane.
     """
-    if self.diameters is None:
-      self.diameters = self.calculateDiameters()
     return self.diameters[0]
 
   def getMaximum2DDiameterColumnFeatureValue(self):
     r"""
     **10. Maximum 2D diameter (Column)**
 
-    Maximum 2D diameter (Column) is defined as the largest pairwise Euclidean distance between tumor surface voxels in
-    the row-slice (usually the coronal) plane.
-
-    .. warning::
-      This feature is only available when C Extensions are enabled
+    Maximum 2D diameter (Column) is defined as the largest pairwise Euclidean distance between tumor surface mesh
+    vertices in the row-slice (usually the coronal) plane.
     """
-    if self.diameters is None:
-      self.diameters = self.calculateDiameters()
     return self.diameters[1]
 
   def getMaximum2DDiameterRowFeatureValue(self):
     r"""
     **11. Maximum 2D diameter (Row)**
 
-    Maximum 2D diameter (Row) is defined as the largest pairwise Euclidean distance between tumor surface voxels in the
-    column-slice (usually the sagittal) plane.
-
-    .. warning::
-      This feature is only available when C Extensions are enabled
+    Maximum 2D diameter (Row) is defined as the largest pairwise Euclidean distance between tumor surface mesh
+    vertices in the column-slice (usually the sagittal) plane.
     """
-    if self.diameters is None:
-      self.diameters = self.calculateDiameters()
     return self.diameters[2]
 
   def getMajorAxisFeatureValue(self):
@@ -382,143 +343,3 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       self.logger.warning('Elongation eigenvalue negative! (%g, %g)', self.eigenValues[0], self.eigenValues[2])
       return numpy.nan
     return numpy.sqrt(self.eigenValues[0] / self.eigenValues[2])
-
-  def _interpolate(self, grid, p1, p2):
-    diff = (.5 - self.maskArray[tuple(grid[p1])]) / (self.maskArray[tuple(grid[p2])] - self.maskArray[tuple(grid[p1])])
-    return (grid[p1] + ((grid[p2] - grid[p1]) * diff)) * self.pixelSpacing
-
-  def _getMarchingTables(self):
-    vertList = numpy.array(((0, 0, 0.5), (0, 0.5, 1), (0, 1, 0.5), (0, 0.5, 0),
-                            (1, 0, 0.5), (1, 0.5, 1), (1, 1, 0.5), (1, 0.5, 0),
-                            (0.5, 0, 0), (0.5, 0, 1), (0.5, 1, 1), (0.5, 1, 0)), dtype='float64')
-    vertList *= self.pixelSpacing[None, :]
-
-    triTable = [[],
-                [[0, 8, 3]],
-                [[0, 1, 9]],
-                [[1, 8, 3], [9, 8, 1]],
-                [[1, 2, 10]],
-                [[0, 8, 3], [1, 2, 10]],
-                [[9, 2, 10], [0, 2, 9]],
-                [[2, 8, 3], [2, 10, 8], [10, 9, 8]],
-                [[3, 11, 2]],
-                [[0, 11, 2], [8, 11, 0]],
-                [[1, 9, 0], [2, 3, 11]],
-                [[1, 11, 2], [1, 9, 11], [9, 8, 11]],
-                [[3, 10, 1], [11, 10, 3]],
-                [[0, 10, 1], [0, 8, 10], [8, 11, 10]],
-                [[3, 9, 0], [3, 11, 9], [11, 10, 9]],
-                [[9, 8, 10], [10, 8, 11]],
-                [[4, 7, 8]],
-                [[4, 3, 0], [7, 3, 4]],
-                [[0, 1, 9], [8, 4, 7]],
-                [[4, 1, 9], [4, 7, 1], [7, 3, 1]],
-                [[1, 2, 10], [8, 4, 7]],
-                [[3, 4, 7], [3, 0, 4], [1, 2, 10]],
-                [[9, 2, 10], [9, 0, 2], [8, 4, 7]],
-                [[2, 10, 9], [2, 9, 7], [2, 7, 3], [7, 9, 4]],
-                [[8, 4, 7], [3, 11, 2]],
-                [[11, 4, 7], [11, 2, 4], [2, 0, 4]],
-                [[9, 0, 1], [8, 4, 7], [2, 3, 11]],
-                [[4, 7, 11], [9, 4, 11], [9, 11, 2], [9, 2, 1]],
-                [[3, 10, 1], [3, 11, 10], [7, 8, 4]],
-                [[1, 11, 10], [1, 4, 11], [1, 0, 4], [7, 11, 4]],
-                [[4, 7, 8], [9, 0, 11], [9, 11, 10], [11, 0, 3]],
-                [[4, 7, 11], [4, 11, 9], [9, 11, 10]],
-                [[9, 5, 4]],
-                [[9, 5, 4], [0, 8, 3]],
-                [[0, 5, 4], [1, 5, 0]],
-                [[8, 5, 4], [8, 3, 5], [3, 1, 5]],
-                [[1, 2, 10], [9, 5, 4]],
-                [[3, 0, 8], [1, 2, 10], [4, 9, 5]],
-                [[5, 2, 10], [5, 4, 2], [4, 0, 2]],
-                [[2, 10, 5], [3, 2, 5], [3, 5, 4], [3, 4, 8]],
-                [[9, 5, 4], [2, 3, 11]],
-                [[0, 11, 2], [0, 8, 11], [4, 9, 5]],
-                [[0, 5, 4], [0, 1, 5], [2, 3, 11]],
-                [[2, 1, 5], [2, 5, 8], [2, 8, 11], [4, 8, 5]],
-                [[10, 3, 11], [10, 1, 3], [9, 5, 4]],
-                [[4, 9, 5], [0, 8, 1], [8, 10, 1], [8, 11, 10]],
-                [[5, 4, 0], [5, 0, 11], [5, 11, 10], [11, 0, 3]],
-                [[5, 4, 8], [5, 8, 10], [10, 8, 11]],
-                [[9, 7, 8], [5, 7, 9]],
-                [[9, 3, 0], [9, 5, 3], [5, 7, 3]],
-                [[0, 7, 8], [0, 1, 7], [1, 5, 7]],
-                [[1, 5, 3], [3, 5, 7]],
-                [[9, 7, 8], [9, 5, 7], [10, 1, 2]],
-                [[10, 1, 2], [9, 5, 0], [5, 3, 0], [5, 7, 3]],
-                [[8, 0, 2], [8, 2, 5], [8, 5, 7], [10, 5, 2]],
-                [[2, 10, 5], [2, 5, 3], [3, 5, 7]],
-                [[7, 9, 5], [7, 8, 9], [3, 11, 2]],
-                [[9, 5, 7], [9, 7, 2], [9, 2, 0], [2, 7, 11]],
-                [[2, 3, 11], [0, 1, 8], [1, 7, 8], [1, 5, 7]],
-                [[11, 2, 1], [11, 1, 7], [7, 1, 5]],
-                [[9, 5, 8], [8, 5, 7], [10, 1, 3], [10, 3, 11]],
-                [[5, 7, 0], [5, 0, 9], [7, 11, 0], [1, 0, 10], [11, 10, 0]],
-                [[11, 10, 0], [11, 0, 3], [10, 5, 0], [8, 0, 7], [5, 7, 0]],
-                [[11, 10, 5], [7, 11, 5]],
-                [[10, 6, 5]],
-                [[0, 8, 3], [5, 10, 6]],
-                [[9, 0, 1], [5, 10, 6]],
-                [[1, 8, 3], [1, 9, 8], [5, 10, 6]],
-                [[1, 6, 5], [2, 6, 1]],
-                [[1, 6, 5], [1, 2, 6], [3, 0, 8]],
-                [[9, 6, 5], [9, 0, 6], [0, 2, 6]],
-                [[5, 9, 8], [5, 8, 2], [5, 2, 6], [3, 2, 8]],
-                [[2, 3, 11], [10, 6, 5]],
-                [[11, 0, 8], [11, 2, 0], [10, 6, 5]],
-                [[0, 1, 9], [2, 3, 11], [5, 10, 6]],
-                [[5, 10, 6], [1, 9, 2], [9, 11, 2], [9, 8, 11]],
-                [[6, 3, 11], [6, 5, 3], [5, 1, 3]],
-                [[0, 8, 11], [0, 11, 5], [0, 5, 1], [5, 11, 6]],
-                [[3, 11, 6], [0, 3, 6], [0, 6, 5], [0, 5, 9]],
-                [[6, 5, 9], [6, 9, 11], [11, 9, 8]],
-                [[5, 10, 6], [4, 7, 8]],
-                [[4, 3, 0], [4, 7, 3], [6, 5, 10]],
-                [[1, 9, 0], [5, 10, 6], [8, 4, 7]],
-                [[10, 6, 5], [1, 9, 7], [1, 7, 3], [7, 9, 4]],
-                [[6, 1, 2], [6, 5, 1], [4, 7, 8]],
-                [[1, 2, 5], [5, 2, 6], [3, 0, 4], [3, 4, 7]],
-                [[8, 4, 7], [9, 0, 5], [0, 6, 5], [0, 2, 6]],
-                [[7, 3, 9], [7, 9, 4], [3, 2, 9], [5, 9, 6], [2, 6, 9]],
-                [[3, 11, 2], [7, 8, 4], [10, 6, 5]],
-                [[5, 10, 6], [4, 7, 2], [4, 2, 0], [2, 7, 11]],
-                [[0, 1, 9], [4, 7, 8], [2, 3, 11], [5, 10, 6]],
-                [[9, 2, 1], [9, 11, 2], [9, 4, 11], [7, 11, 4], [5, 10, 6]],
-                [[8, 4, 7], [3, 11, 5], [3, 5, 1], [5, 11, 6]],
-                [[5, 1, 11], [5, 11, 6], [1, 0, 11], [7, 11, 4], [0, 4, 11]],
-                [[0, 5, 9], [0, 6, 5], [0, 3, 6], [11, 6, 3], [8, 4, 7]],
-                [[6, 5, 9], [6, 9, 11], [4, 7, 9], [7, 11, 9]],
-                [[10, 4, 9], [6, 4, 10]],
-                [[4, 10, 6], [4, 9, 10], [0, 8, 3]],
-                [[10, 0, 1], [10, 6, 0], [6, 4, 0]],
-                [[8, 3, 1], [8, 1, 6], [8, 6, 4], [6, 1, 10]],
-                [[1, 4, 9], [1, 2, 4], [2, 6, 4]],
-                [[3, 0, 8], [1, 2, 9], [2, 4, 9], [2, 6, 4]],
-                [[0, 2, 4], [4, 2, 6]],
-                [[8, 3, 2], [8, 2, 4], [4, 2, 6]],
-                [[10, 4, 9], [10, 6, 4], [11, 2, 3]],
-                [[0, 8, 2], [2, 8, 11], [4, 9, 10], [4, 10, 6]],
-                [[3, 11, 2], [0, 1, 6], [0, 6, 4], [6, 1, 10]],
-                [[6, 4, 1], [6, 1, 10], [4, 8, 1], [2, 1, 11], [8, 11, 1]],
-                [[9, 6, 4], [9, 3, 6], [9, 1, 3], [11, 6, 3]],
-                [[8, 11, 1], [8, 1, 0], [11, 6, 1], [9, 1, 4], [6, 4, 1]],
-                [[3, 11, 6], [3, 6, 0], [0, 6, 4]],
-                [[6, 4, 8], [11, 6, 8]],
-                [[7, 10, 6], [7, 8, 10], [8, 9, 10]],
-                [[0, 7, 3], [0, 10, 7], [0, 9, 10], [6, 7, 10]],
-                [[10, 6, 7], [1, 10, 7], [1, 7, 8], [1, 8, 0]],
-                [[10, 6, 7], [10, 7, 1], [1, 7, 3]],
-                [[1, 2, 6], [1, 6, 8], [1, 8, 9], [8, 6, 7]],
-                [[2, 6, 9], [2, 9, 1], [6, 7, 9], [0, 9, 3], [7, 3, 9]],
-                [[7, 8, 0], [7, 0, 6], [6, 0, 2]],
-                [[7, 3, 2], [6, 7, 2]],
-                [[2, 3, 11], [10, 6, 8], [10, 8, 9], [8, 6, 7]],
-                [[2, 0, 7], [2, 7, 11], [0, 9, 7], [6, 7, 10], [9, 10, 7]],
-                [[1, 8, 0], [1, 7, 8], [1, 10, 7], [6, 7, 10], [2, 3, 11]],
-                [[11, 2, 1], [11, 1, 7], [10, 6, 1], [6, 7, 1]],
-                [[8, 9, 6], [8, 6, 7], [9, 1, 6], [11, 6, 3], [1, 3, 6]],
-                [[0, 9, 1], [11, 6, 7]],
-                [[7, 8, 0], [7, 0, 6], [3, 11, 0], [11, 6, 0]],
-                [[7, 11, 6]]]
-    return vertList, triTable

@@ -522,10 +522,35 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       \textit{IMC 1} = \displaystyle\frac{HXY-HXY1}{\max\{HX,HY\}}
 
+    IMC1 assesses the correlation between the probability distributions of :math:`i` and :math:`j` (quantifying the
+    complexity of the texture), using mutual information I(x, y):
+
+    .. math::
+
+      I(i, j) = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)\log_2\big(\frac{p(i,j)}{p_x(i)p_y(j)}\big)}
+
+              = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)\big(\log_2 (p(i,j)) - \log_2 (p_x(i)p_y(j))\big)}
+
+              = \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)\log_2 \big(p(i,j)\big)} -
+                \sum^{N_g}_{i=1}\sum^{N_g}_{j=1}{p(i,j)\log_2 \big(p_x(i)p_y(j)\big)}
+
+              = -HXY + HXY1
+
+    However, in this formula, the numerator is defined as HXY - HXY1 (i.e. :math:`-I(x, y)`), and is
+    therefore :math:`\leq 0`. This reflects how this feature is defined in the original Haralick paper.
+
+    In the case where the distributions are independent, there is no mutual information and the result will therefore be
+    0. In the case of uniform distribution with complete dependence, mutual information will be equal to
+    :math:`\log_2(N_g)`.
+
+    Finally, :math:`HXY - HXY1` is divided by the maximum of the 2 marginal entropies, where in the latter case of
+    complete dependence (not necessarily uniform; low complexity) it will result in :math:`IMC1 = -1`, as
+    :math:`HX = HY = I(i, j)`.
+
     .. note::
 
       In the case where both HX and HY are 0 (as is the case in a flat region), an arbitrary value of 0 is returned to
-      prevent a division by 0. This is done on a per-angle basis.
+      prevent a division by 0. This is done on a per-angle basis (i.e. prior to any averaging).
     """
     eps = self.coefficients['eps']
     HX = self.coefficients['HX']
@@ -548,10 +573,18 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
       \textit{IMC 2} = \displaystyle\sqrt{1-e^{-2(HXY2-HXY)}}
 
+    IMC2 also assesses the correlation between the probability distributions of :math:`i` and :math:`j` (quantifying the
+    complexity of the texture). Of interest is to note that :math:`HXY1 = HXY2` and that :math:`HXY2 - HXY \geq 0`
+    represents the mutual information of the 2 distributions. Therefore, the range of IMC2 = [0, 1), with 0 representing
+    the case of 2 independent distributions (no mutual information) and the maximum value representing the case of 2
+    fully dependent and uniform distributions (maximal mutual information, equal to :math:`\log_2(N_g)`). In this latter
+    case, the maximum value is then equal to :math:`\displaystyle\sqrt{1-e^{-2\log_2(N_g)}}`, approaching 1.
+
     .. note::
 
-      In the case where HXY = HXY2, an arbitrary value of 0 is returned to prevent returning complex numbers. This is
-      done on a per-angle basis.
+      Due to machine precision errors, it is possble that HXY > HXY2, which would result in returning complex numbers.
+      In these cases, a value of 0 is returned for IMC2. This is done on a per-angle basis (i.e. prior to any
+      averaging).
     """
     HXY = self.coefficients['HXY']
     HXY2 = self.coefficients['HXY2']
@@ -577,9 +610,37 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     idm = numpy.sum(pxSuby / (1 + (kValuesDiff[:, None] ** 2)), 0)
     return idm.mean()
 
+  def getMCCFeatureValue(self):
+    r"""
+    **16. Maximal Correlation Coefficient (MCC)**
+
+    .. math::
+      \textit{MCC} = \sqrt{\text{second largest eigenvalue of Q}}
+
+      Q(i, j) = \displaystyle\sum^{N_g}_{k=0}{\frac{p(i,k)p(j, k)}{p_x(i)p_y(k)}}
+
+    The Maximal Correlation Coefficient is a measure of complexity of the texture and :math:`0 \leq MCC \leq 1`.
+    """
+    px = self.coefficients['px']
+    py = self.coefficients['py']
+    eps = self.coefficients['eps']
+
+    # Calculate Q (shape (i, i, d)). To prevent division by 0, add epsilon (such a division can occur when in a ROI
+    # along a certain angle, voxels with gray level i do not have neighbors
+    Q = numpy.sum((self.P_glcm[:, None, :, :] * self.P_glcm[None, :, :, :]) /  # slice: i, j, k, d
+                  (px[:, None, :, :] * py[None, :, :, :] + eps), 2)  # sum over k (3rd axis --> index 2)
+
+    # calculation of eigenvalues if performed on last 2 dimensions, therefore, move the angles dimension (d) forward
+    Q_eigenValue = numpy.linalg.eigvals(Q.transpose((2, 0, 1)))
+    Q_eigenValue.sort()  # sorts along last axis --> eigenvalues, low to high
+
+    MCC = numpy.sqrt(Q_eigenValue[:, -2])
+
+    return numpy.mean(MCC)  # 2nd highest eigenvalue
+
   def getIdmnFeatureValue(self):
     r"""
-    **16. Inverse Difference Moment Normalized (IDMN)**
+    **17. Inverse Difference Moment Normalized (IDMN)**
 
     .. math::
       \textit{IDMN} = \displaystyle\sum^{N_g-1}_{k=0}{ \frac{p_{x-y}(k)}{1+\left(\frac{k^2}{N_g^2}\right)} }
@@ -599,7 +660,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getIdFeatureValue(self):
     r"""
-    **17. Inverse Difference (ID)**
+    **18. Inverse Difference (ID)**
 
     .. math::
       \textit{ID} = \displaystyle\sum^{N_g-1}_{k=0}{\frac{p_{x-y}(k)}{1+k}}
@@ -614,7 +675,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getIdnFeatureValue(self):
     r"""
-    **18. Inverse Difference Normalized (IDN)**
+    **19. Inverse Difference Normalized (IDN)**
 
     .. math::
       \textit{IDN} = \displaystyle\sum^{N_g-1}_{k=0}{ \frac{p_{x-y}(k)}{1+\left(\frac{k}{N_g}\right)} }
@@ -632,7 +693,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getInverseVarianceFeatureValue(self):
     r"""
-    **19. Inverse Variance**
+    **20. Inverse Variance**
 
     .. math::
       \textit{inverse variance} = \displaystyle\sum^{N_g-1}_{k=1}{\frac{p_{x-y}(k)}{k^2}}
@@ -646,7 +707,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getMaximumProbabilityFeatureValue(self):
     r"""
-    **20. Maximum Probability**
+    **21. Maximum Probability**
 
     .. math::
 
@@ -663,7 +724,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumAverageFeatureValue(self):
     r"""
-    **21. Sum Average**
+    **22. Sum Average**
 
     .. math::
 
@@ -707,7 +768,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumEntropyFeatureValue(self):
     r"""
-    **22. Sum Entropy**
+    **23. Sum Entropy**
 
     .. math::
 
@@ -722,7 +783,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
   def getSumSquaresFeatureValue(self):
     r"""
-    **23. Sum of Squares**
+    **24. Sum of Squares**
 
     .. math::
 

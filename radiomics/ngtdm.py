@@ -152,12 +152,19 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     Contrast is a measure of the spatial intensity change, but is also dependent on the overall gray level dynamic range.
     Contrast is high when both the dynamic range and the spatial change rate are high, i.e. an image with a large range
     of gray levels, with large changes between voxels and their neighbourhood.
+
+    N.B. In case of a completely homogeneous image, :math:`N_{g,p} = 1`, which would result in a division by 0. In this
+    case, an arbitray value of 0 is returned.
     """
     Ngp = self.coefficients['Ngp']
     Nvp = self.coefficients['Nvp']
     p_i = self.coefficients['p_i']
     s_i = self.coefficients['s_i']
     i = self.coefficients['ivector']
+
+    if Ngp <= 1:
+      return 0
+
     contrast = (numpy.sum(p_i[:, None] * p_i[None, :] * (i[:, None] - i[None, :]) ** 2) / (Ngp * (Ngp - 1))) * \
                ((numpy.sum(s_i)) / Nvp)
 

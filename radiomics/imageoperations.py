@@ -520,8 +520,8 @@ def normalizeImage(image, **kwargs):
   Removal of outliers is done after the values of the image are normalized, but before ``scale`` is applied.
   """
   global logger
-  scale = kwargs.get('scale', 1)
-  outliers = kwargs.get('outliers')
+  scale = kwargs.get('normalizeScale', 1)
+  outliers = kwargs.get('removeOutliers')
 
   logger.debug('Normalizing image with scale %d', scale)
   image = sitk.Normalize(image)

@@ -26,6 +26,8 @@ def main(argv=None):
                                                                                     'use in the new test')
   parser.add_argument('Configuration', metavar='FILE', default=None,
                       help='Parameter file containing the settings to be used in extraction')
+  parser.add_argument('--force', '-f', action='store_true', help='When the test is already known for the class, '
+                                                                 'overwrite it in stead of just skipping that class')
 
   args = parser.parse_args(argv)
 
@@ -36,7 +38,6 @@ def main(argv=None):
     testutils = RadiomicsTestUtils()
 
     try:
-      assert args.TestName not in testutils.getTests()
       assert args.TestCase in radiomics.testCases
     except AssertionError:
       logger.error('Input not valid, cancelling addTest!')

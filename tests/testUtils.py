@@ -304,12 +304,7 @@ class RadiomicsTestUtils:
     else:
       self._logger.info('No test cases run, aborting file write to %s', fileName)
 
-  def addTest(self, case, configuration, baselines):
-    if case in self._tests:
-      self._logger.warning('Test %s already present in the baseline, skipping addTest', case)
-      return
-
-    self._tests.add(case)
+  def addTest(self, case, configuration, baselines, force=False):
     self._results[case] = {}
     self._diffs[case] = {}
 
@@ -318,8 +313,8 @@ class RadiomicsTestUtils:
         self._logger.warning('Feature class %s does not yet have a baseline, creating a new one', featureClass)
         self._baseline[featureClass] = PyRadiomicsBaseline(featureClass)
 
-      self._baseline[featureClass].addTest(case, configuration, baselines[featureClass])
-      self._baseline[featureClass].writeBaselineFile(self._baselineDir)
+      if self._baseline[featureClass].addTest(case, configuration, baselines[featureClass], force):
+        self._baseline[featureClass].writeBaselineFile(self._baselineDir)
 
 
 class PyRadiomicsBaseline:
@@ -332,6 +327,8 @@ class PyRadiomicsBaseline:
     self.configuration = {}
     self.baseline = {}
     self.tests = set()
+    self._configKeys = []
+    self._baselineKeys = []
 
   @classmethod
   def readBaselineFile(cls, baselineFile):
@@ -349,6 +346,11 @@ class PyRadiomicsBaseline:
         new_baseline.baseline[case] = {}
 
       for testRow in csvReader:
+        if 'diagnostics' in testRow[0]:
+          new_baseline._configKeys.append(testRow[0])
+        else:
+          new_baseline._baselineKeys.append(testRow[0])
+
         for case_idx, case in enumerate(tests, start=1):
           if 'diagnostics' in testRow[0]:
             new_baseline.configuration[case][testRow[0]] = testRow[case_idx]
@@ -358,14 +360,17 @@ class PyRadiomicsBaseline:
       new_baseline.tests = set(tests)
     return new_baseline
 
-  def addTest(self, case, configuration, baseline):
-    if case in self.tests:
-      self.logger.warning('Test %s already present in the baseline, skipping addTest', case)
-      return
+  def addTest(self, case, configuration, baseline, force=False):
+    if case not in self.tests:
+      self.tests.add(case)
+    elif not force:
+      self.logger.warning('Test %s already present in the baseline for class %s, skipping addTest', case, self.cls)
+      return False
 
-    self.tests.add(case)
     self.configuration[case] = configuration
     self.baseline[case] = baseline
+
+    return True
 
   def getTestConfig(self, test):
     if test not in self.configuration:
@@ -376,6 +381,10 @@ class PyRadiomicsBaseline:
       'Settings': ast.literal_eval(self.configuration[test].get('diagnostics_Configuration_Settings', '{}')),
       'EnabledImageTypes': ast.literal_eval(self.configuration[test].get('diagnostics_Configuration_EnabledImageTypes', '{}'))
     }
+
+    # ensure resegmentation is disable for shape class
+    if self.cls == 'shape' and 'resegmentRange' in config['Settings']:
+      config['Settings']['resegmentRange'] = None
 
     if config['TestCase'] is None:
       self.logger.error('Missing key "diagnostics_Configuration_TestCase". Cannot configure!')
@@ -404,21 +413,27 @@ class PyRadiomicsBaseline:
 
   def writeBaselineFile(self, baselineDir):
     baselineFile = os.path.join(baselineDir, 'baseline_%s.csv' % self.cls)
-    cases = sorted(list(self.baseline.keys()))
-    with open(baselineFile, 'wb') as baseline:
-      csvWriter = csv.writer(baseline)
+    cases = sorted(self.tests)
+    with open(baselineFile, 'w') as baseline:
+      csvWriter = csv.writer(baseline, lineterminator='\n')
       header = ['featureName'] + cases
       csvWriter.writerow(header)
 
-      config = self.configuration[cases[0]].keys()
-      for c in config:
+      config = self.configuration[cases[1]].keys()
+      self._configKeys += list(set(config) - set(self._configKeys))
+      for c in self._configKeys:
+        if c not in config:
+          continue
         row = [c]
         for testCase in cases:
           row.append(str(self.configuration[testCase].get(c, '')))
         csvWriter.writerow(row)
 
       features = self.baseline[cases[0]].keys()
-      for f in features:
+      self._baselineKeys += list(set(features) - set(self._baselineKeys))
+      for f in self._baselineKeys:
+        if f not in features:
+          continue
         row = [f]
         for testCase in cases:
           row.append(str(self.baseline[testCase].get(f, '')))

@@ -31,7 +31,6 @@ imageType:
 # Featureclasses, from which features must be calculated. If a featureclass is not mentioned, no features are calculated
 # for that class. Otherwise, the specified features are calculated, or, if none are specified, all are calculated (excluding redundant/deprecated features).
 featureClass:
-  shape:
   # redundant Compactness 1, Compactness 2 an Spherical Disproportion features are disabled by default, they can be
   # enabled by specifying individual feature names (as is done for glcm) and including them in the list.
   shape:

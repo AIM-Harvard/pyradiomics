@@ -14,6 +14,7 @@ import six
 from radiomics import featureextractor, setVerbosity
 
 caseLogger = logging.getLogger('radiomics.script')
+_parallel_extraction_configured = False
 
 
 def extractSegment(case_idx, case, config, config_override):
@@ -49,9 +50,9 @@ def extractSegment(case_idx, case, config, config_override):
 
 def extractSegment_parallel(args, parallel_config=None):
   if parallel_config is not None:
-    _configurParallelExtraction(parallel_config)
     # set thread name to patient name
     threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
+    _configurParallelExtraction(parallel_config)
   return extractSegment(*args)
 
 
@@ -149,6 +150,10 @@ def _configurParallelExtraction(parallel_config):
   Initialize logging for parallel extraction. This needs to be done here, as it needs to be done for each thread that is
   created.
   """
+  global _parallel_extraction_configured
+  if _parallel_extraction_configured:
+    return
+
   # Configure logging
   ###################
 
@@ -160,6 +165,8 @@ def _configurParallelExtraction(parallel_config):
     logHandler = logging.FileHandler(filename=logFile, mode='a')
     logHandler.setLevel(parallel_config.get('logLevel', logging.INFO))
     rLogger.addHandler(logHandler)
+    if rLogger.level > logHandler.level:
+      rLogger.level = logHandler.level
 
   # Include thread name in Log-message output for all handlers.
   parallelFormatter = logging.Formatter('[%(asctime)-.19s] %(levelname)-.1s: (%(threadName)s) %(name)s: %(message)s')
@@ -194,3 +201,6 @@ def _configurParallelExtraction(parallel_config):
   ####################################################################
 
   sitk.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
+
+  _parallel_extraction_configured = True
+  rLogger.debug('parallel extraction configured')

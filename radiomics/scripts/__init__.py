@@ -260,13 +260,18 @@ def _configureLogging(args):
   rLogger = radiomics.logger
   logging_config['logLevel'] = logLevel
 
+  fmt = logging.Formatter("[%(asctime)-.19s] %(levelname)-.1s: %(name)s: %(message)s")
+  rLogger.handlers[0].setFormatter(fmt)
+
   # Set up optional logging to file
   if args.log_file is not None:
-    rLogger.setLevel(logLevel)
-    handler = logging.FileHandler(filename=args.log_file, mode='a')
-    handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
-    rLogger.addHandler(handler)
     logging_config['logFile'] = args.log_file
+    logHandler = logging.FileHandler(filename=args.log_file, mode='a')
+    logHandler.setFormatter(fmt)
+    logHandler.setLevel(logLevel)
+    rLogger.addHandler(logHandler)
+    if rLogger.level > logHandler.level:
+      rLogger.level = logHandler.level
 
   # Set verbosity of output (stderr)
   verboseLevel = (6 - args.verbosity) * 10  # convert to python logging level

@@ -73,6 +73,8 @@ mapping:
       resegmentMode:
         type: str
         enum: ['absolute', 'relative', 'sigma']
+      resegmentShape:
+        type: bool
       preCrop:
         type: bool
       sigma:

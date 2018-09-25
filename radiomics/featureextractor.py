@@ -357,6 +357,8 @@ class RadiomicsFeaturesExtractor:
     """
     geometryTolerance = self.settings.get('geometryTolerance')
     additionalInfo = self.settings.get('additionalInfo', False)
+    resegmentShape = self.settings.get('resegmentShape', False)
+
     if label is not None:
       self.settings['label'] = label
     else:
@@ -413,6 +415,11 @@ class RadiomicsFeaturesExtractor:
       if self.generalInfo is not None:
         self.generalInfo.addMaskElements(image, resegmentedMask, label, 'resegmented')
 
+    # if resegmentShape is True and resegmentation has been enabled, update the mask here to also use the
+    # resegmented mask for shape calculation (e.g. PET resegmentation)
+    if resegmentShape and resegmentedMask is not None:
+      mask = resegmentedMask
+
     if not voxelBased:
       # 3. Add the additional information if enabled
       if self.generalInfo is not None:
@@ -435,8 +442,9 @@ class RadiomicsFeaturesExtractor:
           newFeatureName = 'original_shape_%s' % featureName
           featureVector[newFeatureName] = featureValue
 
-    # Only use resegemented mask for feature classes other than shape
-    if resegmentedMask is not None:
+    # (Default) Only use resegemented mask for feature classes other than shape
+    # can be overridden by specifying `resegmentShape` = True
+    if not resegmentShape and resegmentedMask is not None:
       mask = resegmentedMask
 
     # 6. Calculate other enabled feature classes using enabled image types

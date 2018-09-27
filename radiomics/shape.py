@@ -10,10 +10,31 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   are independent from the gray level intensity distribution in the ROI and are therefore only calculated on the
   non-derived image and mask.
 
+  Unless otherwise specified, features are derived from the approximated shape defined by the triangle mesh. To build
+  this mesh, vertices (points) are first defined as points halfway on an edge between a voxel included in the ROI and
+  one outside the ROI. By connecting these vertices a mesh of connected triangles is obtained, with each triangle
+  defined by 3 adjacent vertices, which shares each side with exactly one other triangle.
+
+  This mesh is generated using a marching cubes algorithm. In this algorithm, a 2x2 cube is moved through the mask
+  space. For each position, the corners of the cube are then marked 'segmented' (1) or 'not segmented' (0). Treating the
+  corners as specific bits in a binary number, a unique cube-index is obtained (0-255). This index is then used to
+  determine which triangles are present in the cube, which are defined in a lookup table.
+
+  These triangles are defined in such a way, that the normal (obtained from the cross product of vectors describing 2
+  out of 3 edges) are always oriented in the same direction. For PyRadiomics, the calculated normals are always pointing
+  outward. This is necessary to obtain the correct signed volume used in calculation of ``MeshVolume``.
+
   Let:
 
-  - :math:`V` the volume of the ROI in mm\ :sup:`3`
-  - :math:`A` the surface area of the ROI in mm\ :sup:`2`
+  - :math:`N_v` represent the number of voxels included in the ROI
+  - :math:`N_f` represent the number of faces (triangles) defining the Mesh.
+  - :math:`V` the volume of the mesh in mm\ :sup:`3`, calculated by :py:func:`getMeshVolumeFeatureValue`
+  - :math:`A` the surface area of the mesh in mm\ :sup:`2`, calculated by :py:func:`getMeshSurfaceAreaFeatureValue`
+
+  References:
+
+  - Lorensen WE, Cline HE. Marching cubes: A high resolution 3D surface construction algorithm. ACM SIGGRAPH Comput
+    Graph `Internet <http://portal.acm.org/citation.cfm?doid=37402.37422>`_. 1987;21:163-9.
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
@@ -72,36 +93,42 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     self.logger.debug('Shape feature class initialized')
 
-  def getVolumeFeatureValue(self):
+  def getMeshVolumeFeatureValue(self):
     r"""
-    **1. Volume**
+    **1. Mesh Volume**
 
     .. math::
-      V_{f} = \displaystyle\frac{a \dot (b \times c)}{6} (1)
+      V_i = \displaystyle\frac{Oa_i \cdot (Ob_i \times Oc_i)}{6} \text{ (1)}
 
-      V = \displaystyle\sum^{N_f}_{f=1}{V_f} (2)
+      V = \displaystyle\sum^{N_f}_{i=1}{V_i} \text{ (2)}
 
-    The volume of the ROI :math:`V` is calculated from the triangle mesh of the ROI. First the volume is calculated of
-    the tetrahedron that is defined by face f and the origin of the image (1) for all :math:`N_f` faces that make up the
-    triangle mesh. This mesh is also used for the calculation of surface area. By ensuring that the normals (obtained
-    from the cross product) have a consistent orientation (outward or inward facing), the volumes obtained are signed.
-    All sub-volumes are then summed (2), yielding the volume of the ROI.
+    The volume of the ROI :math:`V` is calculated from the triangle mesh of the ROI.
+    For each face :math:`i` in the mesh, defined by points :math:`a_i, b_i` and :math:`c_i`, the (signed) volume
+    :math:`V_f` of the tetrahedron defined by that face and the origin of the image (:math:`O`) is calculated. (1)
+    The sign of the volume is determined by the sign of the normal, which must be consistently defined as either facing
+    outward or inward of the ROI.
+
+    Then taking the sum of all :math:`V_i`, the total volume of the ROI is obtained (2)
 
     .. note::
-      For more extensive documentation on how the volume is obtained using the surface mesh, see the IBSI document on
-      the calculation of Volume.
+      For more extensive documentation on how the volume is obtained using the surface mesh, see the IBSI document,
+      where this feature is defined as ``Volume``.
     """
     return self.Volume
 
-  def getApproximateVolumeFeatureValue(self):
+  def getVoxelVolumeFeatureValue(self):
     r"""
-    **1. Volume**
+    **2. Voxel Volume**
 
     .. math::
-      V_{approx} = \displaystyle\sum^{N}_{i=1}{V_i}
+      V_{voxel} = \displaystyle\sum^{N_v}_{k=1}{V_k}
 
-    The volume of the ROI :math:`V` is approximated by multiplying the number of voxels in the ROI by the volume of a
-    single voxel :math:`V_i`. This is a less precise approximation of the volume and is not used in subsequent features.
+    The volume of the ROI :math:`V_{voxel}` is approximated by multiplying the number of voxels in the ROI by the volume
+    of a single voxel :math:`V_k`. This is a less precise approximation of the volume and is not used in subsequent
+    features. This feature does not make use of the mesh and is not used in calculation of other shape features.
+
+    .. note::
+      Defined in IBSI as ``Approximate Volume``.
     """
     z, y, x = self.pixelSpacing
     Np = len(self.labelledVoxelCoordinates[0])
@@ -109,31 +136,29 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getSurfaceAreaFeatureValue(self):
     r"""
-    **2. Surface Area**
+    **3. Surface Area**
 
     .. math::
-      A = \displaystyle\sum^{N}_{i=1}{\frac{1}{2}|\text{a}_i\text{b}_i \times \text{a}_i\text{c}_i|}
+      A_i = \frac{1}{2}|\text{a}_i\text{b}_i \times \text{a}_i\text{c}_i| \text{ (1)}
 
-    Where:
+      A = \displaystyle\sum^{N_f}_{i=1}{A_i} \text{ (2)}
 
-    :math:`N` is the number of triangles forming the surface mesh of the volume (ROI)
+    where:
 
-    :math:`\text{a}_i\text{b}_i` and :math:`\text{a}_i\text{c}_i` are the edges of the :math:`i^{\text{th}}` triangle
-    formed by points :math:`\text{a}_i`, :math:`\text{b}_i` and :math:`\text{c}_i`
+    :math:`\text{a}_i\text{b}_i` and :math:`\text{a}_i\text{c}_i` are edges of the :math:`i^{\text{th}}` triangle in the
+    mesh, formed by vertices :math:`\text{a}_i`, :math:`\text{b}_i` and :math:`\text{c}_i`.
 
-    Surface Area is an approximation of the surface of the ROI in mm2, calculated using a the triangle mesh generated
-    using the marching cubes algorithm.
+    To calculate the surface area, first the surface area :math:`A_i` of each triangle in the mesh is calculated (1).
+    The total surface area is then obtained by taking the sum of all calculated sub-areas (2).
 
-    References:
-
-    - Lorensen WE, Cline HE. Marching cubes: A high resolution 3D surface construction algorithm. ACM SIGGRAPH Comput
-      Graph `Internet <http://portal.acm.org/citation.cfm?doid=37402.37422>`_. 1987;21:163-9.
+    .. note::
+      Defined in IBSI as ``Surface Area``.
     """
     return self.SurfaceArea
 
   def getSurfaceVolumeRatioFeatureValue(self):
     r"""
-    **3. Surface Area to Volume ratio**
+    **4. Surface Area to Volume ratio**
 
     .. math::
       \textit{surface to volume ratio} = \frac{A}{V}
@@ -145,7 +170,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getSphericityFeatureValue(self):
     r"""
-    **4. Sphericity**
+    **5. Sphericity**
 
     .. math::
       \textit{sphericity} = \frac{\sqrt[3]{36 \pi V^2}}{A}
@@ -165,7 +190,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   @deprecated
   def getCompactness1FeatureValue(self):
     r"""
-    **5. Compactness 1**
+    **6. Compactness 1**
 
     .. math::
       \textit{compactness 1} = \frac{V}{\sqrt{\pi A^3}}
@@ -182,14 +207,15 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       This feature is correlated to Compactness 2, Sphericity and Spherical Disproportion.
       Therefore, this feature is marked, so it is not enabled by default (i.e. this feature will not be enabled if no
       individual features are specified (enabling 'all' features), but will be enabled when individual features are
-      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled features.
+      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled
+      features.
     """
     return self.Volume / (self.SurfaceArea ** (3.0 / 2.0) * numpy.sqrt(numpy.pi))
 
   @deprecated
   def getCompactness2FeatureValue(self):
     r"""
-    **6. Compactness 2**
+    **7. Compactness 2**
 
     .. math::
       \textit{compactness 2} = 36 \pi \frac{V^2}{A^3}
@@ -204,14 +230,15 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       This feature is correlated to Compactness 1, Sphericity and Spherical Disproportion.
       Therefore, this feature is marked, so it is not enabled by default (i.e. this feature will not be enabled if no
       individual features are specified (enabling 'all' features), but will be enabled when individual features are
-      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled features.
+      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled
+      features.
     """
     return (36.0 * numpy.pi) * (self.Volume ** 2.0) / (self.SurfaceArea ** 3.0)
 
   @deprecated
   def getSphericalDisproportionFeatureValue(self):
     r"""
-    **7. Spherical Disproportion**
+    **8. Spherical Disproportion**
 
     .. math::
       \textit{spherical disproportion} = \frac{A}{4\pi R^2} = \frac{A}{\sqrt[3]{36 \pi V^2}}
@@ -227,13 +254,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
       This feature is correlated to Compactness 2, Compactness2 and Sphericity.
       Therefore, this feature is marked, so it is not enabled by default (i.e. this feature will not be enabled if no
       individual features are specified (enabling 'all' features), but will be enabled when individual features are
-      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled features.
+      specified, including this feature). To include this feature in the extraction, specify it by name in the enabled
+      features.
     """
     return self.SurfaceArea / (36 * numpy.pi * self.Volume ** 2) ** (1.0 / 3.0)
 
   def getMaximum3DDiameterFeatureValue(self):
     r"""
-    **8. Maximum 3D diameter**
+    **9. Maximum 3D diameter**
 
     Maximum 3D diameter is defined as the largest pairwise Euclidean distance between tumor surface mesh
     vertices.
@@ -244,7 +272,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getMaximum2DDiameterSliceFeatureValue(self):
     r"""
-    **9. Maximum 2D diameter (Slice)**
+    **10. Maximum 2D diameter (Slice)**
 
     Maximum 2D diameter (Slice) is defined as the largest pairwise Euclidean distance between tumor surface mesh
     vertices in the row-column (generally the axial) plane.
@@ -253,7 +281,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getMaximum2DDiameterColumnFeatureValue(self):
     r"""
-    **10. Maximum 2D diameter (Column)**
+    **11. Maximum 2D diameter (Column)**
 
     Maximum 2D diameter (Column) is defined as the largest pairwise Euclidean distance between tumor surface mesh
     vertices in the row-slice (usually the coronal) plane.
@@ -262,46 +290,61 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getMaximum2DDiameterRowFeatureValue(self):
     r"""
-    **11. Maximum 2D diameter (Row)**
+    **12. Maximum 2D diameter (Row)**
 
     Maximum 2D diameter (Row) is defined as the largest pairwise Euclidean distance between tumor surface mesh
     vertices in the column-slice (usually the sagittal) plane.
     """
     return self.diameters[2]
 
-  def getMajorAxisFeatureValue(self):
+  def getMajorAxisLengthFeatureValue(self):
     r"""
-    **12. Major Axis**
+    **13. Major Axis Length**
 
     .. math::
-      \textit{major axis} = 4 \sqrt{\lambda_{\text{major}}}
+      \textit{major axis} = 4 \sqrt{\lambda_{major}}
 
+    This feature yield the largest axis length of the ROI-enclosing ellipsoid and is calculated using the largest
+    principal component :math:`\lambda_{major}`.
+
+    The principal component analysis is performed using the physical coordinates of the voxel centers defining the ROI.
+    It therefore takes spacing into account, but does not make use of the shape mesh.
     """
     if self.eigenValues[2] < 0:
       self.logger.warning('Major axis eigenvalue negative! (%g)', self.eigenValues[2])
       return numpy.nan
     return numpy.sqrt(self.eigenValues[2]) * 4
 
-  def getMinorAxisFeatureValue(self):
+  def getMinorAxisLengthFeatureValue(self):
     r"""
-    **13. Minor Axis**
+    **14. Minor Axis Length**
 
     .. math::
-      \textit{minor axis} = 4 \sqrt{\lambda_{\text{minor}}}
+      \textit{minor axis} = 4 \sqrt{\lambda_{minor}}
 
+    This feature yield the second-largest axis length of the ROI-enclosing ellipsoid and is calculated using the largest
+    principal component :math:`\lambda_{minor}`.
+
+    The principal component analysis is performed using the physical coordinates of the voxel centers defining the ROI.
+    It therefore takes spacing into account, but does not make use of the shape mesh.
     """
     if self.eigenValues[1] < 0:
       self.logger.warning('Minor axis eigenvalue negative! (%g)', self.eigenValues[1])
       return numpy.nan
     return numpy.sqrt(self.eigenValues[1]) * 4
 
-  def getLeastAxisFeatureValue(self):
+  def getLeastAxisLengthFeatureValue(self):
     r"""
-    **14. Least Axis**
+    **15. Least Axis Length**
 
     .. math::
-      \textit{least axis} = 4 \sqrt{\lambda_{\text{least}}}
+      \textit{least axis} = 4 \sqrt{\lambda_{least}}
 
+    This feature yield the smallest axis length of the ROI-enclosing ellipsoid and is calculated using the largest
+    principal component :math:`\lambda_{least}`. In case of a 2D segmentation, this value will be 0.
+
+    The principal component analysis is performed using the physical coordinates of the voxel centers defining the ROI.
+    It therefore takes spacing into account, but does not make use of the shape mesh.
     """
     if self.eigenValues[0] < 0:
       self.logger.warning('Least axis eigenvalue negative! (%g)', self.eigenValues[0])
@@ -310,17 +353,21 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getElongationFeatureValue(self):
     r"""
-    **15. Elongation**
+    **16. Elongation**
 
-    Elongation is calculated using its implementation in SimpleITK, and is defined as:
+    Elongation shows the relationship between the two largest principal components in the ROI shape.
+    For computational reasons, this feature is defined as the inverse of true elongation.
 
     .. math::
-      \textit{elongation} = \sqrt{\frac{\lambda_{\text{minor}}}{\lambda_{\text{major}}}}
+      \textit{elongation} = \sqrt{\frac{\lambda_{minor}}{\lambda_{major}}}
 
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{minor}}` are the lengths of the largest and second
     largest principal component axes. The values range between 1 (where the cross section through the first and second
-    largest principal moments is circle-like (non-elongated)) and 0 (where the object is a single point or 1 dimensional
-    line).
+    largest principal moments is circle-like (non-elongated)) and 0 (where the object is a maximally elongated: i.e. a 1
+    dimensional line).
+
+    The principal component analysis is performed using the physical coordinates of the voxel centers defining the ROI.
+    It therefore takes spacing into account, but does not make use of the shape mesh.
     """
     if self.eigenValues[1] < 0 or self.eigenValues[2] < 0:
       self.logger.warning('Elongation eigenvalue negative! (%g, %g)', self.eigenValues[1], self.eigenValues[2])
@@ -329,15 +376,20 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
   def getFlatnessFeatureValue(self):
     r"""
-    **16. Flatness**
+    **17. Flatness**
 
-    Flatness is calculated using its implementation in SimpleITK, and is defined as:
+    Flatness shows the relationship between the largest and smallest principal components in the ROI shape.
+    For computational reasons, this feature is defined as the inverse of true flatness.
 
     .. math::
-      \textit{flatness} = \sqrt{\frac{\lambda_{\text{least}}}{\lambda_{\text{major}}}}
+      \textit{flatness} = \sqrt{\frac{\lambda_{least}}{\lambda_{major}}}
 
     Here, :math:`\lambda_{\text{major}}` and :math:`\lambda_{\text{least}}` are the lengths of the largest and smallest
-    principal component axes. The values range between 1 (non-flat, sphere-like) and 0 (a flat object).
+    principal component axes. The values range between 1 (non-flat, sphere-like) and 0 (a flat object, or single-slice
+    segmentation).
+
+    The principal component analysis is performed using the physical coordinates of the voxel centers defining the ROI.
+    It therefore takes spacing into account, but does not make use of the shape mesh.
     """
     if self.eigenValues[0] < 0 or self.eigenValues[2] < 0:
       self.logger.warning('Elongation eigenvalue negative! (%g, %g)', self.eigenValues[0], self.eigenValues[2])

@@ -1,8 +1,9 @@
 #include "cshape.h"
 #include <math.h>
 #include <stdlib.h>
+#include <Python.h>
 
-int *generate_angles(int *size, int *strides, int *a_strides, int *Na, int *mDim);
+void calculate_meshDiameter(double *vertices, int v_idx, double *diameters);
 
 // Declare the look-up tables, these are filled at the bottom of this code file.
 static const int gridAngles[8][3];
@@ -10,14 +11,29 @@ static const int gridAngles[8][3];
 static const int triTable[128][16];
 static const double vertList[12][3];
 
-double calculate_surfacearea(char *mask, int *size, int *strides, double *spacing)
+int calculate_coefficients(char *mask, int *size, int *strides, double *spacing,
+                           double *surfaceArea, double *volume, double *diameters)
 {
   int iz, iy, ix, i, t, d;  // iterator indices
   unsigned char cube_idx;  // cube identifier, 8 bits signifying which corners of the cube belong to the segmentation
   int a_idx;  // Angle index (8 'angles', one pointing to each corner of the marching cube
+
+  static const int points_edges[2][3] = {{6, 4, 3}, {6, 7, 11}};
+  int v_idx = -1;
+  int v_max = 0;
+  double *vertices;
+
   double sum;
-  double surfaceArea = 0;  // Total surface area
-  double a[3], b[3], c[3];  // 2 points of the triangle, relative to the third, and the cross product vector
+  double a[3], b[3], c[3], ab[3];  // 3 points of the triangle, and the cross product vector
+  int sign_correction;
+
+  *surfaceArea = 0;  // Total surface area
+  *volume = 0;  // Total volume
+
+  // create a stack to hold the found vertices. For each cube, a maximum of 3 vertices are stored (with x, y and z
+  // coordinates). This prevents double storing of the vertices.
+  v_max = (size[0] - 1) * (size[1] - 1) * (size[2] - 1) * 9;
+  vertices = (double *)calloc(v_max, sizeof(double));
 
   // Iterate over all voxels, do not include last voxels in the three dimensions, as the cube includes voxels at pos +1
   for (iz = 0; iz < (size[0] - 1); iz++)
@@ -34,196 +50,169 @@ double calculate_surfacearea(char *mask, int *size, int *strides, double *spacin
               (iy + gridAngles[a_idx][1]) * strides[1] +
               (ix + gridAngles[a_idx][2]) * strides[2];
 
-          if (mask[i]) cube_idx |= (1 << a_idx);
+          if (mask[i])
+            cube_idx |= (1 << a_idx);
         }
 
         // Isosurface is symmetrical around the midpoint, flip the number if > 128
         // This enables look-up tables to be 1/2 the size.
-        if (cube_idx & 0x80) cube_idx ^= 0xff;
-
-        // Exlcude cubes entirely outside or inside the segmentation. Also exclude potential invalid values (>= 128).
-        if (cube_idx > 0 && cube_idx < 128)
+        // However, the sign for the volume then needs to be flipped too.
+        if (cube_idx & 0x80)
         {
-          t = 0;
-          while (triTable[cube_idx][t*3] >= 0) // Exit loop when no more triangles are present (element at index = -1)
+          cube_idx ^= 0xff;
+          sign_correction = -1;
+        }
+        else
+          sign_correction = 1;
+
+        // ************************
+        // Store vertices for diameter calculation
+        // ************************
+
+        // check if there are vertices on edges 6, 7 and 11
+        // Because of the symmetry around the midpoint and the flip if cube_idx > 128, the 8th point will never appear
+        // as segmented at this point. Therefore, to check if there are vertices on the adjacent edges (6, 7 and 11),
+        // one only needs to check if the corresponding points (7th, 5th and 4th, respectively) are segmented.
+        if (v_idx + 9 >= v_max) // Overflow!
+        {
+          free(vertices);
+          return 1;
+        }
+
+        for (t = 0; t < 3; t++)
+        {
+          if (cube_idx & (1 << points_edges[0][t]))
           {
-            for (d = 0; d < 3; d++)
-            {
-                a[d] = vertList[triTable[cube_idx][t*3 + 1]][d] - vertList[triTable[cube_idx][t*3]][d];
-                b[d] = vertList[triTable[cube_idx][t*3 + 2]][d] - vertList[triTable[cube_idx][t*3]][d];
-
-                // Factor in the spacing
-                a[d] *= spacing[d];
-                b[d] *= spacing[d];
-            }
-
-            // Compute the cross-product
-            c[0] = (a[1] * b[2]) - (b[1] * a[2]);
-            c[1] = (a[2] * b[0]) - (b[2] * a[0]);
-            c[2] = (a[0] * b[1]) - (b[0] * a[1]);
-
-            // Get the square
-            c[0] = c[0] * c[0];
-            c[1] = c[1] * c[1];
-            c[2] = c[2] * c[2];
-
-            // Compute the surface, which is equal to 1/2 magnitude of the cross product, where
-            // The magnitude is obtained by calculating the euclidean distance between (0, 0, 0)
-            // and the location of c
-            sum = c[0] + c[1] + c[2];
-            sum = sqrt(sum);
-            sum = 0.5 * sum;
-            surfaceArea += sum;
-            t++;
+            vertices[++v_idx] = (((double)iz) + vertList[points_edges[1][t]][0]) * spacing[0];
+            vertices[++v_idx] = (((double)iy) + vertList[points_edges[1][t]][1]) * spacing[1];
+            vertices[++v_idx] = (((double)ix) + vertList[points_edges[1][t]][2]) * spacing[2];
           }
+        }
+
+        // Exlcude cubes entirely outside or inside the segmentation (cube_idx = 0).
+        if (cube_idx == 0)
+          continue;
+
+        // Process all triangles for this cube
+        t = 0;
+        while (triTable[cube_idx][t*3] >= 0) // Exit loop when no more triangles are present (element at index = -1)
+        {
+          a[0] = b[0] = c[0] = iz;
+          a[1] = b[1] = c[1] = iy;
+          a[2] = b[2] = c[2] = ix;
+          for (d = 0; d < 3; d++)
+          {
+              a[d] += vertList[triTable[cube_idx][t*3]][d];
+              b[d] += vertList[triTable[cube_idx][t*3 + 1]][d];
+              c[d] += vertList[triTable[cube_idx][t*3 + 2]][d];
+              // Factor in the spacing
+              a[d] *= spacing[d];
+              b[d] *= spacing[d];
+              c[d] *= spacing[d];
+          }
+
+          // ************************
+          // Calculate volume
+          // ************************
+
+          // Calculate the cross product
+          ab[0] = (a[1] * b[2]) - (b[1] * a[2]);
+          ab[1] = (a[2] * b[0]) - (b[2] * a[0]);
+          ab[2] = (a[0] * b[1]) - (b[0] * a[1]);
+
+          // Calculate the dot-product and add it to the volume total. The division by 6 is performed at the end.
+          *volume += sign_correction * (ab[0] * c[0] + ab[1] * c[1] + ab[2] * c[2]);
+
+          // ************************
+          // Calculate surface area
+          // ************************
+
+          // Compute the surface, which is equal to 1/2 magnitude of the cross product, where
+          // The magnitude is obtained by calculating the euclidean distance between (0, 0, 0)
+          // and the location of c
+          for (d = 0; d < 3; d++)
+          {
+            a[d] -= c[d];
+            b[d] -= c[d];
+          }
+
+          // Compute the cross-product
+          ab[0] = (a[1] * b[2]) - (b[1] * a[2]);
+          ab[1] = (a[2] * b[0]) - (b[2] * a[0]);
+          ab[2] = (a[0] * b[1]) - (b[0] * a[1]);
+
+          // Get the euclidean distance by computing the square and then the square root of the sum.
+          ab[0] = ab[0] * ab[0];
+          ab[1] = ab[1] * ab[1];
+          ab[2] = ab[2] * ab[2];
+
+          sum = ab[0] + ab[1] + ab[2];
+          sum = sqrt(sum);
+
+          // multiply by 0.5 (1/2 the magnitude of the cross product)
+          sum = 0.5 * sum;
+
+          // Add the surface area of the face to the grand total.
+          *surfaceArea += sum;
+          t++;
         }
       }
     }
   }
-  return surfaceArea;
+  *volume = *volume / 6;
+
+  // ************************
+  // Calculate Diameters using found vertices
+  // ************************
+  calculate_meshDiameter(vertices, v_idx, diameters);
+  free(vertices);
+  return 0;
 }
 
-int calculate_diameter(char *mask, int *size, int *strides, double *spacing, int Ns, double *diameters)
+void calculate_meshDiameter(double *points, int stack_top, double *diameters)
 {
-  int iz, iy, ix, i, j;
-  int a_idx, d_idx;
-  int Na, mDim;
-  int *angles;
-  int a_strides[3];
-
-  int *stack;
-  int stack_top = -1;
-
-  int idx, jz, jy, jx;
-  double dz, dy, dx;
+  double a[3], b[3], ab[3];
   double distance;
-
-  angles = generate_angles(size, strides, a_strides, &Na, &mDim);
-  stack = (int *)calloc(Ns, sizeof(int));
-
-  // First, get all the voxels on the border
-  i = 0;
-  // Iterate over all voxels in a row - column - slice order
-  // As the mask is padded with 0's, no voxels on the edge of the image are part of the mask, so skip those...
-  for (iz = 1; iz < size[0] - 1; iz++)
-  {
-    for (iy = 1; iy < size[1] - 1; iy++)
-    {
-      for (ix = 1; ix < size[2] - 1; ix++)
-      {
-        i = iz * strides[0] +
-            iy * strides[1] +
-            ix * strides[2];
-        if (mask[i])
-        {
-          for (a_idx = 0; a_idx < Na; a_idx++)
-          {
-            j = i;
-            for (d_idx = 0; d_idx < mDim; d_idx++)
-            {
-              j += angles[a_idx * mDim + d_idx] * a_strides[d_idx];
-            }
-
-            if (mask[j] == 0)
-            {
-              // neighbour not part of ROI, i.e. 'i' is border voxel
-              if (stack_top >= Ns) return 0;  // index out of bounds
-              stack[++stack_top] = i;
-              break;
-            }
-          }
-        }
-      }
-    }
-	}
-  stack_top++; // increment by 1, so when the first item is popped, it is the last item entered
-
-	free(angles);
+  int idx;
 
   diameters[0] = 0;
   diameters[1] = 0;
   diameters[2] = 0;
   diameters[3] = 0;
 
-  while (stack_top > 0)
+  stack_top++; // increment by 1, so when the first item is popped, it is the last item entered
+  while(stack_top > 0)
   {
-    // pop the last item from the stack, this prevents double processing and comparing the same voxels
-    i = stack[--stack_top];
-    iz = (i / strides[0]);
-    iy = (i % strides[0]) / strides[1];
-    ix = (i % strides[0]) % strides[1];
-    for (idx = 0; idx < stack_top; idx++)  // calculate distance to all other voxels
+    a[2] = points[--stack_top];
+    a[1] = points[--stack_top];
+    a[0] = points[--stack_top];
+
+    for (idx = 0; idx < stack_top; idx += 3)
     {
-      j = stack[idx];
-	    jz = (j / strides[0]);
-      jy = (j % strides[0]) / strides[1];
-      jx = (j % strides[0]) % strides[1];
+      b[0] = points[idx];
+      b[1] = points[idx + 1];
+      b[2] = points[idx + 2];
 
-      dz = (double)(iz - jz) * spacing[0];
-      dy = (double)(iy - jy) * spacing[1];
-      dx = (double)(ix - jx) * spacing[2];
+      ab[0] = a[0] - b[0];
+      ab[1] = a[1] - b[1];
+      ab[2] = a[2] - b[2];
 
-      dz *= dz;
-      dy *= dy;
-      dx *= dx;
+      ab[0] *= ab[0];
+      ab[1] *= ab[1];
+      ab[2] *= ab[2];
 
-      distance = dz + dy + dx;
-      if (iz == jz && distance > diameters[0]) diameters[0] = distance;
-      if (iy == jy && distance > diameters[1]) diameters[1] = distance;
-      if (ix == jx && distance > diameters[2]) diameters[2] = distance;
+      distance = ab[0] + ab[1] + ab[2];
+      if (a[0] == b[0] && distance > diameters[0]) diameters[0] = distance;
+      if (a[1] == b[1] && distance > diameters[1]) diameters[1] = distance;
+      if (a[2] == b[2] && distance > diameters[2]) diameters[2] = distance;
       if (distance > diameters[3]) diameters[3] = distance;
     }
   }
-  free(stack);
 
   diameters[0] = sqrt(diameters[0]);
   diameters[1] = sqrt(diameters[1]);
   diameters[2] = sqrt(diameters[2]);
   diameters[3] = sqrt(diameters[3]);
-
-  return 1;
-}
-
-int *generate_angles(int *size, int *strides, int *a_strides, int *Na, int *mDim)
-{
-  static int *angles;  // return value, declare static so it can be returned
-
-  int offsets[3] = {-1, 0, 1};  // distance 1, both directions
-  int a_idx, d_idx, a_offset, stride;
-
-  // First, determine how many 'moving' dimensions there are, this determines the number of distinct angles to generate
-  // Na = 3 ** NDIM(Size > 3) - 1, i.e. each dimension triples the number of angles, -1 to exclude (0, 0, 0)
-  *Na = 1;
-  *mDim = 0;
-  for (d_idx = 0; d_idx < 3; d_idx++)  // assume mask is 3D
-  {
-    if (size[d_idx] > 3)  // mask is padded with 0's in all directions, i.e. bounding box size = size - 2
-    {
-      // Dimension is a moving dimension
-      a_strides[*mDim] = strides[d_idx];
-      *Na *= 3;
-      (*mDim)++;
-    }
-  }
-  (*Na)--;  // Don't generate angle for (0, 0, 0)
-
-  // Initialize array to hold the angles
-  angles = (int *)calloc(*Na * *mDim, sizeof(int));
-
-  // Fill the angles array
-  stride = 1;
-  for (d_idx = 0; d_idx < *mDim; d_idx++)  // Iterate over all moving dimensions
-  {
-    a_offset = 0;
-    for (a_idx = 0; a_idx < *Na; a_idx++)
-    {
-      if (a_idx == *Na / 2) a_offset = 1;  // Skip (0, 0, 0) angle
-
-      angles[a_idx * *mDim + d_idx] = offsets[((a_idx + a_offset) / stride) % 3];
-    }
-    stride *= 3;  // For next dimension, multiply stride by 3 (length offsets) --> {1, 3, 9, ...}
-  }
-  return angles;
 }
 
 // gridAngles define the 8 corners of the marching cube, relative to the origin of the cube
@@ -249,132 +238,132 @@ static const int gridAngles[8][3] = { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, {0,
 static const int triTable[128][16] = {
   { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 8, 3, 9, 8, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 9, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 8, 3, 1, 9, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 1, 2, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 0, 8, 3, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 9, 2, 10, 0, 2, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 2, 8, 3, 2, 10, 8, 10, 9, 8, -1, -1, -1, -1, -1, -1, -1 },
-  { 3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 11, 2, 8, 11, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 9, 0, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 11, 2, 1, 9, 11, 9, 8, 11, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 2, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 2, 0, 0, 8, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 9, 0, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 2, 1, 1, 9, 11, 9, 8, 11, -1, -1, -1, -1, -1, -1, -1 },
   { 3, 10, 1, 11, 10, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 10, 1, 0, 8, 10, 8, 11, 10, -1, -1, -1, -1, -1, -1, -1 },
-  { 3, 9, 0, 3, 11, 9, 11, 10, 9, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 8, 10, 10, 8, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 10, 1, 0, 0, 8, 10, 8, 11, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 9, 0, 3, 3, 11, 9, 11, 10, 9, -1, -1, -1, -1, -1, -1, -1 },
+  { 9, 8, 10, 11, 10, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 4, 3, 0, 7, 3, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 1, 9, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 4, 1, 9, 4, 7, 1, 7, 3, 1, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 2, 10, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, 4, 3, 4, 7, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 9, 0, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 9, 4, 1, 4, 7, 1, 7, 3, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 2, 10, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 3, 4, 7, 3, 0, 4, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 2, 10, 9, 0, 2, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1 },
-  { 2, 10, 9, 2, 9, 7, 2, 7, 3, 7, 9, 4, -1, -1, -1, -1 },
-  { 8, 4, 7, 3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 9, 2, 10, 9, 0, 2, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1 },
+  { 2, 10, 9, 2, 9, 7, 2, 7, 3, 4, 7, 9, -1, -1, -1, -1 },
+  { 4, 7, 8, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 11, 4, 7, 11, 2, 4, 2, 0, 4, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 0, 1, 8, 4, 7, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1 },
-  { 4, 7, 11, 9, 4, 11, 9, 11, 2, 9, 2, 1, -1, -1, -1, -1 },
-  { 3, 10, 1, 3, 11, 10, 7, 8, 4, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 11, 10, 1, 4, 11, 1, 0, 4, 7, 11, 4, -1, -1, -1, -1 },
-  { 4, 7, 8, 9, 0, 11, 9, 11, 10, 11, 0, 3, -1, -1, -1, -1 },
+  { 1, 9, 0, 4, 7, 8, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1 },
+  { 4, 7, 11, 9, 4, 11, 11, 2, 9, 1, 9, 2, -1, -1, -1, -1 },
+  { 3, 10, 1, 11, 10, 3, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 10, 1, 1, 4, 11, 1, 0, 4, 4, 7, 11, -1, -1, -1, -1 },
+  { 4, 7, 8, 9, 0, 3, 3, 11, 9, 11, 10, 9, -1, -1, -1, -1 },
   { 4, 7, 11, 4, 11, 9, 9, 11, 10, -1, -1, -1, -1, -1, -1, -1 },
   { 9, 5, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 9, 5, 4, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 5, 4, 1, 5, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, 5, 4, 0, 1, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 8, 5, 4, 8, 3, 5, 3, 1, 5, -1, -1, -1, -1, -1, -1, -1 },
   { 1, 2, 10, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 3, 0, 8, 1, 2, 10, 4, 9, 5, -1, -1, -1, -1, -1, -1, -1 },
-  { 5, 2, 10, 5, 4, 2, 4, 0, 2, -1, -1, -1, -1, -1, -1, -1 },
-  { 2, 10, 5, 3, 2, 5, 3, 5, 4, 3, 4, 8, -1, -1, -1, -1 },
-  { 9, 5, 4, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 11, 2, 0, 8, 11, 4, 9, 5, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 5, 4, 0, 1, 5, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1 },
-  { 2, 1, 5, 2, 5, 8, 2, 8, 11, 4, 8, 5, -1, -1, -1, -1 },
-  { 10, 3, 11, 10, 1, 3, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1 },
-  { 4, 9, 5, 0, 8, 1, 8, 10, 1, 8, 11, 10, -1, -1, -1, -1 },
-  { 5, 4, 0, 5, 0, 11, 5, 11, 10, 11, 0, 3, -1, -1, -1, -1 },
-  { 5, 4, 8, 5, 8, 10, 10, 8, 11, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 7, 8, 5, 7, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 3, 0, 9, 5, 3, 5, 7, 3, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 7, 8, 0, 1, 7, 1, 5, 7, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 5, 3, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 7, 8, 9, 5, 7, 10, 1, 2, -1, -1, -1, -1, -1, -1, -1 },
-  { 10, 1, 2, 9, 5, 0, 5, 3, 0, 5, 7, 3, -1, -1, -1, -1 },
-  { 8, 0, 2, 8, 2, 5, 8, 5, 7, 10, 5, 2, -1, -1, -1, -1 },
+  { 0, 8, 3, 1, 2, 10, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1 },
+  { 2, 10, 5, 5, 4, 2, 2, 4, 0, -1, -1, -1, -1, -1, -1, -1 },
+  { 2, 10, 5, 3, 2, 5, 3, 5, 4, 8, 3, 4, -1, -1, -1, -1 },
+  { 9, 5, 4, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 2, 0, 0, 8, 11, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, 5, 4, 0, 1, 5, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1 },
+  { 2, 1, 5, 2, 5, 8, 11, 2, 8, 5, 4, 8, -1, -1, -1, -1 },
+  { 3, 10, 1, 11, 10, 3, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1 },
+  { 5, 4, 9, 10, 1, 0, 0, 8, 10, 8, 11, 10, -1, -1, -1, -1 },
+  { 5, 4, 0, 5, 0, 11, 10, 5, 11, 11, 0, 3, -1, -1, -1, -1 },
+  { 5, 4, 8, 10, 5, 8, 11, 10, 8, -1, -1, -1, -1, -1, -1, -1 },
+  { 7, 8, 9, 5, 7, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 3, 0, 9, 5, 3, 9, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1 },
+  { 7, 8, 0, 0, 1, 7, 7, 1, 5, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 5, 7, 1, 7, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 7, 8, 9, 5, 7, 9, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 2, 10, 3, 0, 9, 3, 9, 5, 3, 5, 7, -1, -1, -1, -1 },
+  { 0, 2, 8, 8, 2, 5, 8, 5, 7, 2, 10, 5, -1, -1, -1, -1 },
   { 2, 10, 5, 2, 5, 3, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1 },
-  { 7, 9, 5, 7, 8, 9, 3, 11, 2, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 5, 7, 9, 7, 2, 9, 2, 0, 2, 7, 11, -1, -1, -1, -1 },
-  { 2, 3, 11, 0, 1, 8, 1, 7, 8, 1, 5, 7, -1, -1, -1, -1 },
-  { 11, 2, 1, 11, 1, 7, 7, 1, 5, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 5, 8, 8, 5, 7, 10, 1, 3, 10, 3, 11, -1, -1, -1, -1 },
-  { 5, 7, 0, 5, 0, 9, 7, 11, 0, 1, 0, 10, 11, 10, 0, -1 },
-  { 11, 10, 0, 11, 0, 3, 10, 5, 0, 8, 0, 7, 5, 7, 0, -1 },
-  { 11, 10, 5, 7, 11, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 10, 6, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 8, 3, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 9, 0, 1, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 8, 3, 1, 9, 8, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 6, 5, 2, 6, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 6, 5, 1, 2, 6, 3, 0, 8, -1, -1, -1, -1, -1, -1, -1 },
+  { 5, 7, 9, 7, 8, 9, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1 },
+  { 5, 7, 9, 9, 7, 2, 2, 0, 9, 11, 2, 7, -1, -1, -1, -1 },
+  { 11, 2, 3, 0, 1, 8, 1, 7, 8, 1, 5, 7, -1, -1, -1, -1 },
+  { 2, 1, 11, 1, 7, 11, 1, 5, 7, -1, -1, -1, -1, -1, -1, -1 },
+  { 7, 8, 9, 5, 7, 9, 3, 10, 1, 11, 10, 3, -1, -1, -1, -1 },
+  { 5, 7, 0, 5, 0, 9, 7, 11, 0, 10, 1, 0, 11, 10, 0, -1 },
+  { 11, 10, 0, 0, 3, 11, 10, 5, 0, 0, 7, 8, 5, 7, 0, -1 },
+  { 11, 10, 5, 5, 7, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 6, 5, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, 8, 3, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 9, 0, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 8, 3, 1, 9, 8, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 6, 5, 1, 2, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 6, 5, 1, 2, 6, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1 },
   { 9, 6, 5, 9, 0, 6, 0, 2, 6, -1, -1, -1, -1, -1, -1, -1 },
-  { 5, 9, 8, 5, 8, 2, 5, 2, 6, 3, 2, 8, -1, -1, -1, -1 },
-  { 2, 3, 11, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 11, 0, 8, 11, 2, 0, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 1, 9, 2, 3, 11, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1 },
-  { 5, 10, 6, 1, 9, 2, 9, 11, 2, 9, 8, 11, -1, -1, -1, -1 },
+  { 5, 9, 8, 5, 8, 2, 5, 2, 6, 8, 3, 2, -1, -1, -1, -1 },
+  { 11, 2, 3, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 2, 0, 0, 8, 11, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 9, 0, 11, 2, 3, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 2, 1, 1, 9, 11, 9, 8, 11, 6, 5, 10, -1, -1, -1, -1 },
   { 6, 3, 11, 6, 5, 3, 5, 1, 3, -1, -1, -1, -1, -1, -1, -1 },
   { 0, 8, 11, 0, 11, 5, 0, 5, 1, 5, 11, 6, -1, -1, -1, -1 },
-  { 3, 11, 6, 0, 3, 6, 0, 6, 5, 0, 5, 9, -1, -1, -1, -1 },
+  { 6, 3, 11, 0, 3, 6, 0, 6, 5, 0, 5, 9, -1, -1, -1, -1 },
   { 6, 5, 9, 6, 9, 11, 11, 9, 8, -1, -1, -1, -1, -1, -1, -1 },
-  { 5, 10, 6, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 4, 3, 0, 4, 7, 3, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 9, 0, 5, 10, 6, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1 },
-  { 10, 6, 5, 1, 9, 7, 1, 7, 3, 7, 9, 4, -1, -1, -1, -1 },
-  { 6, 1, 2, 6, 5, 1, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 2, 5, 5, 2, 6, 3, 0, 4, 3, 4, 7, -1, -1, -1, -1 },
-  { 8, 4, 7, 9, 0, 5, 0, 6, 5, 0, 2, 6, -1, -1, -1, -1 },
-  { 7, 3, 9, 7, 9, 4, 3, 2, 9, 5, 9, 6, 2, 6, 9, -1 },
-  { 3, 11, 2, 7, 8, 4, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1 },
-  { 5, 10, 6, 4, 7, 2, 4, 2, 0, 2, 7, 11, -1, -1, -1, -1 },
-  { 0, 1, 9, 4, 7, 8, 2, 3, 11, 5, 10, 6, -1, -1, -1, -1 },
-  { 9, 2, 1, 9, 11, 2, 9, 4, 11, 7, 11, 4, 5, 10, 6, -1 },
-  { 8, 4, 7, 3, 11, 5, 3, 5, 1, 5, 11, 6, -1, -1, -1, -1 },
-  { 5, 1, 11, 5, 11, 6, 1, 0, 11, 7, 11, 4, 0, 4, 11, -1 },
-  { 0, 5, 9, 0, 6, 5, 0, 3, 6, 11, 6, 3, 8, 4, 7, -1 },
+  { 4, 7, 8, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, 4, 3, 4, 7, 3, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 9, 0, 4, 7, 8, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 9, 4, 1, 4, 7, 1, 7, 3, 6, 5, 10, -1, -1, -1, -1 },
+  { 4, 7, 8, 1, 6, 5, 1, 2, 6, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, 4, 3, 4, 7, 3, 1, 6, 5, 1, 2, 6, -1, -1, -1, -1 },
+  { 4, 7, 8, 9, 6, 5, 9, 0, 6, 0, 2, 6, -1, -1, -1, -1 },
+  { 7, 3, 9, 4, 7, 9, 3, 2, 9, 5, 9, 6, 2, 6, 9, -1 },
+  { 11, 2, 3, 4, 7, 8, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 4, 7, 11, 2, 4, 2, 0, 4, 6, 5, 10, -1, -1, -1, -1 },
+  { 1, 9, 0, 11, 2, 3, 4, 7, 8, 6, 5, 10, -1, -1, -1, -1 },
+  { 4, 7, 11, 9, 4, 11, 11, 2, 9, 1, 9, 2, 6, 5, 10, -1 },
+  { 4, 7, 8, 6, 3, 11, 6, 5, 3, 5, 1, 3, -1, -1, -1, -1 },
+  { 5, 1, 11, 5, 11, 6, 1, 0, 11, 4, 7, 11, 0, 4, 11, -1 },
+  { 4, 7, 8, 6, 3, 11, 0, 3, 6, 0, 6, 5, 0, 5, 9, -1 },
   { 6, 5, 9, 6, 9, 11, 4, 7, 9, 7, 11, 9, -1, -1, -1, -1 },
   { 10, 4, 9, 6, 4, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 4, 10, 6, 4, 9, 10, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1 },
-  { 10, 0, 1, 10, 6, 0, 6, 4, 0, -1, -1, -1, -1, -1, -1, -1 },
-  { 8, 3, 1, 8, 1, 6, 8, 6, 4, 6, 1, 10, -1, -1, -1, -1 },
+  { 10, 4, 9, 6, 4, 10, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, 1, 10, 10, 6, 0, 6, 4, 0, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 8, 3, 1, 6, 8, 8, 6, 4, 6, 1, 10, -1, -1, -1, -1 },
   { 1, 4, 9, 1, 2, 4, 2, 6, 4, -1, -1, -1, -1, -1, -1, -1 },
-  { 3, 0, 8, 1, 2, 9, 2, 4, 9, 2, 6, 4, -1, -1, -1, -1 },
+  { 1, 4, 9, 1, 2, 4, 2, 6, 4, 0, 8, 3, -1, -1, -1, -1 },
   { 0, 2, 4, 4, 2, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
   { 8, 3, 2, 8, 2, 4, 4, 2, 6, -1, -1, -1, -1, -1, -1, -1 },
-  { 10, 4, 9, 10, 6, 4, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 8, 2, 2, 8, 11, 4, 9, 10, 4, 10, 6, -1, -1, -1, -1 },
-  { 3, 11, 2, 0, 1, 6, 0, 6, 4, 6, 1, 10, -1, -1, -1, -1 },
-  { 6, 4, 1, 6, 1, 10, 4, 8, 1, 2, 1, 11, 8, 11, 1, -1 },
-  { 9, 6, 4, 9, 3, 6, 9, 1, 3, 11, 6, 3, -1, -1, -1, -1 },
-  { 8, 11, 1, 8, 1, 0, 11, 6, 1, 9, 1, 4, 6, 4, 1, -1 },
-  { 3, 11, 6, 3, 6, 0, 0, 6, 4, -1, -1, -1, -1, -1, -1, -1 },
-  { 6, 4, 8, 11, 6, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 7, 10, 6, 7, 8, 10, 8, 9, 10, -1, -1, -1, -1, -1, -1, -1 },
-  { 0, 7, 3, 0, 10, 7, 0, 9, 10, 6, 7, 10, -1, -1, -1, -1 },
-  { 10, 6, 7, 1, 10, 7, 1, 7, 8, 1, 8, 0, -1, -1, -1, -1 },
-  { 10, 6, 7, 10, 7, 1, 1, 7, 3, -1, -1, -1, -1, -1, -1, -1 },
-  { 1, 2, 6, 1, 6, 8, 1, 8, 9, 8, 6, 7, -1, -1, -1, -1 },
-  { 2, 6, 9, 2, 9, 1, 6, 7, 9, 0, 9, 3, 7, 3, 9, -1 },
-  { 7, 8, 0, 7, 0, 6, 6, 0, 2, -1, -1, -1, -1, -1, -1, -1 },
-  { 7, 3, 2, 6, 7, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 2, 3, 11, 10, 6, 8, 10, 8, 9, 8, 6, 7, -1, -1, -1, -1 },
-  { 2, 0, 7, 2, 7, 11, 0, 9, 7, 6, 7, 10, 9, 10, 7, -1 },
-  { 1, 8, 0, 1, 7, 8, 1, 10, 7, 6, 7, 10, 2, 3, 11, -1 },
-  { 11, 2, 1, 11, 1, 7, 10, 6, 1, 6, 7, 1, -1, -1, -1, -1 },
-  { 8, 9, 6, 8, 6, 7, 9, 1, 6, 11, 6, 3, 1, 3, 6, -1 },
-  { 0, 9, 1, 11, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-  { 7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0, -1, -1, -1, -1 },
-  { 7, 11, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
+  { 11, 2, 3, 10, 4, 9, 6, 4, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 2, 0, 0, 8, 11, 10, 4, 9, 6, 4, 10, -1, -1, -1, -1 },
+  { 11, 2, 3, 0, 1, 10, 10, 6, 0, 6, 4, 0, -1, -1, -1, -1 },
+  { 6, 4, 1, 6, 1, 10, 1, 4, 8, 11, 2, 1, 1, 8, 11, -1 },
+  { 9, 6, 4, 3, 6, 9, 1, 3, 9, 11, 6, 3, -1, -1, -1, -1 },
+  { 1, 8, 11, 0, 8, 1, 11, 6, 1, 1, 4, 9, 6, 4, 1, -1 },
+  { 6, 3, 11, 0, 3, 6, 6, 4, 0, -1, -1, -1, -1, -1, -1, -1 },
+  { 8, 6, 4, 6, 8, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 6, 7, 10, 7, 8, 10, 8, 9, 10, -1, -1, -1, -1, -1, -1, -1 },
+  { 6, 7, 10, 0, 10, 7, 0, 9, 10, 0, 7, 3, -1, -1, -1, -1 },
+  { 6, 7, 10, 1, 10, 7, 1, 7, 8, 0, 1, 8, -1, -1, -1, -1 },
+  { 6, 7, 10, 1, 10, 7, 1, 7, 3, -1, -1, -1, -1, -1, -1, -1 },
+  { 1, 2, 6, 1, 6, 8, 1, 8, 9, 6, 7, 8, -1, -1, -1, -1 },
+  { 2, 6, 9, 1, 2, 9, 6, 7, 9, 3, 0, 9, 7, 3, 9, -1 },
+  { 0, 7, 8, 7, 0, 6, 6, 0, 2, -1, -1, -1, -1, -1, -1, -1 },
+  { 2, 7, 3, 2, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 11, 2, 3, 6, 7, 10, 7, 8, 10, 8, 9, 10, -1, -1, -1, -1 },
+  { 2, 0, 7, 11, 2, 7, 0, 9, 7, 6, 7, 10, 9, 10, 7, -1 },
+  { 6, 7, 10, 1, 10, 7, 1, 7, 8, 0, 1, 8, 11, 2, 3, -1 },
+  { 11, 2, 1, 1, 7, 11, 10, 6, 1, 1, 6, 7, -1, -1, -1, -1 },
+  { 8, 9, 6, 6, 7, 8, 1, 6, 9, 11, 6, 3, 1, 3, 6, -1 },
+  { 0, 9, 1, 6, 7, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+  { 0, 7, 8, 7, 0, 6, 0, 3, 11, 11, 6, 0, -1, -1, -1, -1 },
+  { 6, 7, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
 };
 
 // Vertlist represents the location of some point somewhere on an edge of the cube, relative to the origin (0, 0, 0).

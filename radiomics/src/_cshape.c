@@ -12,20 +12,18 @@ static char module_docstring[] = "This module links to C-compiled code for effic
                                  "be supplied in this order. Pixelspacing is a 3 element vector containing the pixel"
                                  "spacing in z, y and x dimension, respectively. All non-zero elements in mask are "
                                  "considered to be a part of the segmentation and are included in the algorithm.";
-static char surface_docstring[] = "Arguments: Mask, PixelSpacing, uses a marching cubes algorithm to calculate an "
-                                  "approximation to the total surface area. The isovalue is considered to be situated "
-                                  "midway between a voxel that is part of the segmentation and a voxel that is not.";
-static char diameter_docstring[] = "Arguments: Mask, PixelSpacing, ROI size.";
+static char coefficients_docstring[] = "Arguments: Mask, PixelSpacing. Uses a marching cubes algorithm to calculate an "
+                                       "approximation to the total surface area, volume and maximum diameters. "
+                                       "The isovalue is considered to be situated midway between a voxel that is part "
+                                       "of the segmentation and a voxel that is not.";
 
-static PyObject *cshape_calculate_surfacearea(PyObject *self, PyObject *args);
-static PyObject *cshape_calculate_diameter(PyObject *self, PyObject *args);
+static PyObject *cshape_calculate_coefficients(PyObject *self, PyObject *args);
 
 int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size, int *strides);
 
 static PyMethodDef module_methods[] = {
   //{"calculate_", cmatrices_, METH_VARARGS, _docstring},
-  { "calculate_surfacearea", cshape_calculate_surfacearea, METH_VARARGS, surface_docstring },
-  { "calculate_diameter", cshape_calculate_diameter,METH_VARARGS, diameter_docstring},
+  { "calculate_coefficients", cshape_calculate_coefficients, METH_VARARGS, coefficients_docstring },
   { NULL, NULL, 0, NULL }
 };
 
@@ -83,7 +81,7 @@ moduleinit(void)
   }
 #endif
 
-static PyObject *cshape_calculate_surfacearea(PyObject *self, PyObject *args)
+static PyObject *cshape_calculate_coefficients(PyObject *self, PyObject *args)
 {
   PyObject *mask_obj, *spacing_obj;
   PyArrayObject *mask_arr, *spacing_arr;
@@ -91,7 +89,10 @@ static PyObject *cshape_calculate_surfacearea(PyObject *self, PyObject *args)
   int strides[3];
   char *mask;
   double *spacing;
-  double SA;
+  double SA, Volume;
+  double diameters[4];
+  PyObject *diameter_obj;
+
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OO", &mask_obj, &spacing_obj))
     return NULL;
@@ -106,69 +107,22 @@ static PyObject *cshape_calculate_surfacearea(PyObject *self, PyObject *args)
   mask = (char *)PyArray_DATA(mask_arr);
   spacing = (double *)PyArray_DATA(spacing_arr);
 
-  //Calculate Surface Area
-  SA = calculate_surfacearea(mask, size, strides, spacing);
-
-  // Clean up
-  Py_XDECREF(mask_arr);
-  Py_XDECREF(spacing_arr);
-
-  if (SA < 0) // if SA < 0, an error has occurred
+  //Calculate Surface Area and volume
+  if (calculate_coefficients(mask, size, strides, spacing, &SA, &Volume, diameters))
   {
-    PyErr_SetString(PyExc_RuntimeError, "Calculation of Surface Area Failed.");
-    return NULL;
-  }
-
-  return Py_BuildValue("f", SA);
-}
-
-static PyObject *cshape_calculate_diameter(PyObject *self, PyObject *args)
-{
-  PyObject *mask_obj, *spacing_obj;
-  PyArrayObject *mask_arr, *spacing_arr;
-  int Ns;
-  int size[3];
-  int strides[3];
-  char *mask;
-  double *spacing;
-  double *diameters;
-  PyObject *rslt;
-
-  // Parse the input tuple
-  if (!PyArg_ParseTuple(args, "OOi", &mask_obj, &spacing_obj, &Ns))
-    return NULL;
-
-  // Interpret the input as numpy arrays
-  mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BYTE, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
-  spacing_arr = (PyArrayObject *)PyArray_FROM_OTF(spacing_obj, NPY_DOUBLE, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
-
-  if (check_arrays(mask_arr, spacing_arr, size, strides) > 0) return NULL;
-
-  // Get arrays in Ctype
-  mask = (char *)PyArray_DATA(mask_arr);
-  spacing = (double *)PyArray_DATA(spacing_arr);
-
-  // Initialize output array (elements not set)
-  diameters = (double *)calloc(4, sizeof(double));
-
-  // Calculating Max 3D Diameter
-  if (!calculate_diameter(mask, size, strides, spacing, Ns, diameters))
-  {
+    // An error has occurred
     Py_XDECREF(mask_arr);
     Py_XDECREF(spacing_arr);
-    free(diameters);
-    PyErr_SetString(PyExc_RuntimeError, "Calculation of maximum 3D diameter failed.");
+    PyErr_SetString(PyExc_RuntimeError, "Calculation of Shape coefficients failed.");
     return NULL;
   }
-
-  rslt = Py_BuildValue("ffff", diameters[0], diameters[1], diameters[2], diameters[3]);
 
   // Clean up
   Py_XDECREF(mask_arr);
   Py_XDECREF(spacing_arr);
-  free(diameters);
 
-  return rslt;
+  diameter_obj = Py_BuildValue("ffff", diameters[0], diameters[1], diameters[2], diameters[3]);
+  return Py_BuildValue("ffN", SA, Volume, diameter_obj);
 }
 
 int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size, int *strides)

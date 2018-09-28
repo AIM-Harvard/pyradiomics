@@ -14,19 +14,20 @@ setting:
 # for that class. Otherwise, the specified features are calculated, or, if none are specified, all are calculated (excluding redundant/deprecated features).
 featureClass:
   shape:  # disable redundant Compactness 1 and Compactness 2 features by specifying all other shape features
-    - 'Volume'
-    - 'SurfaceArea'
-    - 'SurfaceVolumeRatio'
-    - 'Compactness1'
-    - 'Compactness2'
-    - 'Sphericity'
-    - 'SphericalDisproportion'
-    - 'Maximum3DDiameter'
-    - 'Maximum2DDiameterSlice'
-    - 'Maximum2DDiameterColumn'
-    - 'Maximum2DDiameterRow'
-    - 'MajorAxis'
-    - 'MinorAxis'
-    - 'LeastAxis'
-    - 'Elongation'
-    - 'Flatness'
+    - VoxelVolume
+    - MeshVolume
+    - SurfaceArea
+    - SurfaceVolumeRatio
+    - Compactness1
+    - Compactness2
+    - Sphericity
+    - SphericalDisproportion
+    - Maximum3DDiameter
+    - Maximum2DDiameterSlice
+    - Maximum2DDiameterColumn
+    - Maximum2DDiameterRow
+    - MajorAxisLength
+    - MinorAxisLength
+    - LeastAxisLength
+    - Elongation
+    - Flatness

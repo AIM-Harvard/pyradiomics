@@ -7,6 +7,68 @@ Next Release
 ------------
 
 -----------------
+PyRadiomics 2.1.0
+-----------------
+
+Feature Calculation Changes
+###########################
+
+- Switch Shape - Volume calculation to a mesh-based instead of a voxel-based one. This also affects all features derived
+  from Volume. Original Volume calculation is retained as ``VoxelVolume``. Also switch calculation of maximum diameter
+  to mesh based. Only PCA-derived are not affected. (`#427 <https://github.com/Radiomics/pyradiomics/pull/427>`_)
+
+New Features
+############
+
+- Add GLCM - Maximal Correlation Coefficient. (`#411 <https://github.com/Radiomics/pyradiomics/pull/411>`_)
+
+New Parameters
+##############
+
+- Update resegmentation function, add support for single (lower) threshold and new modes ``relative`` and ``sigma``,
+  customizable in parameter ``resegmentMode``. (`#420 <https://github.com/Radiomics/pyradiomics/pull/420>`_)
+- Add ``resegmentShape``. Default ``False``, if set to ``True``, the resegmented mask (intensity mask) will also be used
+  for shape calculation. Otherwise, the non-resegmented mask (morphological mask) is used for shape.
+  (`#428 <https://github.com/Radiomics/pyradiomics/pull/428>`_)
+
+Bug fixes
+#########
+
+- Fix bug in dimension checking in ``checkMask``. (`623b836 <https://github.com/Radiomics/pyradiomics/commit/623b836>`_)
+- Fix some errors in the testUtils and baseline generation script.
+  (`c285c15 <https://github.com/Radiomics/pyradiomics/commit/c285c15>`_)
+- Prevent division by 0 in NGTDM - Coarseness. Return 0 instead.
+  (`a59861e <https://github.com/Radiomics/pyradiomics/commit/a59861e>`_)
+- Remove duplicate key in settings file example. (`828a7ac <https://github.com/Radiomics/pyradiomics/commit/828a7ac>`_)
+- Prevent duplicate log entries in parallel batch extraction.
+  (`8cedd8f <https://github.com/Radiomics/pyradiomics/commit/8cedd8f>`_)
+- Build PyWavelets from source for AppVeyor (Windows) python 3.4 testing. Requires pre-installation of numpy and cython.
+  (`6223d35 <https://github.com/Radiomics/pyradiomics/commit/6223d35>`_)
+
+Tests
+#####
+
+- Integrate automatic distribution to conda upon release. (`#422 <https://github.com/Radiomics/pyradiomics/pull/422>`_)
+
+Documentation
+#############
+
+- Update README and Setup.py with additional classifiers, urls. Update section in README on Docker usage.
+  (`0fe737e <https://github.com/Radiomics/pyradiomics/commit/0fe737e>`_)
+
+Internal API
+############
+
+- Use ``ValueError`` exceptions when feature extraction pipeline fails (exceptions of individual features)
+  (`#420 <https://github.com/Radiomics/pyradiomics/pull/420>`_)
+- Update generation and names of general info features (provenance information)
+  (`#420 <https://github.com/Radiomics/pyradiomics/pull/420>`_,
+  `#426 <https://github.com/Radiomics/pyradiomics/pull/426>`_)
+- Rewrite signatures of pre-processing functions to accept all customization arguments in 1 ``**kwargs`` dict.
+  Necessary parameters are obtained using ``kwargs.get`` inside the function. Full settings are passed to the function.
+  (`#425 <https://github.com/Radiomics/pyradiomics/pull/425>`_)
+
+-----------------
 PyRadiomics 2.0.1
 -----------------
 

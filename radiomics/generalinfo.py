@@ -48,6 +48,7 @@ class GeneralInfo:
     Calculates provenance info for the image
 
     Adds the following:
+
     - ImageHash: sha1 hash of the mask, which can be used to check if the same mask was used during reproducibility
       tests. (Only added when prefix is "original")
     - Spacing: Pixel spacing (x, y, z) in mm.

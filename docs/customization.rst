@@ -195,12 +195,14 @@ Feature Extractor Level
   value is None (default), no resegmentation is performed. Resegemented size is checked (using parameter
   ``minimumROISize``, default 1) and upon fail, an error is logged and extraction is skipped for this case.
 - ``resegmentMode`` ['absolute']: string, specifying the method to use for defining the resegmentation thresholds:
+
   - 'absolute': The resegmentRange values are treated as absolute values, i.e. used directly to perform resegmentation.
   - 'relative': The resegmentRange values are treated as relative to the maximum in the ROI, i.e. the actual threshold
     used is defined as :math:`\text{threshold} = \text{value} * X_{max}`.
   - 'sigma': The resegmentRange values indicate a distance from the mean of the ROI in standard deviations. E.g. to
     exclude outliers farther from the mean than 3 sigma, specify mode 'sigma' and range [-3, 3]. Threshold is defined as
     :math:`\text{threshold} = \mu + \text{value} * \sigma`.
+
 - ``resegmentShape`` [False]: Boolean, if set to True, the resegmented mask is also used for shape calculation. If set
   to False (default), only first order and texture classes are calculated using the resegmented mask (known in IBSI as
   the intensity mask). Shape is then calculated using the mask after any optional resampling and corrections (known in

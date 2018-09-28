@@ -8,6 +8,8 @@ before_install:
       RUN_ENV: .\\..\\addons\\appveyor\\run-with-visual-studio.cmd
     commands:
       - python ../addons/appveyor/patch_vs2008.py
+      - $<RUN_ENV> pip install numpy>=1.9.2
+      - $<RUN_ENV> pip install cython
 
   circle:
     environment:

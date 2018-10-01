@@ -173,6 +173,8 @@ class RadiomicsTestUtils:
       if 'MaskHash' in self._current_config:
         assert sitk.Hash(self._mask) == self._current_config['MaskHash']
 
+      self._mask = sitk.Cast(self._mask, sitk.sitkUInt32)
+
       settings = self._current_config.get('Settings', {})
 
       interpolator = settings.get('interpolator', sitk.sitkBSpline)

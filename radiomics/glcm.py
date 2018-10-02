@@ -642,7 +642,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     MCC = numpy.sqrt(Q_eigenValue[:, -2])
 
-    return float(numpy.mean(MCC))  # 2nd highest eigenvalue
+    return numpy.mean(MCC).real  # 2nd highest eigenvalue
 
   def getIdmnFeatureValue(self):
     r"""

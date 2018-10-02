@@ -8,6 +8,7 @@ import os
 import sys
 
 from pykwalify.compat import yaml
+import pykwalify.core
 import six.moves
 
 import radiomics
@@ -48,6 +49,9 @@ def parse_args(custom_arguments=None):
                                'parallel processing. This is applied at the case level;\n'
                                'i.e. 1 thread per case. Actual number of workers used is\n'
                                'min(cases, jobs).')
+  inputGroup.add_argument('--validate', action='store_true',
+                          help='If specified, check if input is valid and check if file locations point to exisiting '
+                               'files')
 
   outputGroup = parser.add_argument_group(title='Output', description='Arguments controlling output redirection and '
                                                                       'the formatting of calculated results.')
@@ -95,10 +99,14 @@ def parse_args(custom_arguments=None):
   try:
     _configureLogging(args)
     scriptlogger.info('Starting PyRadiomics (version: %s)', radiomics.__version__)
-    results = _processInput(args)
-    if results is not None:
-      segment.processOutput(results, args.out, args.skip_nans, args.format, args.format_path, relative_path_start)
-      scriptlogger.info('Finished extraction successfully...')
+    input_tuple = _processInput(args)
+    if input_tuple is not None:
+      if args.validate:
+        _validateCases(*input_tuple)
+      else:
+        results = _extractSegment(*input_tuple)
+        segment.processOutput(results, args.out, args.skip_nans, args.format, args.format_path, relative_path_start)
+        scriptlogger.info('Finished extraction successfully...')
     else:
       return 1  # Feature extraction error
   except Exception:
@@ -155,24 +163,58 @@ def _processInput(args):
     scriptlogger.error('Input is not recognized as batch, no mask specified, cannot compute result!')
     return None
 
-  from radiomics.scripts import segment
+  return caseGenerator, caseCount, num_workers
 
+
+def _extractSegment(case_generator, case_count, num_workers):
   if num_workers > 1:  # multiple cases, parallel processing enabled
     scriptlogger.info('Input valid, starting parallel extraction from %d cases with %d workers...',
-                      caseCount, num_workers)
+                      case_count, num_workers)
     pool = Pool(num_workers)
-    results = pool.map(partial(segment.extractSegment_parallel, parallel_config=logging_config), caseGenerator)
+    results = pool.map(partial(segment.extractSegment_parallel, parallel_config=logging_config), case_generator)
   elif num_workers == 1:  # single case or sequential batch processing
     scriptlogger.info('Input valid, starting sequential extraction from %d case(s)...',
-                      caseCount)
+                      case_count)
     results = []
-    for case in caseGenerator:
+    for case in case_generator:
       results.append(segment.extractSegment(*case))
   else:
     # No cases defined in the batch
     scriptlogger.error('No cases to process...')
     return None
   return results
+
+
+def _validateCases(case_generator, case_count, num_workers):
+  global scriptlogger
+  scriptlogger.info('Validating input for %i cases', case_count)
+  errored_cases = 0
+  for case_idx, case, param, setting_overrides in case_generator:
+    if case_idx == 1 and param is not None:
+      if not os.path.isfile(param):
+        scriptlogger.error('Path for specified parameter file does not exist!')
+      else:
+        schemaFile, schemaFuncs = radiomics.getParameterValidationFiles()
+
+        c = pykwalify.core.Core(source_file=param, schema_files=[schemaFile], extensions=[schemaFuncs])
+        try:
+          c.validate()
+        except Exception as e:
+          scriptlogger.error('Parameter validation failed!\n%s' % e.message)
+    scriptlogger.debug("Validating case (%i/%i): %s", case_idx, case_count, case)
+
+    case_error = False
+    if not os.path.isfile(case['Image']):
+      case_error = True
+      scriptlogger.error('Image path for case (%i/%i) does not exist!', case_idx, case_count)
+    if not os.path.isfile(case['Mask']):
+      case_error = True
+      scriptlogger.error('Mask path for case (%i/%i) does not exist!', case_idx, case_count)
+
+    if case_error:
+      errored_cases += 1
+
+  scriptlogger.info('Validation complete, errors found in %i case(s)', errored_cases)
 
 
 def _buildGenerator(args, cases):
@@ -215,17 +257,18 @@ def _parseOverrides(overrides):
     elif value_type == 'bool':
       return value == '1' or value.lower() == 'true'
     else:
-      raise ValueError('Cannot understand value_type %s' % value_type)
+      raise ValueError('Cannot understand value_type "%s"' % value_type)
 
   for setting in overrides:  # setting = "setting_key:setting_value"
     if ':' not in setting:
       scriptlogger.warning('Incorrect format for override setting "%s", missing ":"', setting)
+      continue
     # split into key and value
     setting_key, setting_value = setting.split(':', 2)
 
     # Check if it is a valid PyRadiomics Setting
     if setting_key not in settingsSchema:
-      scriptlogger.warning('Did not recognize override %s, skipping...', setting_key)
+      scriptlogger.warning('Did not recognize override "%s", skipping...', setting_key)
       continue
 
     # Try to parse the value by looking up its type in the settingsSchema
@@ -247,7 +290,7 @@ def _parseOverrides(overrides):
         scriptlogger.debug('Parsed "%s" as type "%s"; value: %s', setting_key, setting_type, setting_overrides[setting_key])
 
     except Exception:
-      scriptlogger.warning('Could not parse value %s for setting %s, skipping...', setting_value, setting_key)
+      scriptlogger.warning('Could not parse value "%s" for setting "%s", skipping...', setting_value, setting_key)
 
   return setting_overrides
 

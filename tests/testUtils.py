@@ -166,14 +166,12 @@ class RadiomicsTestUtils:
       assert maskName is not None
 
       self._image = sitk.ReadImage(imageName)
-      self._mask = sitk.ReadImage(maskName)
+      self._mask = sitk.ReadImage(maskName, sitk.sitkUInt32)
 
       if 'ImageHash' in self._current_config:
         assert sitk.Hash(self._image) == self._current_config['ImageHash']
       if 'MaskHash' in self._current_config:
         assert sitk.Hash(self._mask) == self._current_config['MaskHash']
-
-      self._mask = sitk.Cast(self._mask, sitk.sitkUInt32)
 
       settings = self._current_config.get('Settings', {})
 

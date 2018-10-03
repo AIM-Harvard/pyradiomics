@@ -337,8 +337,6 @@ def cropToTumorMask(imageNode, maskNode, boundingBox, **kwargs):
   global logger
   padDistance = kwargs.get('padDistance', 0)
 
-  oldMaskID = maskNode.GetPixelID()
-  maskNode = sitk.Cast(maskNode, sitk.sitkInt32)
   size = numpy.array(maskNode.GetSize())
 
   ijkMinBounds = boundingBox[0::2] - padDistance
@@ -360,8 +358,6 @@ def cropToTumorMask(imageNode, maskNode, boundingBox, **kwargs):
     cif.SetUpperBoundaryCropSize(ijkMaxBounds.tolist())
   croppedImageNode = cif.Execute(imageNode)
   croppedMaskNode = cif.Execute(maskNode)
-
-  croppedMaskNode = sitk.Cast(croppedMaskNode, oldMaskID)
 
   return croppedImageNode, croppedMaskNode
 

@@ -630,8 +630,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     # Calculate Q (shape (i, i, d)). To prevent division by 0, add epsilon (such a division can occur when in a ROI
     # along a certain angle, voxels with gray level i do not have neighbors
-    Q = numpy.sum((self.P_glcm[:, None, :, :] * self.P_glcm[None, :, :, :]) /  # slice: i, j, k, d
-                  (px[:, None, :, :] * py[None, :, :, :] + eps), 2)  # sum over k (3rd axis --> index 2)
+    Q = ((self.P_glcm[:, None, 0, :] * self.P_glcm[None, :, 0, :]) /  # slice: i, j, k, d
+         (px[:, None, 0, :] * py[None, :, 0, :] + eps))  # sum over k (3rd axis --> index 2)
+
+    for gl in range(1, self.P_glcm.shape[1]):
+      Q += ((self.P_glcm[:, None, gl, :] * self.P_glcm[None, :, gl, :]) /  # slice: i, j, k, d
+            (px[:, None, 0, :] * py[None, :, gl, :] + eps))  # sum over k (3rd axis --> index 2)
 
     # calculation of eigenvalues if performed on last 2 dimensions, therefore, move the angles dimension (d) forward
     Q_eigenValue = numpy.linalg.eigvals(Q.transpose((2, 0, 1)))

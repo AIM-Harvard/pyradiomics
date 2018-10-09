@@ -416,6 +416,8 @@ def main():
         os.path.join(args.inputDICOMImageDir, f))
     segmentationMetadataAccessor = SEGMetadataAccessor(args.inputSEG)
 
+    pyradiomicsVersion = None
+
     for inputSegment in inputSegments:
         scriptlogger.debug("Processing segmentation file %s" % (inputSegment))
         segmentNumber = os.path.split(inputSegment)[-1].split('.')[0]
@@ -463,6 +465,10 @@ def main():
 
         includedFeatureVectorItems = 0
         for featureName in featureVector.keys():
+            if featureName == 'diagnostics_Versions_PyRadiomics':
+                pyradiomicsVersion = featureVector[featureName]
+                continue
+
             featureValue = featureVector[featureName]
             featureNameSplit = featureName.split('_')
             if len(featureNameSplit) < 3:
@@ -500,7 +506,10 @@ def main():
     m.m["observerContext"] = {}
     # TODO: need to revise this to describe pyradiomics as device and include the
     # version number
-    m.m["observerContext"]["ObserverType"] = "PERSON"
+    m.m["observerContext"]["ObserverType"] = "DEVICE"
+    m.m["observerContext"]["DeviceObserverName"] = "pyradiomics"
+    m.m["observerContext"]["DeviceObserverModelName"] = pyradiomicsVersion
+
     m.m["observerContext"]["PersonObserverName"] = "Reader1"
     m.m["compositeContext"] = [os.path.split(args.inputSEG)[-1]]
     m.m["imageLibrary"] = [os.path.split(f)[-1]

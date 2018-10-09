@@ -1,0 +1,74 @@
+# #############################  Extracted using PyRadiomics version: 2.0.1  ######################################
+
+imageType:
+  Original: {}
+  LoG:
+    sigma: [1.0, 2.0, 3.0]
+  Wavelet: {}
+  Gradient: {}
+  Square: {}
+  SquareRoot: {}
+  Exponential: {}
+  Logarithm: {}
+
+featureClass:
+
+  shape:
+  firstorder:
+  glcm:  # Disable SumAverage by specifying all other GLCM features available
+    - 'Autocorrelation'
+    - 'JointAverage'
+    - 'ClusterProminence'
+    - 'ClusterShade'
+    - 'ClusterTendency'
+    - 'Contrast'
+    - 'Correlation'
+    - 'DifferenceAverage'
+    - 'DifferenceEntropy'
+    - 'DifferenceVariance'
+    - 'JointEnergy'
+    - 'JointEntropy'
+    - 'Imc1'
+    - 'Imc2'
+    - 'Idm'
+    - 'Idmn'
+    - 'Id'
+    - 'Idn'
+    - 'InverseVariance'
+    - 'MaximumProbability'
+    - 'SumEntropy'
+    - 'SumSquares'
+  glrlm:
+  glszm:
+  gldm:
+  ngtdm:
+
+setting:
+  # Resampling:
+  # Usual spacing for CT is often close to 1 or 2 mm, if very large slice thickness is used,
+  # increase the resampled spacing.
+  # On a side note: increasing the resampled spacing forces PyRadiomics to look at more coarse textures, which may or
+  # may not increase accuracy and stability of your extracted features.
+  interpolator: 'sitkBSpline'
+  resampledPixelSpacing: [2, 2, 2]
+  padDistance: 10  # Extra padding for large sigma valued LoG filtered images
+
+  # Mask validation:
+  # correctMask and geometryTolerance are not needed, as both image and mask are resampled, if you expect very small
+  # masks, consider to enable a size constraint by uncommenting settings below:
+  #minimumROIDimensions: 2
+  #minimumROISize: 50
+
+  # Image discretization:
+  # The ideal number of bins is somewhere in the order of 16-128 bins. A possible way to define a good binwidt is to
+  # extract firstorder:Range from the dataset to analyze, and choose a binwidth so, that range/binwidth remains approximately
+  # in this range of bins.
+  binWidth: 25
+
+  # first order specific settings:
+  voxelArrayShift: 1000  # Minimum value in HU is -1000, shift +1000 to prevent negative values from being squared.
+
+  # Misc:
+  # default label value. Labels can also be defined in the call to featureextractor.execute, as a commandline argument,
+  # or in a column "Label" in the input csv (batchprocessing)
+  label: 1

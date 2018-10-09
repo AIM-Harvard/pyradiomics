@@ -1,21 +1,20 @@
 import argparse
 import collections
 import csv
+from decimal import Decimal
 import distutils.spawn
 import glob
 import logging
 import os
 import shutil
+from subprocess import call
 import sys
 import tempfile
-
-from decimal import Decimal
-from pathlib import Path
-from subprocess import call
 
 import numpy
 import pandas
 import pydicom
+
 from radiomics import featureextractor
 
 scriptlogger = logging.getLogger()
@@ -49,7 +48,7 @@ def dcmImageToNIfTI(inputDICOMImageDir, tempDir):
 
 def dcmSEGToNRRDs(inputSEG, tempDir):
     segmentsDir = os.path.join(tempDir, 'Segments')
-    if not Path(segmentsDir).is_dir():
+    if not os.path.isdir(segmentsDir):
         os.mkdir(segmentsDir)
     call(['segimage2itkimage', '--inputDICOM',
           inputSEG, '--outputDirectory', segmentsDir])
@@ -378,7 +377,7 @@ def main():
         return -1
 
     featuresDir = os.path.join(tempDir, 'Features')
-    if not Path(featuresDir).is_dir():
+    if not os.path.isdir(featuresDir):
         os.mkdir(featuresDir)
 
     # initialize Metadata for the individual features

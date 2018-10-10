@@ -195,8 +195,8 @@ class TID1500Metadata:
                               "modifierValue": self.makePrivateCode("Exponent transformation")})
 
         # parameterized processing operations
-        elif re.match("wavelet-([HL]{3})", prefix):
-            match = re.match("wavelet-([HL]{3})", prefix)
+        elif re.match("wavelet-([HL]{2,3})", prefix):
+            match = re.match("wavelet-([HL]{2,3})", prefix)
             modifiers.append({"modifier": imageTransformationConcept,
                               "modifierValue": self.makePrivateCode("Wavelet transformation")})
             modifiers.append({"modifier": self.makePrivateCode("Wavelet sub-band"),
@@ -503,8 +503,6 @@ def main():
                                                                 segmentationLocation.CodeMeaning).getDict()
 
     m.m["observerContext"] = {}
-    # TODO: need to revise this to describe pyradiomics as device and include the
-    # version number
     m.m["observerContext"]["ObserverType"] = "DEVICE"
     m.m["observerContext"]["DeviceObserverName"] = "pyradiomics"
     m.m["observerContext"]["DeviceObserverModelName"] = pyradiomicsVersion
@@ -543,14 +541,19 @@ def main():
 
 
 if __name__ == "__main__":
-    for exe in ['tid1500writer', 'dcm2niix', 'segimage2itkimage']:
+    exeFound = {}
+    for exe in ['tid1500writer', 'dcm2niix', 'plastimatch', 'segimage2itkimage']:
         if distutils.spawn.find_executable(exe) is None:
-            scriptlogger.error(
-                "Dependency converter not found in the path: " + exe)
-            scriptlogger.error(
-                "dcmqi (https://github.com/qiicr/dcmqi), and dcm2niix (https://github.com/rordenlab/dcm2niix/releases)")
-            scriptlogger.error("or Plastimatch (http://plastimatch.org/)")
-            scriptlogger.error(
-                "need to be installed and available in the PATH for using this converter script.")
-            sys.exit()
+            exeFound[exe] = False
+        else:
+            exeFound[exe] = True
+    if not (exeFound['tid1500writer'] and exeFound['segimage2itkimage']) or not (exeFound['plastimatch'] or exeFound['dcm2niix']):
+        scriptlogger.error(
+            "Dependency converter(s) not found in the path.")
+        scriptlogger.error(
+            "dcmqi (https://github.com/qiicr/dcmqi), and dcm2niix (https://github.com/rordenlab/dcm2niix/releases)")
+        scriptlogger.error("or Plastimatch (http://plastimatch.org/)")
+        scriptlogger.error(
+            "need to be installed and available in the PATH for using this converter script.")
+        sys.exit()
     main()

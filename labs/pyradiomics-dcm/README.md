@@ -5,8 +5,8 @@ This is an experimental script to support the use of pyradiomics with DICOM data
 The script will accept as input a directory with a single DICOM image study for the input image,
 and the file name pointing to a DICOM Segmentation Image (DICOM SEG) object.
 
-The script will transparently convert the DICOM image into a representatio suitable by pyradiomics
-using either 
+The script will transparently convert the DICOM image into a representation suitable by pyradiomics
+using either plastimatch or dcm2niix.
 
 # Why?
 
@@ -60,7 +60,7 @@ optional arguments:
   --parameters pyradiomics extraction parameters
   --temp-dir Temporary directory
   --features-dict Dictionary mapping pyradiomics feature names to the IBSI defined features.
-  --volume-reconstructor Choose the tool to be used for reconstructing image volume from the DICOM image series. Allowed options are plastimatch or dcm2niix (should be installed on the system). plastimatchwill be used by default.
+  --volume-reconstructor Choose the tool to be used for reconstructing image volume from the DICOM image series. Allowed options are plastimatch or dcm2niix (should be installed on the system). plastimatch will be used by default.
 ```
 
 # Sample invocation

@@ -67,7 +67,7 @@ class GeneralInfo:
 
     self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Spacing'] = image.GetSpacing()
     self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Size'] = image.GetSize()
-    im_arr = sitk.GetArrayFromImage(image)
+    im_arr = sitk.GetArrayFromImage(image).astype('float')
     self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Mean'] = numpy.mean(im_arr)
     self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Minimum'] = numpy.min(im_arr)
     self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Maximum'] = numpy.max(im_arr)
@@ -132,7 +132,7 @@ class GeneralInfo:
       return
 
     im_arr = sitk.GetArrayFromImage(image)
-    targetvoxels = im_arr[ma_arr]
+    targetvoxels = im_arr[ma_arr].astype('float')
     self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_Mean'] = numpy.mean(targetvoxels)
     self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_Minimum'] = numpy.min(targetvoxels)
     self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_Maximum'] = numpy.max(targetvoxels)

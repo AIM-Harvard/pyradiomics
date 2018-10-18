@@ -16,14 +16,20 @@ static char coefficients_docstring[] = "Arguments: Mask, PixelSpacing. Uses a ma
                                        "approximation to the total surface area, volume and maximum diameters. "
                                        "The isovalue is considered to be situated midway between a voxel that is part "
                                        "of the segmentation and a voxel that is not.";
+static char coefficients2D_docstring[] = "Arguments: Mask, PixelSpacing. Uses an adapted 2D marching cubes algorithm "
+                                         "to calculate an approximation to the total perimeter, surface and maximum "
+                                         "diameter. The isovalue is considered to be situated midway between a pixel "
+                                         "that is part of the segmentation and a pixel that is not.";
 
 static PyObject *cshape_calculate_coefficients(PyObject *self, PyObject *args);
+static PyObject *cshape_calculate_coefficients2D(PyObject *self, PyObject *args);
 
-int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size, int *strides);
+int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size, int *strides, int dimension);
 
 static PyMethodDef module_methods[] = {
   //{"calculate_", cmatrices_, METH_VARARGS, _docstring},
   { "calculate_coefficients", cshape_calculate_coefficients, METH_VARARGS, coefficients_docstring },
+  { "calculate_coefficients2D", cshape_calculate_coefficients2D, METH_VARARGS, coefficients2D_docstring },
   { NULL, NULL, 0, NULL }
 };
 
@@ -98,10 +104,10 @@ static PyObject *cshape_calculate_coefficients(PyObject *self, PyObject *args)
     return NULL;
 
   // Interpret the input as numpy arrays
-  mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BYTE, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
-  spacing_arr = (PyArrayObject *)PyArray_FROM_OTF(spacing_obj, NPY_DOUBLE, NPY_ARRAY_FORCECAST | NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_IN_ARRAY);
+  mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BYTE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
+  spacing_arr = (PyArrayObject *)PyArray_FROM_OTF(spacing_obj, NPY_DOUBLE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
 
-  if (check_arrays(mask_arr, spacing_arr, size, strides) > 0) return NULL;
+  if (check_arrays(mask_arr, spacing_arr, size, strides, 3) > 0) return NULL;
 
   // Get arrays in Ctype
   mask = (char *)PyArray_DATA(mask_arr);
@@ -125,8 +131,51 @@ static PyObject *cshape_calculate_coefficients(PyObject *self, PyObject *args)
   return Py_BuildValue("ffN", SA, Volume, diameter_obj);
 }
 
-int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size, int *strides)
+static PyObject *cshape_calculate_coefficients2D(PyObject *self, PyObject *args)
 {
+  PyObject *mask_obj, *spacing_obj;
+  PyArrayObject *mask_arr, *spacing_arr;
+  int size[2];
+  int strides[2];
+  char *mask;
+  double *spacing;
+  double perimeter, surface, diameter;
+
+  // Parse the input tuple
+  if (!PyArg_ParseTuple(args, "OO", &mask_obj, &spacing_obj))
+    return NULL;
+
+  // Interpret the input as numpy arrays
+  mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BYTE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
+  spacing_arr = (PyArrayObject *)PyArray_FROM_OTF(spacing_obj, NPY_DOUBLE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
+
+  if (check_arrays(mask_arr, spacing_arr, size, strides, 2) > 0) return NULL;
+
+  // Get arrays in Ctype
+  mask = (char *)PyArray_DATA(mask_arr);
+  spacing = (double *)PyArray_DATA(spacing_arr);
+
+  //Calculate Surface Area and volume
+  if (calculate_coefficients2D(mask, size, strides, spacing, &perimeter, &surface, &diameter))
+  {
+    // An error has occurred
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(spacing_arr);
+    PyErr_SetString(PyExc_RuntimeError, "Calculation of Shape coefficients failed.");
+    return NULL;
+  }
+
+  // Clean up
+  Py_XDECREF(mask_arr);
+  Py_XDECREF(spacing_arr);
+
+  return Py_BuildValue("fff", perimeter, surface, diameter);
+}
+
+int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size, int *strides, int dimension)
+{
+  int i;
+
   if (mask_arr == NULL || spacing_arr == NULL)
   {
     Py_XDECREF(mask_arr);
@@ -135,11 +184,11 @@ int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size,
     return 1;
   }
 
-  if (PyArray_NDIM(mask_arr) != 3 || PyArray_NDIM(spacing_arr) != 1)
+  if (PyArray_NDIM(mask_arr) != dimension || PyArray_NDIM(spacing_arr) != 1)
   {
     Py_XDECREF(mask_arr);
     Py_XDECREF(spacing_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expected a 3D array for mask, 1D for spacing.");
+    PyErr_Format(PyExc_ValueError, "Expected a %iD array for mask, 1D for spacing.", dimension);
     return 2;
   }
 
@@ -147,26 +196,24 @@ int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size,
   {
     Py_XDECREF(mask_arr);
     Py_XDECREF(spacing_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expecting input arrays to be C-contiguous.");
+    PyErr_SetString(PyExc_ValueError, "Expecting input arrays to be C-contiguous.");
     return 3;
   }
 
-  if (PyArray_DIM(spacing_arr, 0) != 3)
+  if (PyArray_DIM(spacing_arr, 0) != PyArray_NDIM(mask_arr))
   {
     Py_XDECREF(mask_arr);
     Py_XDECREF(spacing_arr);
-    PyErr_SetString(PyExc_RuntimeError, "Expecting spacing array to have shape (3,).");
+    PyErr_SetString(PyExc_ValueError, "Expecting spacing array to have shape (3,).");
     return 4;
   }
 
-  // Get sizes of the arrays
-  size[2] = (int)PyArray_DIM(mask_arr, 2);
-  size[1] = (int)PyArray_DIM(mask_arr, 1);
-  size[0] = (int)PyArray_DIM(mask_arr, 0);
-
-  strides[2] = (int)(PyArray_STRIDE(mask_arr, 2) / PyArray_ITEMSIZE(mask_arr));
-  strides[1] = (int)(PyArray_STRIDE(mask_arr, 1) / PyArray_ITEMSIZE(mask_arr));
-  strides[0] = (int)(PyArray_STRIDE(mask_arr, 0) / PyArray_ITEMSIZE(mask_arr));
+  // Get sizes and strides of the arrays
+  for (i = 0; i < dimension; i++)
+  {
+    size[i] = (int)PyArray_DIM(mask_arr, i);
+    strides[i] = (int)(PyArray_STRIDE(mask_arr, i) / PyArray_ITEMSIZE(mask_arr));
+  }
 
   return 0;
 }

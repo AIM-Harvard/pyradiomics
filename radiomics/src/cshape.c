@@ -3,6 +3,14 @@
 #include <stdlib.h>
 #include <Python.h>
 
+
+// **************************************************
+
+// 3D Shape calculation
+
+// **************************************************
+
+
 void calculate_meshDiameter(double *vertices, int v_idx, double *diameters);
 
 // Declare the look-up tables, these are filled at the bottom of this code file.
@@ -376,3 +384,204 @@ static const int triTable[128][16] = {
 static const double vertList[12][3] = { { 0, 0, 0.5 }, { 0, 0.5, 1 }, { 0, 1, 0.5 }, { 0, 0.5, 0 },
                                         { 1, 0, 0.5 }, { 1, 0.5, 1 }, { 1, 1, 0.5 }, { 1, 0.5, 0 },
                                         { 0.5, 0, 0 }, { 0.5, 0, 1 }, { 0.5, 1, 1 }, { 0.5, 1, 0 } };
+
+
+// **************************************************
+
+// 2D Shape calculation
+
+// **************************************************
+
+
+double calculate_meshDiameter2D(double *points, int stack_top);
+
+// Declare the look-up tables, these are filled at the bottom of this code file.
+static const int gridAngles2D[4][2];
+static const int lineTable2D[16][5];
+static const double vertList2D[4][2];
+
+int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacing,
+                             double *perimeter, double *surface, double *diameter)
+{
+  int iy, ix, i, t, d;  // iterator indices
+  unsigned char square_idx;  // cube identifier, 4 bits signifying which corners of the cube belong to the segmentation
+  int a_idx;  // Angle index (4 'angles', one pointing to each corner of the marching cube
+
+  static const int points_edges[2][2] = {{0, 2}, {3, 2}};
+  int v_idx = -1;
+  int v_max = 0;
+  double *vertices;
+
+  double sum;
+  double a[2], b[2];  // 2 points of the line
+
+  *perimeter = 0;  // Total surface area
+  *surface = 0;  // Total volume
+
+  // create a stack to hold the found vertices. For each square, a maximum of 2 vertices are stored (with x and y)
+  // coordinates). This prevents double storing of the vertices.
+  v_max = (size[0] - 1) * (size[1] - 1) * 4;
+  vertices = (double *)calloc(v_max, sizeof(double));
+
+  // Iterate over all voxels, do not include last voxels in the three dimensions, as the cube includes voxels at pos +1
+  for (iy = 0; iy < (size[0] - 1); iy++)
+  {
+    for (ix = 0; ix < (size[1] - 1); ix++)
+    {
+
+      // Get current cube_idx by analyzing each point of the current cube
+      square_idx = 0;
+      for (a_idx = 0; a_idx < 4; a_idx++)
+      {
+        i = (iy + gridAngles2D[a_idx][0]) * strides[0] +
+            (ix + gridAngles2D[a_idx][1]) * strides[1];
+
+        if (mask[i])
+          square_idx |= (1 << a_idx);
+      }
+
+      // Exlcude cubes entirely outside or inside the segmentation (cube_idx = 0 or 0xF = B1111).
+      if (square_idx == 0 || square_idx == 0xF)
+        continue;
+
+      // Process all lines for this square
+      t = 0;
+      while (lineTable2D[square_idx][t*2] >= 0) // Exit loop when no more triangles are present (element at index = -1)
+      {
+        a[0] = b[0] = iy;
+        a[1] = b[1] = ix;
+        for (d = 0; d < 2; d++)
+        {
+            a[d] += vertList2D[lineTable2D[square_idx][t*2]][d];
+            b[d] += vertList2D[lineTable2D[square_idx][t*2 + 1]][d];
+            // Factor in the spacing
+            a[d] *= spacing[d];
+            b[d] *= spacing[d];
+        }
+
+        // ************************
+        // Calculate Surface
+        // ************************
+
+        // Calculate the cross product. Because for both vectors, z = 0, only the last term need be calculated
+        *surface += (a[0] * b[1]) - (b[0] * a[1]);
+
+        // ************************
+        // Calculate perimeter
+        // ************************
+
+        // Compute the surface, which is equal to 1/2 magnitude of the cross product, where
+        // The magnitude is obtained by calculating the euclidean distance between (0, 0, 0)
+        // and the location of c
+        for (d = 0; d < 2; d++)
+        {
+          a[d] -= b[d];
+
+          // Get the euclidean distance by computing the square and then the square root of the sum.
+          a[d] = a[d] * a[d];
+        }
+
+        sum = a[0] + a[1];
+        sum = sqrt(sum);
+
+        // Add the surface area of the face to the grand total. (The division by 2 is done on the final sum)
+        *perimeter += sum;
+        t++;
+      }
+
+      // ************************
+      // Store vertices for diameter calculation
+      // ************************
+
+      // check if there are vertices on edges 6, 7 and 11
+      // Because of the symmetry around the midpoint and the flip if cube_idx > 128, the 8th point will never appear
+      // as segmented at this point. Therefore, to check if there are vertices on the adjacent edges (6, 7 and 11),
+      // one only needs to check if the corresponding points (7th, 5th and 4th, respectively) are segmented.
+      if (v_idx + 9 >= v_max) // Overflow!
+      {
+        free(vertices);
+        return 1;
+      }
+
+      if (square_idx > 7)
+        square_idx = square_idx ^ 0xF;  // Flip the square index
+
+      for (t = 0; t < 2; t++)
+      {
+        if (square_idx & (1 << points_edges[0][t]))
+        {
+          vertices[++v_idx] = (((double)iy) + vertList2D[points_edges[1][t]][0]) * spacing[0];
+          vertices[++v_idx] = (((double)ix) + vertList2D[points_edges[1][t]][1]) * spacing[1];
+        }
+      }
+    }
+  }
+  // The surface area of the triangle is 1/2 the magnitude of the cross product.
+  *surface = *surface / 2;
+
+  // ************************
+  // Calculate Diameters using found vertices
+  // ************************
+  *diameter = calculate_meshDiameter2D(vertices, v_idx);
+  free(vertices);
+  return 0;
+}
+
+
+double calculate_meshDiameter2D(double *points, int stack_top)
+{
+  double diameter = 0;
+  double a[2], b[2], ab[3];
+  double distance;
+  int idx;
+
+  stack_top++; // increment by 1, so when the first item is popped, it is the last item entered
+  while(stack_top > 0)
+  {
+    a[1] = points[--stack_top];
+    a[0] = points[--stack_top];
+
+    for (idx = 0; idx < stack_top; idx += 2)
+    {
+      b[0] = points[idx];
+      b[1] = points[idx + 1];
+
+      ab[0] = a[0] - b[0];
+      ab[1] = a[1] - b[1];
+
+      ab[0] *= ab[0];
+      ab[1] *= ab[1];
+
+      distance = ab[0] + ab[1];
+      if (distance > diameter)
+        diameter = distance;
+    }
+  }
+
+  return sqrt(diameter);
+}
+
+
+static const int gridAngles2D[4][2] = { { 0, 0 }, { 0, 1 }, { 1, 1 }, { 1, 0 } };
+
+
+static const int lineTable2D[16][5] = {
+  { -1, -1, -1, -1, -1},
+  {  3,  0, -1, -1, -1},
+  {  0,  1, -1, -1, -1},
+  {  3,  1, -1, -1, -1},
+  {  1,  2, -1, -1, -1},
+  {  1,  2,  3,  0, -1},
+  {  0,  2, -1, -1, -1},
+  {  3,  2, -1, -1, -1},
+  {  2,  3, -1, -1, -1},
+  {  2,  0, -1, -1, -1},
+  {  0,  1,  2,  3, -1},
+  {  2,  1, -1, -1, -1},
+  {  1,  3, -1, -1, -1},
+  {  1,  0, -1, -1, -1},
+  {  0,  3, -1, -1, -1},
+  { -1, -1, -1, -1, -1},
+};
+
+static const double vertList2D[4][2] = { { 0, 0.5 }, { 0.5, 1 }, { 1, 0.5 }, { 0.5, 0 }};

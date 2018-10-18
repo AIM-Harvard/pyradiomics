@@ -3,7 +3,7 @@ import csv
 from datetime import datetime
 from functools import partial
 import json
-import logging
+import logging.config
 import os
 import threading
 
@@ -11,7 +11,7 @@ import numpy
 import SimpleITK as sitk
 import six
 
-from radiomics import featureextractor, setVerbosity
+import radiomics.featureextractor
 
 caseLogger = logging.getLogger('radiomics.script')
 _parallel_extraction_configured = False
@@ -24,6 +24,7 @@ def extractSegment(case_idx, case, config, config_override):
   feature_vector = OrderedDict(case)
 
   try:
+    caseLogger.info('Processing case %s', case_idx)
     t = datetime.now()
 
     imageFilepath = case['Image']  # Required
@@ -33,14 +34,14 @@ def extractSegment(case_idx, case, config, config_override):
       label = int(label)
 
     # Instantiate Radiomics Feature extractor
-    extractor = featureextractor.RadiomicsFeaturesExtractor(config, **config_override)
+    extractor = radiomics.featureextractor.RadiomicsFeaturesExtractor(config, **config_override)
 
     # Extract features
     feature_vector.update(extractor.execute(imageFilepath, maskFilepath, label))
 
     # Display message
     delta_t = datetime.now() - t
-    caseLogger.info('Patient %s processed in %s', case_idx, delta_t)
+    caseLogger.info('Case %s processed in %s', case_idx, delta_t)
 
   except (KeyboardInterrupt, SystemExit):
     raise
@@ -50,11 +51,11 @@ def extractSegment(case_idx, case, config, config_override):
   return feature_vector
 
 
-def extractSegment_parallel(args, parallel_config=None):
-  if parallel_config is not None:
+def extractSegment_parallel(args, logging_config=None):
+  if logging_config is not None:
     # set thread name to patient name
     threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
-    _configurParallelExtraction(parallel_config)
+    _configureParallelExtraction(logging_config)
   return extractSegment(*args)
 
 
@@ -86,11 +87,11 @@ def extractSegmentWithTempFiles(case_idx, case, config, config_override, temp_di
   return feature_vector
 
 
-def extractSegmentWithTempFiles_parallel(args, parallel_config=None):
-  if parallel_config is not None:
-    _configurParallelExtraction(parallel_config)
+def extractSegmentWithTempFiles_parallel(args, logging_config=None):
+  if logging_config is not None:
     # set thread name to patient name
     threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
+    _configureParallelExtraction(logging_config)
   return extractSegmentWithTempFiles(*args)
 
 
@@ -147,7 +148,7 @@ def processOutput(results,
         outStream.write('Case-%d_%s: %s\n' % (case_idx, k, v))
 
 
-def _configurParallelExtraction(parallel_config):
+def _configureParallelExtraction(logging_config, add_info_filter=True):
   """
   Initialize logging for parallel extraction. This needs to be done here, as it needs to be done for each thread that is
   created.
@@ -159,23 +160,9 @@ def _configurParallelExtraction(parallel_config):
   # Configure logging
   ###################
 
-  rLogger = logging.getLogger('radiomics')
+  logging.config.dictConfig(logging_config)
 
-  # Add logging to file is specified
-  logFile = parallel_config.get('logFile', None)
-  if logFile is not None:
-    logHandler = logging.FileHandler(filename=logFile, mode='a')
-    logHandler.setLevel(parallel_config.get('logLevel', logging.INFO))
-    rLogger.addHandler(logHandler)
-    if rLogger.level > logHandler.level:
-      rLogger.level = logHandler.level
-
-  # Include thread name in Log-message output for all handlers.
-  parallelFormatter = logging.Formatter('[%(asctime)-.19s] %(levelname)-.1s: (%(threadName)s) %(name)s: %(message)s')
-  for h in rLogger.handlers:
-    h.setFormatter(parallelFormatter)
-
-  if parallel_config.get('addFilter', True):
+  if add_info_filter:
     # Define filter that allows messages from specified filter and level INFO and up, and level WARNING and up from
     # other loggers.
     class info_filter(logging.Filter):
@@ -193,11 +180,8 @@ def _configurParallelExtraction(parallel_config):
     # Adding the filter to the first handler of the radiomics logger limits the info messages on the output to just
     # those from radiomics.script, but warnings and errors from the entire library are also printed to the output.
     # This does not affect the amount of logging stored in the log file.
-    outputhandler = rLogger.handlers[0]  # Handler printing to the output
+    outputhandler = radiomics.logger.handlers[0]  # Handler printing to the output
     outputhandler.addFilter(info_filter('radiomics.script'))
-
-  # Ensures that log messages are being passed to the filter with the specified level
-  setVerbosity(parallel_config.get('verbosity', logging.INFO))
 
   # Ensure the entire extraction for each cases is handled on 1 thread
   ####################################################################
@@ -205,4 +189,4 @@ def _configurParallelExtraction(parallel_config):
   sitk.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
 
   _parallel_extraction_configured = True
-  rLogger.debug('parallel extraction configured')
+  radiomics.logger.debug('parallel extraction configured')

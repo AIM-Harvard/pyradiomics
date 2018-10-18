@@ -2,9 +2,9 @@
 import argparse
 import csv
 from functools import partial
-import logging.handlers
 import logging.config
-from multiprocessing import cpu_count, Pool, Manager
+import logging.handlers
+from multiprocessing import cpu_count, Manager, Pool
 import os
 import sys
 import threading

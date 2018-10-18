@@ -42,6 +42,8 @@ def extractSegment(case_idx, case, config, config_override):
     delta_t = datetime.now() - t
     caseLogger.info('Patient %s processed in %s', case_idx, delta_t)
 
+  except (KeyboardInterrupt, SystemExit):
+    raise
   except Exception:
     caseLogger.error('Feature extraction failed!', exc_info=True)
 

@@ -109,6 +109,8 @@ def parse_args(custom_arguments=None):
         scriptlogger.info('Finished extraction successfully...')
     else:
       return 1  # Feature extraction error
+  except (KeyboardInterrupt, SystemExit):
+    raise
   except Exception:
     scriptlogger.error('Error extracting features!', exc_info=True)
     return 3  # Unknown error
@@ -199,6 +201,8 @@ def _validateCases(case_generator, case_count, num_workers):
         c = pykwalify.core.Core(source_file=param, schema_files=[schemaFile], extensions=[schemaFuncs])
         try:
           c.validate()
+        except (KeyboardInterrupt, SystemExit):
+          raise
         except Exception as e:
           scriptlogger.error('Parameter validation failed!\n%s' % e.message)
     scriptlogger.debug("Validating case (%i/%i): %s", case_idx, case_count, case)
@@ -289,6 +293,8 @@ def _parseOverrides(overrides):
         setting_overrides[setting_key] = parse_value(setting_value, setting_type)
         scriptlogger.debug('Parsed "%s" as type "%s"; value: %s', setting_key, setting_type, setting_overrides[setting_key])
 
+    except (KeyboardInterrupt, SystemExit):
+      raise
     except Exception:
       scriptlogger.warning('Could not parse value "%s" for setting "%s", skipping...', setting_value, setting_key)
 

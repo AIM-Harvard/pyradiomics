@@ -114,7 +114,8 @@ def parse_args(custom_arguments=None):
     else:
       return 1  # Feature extraction error
   except (KeyboardInterrupt, SystemExit):
-    raise
+    scriptlogger.info('Cancelling Extraction')
+    return -1
   except Exception:
     scriptlogger.error('Error extracting features!', exc_info=True)
     return 3  # Unknown error
@@ -180,7 +181,21 @@ def _extractSegment(case_generator, case_count, num_workers, logging_config):
     scriptlogger.info('Input valid, starting parallel extraction from %d cases with %d workers...',
                       case_count, num_workers)
     pool = Pool(num_workers)
-    results = pool.map(partial(segment.extractSegment_parallel, logging_config=logging_config), case_generator)
+    try:
+      task = pool.map_async(partial(segment.extractSegment_parallel, logging_config=logging_config),
+                            case_generator,
+                            chunksize=min(10, case_count))
+      # Wait for the results to be done. task.get() without timeout performs a blocking call, which prevents
+      # the program from processing the KeyboardInterrupt if it occurs
+      while not task.ready():
+        pass
+      results = task.get()
+      pool.close()
+    except (KeyboardInterrupt, SystemExit):
+      pool.terminate()
+      raise
+    finally:
+      pool.join()
   elif num_workers == 1:  # single case or sequential batch processing
     scriptlogger.info('Input valid, starting sequential extraction from %d case(s)...',
                       case_count)
@@ -190,7 +205,7 @@ def _extractSegment(case_generator, case_count, num_workers, logging_config):
   else:
     # No cases defined in the batch
     scriptlogger.error('No cases to process...')
-    return None
+    results = None
   return results
 
 

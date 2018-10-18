@@ -43,8 +43,11 @@ def extractSegment(case_idx, case, config, config_override):
     delta_t = datetime.now() - t
     caseLogger.info('Case %s processed in %s', case_idx, delta_t)
 
-  except (KeyboardInterrupt, SystemExit):
+  except (KeyboardInterrupt, SystemExit):  # Cancel extraction by forwarding this 'error'
     raise
+  except SystemError:
+    # Occurs when Keyboard Interrupt is caught while the thread is processing a SimpleITK call
+    raise KeyboardInterrupt()
   except Exception:
     caseLogger.error('Feature extraction failed!', exc_info=True)
 
@@ -52,11 +55,16 @@ def extractSegment(case_idx, case, config, config_override):
 
 
 def extractSegment_parallel(args, logging_config=None):
-  if logging_config is not None:
-    # set thread name to patient name
-    threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
-    _configureParallelExtraction(logging_config)
-  return extractSegment(*args)
+  try:
+    if logging_config is not None:
+      # set thread name to patient name
+      threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
+      _configureParallelExtraction(logging_config)
+    return extractSegment(*args)
+  except (KeyboardInterrupt, SystemExit):
+    # Catch the error here, as this represents the interrupt of the child process.
+    # The main process is also interrupted, and cancellation is further handled there
+    return None
 
 
 def extractSegmentWithTempFiles(case_idx, case, config, config_override, temp_dir):
@@ -88,11 +96,16 @@ def extractSegmentWithTempFiles(case_idx, case, config, config_override, temp_di
 
 
 def extractSegmentWithTempFiles_parallel(args, logging_config=None):
-  if logging_config is not None:
-    # set thread name to patient name
-    threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
-    _configureParallelExtraction(logging_config)
-  return extractSegmentWithTempFiles(*args)
+  try:
+    if logging_config is not None:
+      # set thread name to patient name
+      threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
+      _configureParallelExtraction(logging_config)
+    return extractSegmentWithTempFiles(*args)
+  except (KeyboardInterrupt, SystemExit):
+    # Catch the error here, as this represents the interrupt of the child process.
+    # The main process is also interrupted, and cancellation is further handled there
+    return None
 
 
 def processOutput(results,

@@ -67,6 +67,8 @@ class RadiomicsFeaturesExtractor:
       self._enabledFeatures = {}
 
       for featureClassName in self.getFeatureClassNames():
+        if featureClassName == 'shape2D':  # Do not enable shape2D by default
+          continue
         self._enabledFeatures[featureClassName] = []
       self.logger.info('Enabled features: %s', self._enabledFeatures)
 
@@ -427,20 +429,17 @@ class RadiomicsFeaturesExtractor:
 
       # 4. If shape descriptors should be calculated, handle it separately here
       if 'shape' in self._enabledFeatures.keys():
-        croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox)
-        enabledFeatures = self._enabledFeatures['shape']
-
-        self.logger.info('Computing shape')
-        shapeClass = self.featureClasses['shape'](croppedImage, croppedMask, **self.settings)
-        if enabledFeatures is None or len(enabledFeatures) == 0:
-          shapeClass.enableAllFeatures()
+        featureVector.update(self.computeShape(image, mask, boundingBox))
+      if 'shape2D' in self._enabledFeatures.keys():
+        force2D = self.settings.get('force2D', False)
+        force2Ddimension = self.settings.get('force2Ddimension', 0)
+        if not force2D:
+          self.logger.warning('parameter force2D must be set to True to enable shape2D extraction')
+        elif not (boundingBox[1::2] - boundingBox[0::2] + 1)[force2Ddimension] > 1:
+          self.logger.warning('Size in specified 2D dimension (%i) is greater than 1, cannot calculate 2D shape',
+                              force2Ddimension)
         else:
-          for feature in enabledFeatures:
-            shapeClass.enableFeatureByName(feature)
-
-        for (featureName, featureValue) in six.iteritems(shapeClass.execute()):
-          newFeatureName = 'original_shape_%s' % featureName
-          featureVector[newFeatureName] = featureValue
+          featureVector.update(self.computeShape(image, mask, boundingBox, 'shape2D'))
 
     # (Default) Only use resegemented mask for feature classes other than shape
     # can be overridden by specifying `resegmentShape` = True
@@ -549,7 +548,7 @@ class RadiomicsFeaturesExtractor:
     # Calculate feature classes
     for featureClassName, enabledFeatures in six.iteritems(self._enabledFeatures):
       # Handle calculation of shape features separately
-      if featureClassName == 'shape':
+      if featureClassName.startswith('shape'):
         continue
 
       if featureClassName in self.getFeatureClassNames():
@@ -566,6 +565,26 @@ class RadiomicsFeaturesExtractor:
         for (featureName, featureValue) in six.iteritems(featureClass.execute()):
           newFeatureName = '%s_%s_%s' % (imageTypeName, featureClassName, featureName)
           featureVector[newFeatureName] = featureValue
+
+    return featureVector
+
+  def computeShape(self, image, mask, boundingBox, shape_type='shape'):
+    featureVector = collections.OrderedDict()
+
+    croppedImage, croppedMask = imageoperations.cropToTumorMask(image, mask, boundingBox)
+    enabledFeatures = self._enabledFeatures[shape_type]
+
+    self.logger.info('Computing shape')
+    shapeClass = self.featureClasses[shape_type](croppedImage, croppedMask, **self.settings)
+    if enabledFeatures is None or len(enabledFeatures) == 0:
+      shapeClass.enableAllFeatures()
+    else:
+      for feature in enabledFeatures:
+        shapeClass.enableFeatureByName(feature)
+
+    for (featureName, featureValue) in six.iteritems(shapeClass.execute()):
+      newFeatureName = 'original_%s_%s' % (shape_type, featureName)
+      featureVector[newFeatureName] = featureValue
 
     return featureVector
 

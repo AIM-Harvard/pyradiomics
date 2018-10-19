@@ -28,9 +28,13 @@ class TestFeatures:
     for test in tests:
       for featureClassName in extractor.getFeatureClassNames():
         # Get all feature names for which there is a baseline with current test case
+        # Raises an assertion error when the class is not yet present in the baseline
+        # Returns None if no baseline is present for this specific test case
+        # Returns a list of feature names for which baseline values are present for this test
         baselineFeatureNames = testUtils.getFeatureNames(featureClassName, test)
 
-        assert (baselineFeatureNames is not None)
+        if baselineFeatureNames is None:
+          continue
         assert (len(baselineFeatureNames) > 0)
 
         uniqueFeatures = set([f.split('_')[-1] for f in baselineFeatureNames])

@@ -24,10 +24,10 @@ class AddBaseline:
     self.baselineDir = os.path.join(dataDir, "baseline")
 
   def generate_scenarios(self):
-    for test in self.testCases:
-      for className, featureClass in six.iteritems(self.featureClasses):
-        if not os.path.exists(os.path.join(self.baselineDir, 'baseline_%s.csv' % (className))):
-          self.logger.debug('generate_scenarios: featureClass = %s', className)
+    for className, featureClass in six.iteritems(self.featureClasses):
+      if not os.path.exists(os.path.join(self.baselineDir, 'baseline_%s.csv' % className)):
+        self.logger.debug('generate_scenarios: featureClass = %s', className)
+        for test in self.testCases:
           yield test, className
 
   def process_testcase(self, test, featureClassName):
@@ -51,9 +51,9 @@ class AddBaseline:
     imageTypeName = 'original'
 
     # Update versions to reflect which configuration generated the baseline
-    self.generalInfo = generalinfo.GeneralInfo()
+    generalInfo = generalinfo.GeneralInfo()
 
-    versions = self.generalInfo.getGeneralInfo()
+    versions = generalInfo.getGeneralInfo()
     self.new_baselines[featureClassName].configuration[test].update(versions)
 
     self.new_baselines[featureClassName].baseline[test] = {'%s_%s_%s' % (imageTypeName, featureClassName, key): val

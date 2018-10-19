@@ -3,6 +3,7 @@ import csv
 from decimal import Decimal
 import distutils.spawn
 import glob
+import json
 import logging
 import os
 import shutil
@@ -501,12 +502,17 @@ def main():
                                                           segmentationLocation.CodingSchemeDesignator,
                                                           segmentationLocation.CodeMeaning).getDict()
 
+    # AlgorithmIdentification
+    m.m["Measurements"][-1]["measurementAlgorithmIdentification"] = {}
+    m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmName"] = "https://github.com/Radiomics/pyradiomics"
+    m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmVersion"] = pyradiomicsVersion
+    m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmParameters"] = [json.dumps(extractor.settings)]
+
   m.m["observerContext"] = {}
   m.m["observerContext"]["ObserverType"] = "DEVICE"
   m.m["observerContext"]["DeviceObserverName"] = "pyradiomics"
   m.m["observerContext"]["DeviceObserverModelName"] = pyradiomicsVersion
 
-  m.m["observerContext"]["PersonObserverName"] = "Reader1"
   m.m["compositeContext"] = [os.path.split(args.inputSEG)[-1]]
   m.m["imageLibrary"] = [os.path.split(f)[-1]
                          for f in os.listdir(args.inputDICOMImageDir)]

@@ -10,7 +10,7 @@ import numpy
 import SimpleITK as sitk
 import six
 
-from radiomics import featureextractor, getTestCase, imageoperations, testCases
+from radiomics import featureextractor, getTestCase, imageoperations
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func
 logger = logging.getLogger('radiomics.testing')
@@ -154,9 +154,8 @@ class RadiomicsTestUtils:
     if self._testCase != self._current_config['TestCase']:
       self._testCase = self._current_config['TestCase']
       self._logger.info("Reading the image and mask for test case %s", self._testCase)
-      assert self._current_config['TestCase'] in testCases
 
-      imageName, maskName = getTestCase(self._testCase)
+      imageName, maskName = getTestCase(self._testCase)  # Throws ValueError if test case is not recognized
 
       assert imageName is not None
       assert maskName is not None
@@ -419,7 +418,7 @@ class PyRadiomicsBaseline:
       header = ['featureName'] + cases
       csvWriter.writerow(header)
 
-      config = self.configuration[cases[1]].keys()
+      config = self.configuration[cases[0]].keys()
       self._configKeys += list(set(config) - set(self._configKeys))
       for c in self._configKeys:
         if c not in config:

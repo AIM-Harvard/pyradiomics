@@ -1,0 +1,224 @@
+Morphological features	HCUG
+Volume	RNU0
+Approximate volume	YEKZ
+Surface area	C0JK
+Surface to volume ratio	2PR5
+Compactness 1	SKGS
+Compactness 2	BQWJ
+Spherical disproportion	KRCK
+Sphericity	QCFX
+Asphericity	25C7
+Centre of mass shift	KLMA
+Maximum 3D diameter	L0JK
+Major axis length	TDIC
+Minor axis length	P9VJ
+Least axis length	7J51
+Elongation	Q3CK
+Flatness	N17B
+Volume density - axis-aligned bounding box	PBX1
+Area density - axis-aligned bounding box	R59B
+Volume density - oriented minimum bounding box	ZH1A
+Area density - oriented minimum bounding box	IQYR
+Volume density - approximate enclosing ellipsoid	6BDE
+Area density - approximate enclosing ellipsoid	RDD2
+Volume density - minimum volume enclosing ellipsoid	SWZ1
+Area density - minimum volume enclosing ellipsoid	BRI8
+Volume density - convex hull	R3ER
+Area density - convex hull	7T7F
+Integrated intensity	99N0
+Moran's I index	N365
+Geary's C measure	NPT7
+Local intensity features	9ST6
+Local intensity peak	VJGA
+Global intensity peak	0F91
+Intensity-based statistical features	UHIW
+Mean	Q4LE
+Variance	ECT3
+Skewness	KE2A
+Kurtosis	IPH6
+Median	Y12H
+Minimum grey level	1GSF
+10th percentile	QG58
+90th percentile	8DWT
+Maximum grey level	84IY
+Interquartile range	SALO
+Range	2OJQ
+Mean absolute deviation	4FUA
+Robust mean absolute deviation	1128
+Median absolute deviation	N72L
+Coefficient of variation	7TET
+Quartile coefficient of dispersion	9S40
+Energy	N8CA
+Root mean square	5ZWQ
+Intensity histogram features	ZVCW
+Intensity histogram mean	X6K6
+Intensity histogram variance	CH89
+Intensity histogram skewness	88K1
+Intensity histogram kurtosis	C3I7
+Intensity histogram median	WIFQ
+Intensity histogram minimum grey level	1PR8
+Intensity histogram 10th percentile	GPMT
+Intensity histogram 90th percentile	OZ0C
+Intensity histogram maximum grey level	3NCY
+Intensity histogram mode	AMMC
+Intensity histogram interquartile range	WR0O
+Intensity histogram range	5Z3W
+Intensity histogram mean absolute deviation	D2ZX
+Intensity histogram robust mean absolute deviation	WRZB
+Intensity histogram median absolute deviation	4RNL
+Intensity histogram coefficient of variation	CWYJ
+Intensity histogram quartile coefficient of dispersion	SLWD
+Intensity histogram entropy	TLU2
+Intensity histogram uniformity	BJ5W
+Maximum histogram gradient	12CE
+Maximum histogram gradient grey level	8E6O
+Minimum histogram gradient	VQB3
+Minimum histogram gradient grey level	RHQZ
+Intensity-volume histogram features	P88C
+Volume at intensity fraction	BC2M
+Intensity at volume fraction	GBPN
+Volume fraction difference between intensity fractions	DDTU
+Intensity fraction difference between volume fractions	CNV2
+Area under IVH curve	9CMM
+Grey level co-occurrence based features	LFYI
+Joint maximum	GYBY
+Joint average	60VM
+Joint variance	UR99
+Joint entropy	TU9B
+Difference average	TF7R
+Difference variance	D3YU
+Difference entropy	NTRS
+Sum average	ZGXS
+Sum variance	OEEB
+Sum entropy	P6QZ
+Angular second moment	8ZQL
+Contrast	ACUI
+Dissimilarity	8S9J
+Inverse difference	IB1Z
+Normalised inverse difference	NDRX
+Inverse difference moment	WF0Z
+Normalised inverse difference moment	1QCO
+Inverse variance	E8JP
+Correlation	NI2N
+Autocorrelation	QWB0
+Cluster tendency	DG8W
+Cluster shade	7NFM
+Cluster prominence	AE86
+First measure of information correlation	R8DG
+Second measure of information correlation	JN9H
+Grey level run length based features	TP0I
+Short runs emphasis	22OV
+Long runs emphasis	W4KF
+Low grey level run emphasis	V3SW
+High grey level run emphasis	G3QZ
+Short run low grey level emphasis	HTZT
+Short run high grey level emphasis	GD3A
+Long run low grey level emphasis	IVPO
+Long run high grey level emphasis	3KUM
+Grey level non-uniformity	R5YN
+Normalised grey level non-uniformity	OVBL
+Run length non-uniformity	W92Y
+Normalised run length non-uniformity	IC23
+Run percentage	9ZK5
+Grey level variance	8CE5
+Run length variance	SXLW
+Run entropy	HJ9O
+Grey level size zone based features	9SAK
+Small zone emphasis	5QRC
+Large zone emphasis	48P8
+Low grey level zone emphasis	XMSY
+High grey level zone emphasis	5GN9
+Small zone low grey level emphasis	5RAI
+Small zone high grey level emphasis	HW1V
+Large zone low grey level emphasis	YH51
+Large zone high grey level emphasis	J17V
+Grey level non-uniformity	JNSA
+Normalised grey level non-uniformity	Y1RO
+Zone size non-uniformity	4JP3
+Normalised zone size non-uniformity	VB3A
+Zone percentage	P30P
+Grey level variance	BYLV
+Zone size variance	3NSA
+Zone size entropy	GU8N
+Grey level distance zone based features	VMDZ
+Small distance emphasis	0GBI
+Large distance emphasis	MB4I
+Low grey level zone emphasis	S1RA
+High grey level zone emphasis	K26C
+Small distance low grey level emphasis	RUVG
+Small distance high grey level emphasis	DKNJ
+Large distance low grey level emphasis	A7WM
+Large distance high grey level emphasis	KLTH
+Grey level non-uniformity	VFT7
+Normalised grey level non-uniformity	7HP3
+Zone distance non-uniformity	V294
+Zone distance non-uniformity normalised	IATH
+Zone percentage	VIWW
+Grey level variance	QK93
+Zone distance variance	7WT1
+Zone distance entropy	GBDU
+Neighbourhood grey tone difference based features	IPET
+Coarseness	QCDE
+Contrast	65HE
+Busyness	NQ30
+Complexity	HDEZ
+Strength	1X9X
+Neighbouring grey level dependence based features	REK0
+Low dependence emphasis	SODN
+High dependence emphasis	IMOQ
+Low grey level count emphasis	TL9H
+High grey level count emphasis	OAE7
+Low dependence low grey level emphasis	EQ3F
+Low dependence high grey level emphasis	JA6D
+High dependence low grey level emphasis	NBZI
+High dependence high grey level emphasis	9QMG
+Grey level non-uniformity	FP8K
+Normalised grey level non-uniformity	5SPA
+Dependence count non-uniformity	Z87G
+Dependence count non-uniformity normalised	OKJI
+Dependence count percentage	6XV8
+Grey level variance	1PFV
+Dependence count variance	DNX2
+Dependence count entropy	FCBV
+Dependence count energy	CAS9
+feature aggregation	5QB6
+feature computed per slice, and averaged over slices	3IDG
+feature computed over the volume	DHQ4
+feature computed from 2D directional matrix and averaged over 2D directions and slices	BTW3
+feature computed from a single matrix after merging 2D directional matrices per slice, and averaged over slices	SUJT
+feature computed from a single matrix after merging all 2D directional matrices	ZW7Z
+feature computed from 3D directional matrix and averaged over 3D directions	ITBB
+feature computed from a single matrix after merging all 3D directional matrices	IAZD
+feature computed from 2D matrix and averaged over slices	8QNN
+feature computed from a single matrix after merging all 2D matrices	62GR
+feature computed from 3D matrix	KOBO
+grid distances	MPUJ
+manhattan norm	LIFZ
+euclidean norm	G9EV
+chebyshev norm	PVMT
+ROI submasks	ECJF
+intensity mask	SEFI
+morphological mask	G5KJ
+re-segmentation	IF9H
+range re-segmentation	USB3
+outlier filtering	7ACA
+distance weighting	6CK8
+volume voxel representation	LQD8
+volume voxel point set representation	4KW8
+volume voxel mesh representation	WRJH
+discretisation	4R0B
+fixed bin size	Q3RU
+fixed bin number	K15C
+data conversion	23XZ
+image post-acquisition processing	PCDE
+segmentation	OQYT
+interpolation	VTM2
+intensity rounding after interpolation	68QD
+roi mask partial volume	E8H9
+interpolation grid	UMPJ
+fit to original grid	58MB
+align grid origins	SBKJ
+align grid centers	3WE3
+align grid centers interpolation grid dimensions	026Q
+align grid centers grid positions	QCY4
+ROI extraction	1OBP

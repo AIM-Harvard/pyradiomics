@@ -50,7 +50,24 @@ int calculate_coefficients(char *mask, int *size, int *strides, double *spacing,
     {
       for (ix = 0; ix < (size[2] - 1); ix++)
       {
-        // Get current cube_idx by analyzing each point of the current cube
+        /* Get current cube_idx by analyzing each point of the current cube
+        * O - X
+        * |\
+        * Y Z
+        *           v0
+        *  p0 ------------ p1
+        *   |\             |\
+        *   | \ v3         | \ v1
+        * v8|  \      v2   |v9\
+        *   |  p3 ------------ p2
+        *   |   |  v4      |   |
+        *  p4 --|--------- p5  |
+        *    \  |v11        \  |v10
+        *  v7 \ |          v5\ |
+        *      \|             \|
+        *      p7 ------------ p6
+        *             v6
+        */
         cube_idx = 0;
         for (a_idx = 0; a_idx < 8; a_idx++)
         {
@@ -415,21 +432,33 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
   double sum;
   double a[2], b[2];  // 2 points of the line
 
-  *perimeter = 0;  // Total surface area
-  *surface = 0;  // Total volume
+  *perimeter = 0;  // Total perimeter
+  *surface = 0;  // Total surface
 
   // create a stack to hold the found vertices. For each square, a maximum of 2 vertices are stored (with x and y)
   // coordinates). This prevents double storing of the vertices.
   v_max = (size[0] - 1) * (size[1] - 1) * 4;
   vertices = (double *)calloc(v_max, sizeof(double));
 
-  // Iterate over all voxels, do not include last voxels in the three dimensions, as the cube includes voxels at pos +1
+  // Iterate over all pixels, do not include last voxels in the three dimensions, as the cube includes voxels at pos +1
   for (iy = 0; iy < (size[0] - 1); iy++)
   {
     for (ix = 0; ix < (size[1] - 1); ix++)
     {
 
-      // Get current cube_idx by analyzing each point of the current cube
+      /* Get current square_idx by analyzing each point of the current square (origin is in left-upper corner)
+      *  O - X
+      *  |
+      *  Y
+      *         v0
+      *   p0 ------- p1
+      *    |         |
+      * v3 |         | v1
+      *    |         |
+      *   p3 ------- p2
+      *         v2
+      */
+
       square_idx = 0;
       for (a_idx = 0; a_idx < 4; a_idx++)
       {
@@ -440,13 +469,13 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
           square_idx |= (1 << a_idx);
       }
 
-      // Exlcude cubes entirely outside or inside the segmentation (cube_idx = 0 or 0xF = B1111).
+      // Exlcude squares entirely outside or inside the segmentation (square_idx = 0 or 0xF = B1111).
       if (square_idx == 0 || square_idx == 0xF)
         continue;
 
       // Process all lines for this square
       t = 0;
-      while (lineTable2D[square_idx][t*2] >= 0) // Exit loop when no more triangles are present (element at index = -1)
+      while (lineTable2D[square_idx][t*2] >= 0) // Exit loop when no more lines are present (element at index = -1)
       {
         a[0] = b[0] = iy;
         a[1] = b[1] = ix;
@@ -464,27 +493,30 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
         // ************************
 
         // Calculate the cross product. Because for both vectors, z = 0, only the last term need be calculated
+        // The surface of the triangle is only 1/2 the magnitude of this result, but the division by 2 is done on the
+        // final sum.
         *surface += (a[0] * b[1]) - (b[0] * a[1]);
 
         // ************************
         // Calculate perimeter
         // ************************
 
-        // Compute the surface, which is equal to 1/2 magnitude of the cross product, where
-        // The magnitude is obtained by calculating the euclidean distance between (0, 0, 0)
-        // and the location of c
+        // Compute the euclidean distance between points a and b.
+        // Add the result to the grand total, as the perimeter is the sum of
+        // all line lengths.
         for (d = 0; d < 2; d++)
         {
           a[d] -= b[d];
 
-          // Get the euclidean distance by computing the square and then the square root of the sum.
+          // Get the euclidean distance by computing the square...
           a[d] = a[d] * a[d];
         }
 
+        // ... and then the square root of the sum.
         sum = a[0] + a[1];
         sum = sqrt(sum);
 
-        // Add the surface area of the face to the grand total. (The division by 2 is done on the final sum)
+        // Add the length of the line to the grand total.
         *perimeter += sum;
         t++;
       }
@@ -493,10 +525,10 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
       // Store vertices for diameter calculation
       // ************************
 
-      // check if there are vertices on edges 6, 7 and 11
-      // Because of the symmetry around the midpoint and the flip if cube_idx > 128, the 8th point will never appear
-      // as segmented at this point. Therefore, to check if there are vertices on the adjacent edges (6, 7 and 11),
-      // one only needs to check if the corresponding points (7th, 5th and 4th, respectively) are segmented.
+      // check if there are vertices on edges 3 and 2
+      // Because of the symmetry around the midpoint and the flip if cube_idx > 0xF, the 4th point will never appear
+      // as segmented at this point. Therefore, to check if there are vertices on the adjacent edges (3 and 2),
+      // one only needs to check if the corresponding points (0 and 2, respectively) are segmented.
       if (v_idx + 9 >= v_max) // Overflow!
       {
         free(vertices);

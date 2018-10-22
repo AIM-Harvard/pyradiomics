@@ -246,6 +246,8 @@ New Features
 - Add a docker file that exposes the PyRadiomics commandline tools.
   (`#297 <https://github.com/Radiomics/pyradiomics/pull/297>`_,
   `#301 <https://github.com/Radiomics/pyradiomics/pull/301>`_)
+- Add voxel-based calculation, allowing for extraction of feature maps (values per voxel instead of per ROI).
+  (`#337 <https://github.com/Radiomics/pyradiomics/pull/337>`_)
 
 Bug fixes
 #########

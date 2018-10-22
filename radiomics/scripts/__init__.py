@@ -2,10 +2,12 @@
 import argparse
 import csv
 from functools import partial
-import logging
-from multiprocessing import cpu_count, Pool
+import logging.config
+import logging.handlers
+from multiprocessing import cpu_count, Manager, Pool
 import os
 import sys
+import threading
 
 from pykwalify.compat import yaml
 import pykwalify.core
@@ -16,7 +18,6 @@ from . import segment
 
 
 scriptlogger = logging.getLogger('radiomics.script')  # holds logger for script events
-logging_config = {}
 relative_path_start = os.getcwd()
 
 
@@ -95,28 +96,37 @@ def parse_args(custom_arguments=None):
 
   args = parser.parse_args(args=custom_arguments)  # Exits with code 2 if parsing fails
 
+  # variable to hold the listener needed for processing parallel log records
+  queue_listener = None
+
   # Run the extraction
   try:
-    _configureLogging(args)
+    logging_config, queue_listener = _configureLogging(args)
     scriptlogger.info('Starting PyRadiomics (version: %s)', radiomics.__version__)
     input_tuple = _processInput(args)
     if input_tuple is not None:
       if args.validate:
         _validateCases(*input_tuple)
       else:
-        results = _extractSegment(*input_tuple)
+        results = _extractSegment(*input_tuple, logging_config=logging_config)
         segment.processOutput(results, args.out, args.skip_nans, args.format, args.format_path, relative_path_start)
         scriptlogger.info('Finished extraction successfully...')
     else:
       return 1  # Feature extraction error
+  except (KeyboardInterrupt, SystemExit):
+    scriptlogger.info('Cancelling Extraction')
+    return -1
   except Exception:
     scriptlogger.error('Error extracting features!', exc_info=True)
     return 3  # Unknown error
+  finally:
+    if queue_listener is not None:
+      queue_listener.stop()
   return 0  # success
 
 
 def _processInput(args):
-  global logging_config, relative_path_start, scriptlogger
+  global relative_path_start, scriptlogger
   scriptlogger.info('Processing input...')
 
   caseCount = 1
@@ -166,12 +176,26 @@ def _processInput(args):
   return caseGenerator, caseCount, num_workers
 
 
-def _extractSegment(case_generator, case_count, num_workers):
+def _extractSegment(case_generator, case_count, num_workers, logging_config):
   if num_workers > 1:  # multiple cases, parallel processing enabled
     scriptlogger.info('Input valid, starting parallel extraction from %d cases with %d workers...',
                       case_count, num_workers)
     pool = Pool(num_workers)
-    results = pool.map(partial(segment.extractSegment_parallel, parallel_config=logging_config), case_generator)
+    try:
+      task = pool.map_async(partial(segment.extractSegment_parallel, logging_config=logging_config),
+                            case_generator,
+                            chunksize=min(10, case_count))
+      # Wait for the results to be done. task.get() without timeout performs a blocking call, which prevents
+      # the program from processing the KeyboardInterrupt if it occurs
+      while not task.ready():
+        pass
+      results = task.get()
+      pool.close()
+    except (KeyboardInterrupt, SystemExit):
+      pool.terminate()
+      raise
+    finally:
+      pool.join()
   elif num_workers == 1:  # single case or sequential batch processing
     scriptlogger.info('Input valid, starting sequential extraction from %d case(s)...',
                       case_count)
@@ -181,7 +205,7 @@ def _extractSegment(case_generator, case_count, num_workers):
   else:
     # No cases defined in the batch
     scriptlogger.error('No cases to process...')
-    return None
+    results = None
   return results
 
 
@@ -199,6 +223,8 @@ def _validateCases(case_generator, case_count, num_workers):
         c = pykwalify.core.Core(source_file=param, schema_files=[schemaFile], extensions=[schemaFuncs])
         try:
           c.validate()
+        except (KeyboardInterrupt, SystemExit):
+          raise
         except Exception as e:
           scriptlogger.error('Parameter validation failed!\n%s' % e.message)
     scriptlogger.debug("Validating case (%i/%i): %s", case_idx, case_count, case)
@@ -289,6 +315,8 @@ def _parseOverrides(overrides):
         setting_overrides[setting_key] = parse_value(setting_value, setting_type)
         scriptlogger.debug('Parsed "%s" as type "%s"; value: %s', setting_key, setting_type, setting_overrides[setting_key])
 
+    except (KeyboardInterrupt, SystemExit):
+      raise
     except Exception:
       scriptlogger.warning('Could not parse value "%s" for setting "%s", skipping...', setting_value, setting_key)
 
@@ -296,29 +324,74 @@ def _parseOverrides(overrides):
 
 
 def _configureLogging(args):
-  global scriptlogger, logging_config
+  global scriptlogger
 
-  # Initialize Logging
-  logLevel = getattr(logging, args.logging_level)
-  rLogger = radiomics.logger
-  logging_config['logLevel'] = logLevel
+  # Listener to process log messages from child processes in case of multiprocessing
+  queue_listener = None
 
-  fmt = logging.Formatter("[%(asctime)-.19s] %(levelname)-.1s: %(name)s: %(message)s")
-  rLogger.handlers[0].setFormatter(fmt)
+  logfileLevel = getattr(logging, args.logging_level)
+  verboseLevel = (6 - args.verbosity) * 10  # convert to python logging level
+  logger_level = min(logfileLevel, verboseLevel)
+
+  logging_config = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+      'default': {
+        'format': '[%(asctime)s] %(levelname)-.1s: %(name)s: %(message)s',
+        'datefmt': '%Y-%m-%d %H:%M:%S'
+      }
+    },
+    'handlers': {
+      'console': {
+        'class': 'logging.StreamHandler',
+        'level': verboseLevel,
+        'formatter': 'default'
+      }
+    },
+    'loggers': {
+      'radiomics': {
+        'level': logger_level,
+        'handlers': ['console']
+      }
+    }
+  }
 
   # Set up optional logging to file
   if args.log_file is not None:
-    logging_config['logFile'] = args.log_file
-    logHandler = logging.FileHandler(filename=args.log_file, mode='a')
-    logHandler.setFormatter(fmt)
-    logHandler.setLevel(logLevel)
-    rLogger.addHandler(logHandler)
-    if rLogger.level > logHandler.level:
-      rLogger.level = logHandler.level
+    if args.jobs > 1:
+      # Multiprocessing! Use a QueueHandler, FileHandler and QueueListener
+      # to implement thread-safe logging.
+      q = Manager().Queue(-1)
+      threading.current_thread().setName('Main')
 
-  # Set verbosity of output (stderr)
-  verboseLevel = (6 - args.verbosity) * 10  # convert to python logging level
-  radiomics.setVerbosity(verboseLevel)
-  logging_config['verbosity'] = verboseLevel
+      logging_config['formatters']['default']['format'] = \
+          '[%(asctime)s] %(levelname)-.1s: (%(threadName)s) %(name)s: %(message)s'
+
+      logging_config['handlers']['logfile'] = {
+        'class': 'logging.handlers.QueueHandler',
+        'queue': q,
+        'level': logfileLevel,
+        'formatter': 'default'
+      }
+
+      file_handler = logging.FileHandler(filename=args.log_file, mode='a')
+      file_handler.setFormatter(logging.Formatter(fmt=logging_config['formatters']['default'].get('format'),
+                                                  datefmt=logging_config['formatters']['default'].get('datefmt')))
+
+      queue_listener = logging.handlers.QueueListener(q, file_handler)
+      queue_listener.start()
+    else:
+      logging_config['handlers']['logfile'] = {
+        'class': 'logging.FileHandler',
+        'filename': args.log_file,
+        'mode': 'a',
+        'level': logfileLevel,
+        'formatter': 'default'
+      }
+    logging_config['loggers']['radiomics']['handlers'].append('logfile')
+
+  logging.config.dictConfig(logging_config)
 
   scriptlogger.debug('Logging initialized')
+  return logging_config, queue_listener

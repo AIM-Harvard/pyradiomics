@@ -105,6 +105,18 @@ class SEGMetadataAccessor(DICOMMetadataAccessor):
     except BaseException:
       return None
 
+  def getTrackingIdentifier(self, segmentNumber):
+    try:
+      return self.dcm.SegmentSequence[segmentNumber].TrackingIdentifier
+    except BaseException:
+      return None
+
+  def getTrackingUniqueIdentifier(self, segmentNumber):
+    try:
+      return self.dcm.SegmentSequence[segmentNumber].TrackingUID
+    except BaseException:
+      return None
+
   def getSegmentAnatomicLocationCode(self, segmentNumber):
     try:
       return self.dcm.SegmentSequence[segmentNumber].AnatomicRegionSequence[0]
@@ -493,7 +505,17 @@ def main():
       m.m["Measurements"][-1]["Finding"] = CodedValue(segmentationType.CodeValue,
                                                       segmentationType.CodingSchemeDesignator,
                                                       segmentationType.CodeMeaning).getDict()
+
+    segTrackingIdentifier = segmentationMetadataAccessor.getTrackingIdentifier(int(segmentNumber)-1)
+    segTrackingUniqueIdentifier = segmentationMetadataAccessor.getTrackingUniqueIdentifier(int(segmentNumber)-1)
+
+    if segTrackingIdentifier:
+      m.m["Measurements"][-1]["TrackingIdentifier"] = segTrackingIdentifier
+    else:
       m.m["Measurements"][-1]["TrackingIdentifier"] = segmentationType.CodeMeaning
+
+    if segTrackingUniqueIdentifier:
+      m.m["Measurements"][-1]["TrackingUniqueIdentifier"] = segTrackingUniqueIdentifier
 
     segmentationLocation = segmentationMetadataAccessor.getSegmentAnatomicLocationCode(
       int(segmentNumber) - 1)
@@ -503,10 +525,12 @@ def main():
                                                           segmentationLocation.CodeMeaning).getDict()
 
     # AlgorithmIdentification
+    '''
     m.m["Measurements"][-1]["measurementAlgorithmIdentification"] = {}
     m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmName"] = "https://github.com/Radiomics/pyradiomics"
     m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmVersion"] = pyradiomicsVersion
     m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmParameters"] = [json.dumps(extractor.settings)]
+    '''
 
   m.m["observerContext"] = {}
   m.m["observerContext"]["ObserverType"] = "DEVICE"

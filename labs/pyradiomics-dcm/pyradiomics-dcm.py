@@ -308,7 +308,6 @@ class TID1500Metadata:
     return
 
   def saveJSONToFile(self, fileName):
-    import json
     with open(fileName, 'w') as f:
       json.dump(self.m, f, indent=2, sort_keys=True)
 

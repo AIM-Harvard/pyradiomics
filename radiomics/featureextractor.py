@@ -532,7 +532,7 @@ class RadiomicsFeaturesExtractor:
     return image, mask
 
   def computeFeatures(self, image, mask, imageTypeName, **kwargs):
-    """
+    r"""
     Compute signature using image, mask, \*\*kwargs settings.
 
     This function computes the signature for just the passed image (original or derived), it does not preprocess or

@@ -210,15 +210,15 @@ class TID1500Metadata:
                         "modifierValue": self.makePrivateCode("Exponent transformation")})
 
     # parameterized processing operations
-    elif re.match("wavelet-([HL]{2,3})", prefix):
-      match = re.match("wavelet-([HL]{2,3})", prefix)
+    elif re.match(r"wavelet-([HL]{2,3})", prefix):
+      match = re.match(r"wavelet-([HL]{2,3})", prefix)
       modifiers.append({"modifier": imageTransformationConcept,
                         "modifierValue": self.makePrivateCode("Wavelet transformation")})
       modifiers.append({"modifier": self.makePrivateCode("Wavelet sub-band"),
                         "modifierValue": self.makePrivateCode(match.group(1))})
 
-    elif re.match("log-sigma-([\d]+)-([\d]+)-([a-z]+)", prefix):
-      match = re.match("log-sigma-([\d]+)-([\d]+)-([a-z]+)", prefix)
+    elif re.match(r"log-sigma-([\d]+)-([\d]+)-([a-z]+)", prefix):
+      match = re.match(r"log-sigma-([\d]+)-([\d]+)-([a-z]+)", prefix)
 
       units = match.group(3)
       if units == "mm":
@@ -286,11 +286,7 @@ class TID1500Metadata:
           quantityCode)
         return
     except Exception as e:
-      scriptlogger.error(
-        "Exception checking for NaN: " +
-        str(e) +
-        " " +
-        value)
+      scriptlogger.error("Exception checking for NaN: %s %s", str(e), value)
       return
 
     measurement["value"] = '%E' % Decimal(value)
@@ -559,10 +555,7 @@ def main():
     dcm = pydicom.read_file(outputSRTempFile)
     shutil.move(
       outputSRTempFile,
-      os.path.join(
-        args.outputDir,
-        dcm.SOPInstanceUID +
-        ".dcm"))
+      os.path.join(args.outputDir, dcm.SOPInstanceUID + ".dcm"))
   except BaseException:
     scriptlogger.error("Failed to move output SR!")
 

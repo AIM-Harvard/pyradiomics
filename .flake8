@@ -33,6 +33,9 @@ ignore:
     E701,
     # .has_key() is deprecated, use 'in'
     W601,
+    # line break after binary operator
+    W504,
+
 select: C,E,W,F,I
 # flake8-import-order
 application-import-names: radiomics,testUtils

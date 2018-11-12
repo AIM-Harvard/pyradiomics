@@ -539,7 +539,7 @@ def normalizeImage(image, **kwargs):
 
 
 def resegmentMask(imageNode, maskNode, **kwargs):
-  """
+  r"""
   Resegment the Mask based on the range specified by the threshold(s) in ``resegmentRange``. Either 1 or 2 thresholds
   can be defined. In case of 1 threshold, all values equal to or higher than that threshold are included. If there are
   2 thresholds, all voxels with a value inside the closed-range defined by these thresholds is included

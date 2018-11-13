@@ -117,6 +117,12 @@ class SEGMetadataAccessor(DICOMMetadataAccessor):
     except BaseException:
       return None
 
+  def getSegmentDescription(self, segmentNumber):
+    try:
+      return self.dcm.SegmentSequence[segmentNumber].SegmentDescription
+    except BaseException:
+      return None
+
   def getSegmentAnatomicLocationCode(self, segmentNumber):
     try:
       return self.dcm.SegmentSequence[segmentNumber].AnatomicRegionSequence[0]
@@ -508,6 +514,10 @@ def main():
       m.m["Measurements"][-1]["TrackingIdentifier"] = segTrackingIdentifier
     else:
       m.m["Measurements"][-1]["TrackingIdentifier"] = segmentationType.CodeMeaning
+      segmentDescription = segmentationMetadataAccessor.getSegmentDescription(int(segmentNumber)-1)
+      # SegmentDescription is Type 3, and can be missing
+      if segmentDescription is not None:
+        m.m["Measurements"][-1]["TrackingIdentifier"] = segmentationType.CodeMeaning+" - "+segmentDescription
 
     if segTrackingUniqueIdentifier:
       m.m["Measurements"][-1]["TrackingUniqueIdentifier"] = segTrackingUniqueIdentifier

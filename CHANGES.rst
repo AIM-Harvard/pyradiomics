@@ -7,6 +7,46 @@ Next Release
 ------------
 
 -----------------
+PyRadiomics 2.1.1
+-----------------
+
+New Features
+############
+
+- Implement validation of commandline input. (`#433 <https://github.com/Radiomics/pyradiomics/pull/433>`_)
+- Implement thread-safe logging for python >= 3.2 (`#441 <https://github.com/Radiomics/pyradiomics/pull/441>`_,
+  `d8db675 <https://github.com/Radiomics/pyradiomics/commit/d8db675>`_)
+
+Labs
+####
+
+- Add script for using PyRadiomics with DICOM input and output.
+  (`#437 <https://github.com/Radiomics/pyradiomics/pull/437>`_)
+
+Bug Fixes
+#########
+
+- Fix memory error in calculation of GLCM-MCC. (`167888b <https://github.com/Radiomics/pyradiomics/commit/167888b>`_)
+- Fix error in serialization for JSON output. (`9d992fe <https://github.com/Radiomics/pyradiomics/commit/9d992fe>`_)
+
+Tests
+#####
+
+- Expand testing to include more parts of PyRadiomics. (`#410 <https://github.com/Radiomics/pyradiomics/pull/410>`_)
+
+Internal API
+############
+
+- Force cast the mask to an integer datatype on load. (`#431 <https://github.com/Radiomics/pyradiomics/pull/431>`_)
+
+Dependencies
+############
+
+- Fix PyWavelets version to > 0.4.0, <= 1.0.0, due to compilation issue in SlicerRadiomics.
+  (`c828b99 <https://github.com/Radiomics/pyradiomics/commit/c828b99>`_,
+   `SlicerRadiomics#50 <https://github.com/Radiomics/SlicerRadiomics/issues/50>`_)
+
+-----------------
 PyRadiomics 2.1.0
 -----------------
 

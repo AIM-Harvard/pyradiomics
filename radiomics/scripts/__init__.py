@@ -357,16 +357,23 @@ def _configureLogging(args):
     }
   }
 
+  if args.jobs > 1:
+    # Update the logger format to include the threadname if multiprocessing
+    # is enabled
+    logging_config['formatters']['default']['format'] = \
+      '[%(asctime)s] %(levelname)-.1s: (%(threadName)s) %(name)s: %(message)s'
+
   # Set up optional logging to file
   if args.log_file is not None:
-    if args.jobs > 1:
+    py_version = (sys.version_info.major, sys.version_info.minor)
+    if args.jobs > 1 and py_version >= (3, 2):
       # Multiprocessing! Use a QueueHandler, FileHandler and QueueListener
       # to implement thread-safe logging.
+
+      # However, QueueHandler and Listener were added in python 3.2.
+      # Therefore, only use this if the python version > 3.2
       q = Manager().Queue(-1)
       threading.current_thread().setName('Main')
-
-      logging_config['formatters']['default']['format'] = \
-          '[%(asctime)s] %(levelname)-.1s: (%(threadName)s) %(name)s: %(message)s'
 
       logging_config['handlers']['logfile'] = {
         'class': 'logging.handlers.QueueHandler',

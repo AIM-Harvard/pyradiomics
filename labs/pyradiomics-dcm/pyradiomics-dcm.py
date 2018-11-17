@@ -530,12 +530,10 @@ def main():
                                                           segmentationLocation.CodeMeaning).getDict()
 
     # AlgorithmIdentification
-    '''
     m.m["Measurements"][-1]["measurementAlgorithmIdentification"] = {}
     m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmName"] = "https://github.com/Radiomics/pyradiomics"
     m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmVersion"] = pyradiomicsVersion
     m.m["Measurements"][-1]["measurementAlgorithmIdentification"]["AlgorithmParameters"] = [json.dumps(extractor.settings)]
-    '''
 
   m.m["observerContext"] = {}
   m.m["observerContext"]["ObserverType"] = "DEVICE"

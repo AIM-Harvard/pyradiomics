@@ -7,6 +7,15 @@ Next Release
 ------------
 
 -----------------
+PyRadiomics 2.1.2
+-----------------
+
+Labs
+####
+
+- Include algorithm details in dcm output. (`f03145b <https://github.com/Radiomics/pyradiomics/commit/f03145b>`_)
+
+-----------------
 PyRadiomics 2.1.1
 -----------------
 

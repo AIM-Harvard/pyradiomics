@@ -11,6 +11,42 @@ from six.moves import range
 logger = logging.getLogger(__name__)
 
 
+def getMask(mask, **kwargs):
+  """
+  Function to get the correct mask. Includes enforcing a correct pixel data type.
+
+  Also supports extracting the mask for a segmentation (stored as SimpleITK Vector image) if necessary.
+  In this case, the mask at index ``label - 1`` is extracted. All non-zero pixels in that mask are then set to the
+  value of the label.
+
+  :param mask: SimpleITK Image object representing the mask. Can be a vector image to allow for overlapping masks.
+  :param kwargs: keyword arguments. If argument ``label`` is present, this is used to select the label. Otherwise
+    label ``1`` is assumed.
+  :return: 3D mask with pixel type UInt32
+  """
+  global logger
+  label = kwargs.get('label', 1)
+  if 'vector' in mask.GetPixelIDTypeAsString().lower():
+    logger.debug('Mask appears to be a segmentation object (=stored as vector image).')
+    n_components = mask.GetNumberOfComponentsPerPixel()
+    assert label <= n_components, \
+        "Mask %i requested, but segmentation object only contains %i objects" % (label, n_components)
+
+    logger.debug('Extracting mask at index %i', label - 1)
+    selector = sitk.VectorIndexSelectionCastImageFilter()
+    selector.SetIndex(label - 1)
+    mask = selector.Execute(mask)
+
+    logger.debug('Setting all non-zero elements in extracted mask to label value %i', label)
+    mask = sitk.Cast(mask != 0, sitk.sitkUInt32)  # Set all non-zero elements to 1, cast to UInt32
+    mask *= label  # Set all labelled voxels to the correct label
+  else:
+    logger.debug('Force casting mask to UInt32 to ensure correct datatype.')
+    mask = sitk.Cast(mask, sitk.sitkUInt32)
+
+  return mask
+
+
 def getBinEdges(parameterValues, **kwargs):
   r"""
   Calculate and return the histogram using parameterValues (1D array of all segmented voxels in the image).

@@ -505,11 +505,14 @@ class RadiomicsFeaturesExtractor:
       raise ValueError('Error reading image Filepath or SimpleITK object')
 
     if isinstance(MaskFilePath, six.string_types) and os.path.isfile(MaskFilePath):
-      mask = sitk.ReadImage(MaskFilePath, sitk.sitkUInt32)
+      mask = sitk.ReadImage(MaskFilePath)
     elif isinstance(MaskFilePath, sitk.SimpleITK.Image):
-      mask = sitk.Cast(MaskFilePath, sitk.sitkUInt32)
+      mask = MaskFilePath
     else:
       raise ValueError('Error reading mask Filepath or SimpleITK object')
+
+    # process the mask
+    mask = imageoperations.getMask(mask, **self.settings)
 
     if self.generalInfo is not None:
       self.generalInfo.addImageElements(image)

@@ -99,7 +99,7 @@ Interactive Use
 
     dataDir = '/path/to/pyradiomics'
 
-* You will find sample data files brain1_image.nrrd and brain1_label.nrrd in that directory.
+* You will find sample data files brain1_image.nrrd and brain1_label.nrrd in that directory. Note that NRRD format used here does not mean that your image and label must always be in this format. Any format readable by ITK is suitable (e.g., NIfTI, MHA, MHD, HDR, etc). See more details in `this section of FAQ https://pyradiomics.readthedocs.io/en/latest/faq.html#what-file-types-are-supported-by-pyradiomics-for-input-image-and-mask`_.
 
 * Store the path of your image and mask in two variables::
 

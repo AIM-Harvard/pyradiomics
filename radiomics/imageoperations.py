@@ -113,7 +113,7 @@ def binImage(parameterMatrix, parameterMatrixCoordinates=None, **kwargs):
   logger.debug('Discretizing gray levels inside ROI')
 
   if parameterMatrixCoordinates is None:
-    binEdges = getBinEdges(parameterMatrix[:], **kwargs)
+    binEdges = getBinEdges(parameterMatrix.flatten(), **kwargs)
     parameterMatrix = numpy.digitize(parameterMatrix, binEdges)
   else:
     binEdges = getBinEdges(parameterMatrix[parameterMatrixCoordinates], **kwargs)

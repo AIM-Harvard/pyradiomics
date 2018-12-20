@@ -148,7 +148,7 @@ extract a parameter map::
       sitk.WriteImage(val, key + 'nrrd')
 
 Important to know here is that this extraction takes longer (features have to be calculated for each voxel), and that
-the output is a SimpleITK image of the parameter map in stead of a float value *for each feature*.
+the output is a SimpleITK image of the parameter map instead of a float value *for each feature*.
 
 Be sure to also check out the ``helloVoxel.py`` example available in the repository (folder ``examples``).
 

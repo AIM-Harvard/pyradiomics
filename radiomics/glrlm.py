@@ -92,14 +92,23 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   def _calculateMatrix(self):
     self.logger.debug('Calculating GLRLM matrix in C')
+
+    Ng = self.coefficients['Ng']
     P_glrlm, angles = cMatrices.calculate_glrlm(self.matrix,
                                                 self.maskArray,
-                                                self.coefficients['Ng'],
+                                                Ng,
                                                 self.coefficients['Nr'],
                                                 self.settings.get('force2D', False),
                                                 self.settings.get('force2Ddimension', 0))
 
     self.logger.debug('Process calculated matrix')
+
+    # Delete rows that specify gray levels not present in the ROI
+    NgVector = range(1, Ng + 1)  # All possible gray values
+    GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
+    emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
+
+    P_glrlm = numpy.delete(P_glrlm, emptyGrayLevels - 1, 0)
 
     # Optionally apply a weighting factor
     if self.weightingNorm is not None:
@@ -149,14 +158,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     ivector = self.coefficients['grayLevels']
     jvector = numpy.arange(1, self.P_glrlm.shape[1] + 1, dtype=numpy.float64)
 
-    emptyGrayLevels = numpy.where(numpy.sum(pg, 1) == 0)
+    # Delete columns that run lengths not present in the ROI
     emptyRunLenghts = numpy.where(numpy.sum(pr, 1) == 0)
-
-    self.P_glrlm = numpy.delete(self.P_glrlm, emptyGrayLevels, 0)
     self.P_glrlm = numpy.delete(self.P_glrlm, emptyRunLenghts, 1)
     jvector = numpy.delete(jvector, emptyRunLenghts)
-
-    pg = numpy.delete(pg, emptyGrayLevels, 0)
     pr = numpy.delete(pr, emptyRunLenghts, 0)
 
     self.coefficients['pr'] = pr

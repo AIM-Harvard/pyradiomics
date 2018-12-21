@@ -79,26 +79,32 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.logger.debug('Feature class initialized, calculated GLDM with shape %s', self.P_gldm.shape)
 
   def _calculateMatrix(self):
+    self.logger.debug('Calculating GLDM matrix in C')
+
+    Ng = self.coefficients['Ng']
     P_gldm = cMatrices.calculate_gldm(self.matrix,
                                       self.maskArray,
                                       numpy.array(self.settings.get('distances', [1])),
-                                      self.coefficients['Ng'],
+                                      Ng,
                                       self.gldm_a,
                                       self.settings.get('force2D', False),
                                       self.settings.get('force2Ddimension', 0))
 
+    # Delete rows that specify gray levels not present in the ROI
+    NgVector = range(1, Ng + 1)  # All possible gray values
+    GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
+    emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
+
+    P_gldm = numpy.delete(P_gldm, emptyGrayLevels - 1, 0)
+
     jvector = numpy.arange(1, P_gldm.shape[1] + 1, dtype='float64')
 
-    # Delete rows and columns that specify gray levels not present in the ROI
     pd = numpy.sum(P_gldm, 0)
     pg = numpy.sum(P_gldm, 1)
 
-    P_gldm = numpy.delete(P_gldm, numpy.where(pg == 0), 0)
+    # Delete columns that dependence sizes not present in the ROI
     P_gldm = numpy.delete(P_gldm, numpy.where(pd == 0), 1)
-
     jvector = numpy.delete(jvector, numpy.where(pd == 0))
-
-    pg = numpy.delete(pg, numpy.where(pg == 0))
     pd = numpy.delete(pd, numpy.where(pd == 0))
 
     self.coefficients['pd'] = pd

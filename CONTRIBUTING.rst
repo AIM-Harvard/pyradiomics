@@ -8,9 +8,9 @@ There are many ways to contribute to pyradiomics, with varying levels of effort.
 look through the documentation first if something is unclear, and let us know how we can
 do better.
 
-* Ask a question on the `pyradiomics email list <https://groups.google.com/forum/#!forum/pyradiomics)>`_
+* Ask a question on the `pyradiomics email list <https://groups.google.com/forum/#!forum/pyradiomics>`_
 * Submit a parameter file you used for your extraction
-* Submit a feature request or bug, or add to the discussion on the `pyradiomics issue tracker <https://github.com/Radiomics/pyradiomics/issues)>`_
+* Submit a feature request or bug, or add to the discussion on the `pyradiomics issue tracker <https://github.com/Radiomics/pyradiomics/issues>`_
 * Submit a `Pull Request <https://github.com/Radiomics/pyradiomics/pulls>`_ to improve pyradiomics or its documentation
 
 We encourage a range of Pull Requests, from patches that include passing tests and

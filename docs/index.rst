@@ -49,6 +49,7 @@ Table of Contents
    removedfeatures
    contributing
    developers
+   labs
    FAQs <faq>
    changes
 
@@ -141,7 +142,7 @@ Developers
  - `Ahmed Hosny <https://github.com/ahmedhosny>`_:sup:`1`
  - `Steve Pieper <https://github.com/pieper>`_:sup:`6`
  - `Hugo Aerts (PI) <https://github.com/hugoaerts>`_:sup:`1,2`
- 
+
 :sup:`1`\ Department of Radiation Oncology, Dana-Farber Cancer Institute, Brigham and Women's Hospital, Harvard Medical School, Boston, MA,
 :sup:`2`\ Department of Radiology, Brigham and Women's Hospital, Harvard Medical School, Boston, MA
 :sup:`3`\ Department of Radiology, Netherlands Cancer Institute, Amsterdam, The Netherlands,

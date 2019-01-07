@@ -96,6 +96,8 @@ used as input for PyRadiomics. Please note that only one file location can be pr
 provide the image in DICOM format, load the DICOM images using SimpleITK functionality and pass the resultant image
 object instead.
 
+If your input images are DICOM, you should first confirm the DICOM files you have correspond to a single image series. If you are not sure, you can sort the data such that you have a single directory per series using, for example, `dicomsort https://github.com/pieper/dicomsort`_. You can then convert the DICOM series into an ITK-readable volumetric format using `plastimatch convert http://plastimatch.org/plastimatch.html#plastimatch-convert`_ or `dcm2niix https://github.com/rordenlab/dcm2niix`_. We also provide a "labs" (experimental) script `pyradiomics-dcm https://github.com/Radiomics/pyradiomics/tree/master/labs/pyradiomics-dcm` that can do those conversions automatically and also saves the resulting features as DICOM SR.
+
 .. _radiomics_geometry_mismatch:
 
 Geometry mismatch between image and mask
@@ -128,9 +130,11 @@ See `this thread <https://groups.google.com/forum/#!topic/pyradiomics/QLdD_qEw3P
 Can I use DICOM-RT struct for the input mask?
 #############################################
 
-PyRadiomics does not support DICOM-RT struct as input directly. We recommend to convert these using for example
-`SlicerRT <http://slicerrt.github.io/>`_. We are working on providing support for DICOM-RT in the `Slicer extension
-<https://github.com/Radiomics/SlicerRadiomics>`_, but this is not thoroughly tested yet.
+PyRadiomics does not support DICOM-RT struct as input directly. We recommend to convert these using for example `plastimatch convert http://plastimatch.org/plastimatch.html#plastimatch-convert`_. You can also
+load DICOM RT in 3D Slicer after installing the
+`SlicerRT <http://slicerrt.github.io/>`_ extension. DICOM RT loaded into 3D Slicer using SlicerRT extension
+can then be passed as input to the `SlicerRadiomics extension
+<https://github.com/Radiomics/SlicerRadiomics>`_.
 
 
 Usage

@@ -135,11 +135,20 @@ def getTestCase(testCase, dataDirectory=None):
 
   If the test case has been found or downloaded successfully, this function returns a tuple of two strings:
   ``(path/to/image.nrrd, path/to/mask.nrrd)``. In case of an error ``(None, None)`` is returned.
+
+  .. note::
+    To get the testcase with the corresponding single-slice label, append "_2D" to the testCase.
+
   """
   global logger, testCases
+  label2D = False
+  testCase = testCase.lower()
+  if testCase.endswith('_2d'):
+    label2D = True
+    testCase = testCase[:-3]
+
   if testCase not in testCases:
-    logger.error('Testcase "%s" not recognized!', testCase)
-    return None, None
+    raise ValueError('Testcase "%s" not recognized!' % testCase)
 
   logger.debug('Getting test case %s', testCase)
 
@@ -147,41 +156,42 @@ def getTestCase(testCase, dataDirectory=None):
     dataDirectory = os.path.join(tempfile.gettempdir(), 'pyradiomics', 'data')
     logger.debug('No data directory specified, using temporary directory "%s"', dataDirectory)
 
-  # Check if test case has already been downloaded.
-  imageFile = os.path.join(dataDirectory, '%s_image.nrrd' % testCase)
-  maskFile = os.path.join(dataDirectory, '%s_label.nrrd' % testCase)
-  if os.path.isfile(imageFile) and os.path.isfile(maskFile):
-    logger.info('Test case already downloaded')
-    return imageFile, maskFile
+  im_name = '%s_image.nrrd' % testCase
+  ma_name = '%s_label%s.nrrd' % (testCase, '_2D' if label2D else '')
 
-  # Test case not found, so try to download it
-  logger.info("Test case %s not available locally, downloading test case...", testCase)
+  def get_or_download(fname):
+    target = os.path.join(dataDirectory, fname)
+    if os.path.exists(target):
+      logger.debug('File %s already downloaded', fname)
+      return target
 
-  try:
+    # Test case file not found, so try to download it
+    logger.info("Test case file %s not available locally, downloading from github...", fname)
+
     # First check if the folder is available
     if not os.path.isdir(dataDirectory):
       logger.debug('Creating data directory: %s', dataDirectory)
       os.makedirs(dataDirectory)
 
     # Download the test case files (image and label)
-    url = r'https://github.com/Radiomics/pyradiomics/releases/download/v1.0/%s_%s.nrrd'
+    url = r'https://github.com/Radiomics/pyradiomics/releases/download/v1.0/%s' % fname
 
-    logger.debug('Retrieving image at %s', url % (testCase, 'image'))
-    fname, headers = urllib.request.urlretrieve(url % (testCase, 'image'), imageFile)
+    logger.debug('Retrieving file at %s', url)
+    _, headers = urllib.request.urlretrieve(url, target)
+
     if headers.get('status', '') == '404 Not Found':
-      logger.warning('Unable to download image file at %s!', url % (testCase, 'image'))
-      return None, None
+      raise ValueError('Unable to download image file at %s!', url)
 
-    logger.debug('Retrieving mask at %s', url % (testCase, 'label'))
-    fname, headers = urllib.request.urlretrieve(url % (testCase, 'label'), maskFile)
-    if headers.get('status', '') == '404 Not Found':
-      logger.warning('Unable to download mask file at %s!', url % (testCase, 'label'))
+    logger.info('File %s downloaded', fname)
+    return target
 
-    logger.info('Test case %s downloaded', testCase)
-    return imageFile, maskFile
-  except Exception:
-    logger.error('Download failed!', exc_info=True)
-    return None, None
+  logger.debug('Getting Image file')
+  imageFile = get_or_download(im_name)
+
+  logger.debug('Getting Mask file')
+  maskFile = get_or_download(ma_name)
+
+  return imageFile, maskFile
 
 
 def getParameterValidationFiles():

@@ -1,0 +1,42 @@
+featureName,brain1_shape2D,brain2_shape2D,breast1_shape2D,lung1_shape2D,lung2_shape2D
+diagnostics_Image-original_Maximum,3057.0,1523.0,248.0,3071.0,1671.0
+diagnostics_Mask-original_CenterOfMass,"(43.13548018292683, 20.012385670731703, 26.000000000000014)","(57.44906387665198, -22.31087860241864, -10.700000762939446)","(-99.99007990243902, -1.789887073170732, 28.35000000000003)","(-21.721181556195972, -120.73608609510089, -612.4999999999998)","(53.84355387019346, -97.05089679126613, -249.9999999999999)"
+diagnostics_Mask-corrected_VolumeNum,1,1,1,1,1
+diagnostics_Mask-corrected_Size,"(256, 256, 25)","(256, 256, 23)","(45, 120, 21)","(512, 512, 48)","(512, 512, 61)"
+diagnostics_Mask-corrected_Mean,859.3841463414634,422.5947136563877,131.1829268292683,-51.518731988472624,17.4510550996483
+diagnostics_Image-original_Minimum,0.0,0.0,6.0,-1024.0,-1024.0
+diagnostics_Mask-corrected_Spacing,"(0.7812499999999999, 0.7812499999999999, 6.499999999999998)","(0.7812499999999999, 0.7812499999999999, 6.499999999999998)","(0.664062, 0.664062, 2.1)","(0.5703125, 0.5703125, 5.0)","(0.6269531, 0.6269531, 5.0)"
+diagnostics_Versions_Numpy,1.15.1,1.15.1,1.15.1,1.15.1,1.15.1
+diagnostics_Mask-corrected_CenterOfMass,"(43.13548018292683, 20.012385670731703, 26.000000000000014)","(57.44906387665198, -22.31087860241864, -10.700000762939446)","(-99.99007990243902, -1.789887073170732, 28.35000000000003)","(-21.721181556195972, -120.73608609510089, -612.4999999999998)","(53.84355387019346, -97.05089679126613, -249.9999999999999)"
+diagnostics_Mask-corrected_CenterOfMassIndex,"(182.71341463414635, 101.88414634146342, 16.0)","(214.33480176211455, 160.9339207048458, 8.0)","(24.926829268292682, 69.8048780487805, 9.0)","(217.9135446685879, 358.1613832853026, 33.0)","(357.8314771395076, 362.784876905041, 22.0)"
+diagnostics_Mask-corrected_BoundingBox,"(162, 84, 16, 45, 32, 1)","(205, 155, 8, 20, 14, 1)","(21, 64, 9, 9, 12, 1)","(206, 347, 33, 24, 22, 1)","(321, 334, 22, 72, 65, 1)"
+diagnostics_Versions_SimpleITK,1.1.0,0.9.1,0.9.1,0.9.1,0.9.1
+diagnostics_Mask-original_CenterOfMassIndex,"(182.71341463414635, 101.88414634146342, 0.0)","(214.33480176211455, 160.9339207048458, 0.0)","(24.926829268292682, 69.8048780487805, 0.0)","(217.9135446685879, 358.1613832853026, 0.0)","(357.8314771395076, 362.784876905041, 0.0)"
+diagnostics_Configuration_EnabledImageTypes,{'Original': {}},{'Original': {}},{'Original': {}},{'Original': {}},{'Original': {}}
+diagnostics_Image-original_Hash,5c9ce3ca174f0f8324aa4d277e0fef82dc5ac566,f2b8fbc4d5d1da08a1a70e79a301f8a830139438,016951a8f9e8e5de21092d9d62b77262f92e04a5,34dca4200809a5e76c702d6b9503d958093057a3,14f57fd04838eb8c9cca2a0dd871d29971585975
+diagnostics_Versions_PyWavelet,0.5.1,0.5.2,0.5.2,0.5.2,0.5.2
+diagnostics_Mask-original_Size,"(256, 256, 1)","(256, 256, 1)","(45, 120, 1)","(512, 512, 1)","(512, 512, 1)"
+diagnostics_Mask-original_VoxelNum,984,227,82,347,3412
+diagnostics_Versions_Python,3.5.3,2.7.11,2.7.11,2.7.11,2.7.11
+diagnostics_Mask-corrected_Maximum,1261.0,729.0,162.0,106.0,108.0
+diagnostics_Image-original_Size,"(256, 256, 25)","(256, 256, 23)","(45, 120, 21)","(512, 512, 48)","(512, 512, 61)"
+diagnostics_Configuration_Settings,"{'additionalInfo': True, 'interpolator': 'sitkBSpline', 'minimumROISize': None, 'force2D': True, 'minimumROIDimensions': 2, 'preCrop': False, 'resegmentRange': None, 'correctMask': True, 'normalize': False, 'distances': [1], 'removeOutliers': None, 'label': 1, 'resampledPixelSpacing': None, 'normalizeScale': 1, 'force2Ddimension': 0, 'padDistance': 5}","{'distances': [1], 'additionalInfo': True, 'force2D': True, 'interpolator': 'sitkBSpline', 'resampledPixelSpacing': None, 'label': 1, 'normalizeScale': 1, 'normalize': False, 'force2Ddimension': 0, 'removeOutliers': None, 'minimumROISize': None, 'minimumROIDimensions': 2, 'correctMask': True, 'preCrop': False, 'resegmentRange': None, 'padDistance': 5}","{'distances': [1], 'additionalInfo': True, 'force2D': True, 'interpolator': 'sitkBSpline', 'resampledPixelSpacing': None, 'label': 1, 'normalizeScale': 1, 'normalize': False, 'force2Ddimension': 0, 'removeOutliers': None, 'minimumROISize': None, 'minimumROIDimensions': 2, 'correctMask': True, 'preCrop': False, 'resegmentRange': None, 'padDistance': 5}","{'distances': [1], 'additionalInfo': True, 'force2D': True, 'interpolator': 'sitkBSpline', 'resampledPixelSpacing': None, 'label': 1, 'normalizeScale': 1, 'normalize': False, 'force2Ddimension': 0, 'removeOutliers': None, 'minimumROISize': None, 'minimumROIDimensions': 2, 'correctMask': True, 'preCrop': False, 'resegmentRange': None, 'padDistance': 5}","{'distances': [1], 'additionalInfo': True, 'force2D': True, 'interpolator': 'sitkBSpline', 'resampledPixelSpacing': None, 'label': 1, 'normalizeScale': 1, 'normalize': False, 'force2Ddimension': 0, 'removeOutliers': None, 'minimumROISize': None, 'minimumROIDimensions': 2, 'correctMask': True, 'preCrop': False, 'resegmentRange': None, 'padDistance': 5}"
+diagnostics_Configuration_TestCase,brain1_2D,brain2_2D,breast1_2D,lung1_2D,lung2_2D
+diagnostics_Mask-corrected_Minimum,546.0,206.0,106.0,-506.0,-677.0
+diagnostics_Mask-original_Spacing,"(0.7812499999999999, 0.7812499999999999, 6.499999999999998)","(0.7812499999999999, 0.7812499999999999, 6.499999999999998)","(0.664062, 0.664062, 2.1)","(0.5703125, 0.5703125, 5.0)","(0.6269531, 0.6269531, 5.0)"
+diagnostics_Versions_PyRadiomics,2.1.0.post17.dev0+gba07b03,2.1.0.post17.dev0+gba07b03,2.1.0.post17.dev0+gba07b03,2.1.0.post17.dev0+gba07b03,2.1.0.post17.dev0+gba07b03
+diagnostics_Mask-original_Hash,c686d815c4383f3ca71a1afb07d6f871172a7dac,1d3b86cb29e4ab89fd40c0fdaddea1110ca21bfc,378ace5e4d190eaeb0d69fdc80b2b7eaeb61ffd6,1c84c30b5030441c864b3569b88919459344af9a,0094f5cfe799b0bd5603f6b7cafdc6387be39d66
+diagnostics_Mask-corrected_VoxelNum,984,227,82,347,3412
+diagnostics_Image-original_Spacing,"(0.7812499999999999, 0.7812499999999999, 6.499999999999998)","(0.7812499999999999, 0.7812499999999999, 6.499999999999998)","(0.664062, 0.664062, 2.1)","(0.5703125, 0.5703125, 5.0)","(0.6269531, 0.6269531, 5.0)"
+diagnostics_Mask-original_VolumeNum,1,1,1,1,1
+diagnostics_Image-original_Mean,385.6564080810547,236.20217696480128,63.380440917107585,-577.9148241678873,-433.28809775680793
+diagnostics_Mask-original_BoundingBox,"(162, 84, 0, 45, 32, 1)","(205, 155, 0, 20, 14, 1)","(21, 64, 0, 9, 12, 1)","(206, 347, 0, 24, 22, 1)","(321, 334, 0, 72, 65, 1)"
+original_shape2D_MeshSurface,600.28076171875,138.244628906,35.9397346973,112.701324463,1340.95895182
+original_shape2D_PixelSurface,600.5859374999998,138.54980468749994,36.160223867208,112.86395263671875,1341.1554869138695
+original_shape2D_Perimeter,101.0913825153671,48.0908978016,23.6116203532,43.4485541519,156.412404051
+original_shape2D_PerimeterSurfaceRatio,0.16840683387206656,0.347868110191,0.656978148339,0.385519463581,0.116642201343
+original_shape2D_Sphericity,0.8591480496460207,0.8666947794872987,0.9000498705600878,0.8661520010380676,0.8299300366556801
+original_shape2D_MaximumDiameter,35.579054802299055,16.3129789202,8.39979371027,16.3113363151,46.3182155834
+original_shape2D_MajorAxisLength,33.85279086841539,16.570640783628463,8.259750107622313,16.33412649719061,45.38958860924436
+original_shape2D_MinorAxisLength,23.785948973581707,10.963260379640587,5.729800201543435,8.986202904129604,38.4309041153114
+original_shape2D_Elongation,0.7026288930220511,0.6616075094978898,0.6937013985757058,0.5501489721948207,0.8466898531766884

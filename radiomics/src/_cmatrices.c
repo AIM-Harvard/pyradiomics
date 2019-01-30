@@ -216,7 +216,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   for (k = Ng * Ng * n_a - 1; k >= 0; k--) glcm[k] = 0;
 
   //Calculate GLCM
-  if (!calculate_glcm(image, mask, size, strides, angles, n_a, glcm, Ng))
+  if (!calculate_glcm(image, mask, size, strides, angles, n_a, 3, glcm, Ng))
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -307,7 +307,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 
   //Calculate GLSZM
   maxRegion = 0;
-  maxRegion = calculate_glszm(image, mask, size, strides, angles, n_a, tempData, Ng, Ns);
+  maxRegion = calculate_glszm(image, mask, size, strides, angles, n_a, 3, tempData, Ng, Ns);
   if (maxRegion == -1) // Error occured
   {
 	  free(tempData);
@@ -455,7 +455,7 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   for (k = Ng * Nr * n_a - 1; k >= 0; k--) glrlm[k] = 0;
 
   //Calculate GLRLM
-  if (!calculate_glrlm(image, mask, size, strides, angles, n_a, glrlm, Ng, Nr))
+  if (!calculate_glrlm(image, mask, size, strides, angles, n_a, 3, glrlm, Ng, Nr))
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -586,7 +586,7 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   for (k = Ng * 3 - 1; k >= 0; k--) ngtdm[k] = 0;
 
   //Calculate NGTDM
-  if (!calculate_ngtdm(image, mask, size, strides, angles, n_a, ngtdm, Ng))
+  if (!calculate_ngtdm(image, mask, size, strides, angles, n_a, 3, ngtdm, Ng))
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -718,7 +718,7 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   for (k = Ng * (n_a * 2 + 1) - 1; k >= 0; k--) gldm[k] = 0;
 
   //Calculate GLDM
-  if (!calculate_gldm(image, mask, size, strides, angles, n_a, gldm, Ng, alpha))
+  if (!calculate_gldm(image, mask, size, strides, angles, n_a, 3, gldm, Ng, alpha))
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);

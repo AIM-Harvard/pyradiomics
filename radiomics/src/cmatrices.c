@@ -1,68 +1,106 @@
 #include <stdlib.h>
+#include <Python.h>
 #include "cmatrices.h"
 
-int calculate_glcm(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *glcm, int Ng)
+int calculate_glcm(int *image, char *mask, int *size, int *strides, int *angles, int Na, int Nd, double *glcm, int Ng)
 {
   /* Calculate GLCM: Count the number of voxels with gray level i is neighboured by a voxel with gray level j in
   *  direction and distance specified by a. Returns an asymmetrical GLCM matrix for each angle/distance
   *  defined in angles.
   */
-  int glcm_idx_max = Ng * Ng * Na;
-  int i = 0, j = 0;
-  int iz, iy, ix;
-  int a, glcm_idx;
-  for (iz = 0; iz < size[0]; iz ++) // Iterate over all voxels in a row - column - slice order
+
+  // Index and size variables of the image
+  int Ni;  // Size of the entire image array
+  int i, j, a, d;  // Iterator variables (image, angles, dimensions)
+  int* cur_idx = (int *)calloc(Nd, sizeof(int));  // Temporary array to store current index by dimension
+
+// Output matrix variables
+  int glcm_idx, glcm_idx_max = Ng * Ng * Na;  // Index and max index of the texture array
+
+  // Calculate size of image array
+  Ni = size[0];
+  for (d = 1; d < Nd; d++)
+    Ni *= size[d];
+
+  // Loop over all voxels in the image
+  for (i = 0; i < Ni; i++)
   {
-    for (iy = 0; iy < size[1]; iy ++)
+    if (mask[i])
     {
-      for (ix = 0; ix < size[2]; ix ++)
+      // Calculate the current index in each dimension
+      cur_idx[0] = i / strides[0];
+      for (d = 1; d < Nd; d++)
+        cur_idx[d] = (i % strides[d - 1]) / strides[d];
+
+      // Loop over all angles to get the neighbours
+      for (a = 0; a < Na; a++)
       {
-        if (mask[i])  // Check if the current voxel is part of the segmentation
+        j = i;  // Start at current center voxel
+        for (d = 0; d < Nd; d++)
         {
-          for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
+          // Check if the current offset does not go out-of-range
+          if (cur_idx[d] + angles[a * Nd + d] < 0 ||  cur_idx[d] + angles[a * Nd + d] >= size[d])
           {
-            // Check whether the neighbour index is not out of range (i.e. part of the image)
-            if (iz + angles[a * 3] >= 0 && iz + angles[a * 3] < size[0] &&
-                iy + angles[a * 3 + 1] >= 0 && iy + angles[a * 3 + 1] < size[1] &&
-                ix + angles[a * 3 + 2] >= 0 && ix + angles[a * 3 + 2] < size[2])
-            {
-              j = i + angles[a * 3] * strides[0] +
-                  angles[a * 3 + 1] * strides[1] +
-                  angles[a * 3 + 2] * strides[2];
-              if (mask[j])  // Check whether neighbour voxel is part of the segmentation
-              {
-                glcm_idx = a + (image[j]-1) * Na + (image[i]-1) * Na * Ng;
-                if (glcm_idx >= glcm_idx_max) return 0; // Index out of range
-                glcm[glcm_idx] ++;
-                }
-            }
+            j = -1;  // Set to -1 to signal out-of-range below
+            break;
           }
+          j += angles[a * Nd + d] * strides[d];
         }
-        // Increase index to point to next item. Only one index is needed as data is stored one dimensionally in memory.
-        // This is in row-column-slice order.
-        i++;
+
+        // If the neighbor voxel is not out of range (> 0) and part of the ROI (mask[j]),
+        // increment the corresponding element in the GLCM
+        if (j > 0 && mask[j])
+        {
+          glcm_idx = a + (image[j]-1) * Na + (image[i]-1) * Na * Ng;
+          if (glcm_idx >= glcm_idx_max)
+          {
+            free(cur_idx);
+            return 0; // Index out of range
+          }
+          glcm[glcm_idx] ++;
+        }
       }
     }
   }
+  free(cur_idx);
   return 1;
 }
 
-int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles, int Na, int *tempData, int Ng, int Ns)
+int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles, int Na, int Nd, int *tempData, int Ng, int Ns)
 {
-  int Ni = size[0] * size[1] * size[2];
-  int maxSize = 0;
+  /* Calculate the GLSZM: Count the number of connected zones with gray level i and size j in the ROI. Uses the angles
+   * to find neighbours and pushes neighbours with the same gray level of the current zone onto a stack. Next, the last
+   * entry to the stack is popped and neighbours are again evaluated and pushed. If no the stack is empty, the region is
+   * complete. The number of times a voxel has been pushed / popped from the stack is the size of the zone. Voxels that
+   * have been assigned to a zone are marked to prevent re-processing.
+   *
+   * This function calculates the zones and stores them in a temporary output array, combining the size with the gray
+   * level. A separate function the fills the GLSZM array from this tempData array. This allows memory conservation,
+   * as the GLSZM only has to be instantiated to allow the found sizes, rather than the potential sizes based on voxel
+   * count alone.
+   */
 
+  // Index and size variables of the image
+  int Ni;  // Size of the entire image array
+  int i, j, k, a, d;  // Iterator variables (image, angles, dimensions)
+  int* cur_idx = (int *)calloc(Nd, sizeof(int));  // Temporary array to store current index by dimension
+
+  // Stack to hold indices of a growing region
   int *regionStack;
   int stackTop = -1;
 
+  // Output matrix variables
+  int gl, region;
+  int maxSize = 0;
   int regionCounter = 0;
   int max_region_idx = Ns * 2;
 
-  int gl, region;
-  int i, a;
-  int cur_idx, cur_x, cur_y, cur_z, j;
-
   regionStack = (int *)calloc(Ns, sizeof(int));
+
+  // Calculate size of image array
+  Ni = size[0];
+  for (d = 1; d < Nd; d++)
+    Ni *= size[d];
 
   for (i = 0; i < Ni; i++)  // Loop over all the voxels in the image
   {
@@ -81,33 +119,39 @@ int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles
 
       while (stackTop > -1)
       {
-        cur_idx = regionStack[stackTop--];  // Get the next voxel to process, on first iteration, this equals i
+        k = regionStack[stackTop--];  // Get the next voxel to process, on first iteration, this equals i
 
         // Increment region size, as number of loops corresponds to number of voxels in current region
         region++;
 
+        // Calculate the current index in each dimension
+        cur_idx[0] = k / strides[0];
+        for (d = 1; d < Nd; d++)
+          cur_idx[d] = (k % strides[d - 1]) / strides[d];
+
         // Generate neighbours for current voxel
-        cur_z = (cur_idx / strides[0]);
-        cur_y = (cur_idx % strides[0]) / strides[1];
-        cur_x = (cur_idx % strides[0]) % strides[1];
         for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
         {
-          // Check whether the neighbour index is not out of range (i.e. part of the image)
-          if (cur_z + angles[a * 3] >= 0 && cur_z + angles[a * 3] < size[0] &&
-            cur_y + angles[a * 3 + 1] >= 0 && cur_y + angles[a * 3 + 1] < size[1] &&
-            cur_x + angles[a * 3 + 2] >= 0 && cur_x + angles[a * 3 + 2] < size[2])
+          j = k;  // Start at current center voxel
+          for (d = 0; d < Nd; d++)
           {
-            j = cur_idx + angles[a * 3] * strides[0] +
-                          angles[a * 3 + 1] * strides[1] +
-                          angles[a * 3 + 2] * strides[2];
-            // Check whether neighbour voxel is part of the current region and unprocessed
-            if (mask[j] && (image[j] == gl))
+            // Check if the current offset does not go out-of-range
+            if (cur_idx[d] + angles[a * Nd + d] < 0 ||  cur_idx[d] + angles[a * Nd + d] >= size[d])
             {
-              // Push the voxel index to the stack for further processing
-              regionStack[++stackTop] = j;
-              // Voxel belongs to current region, mark it as 'processed'
-              mask[j] = 0;
+              j = -1;  // Set to -1 to signal out-of-range below
+              break;
             }
+            j += angles[a * Nd + d] * strides[d];
+          }
+
+          // If the neighbor voxel is not out of range (> 0) and part of the ROI (mask[j]),
+          // increment the corresponding element in the GLCM
+          if (j > 0 && mask[j] && (image[j] == gl))
+          {
+            // Push the voxel index to the stack for further processing
+            regionStack[++stackTop] = j;
+            // Voxel belongs to current region, mark it as 'processed'
+            mask[j] = 0;
           }
         } // next a
       }  // while (stackTop > -1)
@@ -115,16 +159,20 @@ int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles
       if (regionCounter >= max_region_idx)
       {
         free(regionStack);
+        free(cur_idx);
         return -1; // index out of range
       }
+      // Keep track of the largest region encountered, used to instantiate the GLSZM matrix later
       if (region > maxSize) maxSize = region;
 
+      // Store the region size and gray level in the temporary output matrix
       tempData[(regionCounter * 2)] = gl;
       tempData[((regionCounter * 2) + 1)] = region;
 
       regionCounter++;
     }
   }
+  free(cur_idx);
   free(regionStack);
 
   if (regionCounter >= max_region_idx) return -1; // index out of range
@@ -134,9 +182,10 @@ int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles
 
 int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion)
 {
+  /* This function fills the GLSZM using the zones described in the tempData. See calculate_glszm() for more details.
+   */
   int i = 0;
-  int glszm_idx_max = Ng * maxRegion;
-  int glszm_idx;
+  int glszm_idx, glszm_idx_max = Ng * maxRegion;  // Index and max index of the texture array
 
   while(tempData[i * 2] > -1)
   {
@@ -149,253 +198,227 @@ int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion)
   return 1;
 }
 
-int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *glrlm, int Ng, int Nr)
+int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles, int Na, int Nd, double *glrlm, int Ng, int Nr)
 {
-  int a, da, nd;
-  int mDims[3], sDims[2];
-  int d1, d2;
-  int jd[3];
-  int glrlm_idx_max = Ng * Nr * Na;
-  int runVal;
-  char multiElement;
+  /* Calculate the GLRLM: Count the number of runs (=consecutive voxels with the same gray level) with gray level i and
+   * run length j along angle a.
+   *
+   * The GLRLM is calculated by angle: First, it detects in which dimensions the current angle has a non-zero offset,
+   * and what direction is the start (if the angle is positive, the start is at index 0, if negative, at size - 1).
+   * Then the function loops over all the voxels in the image and checks if the voxel represents a starting position for
+   * any of the moving dimensions. If not, the index is skipped forward to a point that is a starting position.
+   * Finally, the run is instantiated by starting at the current index and advancing until the index goes out-of-range
+   * in a dimension. During the run, the code tracks the number of consecutive voxels the define a run and updates the
+   * GLRLM accordingly.
+   */
+  // Index and size variables of the image
+  int Ni;  // Size of the entire image array
+  int i, j, a, d, md;  // Iterator variables (image, angles, dimensions)
+  int cnt_mDim;  // Variable to hold the number of moving dims
+  int multiElement;  // Variable to check whether the current angle only yields runs of length 1
+
+  // Variables to track the non-zero offsets of the current angle (=moving dimensions)
+  // and to help define the start voxels for the runs
+  int* mDims = (int *)calloc(Nd, sizeof(int));  // Array to hold mapping to moving dimensions
+  int* mDim_start = (int *)calloc(Nd, sizeof(int)); // Array to hold start positions for moving dimensions (0 or size - 1)
+  int cur_idx;  // Only need a single int for index, as each the index is calculated and check separately for each dimension
+
+  // Output matrix variables
+  int gl, rl, elements;
+  int glrlm_idx, glrlm_idx_max = Ng * Nr * Na;  // Index and max index of the texture array
+
+  // Calculate size of image array
+  printf("Size: %i", size[0]);
+  Ni = size[0];
+  for (d = 1; d < Nd; d++)
+  {
+    printf(", %i", size[d]);
+    Ni *= size[d];
+  }
+  printf("\n");
 
   for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
   {
     multiElement = 0;
-    nd = 0;
-    for (da = 0; da < 3; da++)
+    // First lookup and count the number of dimensions where the angle != 0 (i.e. "Moving dimensions")
+    // Moreover, check if we need to start at 0 (angle > 0) or at the end (size[d] - 1, angle < 0)
+    cnt_mDim = 0;
+    printf("Angle: ");
+    for (d = 0; d < Nd; d++)
     {
-      if (angles[a * 3 + da] == 0)
+      printf("%i ", angles[a * 3 + d]);
+      if (angles[a * 3 + d] != 0)
       {
-        sDims[da - nd] = da;
-      }
-      else
-      {
-        mDims[nd] = da;
-        nd++;
+        if (angles[a * 3 + d] > 0)
+          mDim_start[cnt_mDim] = 0;
+        else
+          mDim_start[cnt_mDim] = size[d] - 1;
+        mDims[cnt_mDim] = d;
+        cnt_mDim++;
       }
     }
-    if (nd == 1)  // Moving in 1 dimension
+    printf("\n");
+
+    // Then, iterate over the image (with the goal of getting all "start positions", i.e. from where we start the run
+    for (i = 0; i < Ni; i++)
     {
-      // Iterate over all start voxels: All voxels, where moving dim == 0 or max (i.e. all combinations of voxels
-      // in static dimensions)
-      for (d1 = 0; d1 < size[sDims[0]]; d1++)
+      // loop over moving dimensions to check if the current voxel is a valid starting voxel
+      // a voxel is a starting voxel if it's index for a specific moving dimension matches the start index for
+      // that dimension. If this is the case for ANY of the moving dimensions, the voxel is indeed a starting voxel
+      for (md = 0; md < cnt_mDim; md++)
       {
-        for (d2 = 0; d2 < size[sDims[1]]; d2++)
+        d = mDims[md];
+        // Get the current index for the current moving dimension mDims[d]
+        if (d == 0)
+          cur_idx = i / strides[d];
+        else
+          cur_idx = (i % strides[d - 1]) / strides[d];
+
+        if (cur_idx == mDim_start[md])
         {
-          jd[sDims[0]] = d1;
-          jd[sDims[1]] = d2;
-          if (angles[a * 3 + mDims[0]]< 0)
-          {
-            jd[mDims[0]] = size[mDims[0]] - 1; // Moving dim is negative, set start at maximum index
-          }
-          else
-          {
-            jd[mDims[0]] = 0; // Moving dim is positive, set start at 0
-          }
-          // run_diagonal returns -1 if error, otherwise number of elements encountered
-          runVal = run_diagonal(image, mask, size, strides, angles, Na, glrlm, glrlm_idx_max, Nr, jd, a);
-          if (runVal < 0) return runVal; // index out of range, 'raise' error.
-          if (!multiElement && runVal > 1) multiElement = 1; // multiple elements found
+          cur_idx = -1;  // Signals the start voxel is a valid start voxel
+          break;  // No need to check the rest, the voxel is valid
         }
       }
-    }
-    else if (nd == 2) // Moving in 2 dimensions
-    {
-      for (d1 = 0; d1 < size[sDims[0]]; d1++) // iterate over all voxels in the static dimension
+
+      if (cur_idx > -1)
       {
-        for (d2 = 0; d2 < size[mDims[0]]; d2++) // Iterate over moving dimension 1, treating it as a 'static'
-        {
-          jd[sDims[0]] = d1;
-          jd[mDims[0]] = d2;
-          if (angles[a * 3 + mDims[1]] < 0)
-          {
-            jd[mDims[1]] = size[mDims[1]] - 1; // Moving dim is negative, set start at maximum index
-          }
-          else
-          {
-            jd[mDims[1]] = 0; // Moving dim is positive, set start at 0
-          }
-          // run_diagonal returns -1 if error, otherwise number of elements encountered
-          runVal = run_diagonal(image, mask, size, strides, angles, Na, glrlm, glrlm_idx_max, Nr, jd, a);
-          if (runVal < 0) return runVal; // index out of range, 'raise' error.
-          if (!multiElement && runVal > 1) multiElement = 1; // multiple elements found
-        }
-        for (d2 = 1; d2 < size[mDims[1]]; d2++) // Iterate over other moving dimension, treating it as a 'static'
-        {
-          jd[sDims[0]] = d1;
-          jd[mDims[1]] = d2;
-          // Prevent calculating the true diagonal twice, which is either at index 0, or max, depending on the
-          // angle of the the second moving dimension: iterate 1 to max if angle is positive, 0 to max -1 if
-          // negative. The ignored index is handled in the previous loop.
-          if (angles[a * 3 + mDims[1]] < 0) jd[mDims[1]] --;
-          if (angles[a * 3 + mDims[0]] < 0)
-          {
-            jd[mDims[0]] = size[mDims[0]] - 1; // Moving dim is negative, set start at maximum index
-          }
-          else
-          {
-            jd[mDims[0]] = 0; // Moving dim is positive, set start at 0
-          }
-          // run_diagonal returns -1 if error, otherwise number of elements encountered
-          runVal = run_diagonal(image, mask, size, strides, angles, Na, glrlm, glrlm_idx_max, Nr, jd, a);
-          if (runVal < 0) return runVal; // index out of range, 'raise' error.
-          if (!multiElement && runVal > 1) multiElement = 1; // multiple elements found
-        }
+        // Oh oh, current voxel is not a starting position for any of the moving dimensions!
+        // Skip to a valid index by ensure to fastest changing moving dimension is set to a valid start position.
+        // Because that dimension changes the fastest, it is the last one that changed from valid to invalid starting
+        // position and thereby guaranteed to be 1 if mDim_start = 0 and 0 if mDim_start = size[d] - 1.
+        // By adding (size[d] - 1) * stride we effectively either set the index for that dimension to 0 (and causing the
+        // next dimension to increase by 1) or to (size[d] - 1), respectively.
+        d = mDims[cnt_mDim - 1]; // Get the last moving dimension (i.e. the moving dimension with the smallest stride)
+
+        printf("Skipping in moving dim %d! index ", d);
+        if (d == 0)
+          printf("%d -> ", i / strides[d]);
+        else
+          printf("%d -> ", (i % strides[d - 1]) / strides[d]);
+
+        i += (size[d] - 1) * strides[d]; // Skip the rest of the voxels in this moving dimension
+
+        if (d == 0)
+          printf("%d\n", i / strides[d]);
+        else
+          printf("%d\n", (i % strides[d - 1]) / strides[d]);
+
+        if (i >= Ni)  // Check if this does not mean we've finished iterating over the entire image.
+          break;
       }
-    }
-    else if (nd == 3)
-    {
-      for (d1 = 0; d1 < size[mDims[0]]; d1++)
+
+      // Run Forest, Run! Start at the current index and advance using the angle until exiting the image.
+      j = i;
+      gl = -1;
+      rl = 0;
+      elements = 0;
+      while(j > -1)
       {
-        for (d2 = 0; d2 < size[mDims[1]]; d2++)
+        // Check if j belongs to the mask (i.e. part of some run)
+        if (mask[j])
         {
-          jd[mDims[0]] = d1;
-          jd[mDims[1]] = d2;
-          if (angles[a * 3 + mDims[2]] < 0)
+          elements++;  // count the number of voxels in this run
+          if (gl == -1)  // No run initialized, start a new one
+            gl = image[j];
+          else if (image[j] == gl)  // j is part of the current run, increase the length
+            rl++;
+          else  // j is not part of the run, end current run and start new one
           {
-            jd[mDims[2]] = size[mDims[2]] - 1; // Moving dim is negative, set start at maximum index
+            glrlm_idx = a + rl * Na + (gl - 1) * Na * Nr;
+            if (glrlm_idx >= glrlm_idx_max)
+            {
+              free(mDims);
+              free(mDim_start);
+              return 0;
+            }
+            glrlm[glrlm_idx]++;
+
+            gl = image[j];
+            rl = 0;
           }
-          else
-          {
-            jd[mDims[2]] = 0; // Moving dim is positive, set start at 0
-          }
-          // run_diagonal returns -1 if error, otherwise number of elements encountered
-          runVal = run_diagonal(image, mask, size, strides, angles, Na, glrlm, glrlm_idx_max, Nr, jd, a);
-          if (runVal < 0) return runVal; // index out of range, 'raise' error.
-          if (!multiElement && runVal > 1) multiElement = 1; // multiple elements found
         }
-      }
-      for (d1 = 0; d1 < size[mDims[1]]; d1++)
+        else if (gl > -1)  // end current run
+        {
+          glrlm_idx = a + rl * Na + (gl - 1) * Na * Nr;
+          if (glrlm_idx >= glrlm_idx_max)
+          {
+            free(mDims);
+            free(mDim_start);
+            return 0;
+          }
+          glrlm[glrlm_idx]++;
+
+          gl = -1;
+          rl = 0;
+        }
+
+        // Advance to the next voxel:
+        // Set j to the next voxel using the current angle. If j goes out-of-range, it is set to -1,
+        // causing the while(j > -1) to exit (end of the runs for the current index).
+        for (md = 0; md < cnt_mDim; md++)
+        {
+          d = mDims[md];
+          // Calculate the current index in each dimension
+          if (d == 0)
+            cur_idx = j / strides[d];
+          else
+            cur_idx = (j % strides[d - 1]) / strides[d];
+          // Check if that is within the range [0, size[d])
+          if (cur_idx + angles[a * Nd + d] < 0 ||  cur_idx + angles[a * Nd + d] >= size[d])
+          {
+            j = -1;  // Set to -1 to signal out-of-range below
+            break;
+          }
+          j += angles[a * Nd + d] * strides[d];
+        }  // next md
+      }  // while (j > -1)
+      if (gl > -1)  // end current run (this is the case when the last voxel of the run was included in the mask)
       {
-        for (d2 = 1; d2 < size[mDims[2]]; d2++)
+        glrlm_idx = (gl - 1) * Na * Nr + rl * Na + a;
+        if (glrlm_idx >= glrlm_idx_max)
         {
-          jd[mDims[1]] = d1;
-          jd[mDims[2]] = d2;
-          // Prevent calculating the true diagonal twice, which is either at index 0, or max, depending on the
-          // angle of the the second moving dimension: iterate 1 to max if angle is positive, 0 to max -1 if
-          // negative. The ignored index is handled in the previous loop.
-          if (angles[a * 3 + mDims[2]] < 0) jd[mDims[2]] --;
-          if (angles[a * 3 + mDims[0]] < 0)
-          {
-            jd[mDims[0]] = size[mDims[0]] - 1; // Moving dim is negative, set start at maximum index
-          }
-          else
-          {
-            jd[mDims[0]] = 0; // Moving dim is positive, set start at 0
-          }
-          // run_diagonal returns -1 if error, otherwise number of elements encountered
-          runVal = run_diagonal(image, mask, size, strides, angles, Na, glrlm, glrlm_idx_max, Nr, jd, a);
-          if (runVal < 0) return runVal; // index out of range, 'raise' error.
-          if (!multiElement && runVal > 1) multiElement = 1; // multiple elements found
+          free(mDims);
+          free(mDim_start);
+          return 0;
         }
+        glrlm[glrlm_idx]++;
       }
-      for (d1 = 1; d1 < size[mDims[2]]; d1++)
-      {
-        for (d2 = 1; d2 < size[mDims[0]]; d2++)
-        {
-          jd[mDims[2]] = d1;
-          jd[mDims[0]] = d2;
-          // Prevent calculating the true diagonal twice, which is either at index 0, or max, depending on the
-          // angle of the the second moving dimension: iterate 1 to max if angle is positive, 0 to max -1 if
-          // negative. The ignored index is handled in the previous loops. This is done for both 'statics'.
-          if (angles[a * 3 + mDims[2]] < 0) jd[mDims[2]] --;
-          if (angles[a * 3 + mDims[0]] < 0) jd[mDims[0]] --;
-          if (angles[a * 3 + mDims[1]] < 0)
-          {
-            jd[mDims[1]] = size[mDims[1]] - 1; // Moving dim is negative, set start at maximum index
-          }
-          else
-          {
-            jd[mDims[1]] = 0; // Moving dim is positive, set start at 0
-          }
-          // run_diagonal returns -1 if error, otherwise number of elements encountered
-          runVal = run_diagonal(image, mask, size, strides, angles, Na, glrlm, glrlm_idx_max, Nr, jd, a);
-          if (runVal < 0) return runVal; // index out of range, 'raise' error.
-          if (!multiElement && runVal > 1) multiElement = 1; // multiple elements found
-        }
-      }
-    } // switch No of dimensions
+
+      if (elements > 1) // multiple elements found in this run. Ensure multiElement is set to true;
+        multiElement = 1;
+    }  // next i
+
     if (!multiElement) // Segmentation is 2D for this angle, remove it.
     {
       // set elements at runlength index 0 to 0 for all gray levels in this angle, other runlength indices are
       // already 0.
-      for (d1 = 0; d1 < Ng; d1++)
-      {
-        glrlm[a + d1 * Na * Nr] = 0;
-      }
+      for (glrlm_idx = 0; glrlm_idx < Ng; glrlm_idx++)
+        glrlm[glrlm_idx * Nr * Na + a] = 0;
     }
-  } // next a
+  }  // next a
+
+  free(mDims);
+  free(mDim_start);
+
   return 1;
 }
 
-int run_diagonal(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *glrlm, int glrlm_idx_max, int Nr, int *jd, int a)
+int calculate_ngtdm(int *image, char *mask, int *size, int *strides, int *angles, int Na, int Nd, double *ngtdm, int Ng)
 {
-  int j, gl, rl;
-  int glrlm_idx;
-  int elements = 0;
-
-  gl = -1;
-  rl = 0;
-
-  j = jd[0] * strides[0] + jd[1] * strides[1] + jd[2] * strides[2];
-  while (jd[0] >= 0 && jd[0] < size[0] &&
-        jd[1] >= 0 && jd[1] < size[1] &&
-        jd[2] >= 0 && jd[2] < size[2])
-  {
-    j = jd[0] * strides[0] + jd[1] * strides[1] + jd[2] * strides[2];
-    if (mask[j])
-    {
-        elements++; // Count the number of segmented voxels in this run
-      if (gl == image[j])
-      {
-        rl++;
-      }
-      else if (gl == -1)
-      {
-        gl = image[j];
-        rl = 0;
-      }
-      else
-      {
-        glrlm_idx = a + rl * Na + (gl - 1) * Na * Nr;
-        if (glrlm_idx >= glrlm_idx_max) return -1;
-        glrlm[glrlm_idx]++;
-
-        gl = image[j];
-        rl = 0;
-      }
-    }
-    else if (gl > -1)
-    {
-      glrlm_idx = a + rl * Na + (gl - 1) * Na * Nr;
-      if (glrlm_idx >= glrlm_idx_max) return -1;
-      glrlm[glrlm_idx]++;
-      gl = -1;
-    }
-    jd[0] += angles[a * 3];
-    jd[1] += angles[a * 3 + 1];
-    jd[2] += angles[a * 3 + 2];
-  }
-  if (gl > -1)
-  {
-    glrlm_idx = a + rl * Na + (gl - 1) * Na * Nr;
-    if (glrlm_idx >= glrlm_idx_max) return -1;
-    glrlm[glrlm_idx]++;
-  }
-  return elements;
-}
-
-int calculate_ngtdm(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *ngtdm, int Ng)
-{
+  /* Calculate the NGTDM: For each voxel, calculate the absolute difference between the center voxel and the average of
+   * its neighbours. Then, add this difference to a grand total (for the gray level i of the center voxel)
+   *
+   */
+  // Index and size variables of the image
   int gl;
-  int ngtdm_idx_max = Ng * 3;
-  int i = 0, j = 0;
-  int iz, iy, ix;
-  int offset[3];
+  int Ni;  // Size of the entire image array
+  int i, j, a, d;  // Iterator variables (image, angles, dimensions)
+  int* cur_idx = (int *)calloc(Nd, sizeof(int));  // Temporary array to store current index by dimension
+
+  // Output matrix variables
   double count, sum, diff;
-  int a;
-  int ngtdm_idx;
+  int ngtdm_idx, ngtdm_idx_max = Ng * 3;  // Index and max index of the texture array
 
   // Fill gray levels (empty slices gray levels are later deleted in python)
   for (gl = 0; gl < Ng; gl++)
@@ -403,130 +426,166 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *strides, int *angles
       ngtdm[gl*3 + 2] = gl + 1;
   }
   /* Calculate matrix: for each gray level, element 0 describes the number of voxels with gray level i and
-  *  element 1 describes the sum of all differences between voxels with gray level i and their neighbourhood
-  */
-  for (iz = 0; iz < size[0]; iz ++) // Iterate over all voxels in a row - column - slice order
+   * element 1 describes the sum of all differences between voxels with gray level i and their neighbourhood.
+   * element 2 is set above and contains the corresponding gray level (gray levels not present in the ROI are removed
+   * later on).
+   */
+
+  // Calculate size of image array
+  Ni = size[0];
+  for (d = 1; d < Nd; d++)
+    Ni *= size[d];
+
+  // Loop over all voxels in the image
+  for (i = 0; i < Ni; i++)
   {
-    for (iy = 0; iy < size[1]; iy ++)
+    if (mask[i])
     {
-      for (ix = 0; ix < size[2]; ix ++)
+      count = 0;
+      sum = 0;
+
+      // Calculate the current index in each dimension
+      cur_idx[0] = i / strides[0];
+      for (d = 1; d < Nd; d++)
+        cur_idx[d] = (i % strides[d - 1]) / strides[d];
+
+      // Loop over all angles to get the neighbours
+      for (a = 0; a < Na; a++)
       {
-        if (mask[i])  // Check if the current voxel is part of the segmentation
+        j = i;  // Start at current center voxel
+        for (d = 0; d < Nd; d++)
         {
-          count = 0;
-          sum = 0;
-          for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
+          // Check if the current offset does not go out-of-range
+          if (cur_idx[d] + angles[a * Nd + d] < 0 ||  cur_idx[d] + angles[a * Nd + d] >= size[d])
           {
-            offset[0] = angles[a * 3];
-            offset[1] = angles[a * 3 + 1];
-            offset[2] = angles[a * 3 + 2];
-
-            // Check whether the neighbour index is not out of range (i.e. part of the image)
-            if (iz + offset[0] >= 0 && iz + offset[0] < size[0] &&
-                iy + offset[1] >= 0 && iy + offset[1] < size[1] &&
-                ix + offset[2] >= 0 && ix + offset[2] < size[2])
-            {
-              j = i + offset[0] * strides[0] +
-                      offset[1] * strides[1] +
-                      offset[2] * strides[2];
-              if (mask[j])  // Check whether neighbour voxel is part of the segmentation
-              {
-               count++;
-               sum += image[j];
-              }
-            }
+            j = -1;  // Set to -1 to signal out-of-range below
+            break;
           }
-          if (count == 0) { diff = 0; }
-          else { diff = (double)image[i] - sum  / count; }
-
-          if (diff < 0) diff *= -1;  // Get absolute difference
-
-          ngtdm_idx = (image[i]-1) * 3;
-          if (ngtdm_idx >= ngtdm_idx_max) return 0; // Index out of range
-          ngtdm[ngtdm_idx]++;
-          ngtdm[ngtdm_idx + 1] += diff;
+          j += angles[a * Nd + d] * strides[d];
         }
-        // Increase index to point to next item. Only one index is needed as data is stored one dimensionally in memory.
-        // This is in row-column-slice order.
-        i++;
+
+        // If the neighbor voxel is not out of range (> 0) and part of the ROI (mask[j]),
+        // increment the corresponding element in the GLCM
+        if (j > 0 && mask[j])
+        {
+           count++;
+           sum += image[j];
+        }
       }
+      if (count == 0)
+        diff = 0;
+      else
+        diff = (double)image[i] - (sum  / count);
+
+      if (diff < 0)
+        diff *= -1;  // Get absolute difference
+
+      ngtdm_idx = (image[i]-1) * 3;
+      if (ngtdm_idx >= ngtdm_idx_max)
+      {
+        free(cur_idx);
+        return 0; // Index out of range
+      }
+      ngtdm[ngtdm_idx]++;  // Increase the count for this gray level
+      ngtdm[ngtdm_idx + 1] += diff;  // Add the absolute difference to the total for this gray level
     }
   }
+
+  free(cur_idx);
   return 1;
 }
 
-int calculate_gldm(int *image, char *mask, int *size, int *strides, int *angles, int Na, double *gldm, int Ng, int alpha)
+int calculate_gldm(int *image, char *mask, int *size, int *strides, int *angles, int Na, int Nd, double *gldm, int Ng, int alpha)
 {
   /* Calculate GLDM: Count the number of voxels with gray level i, that have j dependent neighbours.
   *  A voxel is considered dependent if the absolute difference between the center voxel and the neighbour <= alpha
   */
-  int gldm_idx_max = Ng * (Na * 2 + 1);
-  int i = 0, j = 0;
-  int iz, iy, ix;
-  int offset[3];
-  int dep, a, diff;
-  int gldm_idx;
-  for (iz = 0; iz < size[0]; iz ++) // Iterate over all voxels in a row - column - slice order
-  {
-    for (iy = 0; iy < size[1]; iy ++)
-    {
-      for (ix = 0; ix < size[2]; ix ++)
-      {
-        if (mask[i])  // Check if the current voxel is part of the segmentation
-        {
-          dep = 0;
-          for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
-          {
-            offset[0] = angles[a * 3];
-            offset[1] = angles[a * 3 + 1];
-            offset[2] = angles[a * 3 + 2];
 
-            // Check whether the neighbour index is not out of range (i.e. part of the image)
-            if (iz + offset[0] >= 0 && iz + offset[0] < size[0] &&
-                iy + offset[1] >= 0 && iy + offset[1] < size[1] &&
-                ix + offset[2] >= 0 && ix + offset[2] < size[2])
-            {
-              j = i + offset[0] * strides[0] +
-                      offset[1] * strides[1] +
-                      offset[2] * strides[2];
-              if (mask[j])  // Check whether neighbour voxel is part of the segmentation
-              {
-                diff = image[i] - image[j];
-                if (diff < 0) diff *= -1;  // Get absolute difference
-                if (diff <= alpha) dep++;
-              }
-            }
+  // Index and size variables of the image
+  int Ni;  // Size of the entire image array
+  int i, j, a, d;  // Iterator variables (image, angles, dimensions)
+  int* cur_idx = (int *)calloc(Nd, sizeof(int));  // Temporary array to store current index by dimension
+
+  // Output matrix variables
+  int dep, diff;
+  int gldm_idx, gldm_idx_max = Ng * (Na * 2 + 1);  // Index and max index of the texture array
+
+  // Calculate size of image array
+  Ni = size[0];
+  for (d = 1; d < Nd; d++)
+    Ni *= size[d];
+
+  // Loop over all voxels in the image
+  for (i = 0; i < Ni; i++)
+  {
+    if (mask[i])
+    {
+      dep = 0;
+
+      // Calculate the current index in each dimension
+      cur_idx[0] = i / strides[0];
+      for (d = 1; d < Nd; d++)
+        cur_idx[d] = (i % strides[d - 1]) / strides[d];
+
+      // Loop over all angles to get the neighbours
+      for (a = 0; a < Na; a++)
+      {
+        j = i;  // Start at current center voxel
+        for (d = 0; d < Nd; d++)
+        {
+          // Check if the current offset does not go out-of-range
+          if (cur_idx[d] + angles[a * Nd + d] < 0 ||  cur_idx[d] + angles[a * Nd + d] >= size[d])
+          {
+            j = -1;  // Set to -1 to signal out-of-range below
+            break;
           }
-          gldm_idx = dep + (image[i]-1) * (Na * 2 + 1);  // Row_idx (dep) + Col_idx (Gray level * Max dependency)
-          if (gldm_idx >= gldm_idx_max) return 0; // Index out of range
-          gldm[gldm_idx] ++;
+          j += angles[a * Nd + d] * strides[d];
         }
-        // Increase index to point to next item. Only one index is needed as data is stored one dimensionally in memory.
-        // This is in row-column-slice order.
-        i++;
+
+        // If the neighbor voxel is not out of range (> 0) and part of the ROI (mask[j]),
+        // increment the corresponding element in the GLCM
+        if (j > 0 && mask[j])
+        {
+          diff = image[i] - image[j];
+          if (diff < 0) diff *= -1;  // Get absolute difference
+          if (diff <= alpha) dep++;
+        }
       }
+      gldm_idx = dep + (image[i]-1) * (Na * 2 + 1);  // Row_idx (dep) + Col_idx (Gray level * Max dependency)
+      if (gldm_idx >= gldm_idx_max)
+      {
+        free(cur_idx);
+        return 0; // Index out of range
+      }
+      gldm[gldm_idx] ++;
     }
   }
+
+  free(cur_idx);
   return 1;
 }
 
-int get_angle_count(int *size, int *distances, int n_dim, int n_dist, char bidirectional, int force2Ddim)
+int get_angle_count(int *size, int *distances, int Nd, int Ndist, char bidirectional, int force2Ddim)
 {
-  int n_a;
-  int Na_d, Na_dd;  // Angles per distance
+  /* Calculate the number of angles that need to be generated for the requested distances, taking into account the size
+   * of the image and whether a dimension has been excluded (=force2Ddim).
+   *
+   * First, determine the maximum distance and the number of angles to compute
+   * Number of angles to compute for distance Na_d = (2d + 1)^Nd - (2d - 1)^Nd
+   * The first term is temporarily stored in Na_d, the second in Na_dd
+   */
+  int Na;  // Grand total of angles to generate
+  int Na_d, Na_dd;  // Angles per distance Na_d = N angles for distance [0, n] and Na_dd = N angles for distance [0, n -1]
   int dist_idx, dim_idx;
 
-  // First, determine the maximum distance and the number of angles to compute
-  // Number of angles to compute for distance Na_d = (2d + 1)^n_dim - (2d - 1)^n_dim
-  // The first term is temporarily stored in Na_d, the second in Na_dd
-  n_a = 0;
-  for (dist_idx = 0; dist_idx < n_dist; dist_idx++)
+  Na = 0;
+  for (dist_idx = 0; dist_idx < Ndist; dist_idx++)
   {
     if (distances[dist_idx] < 1) return 0;  // invalid distance encountered
 
     Na_d = 1;
     Na_dd = 1;
-    for (dim_idx = 0; dim_idx < n_dim; dim_idx++)
+    for (dim_idx = 0; dim_idx < Nd; dim_idx++)
     {
         // Do not generate angles that move in the out-of-plane dimension
         if (dim_idx == force2Ddim) continue;
@@ -541,27 +600,41 @@ int get_angle_count(int *size, int *distances, int n_dim, int n_dist, char bidir
         else
         {
           // Limited range possible, so multiply by (2 * (size - 1) + 1) (i.e. max possible distance for this size)
+          // This is the same for both Na_d and Na_dd, as the upper bound is the size, not the distance.
+          // The multiplication is still needed, as Na_d and Na_dd diverge more strongly, and are subtracted later on.
           Na_d *= (2 *(size[dim_idx] - 1) + 1);
           Na_dd *= (2 *(size[dim_idx] - 1) + 1);
         }
     }
-    n_a += (Na_d - Na_dd);  // Add the number of angles to be generated for this distance to the grand total
+    Na += (Na_d - Na_dd);  // Add the number of angles to be generated for this distance to the grand total
   }
 
-  // if only single direction is needed, divide Na by 2 (if bidirectional, Na will be even, and angles is a mirrored)
-  if (!bidirectional) n_a /= 2;
+  // if only single direction is needed, divide Na by 2
+  // (if bidirectional, Na will be even, and angles is a mirrored array)
+  if (!bidirectional) Na /= 2;
 
-  return n_a;
+  return Na;
 }
 
-int build_angles(int *size, int *distances, int n_dim, int n_dist, int force2Ddim, int n_a, int *angles)
+int build_angles(int *size, int *distances, int Nd, int Ndist, int force2Ddim, int Na, int *angles)
 {
+  /* Generate the angles. One index, new_a_idx controls the combination of offsets, and is always increased.
+   * Each new generated angle is checked if it is valid (i.e. at least 1 dimension non-zero, no offset larger than
+   * the size and, if specified, only 0 offset in the force2Ddim). During generation, the offsets for the angle are
+   * stored in the angles array, but a_idx is only increased if the angle is valid and it's maximum offset (defining
+   * the infinity norm distance the angle belongs to) is specified in the distances array. That way, invalid angles are
+   * overwritten by the next generated angle. This loop continues until the specified number of angles are generated.
+   *
+   * N.B. This function should only be used with the results obtained from `get_angle_count`, and values for `size`,
+   * `distances`, `Nd`, `Ndist` and `force2Ddim` should be identical to those used in `get_angle_count`.
+   */
+
   int *offset_stride;
   int max_distance, n_offsets, offset, a_dist;
   int dist_idx, dim_idx, a_idx, new_a_idx;
 
   max_distance = 0;  // Maximum offset specified, needed later on to generate the range of offsets
-  for (dist_idx = 0; dist_idx < n_dist; dist_idx++)
+  for (dist_idx = 0; dist_idx < Ndist; dist_idx++)
   {
       if (distances[dist_idx] < 1) return 1;  // invalid distance encountered
 
@@ -583,20 +656,18 @@ int build_angles(int *size, int *distances, int n_dim, int n_dist, int force2Ddi
   // dim 2  -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1
   // dim 1  -1 -1 -1  0  0  0  1  1  1 -1 -1 -1  0  0  0  1  1  1 -1 -1 -1  0  0  0  1  1  1
   // dim 0  -1 -1 -1 -1 -1 -1 -1 -1 -1  0  0  0  0  0  0  0  0  0  1  1  1  1  1  1  1  1  1
-  offset_stride = (int *)calloc(n_dim, sizeof(int));
-  offset_stride[n_dim - 1] = 1;
-  for (dim_idx = n_dim - 2; dim_idx >= 0; dim_idx--)
-  {
+  offset_stride = (int *)calloc(Nd, sizeof(int));
+  offset_stride[Nd - 1] = 1;
+  for (dim_idx = Nd - 2; dim_idx >= 0; dim_idx--)
     offset_stride[dim_idx] = offset_stride[dim_idx + 1] * n_offsets;
-  }
 
   new_a_idx = 0;  // index used to generate new angle offset, increases during every loop
   a_idx = 0;  // index in angles array of current angle being generated, increases only when a valid angle has been generated
-  while (a_idx < n_a)
+  while (a_idx < Na)
   {
     a_dist = 0;  // maximum offset of the angle, corresponds to the distance this angle belongs to (infinity norm)
     // generate new angle
-    for (dim_idx = 0; dim_idx < n_dim; dim_idx++)
+    for (dim_idx = 0; dim_idx < Nd; dim_idx++)
     {
       offset = max_distance - (new_a_idx / offset_stride[dim_idx]) % n_offsets;  // {max_d, ... , -max_d}, step 1
       if ((dim_idx == force2Ddim && offset != 0) ||  // Moves in an invalid direction (out-of-plane dimension)
@@ -606,17 +677,19 @@ int build_angles(int *size, int *distances, int n_dim, int n_dist, int force2Ddi
         a_dist = -1;  // invalid angle
         break;  // no need to generate offsets for other dimensions, angle is invalid
       }
-      angles[a_idx * n_dim + dim_idx] = offset;
+      angles[a_idx * Nd + dim_idx] = offset;
 
-      if (a_dist < offset) a_dist = offset;  // offset positive
-      else if (a_dist < -offset) a_dist = -offset;  // offset negative
+      if (a_dist < offset)
+        a_dist = offset;  // offset positive
+      else if (a_dist < -offset)
+        a_dist = -offset;  // offset negative
     }
     new_a_idx++;  // always advance new_a_idx, this controls the combination of offsets in generating the angle
 
     if (a_dist < 1) continue; // Angle is invalid, i.e a_dist = -1 (failed check) or a_dist = 0 (angle (0, 0, 0))
 
     // Check if the distance this angle is generated for is requested (i.e. present in distances)
-    for (dist_idx = 0; dist_idx < n_dist; dist_idx++)
+    for (dist_idx = 0; dist_idx < Ndist; dist_idx++)
     {
       if (a_dist == distances[dist_idx])
       {

@@ -1,13 +1,9 @@
 from collections import OrderedDict
-import csv
 from datetime import datetime
-from functools import partial
-import json
 import logging.config
 import os
 import threading
 
-import numpy
 import SimpleITK as sitk
 import six
 

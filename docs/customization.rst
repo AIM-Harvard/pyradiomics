@@ -8,12 +8,13 @@ Customizing the Extraction
 Types of Customization
 ----------------------
 
-There are 3 ways in which the feature extraction can be customized in PyRadiomics:
+There are 4 ways in which the feature extraction can be customized in PyRadiomics:
 
 1. Specifying which image types (original/derived) to use to extract features from
 2. Specifying which feature(class) to extract
 3. Specifying settings, which control the pre processing and customize the behaviour of enabled filters and feature
    classes.
+4. Specifying the voxel-based specific settings, which are only needed when using PyRadiomics to generate feature maps
 
 .. warning::
     At initialization of the feature extractor or an individual feature class, settings can be provided as keyword
@@ -349,13 +350,34 @@ Feature Class Specific Settings
 - ``gldm_a`` [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is
   considered dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
 
+.. _radiomics-voxel-settings-label:
+
+Voxel-based specific settings
+#############################
+
+When using PyRadiomics to generate feature maps, additional customization options exist. These control the neighborhood
+around each voxel that is used for calculation (kernel) and what the background value should be, i.e. the value of
+voxels for which there is no calculated value.
+
+- ``kernelRadius`` [1]: integer, specifies the size of the kernel to use as the radius from the center voxel. Therefore
+  the actual size is ``2 * kernelRadius + 1``. E.g. a value of 1 yields a 3x3x3 kernel, a value of 2 5x5x5, etc. In case
+  of 2D extraction, the generated kernel will also be a 2D shape (square instead of cube).
+
+- ``maskedKernel`` [True]: boolean, specifies whether to mask the kernel with the overall mask. If True, only voxels in
+  the kernel that are also segmented in the mask are used for calculation. Otherwise, all voxels inside the kernel are
+  used. Moreover, gray value discretization is performed over the ROI if the setting is set to True, and over the entire
+  image if False.
+
+- ``initValue`` [0]: float, value to use for voxels outside the ROI, or voxels where calculation failed. If set to
+  ``nan``, 3D slicer will treat them as transparent voxels
+
 .. _radiomics-parameter-file-label:
 
 --------------
 Parameter File
 --------------
 
-All 3 categories of customization can be provided in a single yaml or JSON structured text file, which can be provided
+All 4 categories of customization can be provided in a single yaml or JSON structured text file, which can be provided
 in an optional argument (``--param``) when running pyradiomics from the command line. In interactive mode, it can be
 provided during initialization of the :ref:`feature extractor <radiomics-featureextractor-label>`, or using
 :py:func:`~radiomics.featureextractor.RadiomicsFeaturesExtractor.loadParams` after initialization. This removes the need
@@ -399,6 +421,8 @@ The three setting types are named as follows:
    <value> is specified or <value> is an empty list ('[]'), all features for this class are enabled.
 3. **setting:** Setting to use for pre processing and class specific settings. if no <value> is specified, the value for
    this setting is set to None.
+4. **voxelSetting:** Settings used to control the voxel-based specific settings. E.g. the size of the kernel used and
+   the background value in the parameter maps.
 
 Example::
 

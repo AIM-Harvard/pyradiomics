@@ -9,7 +9,9 @@ Welcome to pyradiomics documentation!
 This is an open-source python package for the extraction of Radiomics features from medical imaging.
 With this package we aim to establish a reference standard for Radiomic Analysis, and provide a tested and maintained
 open-source platform for easy and reproducible Radiomic Feature extraction. By doing so, we hope to increase awareness
-of radiomic capabilities and expand the community. The platform supports both the feature extraction in 2D and 3D.
+of radiomic capabilities and expand the community. The platform supports both the feature extraction in 2D and 3D and
+can be used to calculate single values per feature for a region of interest ("segment-based") or to generate feature
+maps ("voxel-based").
 
 **If you publish any work which uses this package, please cite the following publication:**
 *van Griethuysen, J. J. M., Fedorov, A., Parmar, C., Hosny, A., Aucoin, N., Narayan, V., Beets-Tan, R. G. H.,

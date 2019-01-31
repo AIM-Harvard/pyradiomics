@@ -28,9 +28,20 @@ Example
 
   * The parameter file used in the instruction video is available in ``pyradiomics/examples/exampleSettings``
 
-* If jupyter is not installed, run the python script alternative (``pyradiomics/examples/helloRadiomics.py``):
+* If jupyter is not installed, run the python script alternatives contained in the folder (``pyradiomics/examples``):
 
-  * ``python helloRadiomics.py``
+  * ``python helloRadiomics.py`` (segment-based extraction)
+  * ``python helloVoxel.py`` (voxel-based extraction)
+
+----------------------
+Voxel-based extraction
+----------------------
+
+As of version 2.0, pyradiomics also implements a voxel-based extraction. It is both available from the command line and
+in the interactive use. See below for details.
+
+Important to know here is that this extraction takes longer (features have to be calculated for each voxel), and that
+the output is a SimpleITK image of the parameter map instead of a float value *for each feature*.
 
 ----------------
 Command Line Use
@@ -71,6 +82,12 @@ Command Line Use
   argument and/or by specifying override settings (only `type 3 customization <radiomics-settings-label>`) in the
   ``--setting`` argument. Multiple overrides can be used by specifying ``--setting`` multiple times.
 
+* To extract feature maps ("voxel-based" extraction), simply add the argument ``--mode voxel``. The calculated feature
+  maps are then stored as images (NRRD format) in the current working directory. The name convention used is
+  "Case-<idx>_<FeatureName>.nrrd". An alternative output directory can be provided in the ``--out-dir`` command line
+  switch. The results that are printed to the console window or the out file will still contain the diagnostic
+  information, and the value of the extracted features is set to the location the feature maps are stored.
+
 * For more information on the possible command line arguments, run::
 
     pyradiomics -h
@@ -91,9 +108,12 @@ Interactive Use
 
 * Import the necessary classes::
 
-     from radiomics import featureextractor, getTestCase
+     import os
+
+     import SimpleITK as sitk
      import six
-     import sys, os
+
+     from radiomics import featureextractor, getTestCase
 
 * Set up a pyradiomics directory variable::
 
@@ -113,44 +133,23 @@ Interactive Use
 
     extractor = featureextractor.RadiomicsFeaturesExtractor(params)
 
-* Calculate the features::
+* Calculate the features (segment-based)::
 
     result = extractor.execute(imageName, maskName)
     for key, val in six.iteritems(result):
       print("\t%s: %s" %(key, val))
 
-* See the :ref:`feature extractor class<radiomics-featureextractor-label>` for more information on using this core class.
-
-----------------------
-Voxel-based extraction
-----------------------
-
-As of version 2.0, pyradiomics also implements a voxel-based extraction.
-Currently, this is only available in the interactive mode, and is as simple as telling the feature extractor to
-extract a parameter map::
-
-    from radiomics import featureextractor, getTestCase
-    import six
-    import sys, os
-
-    import SimpleITK as sitk
-
-    dataDir = '/path/to/pyradiomics'
-
-    imageName, maskName = getTestCase('brain1', dataDir)
-    params = os.path.join(dataDir, "examples", "exampleSettings", "exampleVoxel.yaml")
-
-    extractor = featureextractor.RadiomicsFeaturesExtractor(params)
+* Calculate the features (voxel-based)::
 
     result = extractor.execute(imageName, maskName, voxelBased=True)
-
     for key, val in six.iteritems(result):
-      sitk.WriteImage(val, key + 'nrrd')
+      if isinstance(val, sitk.Image):  # Feature map
+        sitk.WriteImage(val, key + '.nrrd', True)
+        print("Stored feature %s in %s" % (key, key + ".nrrd")
+      else:  # Diagnostic information
+        print("\t%s: %s" %(key, val))
 
-Important to know here is that this extraction takes longer (features have to be calculated for each voxel), and that
-the output is a SimpleITK image of the parameter map instead of a float value *for each feature*.
-
-Be sure to also check out the ``helloVoxel.py`` example available in the repository (folder ``examples``).
+* See the :ref:`feature extractor class<radiomics-featureextractor-label>` for more information on using this core class.
 
 ------------------------
 PyRadiomics in 3D Slicer

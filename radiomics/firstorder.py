@@ -35,7 +35,6 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     self.voxelArrayShift = kwargs.get('voxelArrayShift', 0)
 
   def _initCalculation(self):
-    super(RadiomicsFirstOrder, self)._initSegmentBasedCalculation()
     self.targetVoxelArray = self.imageArray[self.labelledVoxelCoordinates].astype('float')
     self.discretizedTargetVoxelArray = None  # Lazy instantiation
 

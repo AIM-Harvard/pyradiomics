@@ -422,11 +422,11 @@ class RadiomicsFeaturesExtractor:
     if resegmentShape and resegmentedMask is not None:
       mask = resegmentedMask
 
-    if not voxelBased:
-      # 3. Add the additional information if enabled
-      if self.generalInfo is not None:
-        featureVector.update(self.generalInfo.getGeneralInfo())
+    # 3. Add the additional information if enabled
+    if self.generalInfo is not None:
+      featureVector.update(self.generalInfo.getGeneralInfo())
 
+    if not voxelBased:
       # 4. If shape descriptors should be calculated, handle it separately here
       if 'shape' in self._enabledFeatures.keys():
         featureVector.update(self.computeShape(image, mask, boundingBox))

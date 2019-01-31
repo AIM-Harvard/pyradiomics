@@ -1,5 +1,4 @@
 from collections import OrderedDict
-import csv
 from datetime import datetime
 import logging.config
 import os
@@ -14,44 +13,19 @@ caseLogger = logging.getLogger('radiomics.script')
 _parallel_extraction_configured = False
 
 
-def extractSegment(case_idx, case, config, config_override, out_dir):
-  global caseLogger
-
-  if out_dir is None:
-    return _extractFeatures(case_idx, case, config, config_override)
-
-  filename = os.path.join(out_dir, 'features_%s.csv' % case_idx)
-  if os.path.isfile(filename):
-    # Output already generated, load result (prevents re-extraction in case of interrupted process)
-    with open(filename, 'w') as outputFile:
-      reader = csv.reader(outputFile)
-      headers = reader.rows[0]
-      values = reader.rows[1]
-      feature_vector = OrderedDict(zip(headers, values))
-
-    caseLogger.info('Patient %s already processed, reading results...', case_idx)
-  else:
-    # Extract the set of features. Set parallel_config flag to None, as any logging initialization is already handled.
-    feature_vector = _extractFeatures(case_idx, case, config, config_override)
-
-    # Store results in temporary separate files to prevent write conflicts
-    # This allows for the extraction to be interrupted. Upon restarting, already processed cases are found in the
-    # TEMP_DIR directory and loaded instead of re-extracted
-    with open(filename, 'w') as outputFile:
-      writer = csv.DictWriter(outputFile, fieldnames=list(feature_vector.keys()), lineterminator='\n')
-      writer.writeheader()
-      writer.writerow(feature_vector)
-
-  return feature_vector
-
-
-def _extractFeatures(case_idx, case, config, config_override):
+def extractVoxel(case_idx, case, config, config_override, out_dir):
   global caseLogger
 
   # Instantiate the output
   feature_vector = OrderedDict(case)
 
   try:
+    if out_dir is None:
+      out_dir = '.'
+    elif not os.path.isdir(out_dir):
+      caseLogger.debug('Creating output directory at %s' % out_dir)
+      os.makedirs(out_dir)
+
     caseLogger.info('Processing case %s', case_idx)
     t = datetime.now()
 
@@ -65,7 +39,15 @@ def _extractFeatures(case_idx, case, config, config_override):
     extractor = radiomics.featureextractor.RadiomicsFeaturesExtractor(config, **config_override)
 
     # Extract features
-    feature_vector.update(extractor.execute(imageFilepath, maskFilepath, label))
+    result = extractor.execute(imageFilepath, maskFilepath, label, voxelBased=True)
+
+    for k in result:
+      if isinstance(result[k], sitk.Image):
+        target = os.path.join(out_dir, 'Case-%i_%s.nrrd' % (case_idx, k))
+        sitk.WriteImage(result[k], target, True)
+        feature_vector[k] = target
+      else:
+        feature_vector[k] = result[k]
 
     # Display message
     delta_t = datetime.now() - t
@@ -82,13 +64,13 @@ def _extractFeatures(case_idx, case, config, config_override):
   return feature_vector
 
 
-def extractSegment_parallel(args, out_dir=None, logging_config=None):
+def extractVoxel_parallel(args, out_dir=None, logging_config=None):
   try:
     if logging_config is not None:
       # set thread name to patient name
       threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
       _configureParallelExtraction(logging_config)
-    return extractSegment(*args, out_dir=out_dir)
+    return extractVoxel(*args, out_dir=out_dir)
   except (KeyboardInterrupt, SystemExit):
     # Catch the error here, as this represents the interrupt of the child process.
     # The main process is also interrupted, and cancellation is further handled there

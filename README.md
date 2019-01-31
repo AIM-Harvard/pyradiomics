@@ -23,7 +23,10 @@ With this package we aim to establish a reference standard for Radiomic Analysis
 open-source platform for easy and reproducible Radiomic Feature extraction. By doing so, we hope to increase awareness
 of radiomic capabilities and expand the community.
 
-The platform supports both the feature extraction in 2D and 3D. **Not intended for clinical use.**
+The platform supports both the feature extraction in 2D and 3D and can be used to calculate single values per feature
+for a region of interest ("segment-based") or to generate feature maps ("voxel-based"). 
+
+**Not intended for clinical use.**
 
 **If you publish any work which uses this package, please cite the following publication:**
 *van Griethuysen, J. J. M., Fedorov, A., Parmar, C., Hosny, A., Aucoin, N., Narayan, V., Beets-Tan, R. G. H.,

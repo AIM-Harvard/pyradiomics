@@ -36,7 +36,6 @@ Intensity-based statistical features	UHIW
 Mean	Q4LE	firstorder	Mean	
 Variance	ECT3	firstorder	Variance	
 Skewness	KE2A	firstorder	Skewness	
-Kurtosis	IPH6	firstorder	Kurtosis	The IBSI feature definition implements excess kurtosis, where kurtosis is corrected by -3, yielding 0 for normal distributions. The PyRadiomics kurtosis is not corrected, yielding a value 3 higher than the IBSI kurtosis.
 Median	Y12H	firstorder	Median	
 Minimum grey level	1GSF	firstorder	Minimum	
 10th percentile	QG58	firstorder	10Percentile	

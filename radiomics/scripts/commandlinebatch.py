@@ -105,10 +105,10 @@ def main():
   headers = None
   for idx, entry in enumerate(flists, start=1):
     # Check if the required columns have a value, if not, skip them.
-    if entry['Image'] is '':
+    if entry['Image'] == '':
       logger.error('Missing value in column "Image", cannot process. Skipping patient (%d/%d)', idx, len(flists))
       continue
-    if entry['Mask'] is '':
+    if entry['Mask'] == '':
       logger.error('Missing value in column "Mask", cannot process. Skipping patient (%d/%d)', idx, len(flists))
       continue
 

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <Python.h>
 #include "cmatrices.h"
 
 int calculate_glcm(int *image, char *mask, int *size, int *strides, int *angles, int Na, int Nd, double *glcm, int Ng)
@@ -228,14 +227,9 @@ int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles
   int glrlm_idx, glrlm_idx_max = Ng * Nr * Na;  // Index and max index of the texture array
 
   // Calculate size of image array
-  printf("Size: %i", size[0]);
   Ni = size[0];
   for (d = 1; d < Nd; d++)
-  {
-    printf(", %i", size[d]);
     Ni *= size[d];
-  }
-  printf("\n");
 
   for (a = 0; a < Na; a++)  // Iterate over angles to get the neighbours
   {
@@ -243,10 +237,8 @@ int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles
     // First lookup and count the number of dimensions where the angle != 0 (i.e. "Moving dimensions")
     // Moreover, check if we need to start at 0 (angle > 0) or at the end (size[d] - 1, angle < 0)
     cnt_mDim = 0;
-    printf("Angle: ");
     for (d = 0; d < Nd; d++)
     {
-      printf("%i ", angles[a * 3 + d]);
       if (angles[a * 3 + d] != 0)
       {
         if (angles[a * 3 + d] > 0)
@@ -257,7 +249,6 @@ int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles
         cnt_mDim++;
       }
     }
-    printf("\n");
 
     // Then, iterate over the image (with the goal of getting all "start positions", i.e. from where we start the run
     for (i = 0; i < Ni; i++)
@@ -291,18 +282,7 @@ int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles
         // next dimension to increase by 1) or to (size[d] - 1), respectively.
         d = mDims[cnt_mDim - 1]; // Get the last moving dimension (i.e. the moving dimension with the smallest stride)
 
-        printf("Skipping in moving dim %d! index ", d);
-        if (d == 0)
-          printf("%d -> ", i / strides[d]);
-        else
-          printf("%d -> ", (i % strides[d - 1]) / strides[d]);
-
         i += (size[d] - 1) * strides[d]; // Skip the rest of the voxels in this moving dimension
-
-        if (d == 0)
-          printf("%d\n", i / strides[d]);
-        else
-          printf("%d\n", (i % strides[d - 1]) / strides[d]);
 
         if (i >= Ni)  // Check if this does not mean we've finished iterating over the entire image.
           break;

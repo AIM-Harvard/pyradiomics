@@ -12,7 +12,7 @@ subdivided into the following classes:
 * :py:class:`Gray Level Cooccurence Matrix <radiomics.glcm.RadiomicsGLCM>` (24 features)
 * :py:class:`Gray Level Run Length Matrix <radiomics.glrlm.RadiomicsGLRLM>` (16 features)
 * :py:class:`Gray Level Size Zone Matrix <radiomics.glszm.RadiomicsGLSZM>` (16 features)
-* :py:class:`Neigbouring Gray Tone Difference Matrix <radiomics.ngtdm.RadiomicsNGTDM>` (5 features)
+* :py:class:`Neighbouring Gray Tone Difference Matrix <radiomics.ngtdm.RadiomicsNGTDM>` (5 features)
 * :py:class:`Gray Level Dependence Matrix <radiomics.gldm.RadiomicsGLDM>` (14 features)
 
 All feature classes, with the exception of shape can be calculated on either the original image and/or a derived image,
@@ -81,7 +81,7 @@ Gray Level Run Length Matrix (GLRLM) Features
 
 .. _radiomics-ngtdm-label:
 
-Neigbouring Gray Tone Difference Matrix (NGTDM) Features
+Neighbouring Gray Tone Difference Matrix (NGTDM) Features
 --------------------------------------------------------
 
 .. automodule:: radiomics.ngtdm

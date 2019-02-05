@@ -11,7 +11,7 @@ int calculate_glcm(int *image, char *mask, int *size, int *strides, int *angles,
   // Index and size variables of the image
   int Ni;  // Size of the entire image array
   int i, j, a, d;  // Iterator variables (image, angles, dimensions)
-  int* cur_idx = (int *)calloc(Nd, sizeof(int));  // Temporary array to store current index by dimension
+  int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
 // Output matrix variables
   int glcm_idx, glcm_idx_max = Ng * Ng * Na;  // Index and max index of the texture array
@@ -82,7 +82,7 @@ int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles
   // Index and size variables of the image
   int Ni;  // Size of the entire image array
   int i, j, k, a, d;  // Iterator variables (image, angles, dimensions)
-  int* cur_idx = (int *)calloc(Nd, sizeof(int));  // Temporary array to store current index by dimension
+  int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
   // Stack to hold indices of a growing region
   int *regionStack;
@@ -94,7 +94,7 @@ int calculate_glszm(int *image, char *mask, int *size, int *strides, int *angles
   int regionCounter = 0;
   int max_region_idx = Ns * 2;
 
-  regionStack = (int *)calloc(Ns, sizeof(int));
+  regionStack = (int *)malloc(sizeof *regionStack * Ns);
 
   // Calculate size of image array
   Ni = size[0];
@@ -218,8 +218,8 @@ int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles
 
   // Variables to track the non-zero offsets of the current angle (=moving dimensions)
   // and to help define the start voxels for the runs
-  int* mDims = (int *)calloc(Nd, sizeof(int));  // Array to hold mapping to moving dimensions
-  int* mDim_start = (int *)calloc(Nd, sizeof(int)); // Array to hold start positions for moving dimensions (0 or size - 1)
+  int* mDims = (int *)malloc(sizeof *mDims * Nd);  // Array to hold mapping to moving dimensions
+  int* mDim_start = (int *)malloc(sizeof *mDim_start * Nd); // Array to hold start positions for moving dimensions (0 or size - 1)
   int cur_idx;  // Only need a single int for index, as each the index is calculated and check separately for each dimension
 
   // Output matrix variables
@@ -239,9 +239,9 @@ int calculate_glrlm(int *image, char *mask, int *size, int *strides, int *angles
     cnt_mDim = 0;
     for (d = 0; d < Nd; d++)
     {
-      if (angles[a * 3 + d] != 0)
+      if (angles[a * Nd + d] != 0)
       {
-        if (angles[a * 3 + d] > 0)
+        if (angles[a * Nd + d] > 0)
           mDim_start[cnt_mDim] = 0;
         else
           mDim_start[cnt_mDim] = size[d] - 1;
@@ -394,7 +394,7 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *strides, int *angles
   int gl;
   int Ni;  // Size of the entire image array
   int i, j, a, d;  // Iterator variables (image, angles, dimensions)
-  int* cur_idx = (int *)calloc(Nd, sizeof(int));  // Temporary array to store current index by dimension
+  int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
   // Output matrix variables
   double count, sum, diff;
@@ -484,7 +484,7 @@ int calculate_gldm(int *image, char *mask, int *size, int *strides, int *angles,
   // Index and size variables of the image
   int Ni;  // Size of the entire image array
   int i, j, a, d;  // Iterator variables (image, angles, dimensions)
-  int* cur_idx = (int *)calloc(Nd, sizeof(int));  // Temporary array to store current index by dimension
+  int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
   // Output matrix variables
   int dep, diff;
@@ -636,7 +636,7 @@ int build_angles(int *size, int *distances, int Nd, int Ndist, int force2Ddim, i
   // dim 2  -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1 -1  0  1
   // dim 1  -1 -1 -1  0  0  0  1  1  1 -1 -1 -1  0  0  0  1  1  1 -1 -1 -1  0  0  0  1  1  1
   // dim 0  -1 -1 -1 -1 -1 -1 -1 -1 -1  0  0  0  0  0  0  0  0  0  1  1  1  1  1  1  1  1  1
-  offset_stride = (int *)calloc(Nd, sizeof(int));
+  offset_stride = (int *)malloc(sizeof *offset_stride * Nd);
   offset_stride[Nd - 1] = 1;
   for (dim_idx = Nd - 2; dim_idx >= 0; dim_idx--)
     offset_stride[dim_idx] = offset_stride[dim_idx + 1] * n_offsets;

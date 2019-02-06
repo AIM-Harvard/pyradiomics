@@ -428,18 +428,28 @@ class RadiomicsFeaturesExtractor:
 
     if not voxelBased:
       # 4. If shape descriptors should be calculated, handle it separately here
+      Nd = mask.GetDimension()
       if 'shape' in self._enabledFeatures.keys():
-        featureVector.update(self.computeShape(image, mask, boundingBox))
-      if 'shape2D' in self._enabledFeatures.keys():
-        force2D = self.settings.get('force2D', False)
-        force2Ddimension = self.settings.get('force2Ddimension', 0)
-        if not force2D:
-          self.logger.warning('parameter force2D must be set to True to enable shape2D extraction')
-        elif not (boundingBox[1::2] - boundingBox[0::2] + 1)[force2Ddimension] > 1:
-          self.logger.warning('Size in specified 2D dimension (%i) is greater than 1, cannot calculate 2D shape',
-                              force2Ddimension)
+        if Nd == 3:
+          featureVector.update(self.computeShape(image, mask, boundingBox))
         else:
+          self.logger.warning('Shape features are only available 3D input (for 2D input, use shape2D). Found %iD input', Nd)
+      if 'shape2D' in self._enabledFeatures.keys():
+        if Nd == 3:
+          force2D = self.settings.get('force2D', False)
+          force2Ddimension = self.settings.get('force2Ddimension', 0)
+          if not force2D:
+            self.logger.warning('parameter force2D must be set to True to enable shape2D extraction')
+          elif not (boundingBox[1::2] - boundingBox[0::2] + 1)[force2Ddimension] > 1:
+            self.logger.warning('Size in specified 2D dimension (%i) is greater than 1, cannot calculate 2D shape',
+                                force2Ddimension)
+          else:
+            featureVector.update(self.computeShape(image, mask, boundingBox, 'shape2D'))
+        elif Nd == 2:
           featureVector.update(self.computeShape(image, mask, boundingBox, 'shape2D'))
+        else:
+          self.logger.warning('Shape2D features are only available for 2D and 3D (with force2D=True) input. '
+                              'Found %iD input', Nd)
 
     # (Default) Only use resegemented mask for feature classes other than shape
     # can be overridden by specifying `resegmentShape` = True

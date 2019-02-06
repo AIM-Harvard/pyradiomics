@@ -52,41 +52,32 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
     raise NotImplementedError('Shape features are not available in pixel-based mode')
 
   def _initSegmentBasedCalculation(self):
-    if not self.settings.get('force2D', False):
-      raise ValueError('Shape2D is can only be calculated when `force2D` is True')
+    self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)  # boolean array
 
-    force2DDimension = self.settings.get('force2Ddimension', 0)
-    axes = [0, 1, 2]
-    axes.remove(force2DDimension)
+    Nd = self.inputMask.GetDimension()
+    if Nd == 3:
+      if not self.settings.get('force2D', False):
+        raise ValueError('Shape2D is can only be calculated when input is 2D or 3D with `force2D=True`')
 
-    self.pixelSpacing = numpy.array(self.inputImage.GetSpacing()[::-1])[(axes,)]
+      force2DDimension = self.settings.get('force2Ddimension', 0)
+      axes = [0, 1, 2]
+      axes.remove(force2DDimension)
 
-    # Pad inputMask to prevent index-out-of-range errors
+      self.pixelSpacing = numpy.array(self.inputImage.GetSpacing()[::-1])[(axes,)]
+
+      if self.maskArray.shape[force2DDimension] > 1:
+        raise ValueError('Size of the mask in dimension %i is more than 1, cannot compute 2D shape')
+
+      # Drop the 2D axis, ensuring the input is truly 2D
+      self.maskArray = numpy.squeeze(self.maskArray, axis=force2DDimension)
+    elif Nd == 2:
+      self.pixelSpacing = numpy.array(self.inputImage.GetSpacing()[::-1])
+    else:
+      raise ValueError('Shape2D is can only be calculated when input is 2D or 3D with `force2D=True`')
+
+    # Pad maskArray to prevent index-out-of-range errors
     self.logger.debug('Padding the mask with 0s')
-
-    cpif = sitk.ConstantPadImageFilter()
-
-    padding = numpy.tile(1, 3)
-    padding[force2DDimension] = 0  # Do not pad in 2D dimension
-    padding = padding[::-1]  # Reverse order (ITK is x, y, z; Numpy is z, y, x)
-    try:
-      cpif.SetPadLowerBound(padding)
-      cpif.SetPadUpperBound(padding)
-    except TypeError:
-      # newer versions of SITK/python want a tuple or list
-      cpif.SetPadLowerBound(padding.tolist())
-      cpif.SetPadUpperBound(padding.tolist())
-
-    self.inputMask = cpif.Execute(self.inputMask)
-
-    # Reassign self.maskArray using the now-padded self.inputMask
-    self.maskArray = numpy.array(sitk.GetArrayFromImage(self.inputMask) == self.label)
-
-    if self.maskArray.shape[force2DDimension] > 1:
-      raise ValueError('Size of the mask in dimension %i is more than 1, cannot compute 2D shape')
-
-    # Drop the 2D axis, ensuring the input is truly 2D
-    self.maskArray = numpy.squeeze(self.maskArray, axis=force2DDimension)
+    self.maskArray = numpy.pad(self.maskArray, pad_width=1, mode='constant', constant_values=0)
 
     self.labelledPixelCoordinates = numpy.where(self.maskArray != 0)
 

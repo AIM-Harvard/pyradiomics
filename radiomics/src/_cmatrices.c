@@ -103,13 +103,14 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   PyObject *image_obj, *mask_obj, *distances_obj;
   PyArrayObject *image_arr, *mask_arr;
   int Nd, Na;
-  int *size, *strides;
+  int *size, *bb, *strides;
   npy_intp dims[3];
   PyArrayObject *glcm_arr, *angles_arr;
   int *image;
   char *mask;
   int *angles;
   double *glcm;
+  int d;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOOiii", &image_obj, &mask_obj, &distances_obj, &Ng, &force2D, &force2Ddimension))
@@ -175,8 +176,9 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   // Set all elements to 0
   memset(glcm, 0, sizeof *glcm * Ng * Ng * Na);
 
-  //Calculate GLCM
-  if (!calculate_glcm(image, mask, size, strides, angles, Na, Nd, glcm, Ng))
+  // initialize bb
+  bb = (int *)malloc(sizeof *bb * Nd * 2);
+  if (!bb)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -185,6 +187,29 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
 
     free(size);
     free(strides);
+
+    return PyErr_NoMemory();
+  }
+  memset(bb, 0, sizeof *bb * Nd);
+  for (d = 0; d < Nd; d++)
+    bb[Nd + d] = size[d] - 1;
+
+  printf("_BB");
+  for (d = 0; d < Nd; d++)
+    printf(", %i %i", bb[d], bb[Nd + d]);
+  printf("\n");
+
+  //Calculate GLCM
+  if (!calculate_glcm(image, mask, size, bb, strides, angles, Na, Nd, glcm, Ng))
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(glcm_arr);
+    Py_XDECREF(angles_arr);
+
+    free(size);
+    free(strides);
+    free(bb);
 
     PyErr_SetString(PyExc_IndexError, "Calculation of GLCM Failed.");
     return NULL;
@@ -196,6 +221,7 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
 
   free(size);
   free(strides);
+  free(bb);
 
   return Py_BuildValue("NN", PyArray_Return(glcm_arr), PyArray_Return(angles_arr));
 }
@@ -206,7 +232,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   PyObject *image_obj, *mask_obj;
   PyArrayObject *image_arr, *mask_arr;
   int Na, Nd;
-  int *size, *strides;
+  int *size, *bb, *strides;
   npy_intp dims[2];
   PyArrayObject *glszm_arr, *angles_arr;
   int *image;
@@ -215,6 +241,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   int *tempData;
   int maxRegion;
   double *glszm;
+  int d;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOiiii", &image_obj, &mask_obj, &Ng, &Ns, &force2D, &force2Ddimension))
@@ -260,8 +287,26 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   image = (int *)PyArray_DATA(image_arr);
   mask = (char *)PyArray_DATA(mask_arr);
 
+  // initialize bb
+  bb = (int *)malloc(sizeof *bb * Nd * 2);
+  if (!bb)
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(glszm_arr);
+    Py_XDECREF(angles_arr);
+
+    free(size);
+    free(strides);
+
+    return PyErr_NoMemory();
+  }
+  memset(bb, 0, sizeof *bb * Nd);
+  for (d = 0; d < Nd; d++)
+    bb[Nd + d] = size[d] - 1;
+
   //Calculate GLSZM
-  maxRegion = calculate_glszm(image, mask, size, strides, angles, Na, Nd, tempData, Ng, Ns);
+  maxRegion = calculate_glszm(image, mask, size, bb, strides, angles, Na, Nd, tempData, Ng, Ns);
   if (maxRegion < 0) // Error occured
   {
 	  free(tempData);
@@ -271,6 +316,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 
     free(size);
     free(strides);
+    free(bb);
 
     PyErr_SetString(PyExc_IndexError, "Calculation of GLSZM Failed.");
     return NULL;
@@ -283,6 +329,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 
   free(size);
   free(strides);
+  free(bb);
 
   // Initialize output array (elements not set)
   if (maxRegion == 0) maxRegion = 1;
@@ -330,13 +377,14 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   PyObject *image_obj, *mask_obj;
   PyArrayObject *image_arr, *mask_arr;
   int Nd, Na;
-  int *size, *strides;
+  int *size, *bb, *strides;
   npy_intp dims[3];
   PyArrayObject *glrlm_arr, *angles_arr;
   int *image;
   char *mask;
   int *angles;
   double *glrlm;
+  int d;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOiiii", &image_obj, &mask_obj, &Ng, &Nr, &force2D, &force2Ddimension))
@@ -402,8 +450,9 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   // Set all elements to 0
   memset(glrlm, 0, sizeof *glrlm * Ng * Nr * Na);
 
-  //Calculate GLRLM
-  if (!calculate_glrlm(image, mask, size, strides, angles, Na, Nd, glrlm, Ng, Nr))
+  // initialize bb
+  bb = (int *)malloc(sizeof *bb * Nd * 2);
+  if (!bb)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -412,6 +461,24 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
 
     free(size);
     free(strides);
+
+    return PyErr_NoMemory();
+  }
+  memset(bb, 0, sizeof *bb * Nd);
+  for (d = 0; d < Nd; d++)
+    bb[Nd + d] = size[d] - 1;
+
+  //Calculate GLRLM
+  if (!calculate_glrlm(image, mask, size, bb, strides, angles, Na, Nd, glrlm, Ng, Nr))
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(glrlm_arr);
+    Py_XDECREF(angles_arr);
+
+    free(size);
+    free(strides);
+    free(bb);
 
     PyErr_SetString(PyExc_IndexError, "Calculation of GLRLM Failed.");
     return NULL;
@@ -423,6 +490,7 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
 
   free(size);
   free(strides);
+  free(bb);
 
   return Py_BuildValue("NN", PyArray_Return(glrlm_arr), PyArray_Return(angles_arr));
 }
@@ -433,13 +501,14 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   PyObject *image_obj, *mask_obj, *distances_obj;
   PyArrayObject *image_arr, *mask_arr;
   int Nd, Na;
-  int *size, *strides;
+  int *size, *bb, *strides;
   npy_intp dims[2];
   PyArrayObject *ngtdm_arr, *angles_arr;
   int *image;
   char *mask;
   int *angles;
   double *ngtdm;
+  int d;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOOiii", &image_obj, &mask_obj, &distances_obj, &Ng, &force2D, &force2Ddimension))
@@ -504,8 +573,9 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   // Set all elements to 0
   memset(ngtdm, 0, sizeof *ngtdm * Ng * 3);
 
-  //Calculate NGTDM
-  if (!calculate_ngtdm(image, mask, size, strides, angles, Na, Nd, ngtdm, Ng))
+  // initialize bb
+  bb = (int *)malloc(sizeof *bb * Nd * 2);
+  if (!bb)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -514,6 +584,24 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
 
     free(size);
     free(strides);
+
+    return PyErr_NoMemory();
+  }
+  memset(bb, 0, sizeof *bb * Nd);
+  for (d = 0; d < Nd; d++)
+    bb[Nd + d] = size[d] - 1;
+
+  //Calculate NGTDM
+  if (!calculate_ngtdm(image, mask, size, bb, strides, angles, Na, Nd, ngtdm, Ng))
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(ngtdm_arr);
+    Py_XDECREF(angles_arr);
+
+    free(size);
+    free(strides);
+    free(bb);
 
     PyErr_SetString(PyExc_IndexError, "Calculation of NGTDM Failed.");
     return NULL;
@@ -526,6 +614,7 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
 
   free(size);
   free(strides);
+  free(bb);
 
   return PyArray_Return(ngtdm_arr);
 }
@@ -536,14 +625,14 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   PyObject *image_obj, *mask_obj, *distances_obj;
   PyArrayObject *image_arr, *mask_arr;
   int Nd, Na;
-  int *size, *strides;
+  int *size, *bb, *strides;
   npy_intp dims[2];
   PyArrayObject *gldm_arr, *angles_arr;
   int *image;
   char *mask;
   int *angles;
   double *gldm;
-  int k;
+  int d;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOOiiii", &image_obj, &mask_obj, &distances_obj, &Ng, &alpha, &force2D, &force2Ddimension))
@@ -608,8 +697,9 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   // Set all elements to 0
   memset(gldm, 0, sizeof *gldm * Ng * (Na * 2 + 1));
 
-  //Calculate GLDM
-  if (!calculate_gldm(image, mask, size, strides, angles, Na, Nd, gldm, Ng, alpha))
+  // initialize bb
+  bb = (int *)malloc(sizeof *bb * Nd * 2);
+  if (!bb)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -618,6 +708,24 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
 
     free(size);
     free(strides);
+
+    return PyErr_NoMemory();
+  }
+  memset(bb, 0, sizeof *bb * Nd);
+  for (d = 0; d < Nd; d++)
+    bb[Nd + d] = size[d] - 1;
+
+  //Calculate GLDM
+  if (!calculate_gldm(image, mask, size, bb, strides, angles, Na, Nd, gldm, Ng, alpha))
+  {
+    Py_XDECREF(image_arr);
+    Py_XDECREF(mask_arr);
+    Py_XDECREF(gldm_arr);
+    Py_XDECREF(angles_arr);
+
+    free(size);
+    free(strides);
+    free(bb);
 
     PyErr_SetString(PyExc_IndexError, "Calculation of GLDM Failed.");
     return NULL;
@@ -630,6 +738,7 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
 
   free(size);
   free(strides);
+  free(bb);
 
   return PyArray_Return(gldm_arr);
 }
@@ -801,7 +910,24 @@ int try_parse_arrays(PyObject *image_obj, PyObject *mask_obj, PyArrayObject **im
   }
 
   *size = (int *)malloc(sizeof **size * *Nd);
+  if (!(*size))
+  {
+    Py_XDECREF(*image_arr);
+    Py_XDECREF(*mask_arr);
+    PyErr_NoMemory();
+    return -1;
+  }
+
   *strides = (int *)malloc(sizeof **strides * *Nd);
+  if (!(*strides))
+  {
+    free(*size);
+
+    Py_XDECREF(*image_arr);
+    Py_XDECREF(*mask_arr);
+    PyErr_NoMemory();
+    return -1;
+  }
 
   for (d = 0; d < *Nd; d++)
   {

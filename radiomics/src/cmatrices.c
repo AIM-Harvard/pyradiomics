@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <Python.h>
 #include "cmatrices.h"
 
 int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int *angles, int Na, int Nd, double *glcm, int Ng)
@@ -20,14 +19,11 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
   // Calculate size of image array, and set i at lower bound of bounding box
   Ni = size[0];
   i = bb[0] * strides[0];
-  printf("BB: %i %i", bb[0], bb[Nd]);
   for (d = 1; d < Nd; d++)
   {
     i += bb[d] * strides[d];
     Ni *= size[d];
-    printf(", %i %i", bb[d], bb[Nd + d]);
   }
-  printf("\n");
 
   // Loop over all voxels in the image
   for ( ; i < Ni; i++)
@@ -52,10 +48,6 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
 
     if (mask[i])
     {
-      printf("(%i", cur_idx[0]);
-      for (d = 1; d < Nd; d++)
-        printf(", %i", cur_idx[d]);
-      printf(")");
       // Loop over all angles to get the neighbours
       for (a = 0; a < Na; a++)
       {
@@ -65,7 +57,6 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
           // Check if the current offset does not go out-of-range
           if (cur_idx[d] + angles[a * Nd + d] < bb[d] ||  cur_idx[d] + angles[a * Nd + d] > bb[Nd + d])
           {
-            printf(" b: a %i d %i j %i", a, d, cur_idx[d] + angles[a * Nd + d]);
             j = -1;  // Set to -1 to signal out-of-range below
             break;
           }
@@ -85,7 +76,6 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
           glcm[glcm_idx] ++;
         }
       }
-      printf("\n");
     }
   }
   free(cur_idx);
@@ -290,10 +280,8 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
     // First lookup and count the number of dimensions where the angle != 0 (i.e. "Moving dimensions")
     // Moreover, check if we need to start at 0 (angle > 0) or at the end (size[d] - 1, angle < 0)
     cnt_mDim = 0;
-    printf("Angle: ");
     for (d = 0; d < Nd; d++)
     {
-      printf("%i ", angles[a * 3 + d]);
       if (angles[a * Nd + d] != 0)
       {
         if (angles[a * Nd + d] > 0)
@@ -304,7 +292,6 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
         cnt_mDim++;
       }
     }
-    printf("\n");
 
     // Then, iterate over the image (with the goal of getting all "start positions", i.e. from where we start the run)
     for (i = start_i; i < Ni; i++)
@@ -351,23 +338,12 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
         md = cnt_mDim - 1;
         d = mDims[md]; // Get the last moving dimension (i.e. the moving dimension with the smallest stride)
 
-        printf("Skipping in moving dim %d! index ", d);
-        if (d == 0)
-          printf("%d -> ", i / strides[d]);
-        else
-          printf("%d -> ", (i % strides[d - 1]) / strides[d]);
-
         // Advance i in the last moving dimension to a valid start position. Do this by calculating the difference
         // between the current position (cur_idx, as the loop above ends with the last moving dimension) and the
         // intended start position.
         // Take the modulus with the size to ensure this change is always forward.
         // Add size[d] to ensure the operation returns the modulus, not the remainder (% operator)
         i += ((mDim_start[md] - cur_idx + size[d]) % size[d]) * strides[d]; // Skip the rest of the voxels in this moving dimension
-
-        if (d == 0)
-          printf("%d (s %i, i %i, size %i: +%i)", i / strides[d], mDim_start[md], cur_idx, size[d], (mDim_start[md] - cur_idx + size[d]) % size[d]);
-        else
-          printf("%d (s %i, i %i, size %i: +%i)", (i % strides[d - 1]) / strides[d], mDim_start[md], cur_idx, size[d], (mDim_start[md] - cur_idx + size[d]) % size[d]);
 
         // Update all lower dimensions if necessary (ensuring it all stays within the bounding box)
         d--;  // Don't handle the current dimension (=last moving dimension), we just did that above...
@@ -386,11 +362,6 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
         if (i / strides[0] > bb[Nd])
           break; // Out-of-range in first dimension: end of bounding box reached
       }
-
-      printf("(%i", i / strides[0]);
-      for (d = 1; d < Nd; d++)
-        printf(", %i", (i % strides[d - 1]) / strides[d]);
-      printf(")\n");
 
       // Run Forest, Run! Start at the current index and advance using the angle until exiting the image.
       j = i;
@@ -451,7 +422,6 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
           // Check if that is within the range [0, size[d])
           if (cur_idx + angles[a * Nd + d] < bb[d] ||  cur_idx + angles[a * Nd + d] > bb[Nd + d])
           {
-            printf(" b: a %i d %i j %i", a, d, cur_idx[d] + angles[a * Nd + d]);
             j = -1;  // Set to -1 to signal out-of-range below
             break;
           }

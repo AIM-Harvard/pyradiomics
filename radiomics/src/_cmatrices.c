@@ -194,11 +194,6 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   for (d = 0; d < Nd; d++)
     bb[Nd + d] = size[d] - 1;
 
-  printf("_BB");
-  for (d = 0; d < Nd; d++)
-    printf(", %i %i", bb[d], bb[Nd + d]);
-  printf("\n");
-
   //Calculate GLCM
   if (!calculate_glcm(image, mask, size, bb, strides, angles, Na, Nd, glcm, Ng))
   {

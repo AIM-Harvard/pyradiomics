@@ -274,7 +274,7 @@ class RadiomicsFeaturesBase(object):
     # Get the feature values using the current segment.
     for success, featureName, featureValue in self._calculateFeatures():
       # Always store the result. In case of an error, featureValue will be NaN
-      self.featureValues[featureName] = featureValue
+      self.featureValues[featureName] = numpy.squeeze(featureValue)
 
   def _calculateFeatures(self):
     # Initialize the calculation

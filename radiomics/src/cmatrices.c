@@ -218,21 +218,22 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
   return maxSize;
 }
 
-int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion)
+int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion, int Nvox)
 {
   /* This function fills the GLSZM using the zones described in the tempData. See calculate_glszm() for more details.
    */
-  int i = 0;
-  int glszm_idx, glszm_idx_max = Ng * maxRegion;  // Index and max index of the texture array
+  int v, i = 0;
+  int glszm_idx, glszm_idx_max = Nvox * Ng * maxRegion;  // Index and max index of the texture array
 
-  while(tempData[i * 2] > -1)
-  {
-    glszm_idx = (tempData[i * 2] - 1) * maxRegion + tempData[i * 2 + 1] - 1;
-    if (glszm_idx >= glszm_idx_max) return 0; // Index out of range
+  for (v = 0; v < Nvox; v++)
+    while(tempData[v * (Ng * 2 + 1) + i * 2] > -1)
+    {
+      glszm_idx = v * Ng * maxRegion + (tempData[v * (Ng * 2 + 1) + i * 2] - 1) * maxRegion + tempData[v * (Ng * 2 + 1) + i * 2 + 1] - 1;
+      if (glszm_idx >= glszm_idx_max) return 0; // Index out of range
 
-    glszm[glszm_idx]++;
-    i++;
-  }
+      glszm[glszm_idx]++;
+      i++;
+    }
   return 1;
 }
 

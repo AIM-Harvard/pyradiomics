@@ -62,8 +62,6 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     self._applyBinning()
 
   def _initCalculation(self):
-    self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
-
     self.P_glszm = self._calculateMatrix()
 
     self._calculateCoefficients()
@@ -79,8 +77,9 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     """
     self.logger.debug('Calculating GLSZM matrix in C')
     Ng = self.coefficients['Ng']
-    Ns = self.coefficients['Np']
+    Ns = len(self.labelledVoxelCoordinates[0])
 
+    # shape (Nvox, Ng, Ns)
     P_glszm = cMatrices.calculate_glszm(self.matrix,
                                         self.maskArray,
                                         Ng,
@@ -93,31 +92,33 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
     emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
 
-    P_glszm = numpy.delete(P_glszm, emptyGrayLevels - 1, 0)
+    P_glszm = numpy.delete(P_glszm, emptyGrayLevels - 1, 1)
 
     return P_glszm
 
   def _calculateCoefficients(self):
     self.logger.debug('Calculating GLSZM coefficients')
 
-    Nz = numpy.sum(self.P_glszm, (0, 1))
+    ps = numpy.sum(self.P_glszm, 1)  # shape (Nvox, Ns)
+    pg = numpy.sum(self.P_glszm, 2)  # shape (Nvox, Ng)
 
-    # set sum to numpy.spacing(1) if sum is 0?
-    if Nz == 0:
-      Nz = 1
+    ivector = self.coefficients['grayLevels']  # shape (Ng,)
+    jvector = numpy.arange(1, self.P_glszm.shape[2] + 1, dtype=numpy.float64)  # shape (Ns,)
 
-    ps = numpy.sum(self.P_glszm, 0)
-    pg = numpy.sum(self.P_glszm, 1)
+    # Get the number of zones in this GLSZM
+    Nz = numpy.sum(self.P_glszm, (1, 2))  # shape (Nvox,)
+    Nz[Nz == 0] = 1  # set sum to numpy.spacing(1) if sum is 0?
 
-    ivector = self.coefficients['grayLevels']
-    jvector = numpy.arange(1, self.P_glszm.shape[1] + 1, dtype=numpy.float64)
+    # Get the number of voxels represented by this GLSZM: Multiply the zones by their size and sum them
+    Np = numpy.sum(ps * jvector[None, :], 1)  # shape (Nvox,)
 
     # Delete columns that specify zone sizes not present in the ROI
-    emptyZoneSizes = numpy.where(ps == 0)
-    self.P_glszm = numpy.delete(self.P_glszm, emptyZoneSizes, 1)
+    emptyZoneSizes = numpy.where(numpy.sum(ps, 0) == 0)
+    self.P_glszm = numpy.delete(self.P_glszm, emptyZoneSizes, 2)
     jvector = numpy.delete(jvector, emptyZoneSizes)
-    ps = numpy.delete(ps, emptyZoneSizes)
+    ps = numpy.delete(ps, emptyZoneSizes, 1)
 
+    self.coefficients['Np'] = Np
     self.coefficients['Nz'] = Nz
     self.coefficients['ps'] = ps
     self.coefficients['pg'] = pg
@@ -138,7 +139,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     Nz = self.coefficients['Nz']
 
-    sae = numpy.sum(ps / (jvector ** 2)) / Nz
+    sae = numpy.sum(ps / (jvector[None, :] ** 2), 1) / Nz
     return sae
 
   def getLargeAreaEmphasisFeatureValue(self):
@@ -155,7 +156,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     Nz = self.coefficients['Nz']
 
-    lae = numpy.sum(ps * (jvector ** 2)) / Nz
+    lae = numpy.sum(ps * (jvector[None, :] ** 2), 1) / Nz
     return lae
 
   def getGrayLevelNonUniformityFeatureValue(self):
@@ -171,7 +172,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     pg = self.coefficients['pg']
     Nz = self.coefficients['Nz']
 
-    iv = numpy.sum(pg ** 2) / Nz
+    iv = numpy.sum(pg ** 2, 1) / Nz
     return iv
 
   def getGrayLevelNonUniformityNormalizedFeatureValue(self):
@@ -187,7 +188,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     pg = self.coefficients['pg']
     Nz = self.coefficients['Nz']
 
-    ivn = numpy.sum(pg ** 2) / Nz ** 2
+    ivn = numpy.sum(pg ** 2, 1) / Nz ** 2
     return ivn
 
   def getSizeZoneNonUniformityFeatureValue(self):
@@ -203,7 +204,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     ps = self.coefficients['ps']
     Nz = self.coefficients['Nz']
 
-    szv = numpy.sum(ps ** 2) / Nz
+    szv = numpy.sum(ps ** 2, 1) / Nz
     return szv
 
   def getSizeZoneNonUniformityNormalizedFeatureValue(self):
@@ -219,7 +220,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     ps = self.coefficients['ps']
     Nz = self.coefficients['Nz']
 
-    szvn = numpy.sum(ps ** 2) / Nz ** 2
+    szvn = numpy.sum(ps ** 2, 1) / Nz ** 2
     return szvn
 
   def getZonePercentageFeatureValue(self):
@@ -253,10 +254,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     """
     ivector = self.coefficients['ivector']
     Nz = self.coefficients['Nz']
-    pg = self.coefficients['pg'] / Nz  # divide by Nz to get the normalized matrix
+    pg = self.coefficients['pg'] / Nz[:, None]  # divide by Nz to get the normalized matrix
 
-    u_i = numpy.sum(pg * ivector)
-    glv = numpy.sum(pg * (ivector - u_i) ** 2)
+    u_i = numpy.sum(pg * ivector[None, :], 1, keepdims=True)
+    glv = numpy.sum(pg * (ivector[None, :] - u_i) ** 2, 1)
     return glv
 
   def getZoneVarianceFeatureValue(self):
@@ -272,10 +273,10 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     """
     jvector = self.coefficients['jvector']
     Nz = self.coefficients['Nz']
-    ps = self.coefficients['ps'] / Nz  # divide by Nz to get the normalized matrix
+    ps = self.coefficients['ps'] / Nz[:, None]  # divide by Nz to get the normalized matrix
 
-    u_j = numpy.sum(ps * jvector)
-    zv = numpy.sum(ps * (jvector - u_j) ** 2)
+    u_j = numpy.sum(ps * jvector[None, :], 1, keepdims=True)
+    zv = numpy.sum(ps * (jvector[None, :] - u_j) ** 2, 1)
     return zv
 
   def getZoneEntropyFeatureValue(self):
@@ -292,9 +293,9 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     """
     eps = numpy.spacing(1)
     Nz = self.coefficients['Nz']
-    p_glszm = self.P_glszm / Nz  # divide by Nz to get the normalized matrix
+    p_glszm = self.P_glszm / Nz[:, None, None]  # divide by Nz to get the normalized matrix
 
-    ze = -numpy.sum(p_glszm * numpy.log2(p_glszm + eps))
+    ze = -numpy.sum(p_glszm * numpy.log2(p_glszm + eps), (1, 2))
     return ze
 
   def getLowGrayLevelZoneEmphasisFeatureValue(self):
@@ -311,7 +312,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     ivector = self.coefficients['ivector']
     Nz = self.coefficients['Nz']
 
-    lie = numpy.sum(pg / (ivector ** 2)) / Nz
+    lie = numpy.sum(pg / (ivector[None, :] ** 2), 1) / Nz
     return lie
 
   def getHighGrayLevelZoneEmphasisFeatureValue(self):
@@ -328,7 +329,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     ivector = self.coefficients['ivector']
     Nz = self.coefficients['Nz']
 
-    hie = numpy.sum(pg * (ivector ** 2)) / Nz
+    hie = numpy.sum(pg * (ivector[None, :] ** 2), 1) / Nz
     return hie
 
   def getSmallAreaLowGrayLevelEmphasisFeatureValue(self):
@@ -345,7 +346,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     Nz = self.coefficients['Nz']
 
-    lisae = numpy.sum(self.P_glszm / ((ivector[:, None] ** 2) * (jvector[None, :] ** 2))) / Nz
+    lisae = numpy.sum(self.P_glszm / ((ivector[None, :, None] ** 2) * (jvector[None, None, :] ** 2)), (1, 2)) / Nz
     return lisae
 
   def getSmallAreaHighGrayLevelEmphasisFeatureValue(self):
@@ -362,7 +363,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     Nz = self.coefficients['Nz']
 
-    hisae = numpy.sum(self.P_glszm * (ivector[:, None] ** 2) / (jvector[None, :] ** 2)) / Nz
+    hisae = numpy.sum(self.P_glszm * (ivector[None, :, None] ** 2) / (jvector[None, None, :] ** 2), (1, 2)) / Nz
     return hisae
 
   def getLargeAreaLowGrayLevelEmphasisFeatureValue(self):
@@ -379,7 +380,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     Nz = self.coefficients['Nz']
 
-    lilae = numpy.sum(self.P_glszm * (jvector[None, :] ** 2) / (ivector[:, None] ** 2)) / Nz
+    lilae = numpy.sum(self.P_glszm * (jvector[None, None, :] ** 2) / (ivector[None, :, None] ** 2), (1, 2)) / Nz
     return lilae
 
   def getLargeAreaHighGrayLevelEmphasisFeatureValue(self):
@@ -396,5 +397,5 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     jvector = self.coefficients['jvector']
     Nz = self.coefficients['Nz']
 
-    hilae = numpy.sum(self.P_glszm * (ivector[:, None] ** 2) * (jvector[None, :] ** 2)) / Nz
+    hilae = numpy.sum(self.P_glszm * (ivector[None, :, None] ** 2) * (jvector[None, None, :] ** 2), (1, 2)) / Nz
     return hilae

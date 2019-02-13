@@ -90,11 +90,11 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     self._applyBinning()
 
   def _initCalculation(self):
-    self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
     self.P_ngtdm = self._calculateMatrix()
     self._calculateCoefficients()
 
   def _calculateMatrix(self):
+    # shape (Nvox, Ng, 3)
     P_ngtdm = cMatrices.calculate_ngtdm(self.matrix,
                                         self.maskArray,
                                         numpy.array(self.settings.get('distances', [1])),
@@ -103,24 +103,27 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
                                         self.settings.get('force2Ddimension', 0))
 
     # Delete empty grey levels
-    P_ngtdm = numpy.delete(P_ngtdm, numpy.where(P_ngtdm[:, 0] == 0), 0)
+    emptyGrayLevels = numpy.where(numpy.sum(P_ngtdm[:, :, 0], 0) == 0)
+    P_ngtdm = numpy.delete(P_ngtdm, emptyGrayLevels, 1)
 
     return P_ngtdm
 
   def _calculateCoefficients(self):
-    Nvp = numpy.sum(self.P_ngtdm[:, 0])  # = No of voxels that have a valid region, lesser equal to Np
-    self.coefficients['Nvp'] = Nvp
-    if Nvp < self.coefficients['Np']:
-      self.logger.debug('Detected %d voxels without valid neighbors', self.coefficients['Np'] - Nvp)
+    # No of voxels that have a valid region, lesser equal to Np
+    Nvp = numpy.sum(self.P_ngtdm[:, :, 0], 1)  # shape (Nvox,)
+    self.coefficients['Nvp'] = Nvp  # shape (Nv,)
 
     # Normalize P_ngtdm[:, 0] (= n_i) to obtain p_i
-    self.coefficients['p_i'] = self.P_ngtdm[:, 0] / Nvp
+    self.coefficients['p_i'] = self.P_ngtdm[:, :, 0] / Nvp[:, None]
 
-    self.coefficients['s_i'] = self.P_ngtdm[:, 1]
-    self.coefficients['ivector'] = self.P_ngtdm[:, 2]
+    self.coefficients['s_i'] = self.P_ngtdm[:, :, 1]
+    self.coefficients['ivector'] = self.P_ngtdm[:, :, 2]
 
     # Ngp = number of graylevels, for which p_i > 0
-    self.coefficients['Ngp'] = self.P_ngtdm.shape[0]
+    self.coefficients['Ngp'] = numpy.sum(self.P_ngtdm[:, :, 0] > 0, 1)
+
+    p_zero = numpy.where(self.coefficients['p_i'] == 0)
+    self.coefficients['p_zero'] = p_zero
 
   def getCoarsenessFeatureValue(self):
     r"""
@@ -136,11 +139,11 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     """
     p_i = self.coefficients['p_i']
     s_i = self.coefficients['s_i']
-    sum_coarse = numpy.sum(p_i * s_i)
-    if sum_coarse == 0:
-      return 1000000
-    else:
-      return 1 / sum_coarse
+    sum_coarse = numpy.sum(p_i * s_i, 1)
+
+    sum_coarse[sum_coarse != 0] = 1 / sum_coarse[sum_coarse != 0]
+    sum_coarse[sum_coarse == 0] = 1e6
+    return sum_coarse
 
   def getContrastFeatureValue(self):
     r"""
@@ -156,17 +159,20 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     N.B. In case of a completely homogeneous image, :math:`N_{g,p} = 1`, which would result in a division by 0. In this
     case, an arbitray value of 0 is returned.
     """
-    Ngp = self.coefficients['Ngp']
-    Nvp = self.coefficients['Nvp']
-    p_i = self.coefficients['p_i']
-    s_i = self.coefficients['s_i']
-    i = self.coefficients['ivector']
+    Ngp = self.coefficients['Ngp']  # shape (Nvox,)
+    Nvp = self.coefficients['Nvp']  # shape (Nvox,)
+    p_i = self.coefficients['p_i']  # shape (Nvox, Ng)
+    s_i = self.coefficients['s_i']  # shape (Nvox, Ng)
+    i = self.coefficients['ivector']  # shape (Ng,)
 
-    if Ngp <= 1:
-      return 0
+    div = Ngp * (Ngp - 1)
 
-    contrast = (numpy.sum(p_i[:, None] * p_i[None, :] * (i[:, None] - i[None, :]) ** 2) / (Ngp * (Ngp - 1))) * \
-               ((numpy.sum(s_i)) / Nvp)
+    # Terms where p_i = 0 or p_j = 0 will calculate as 0, and therefore do not affect the sum
+    contrast = (numpy.sum(p_i[:, :, None] * p_i[:, None, :] * (i[:, :, None] - i[:, None, :]) ** 2, (1, 2)) *
+                numpy.sum(s_i, 1) / Nvp)
+
+    contrast[div != 0] /= div[div != 0]
+    contrast[div == 0] = 0
 
     return contrast
 
@@ -182,14 +188,23 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     N.B. if :math:`N_{g,p} = 1`, then :math:`busyness = \frac{0}{0}`. If this is the case, 0 is returned, as it concerns
     a fully homogeneous region.
     """
-    p_i = self.coefficients['p_i']
-    s_i = self.coefficients['s_i']
-    i = self.coefficients['ivector']
-    absdiff = numpy.sum(numpy.abs((i * p_i)[:, None] - (i * p_i)[None, :]))
-    if absdiff == 0:
-      return 0
-    else:
-      busyness = numpy.sum(p_i * s_i) / absdiff
+    p_i = self.coefficients['p_i']  # shape (Nv, Ngp)
+    s_i = self.coefficients['s_i']  # shape (Nv, Ngp)
+    i = self.coefficients['ivector']  # shape (Nv, Ngp)
+    p_zero = self.coefficients['p_zero']  # shape (2, z)
+
+    i_pi = i * p_i
+    absdiff = numpy.abs(i_pi[:, :, None] - i_pi[:, None, :])
+
+    # Remove terms from the sum where p_i = 0 or p_j = 0
+    absdiff[p_zero[0], :, p_zero[1]] = 0
+    absdiff[p_zero[0], p_zero[1], :] = 0
+
+    absdiff = numpy.sum(absdiff, (1, 2))
+
+    busyness = numpy.sum(p_i * s_i, 1)
+    busyness[absdiff != 0] = busyness[absdiff != 0] / absdiff[absdiff != 0]
+    busyness[absdiff == 0] = 0
     return busyness
 
   def getComplexityFeatureValue(self):
@@ -202,12 +217,24 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     An image is considered complex when there are many primitive components in the image, i.e. the image is non-uniform
     and there are many rapid changes in gray level intensity.
     """
-    Nvp = self.coefficients['Nvp']
-    p_i = self.coefficients['p_i']
-    s_i = self.coefficients['s_i']
-    i = self.coefficients['ivector']
-    complexity = numpy.sum(numpy.abs(i[:, None] - i[None, :]) * (
-      ((p_i * s_i)[:, None] + (p_i * s_i)[None, :]) / (p_i[:, None] + p_i[None, :]))) / Nvp
+    Nvp = self.coefficients['Nvp']  # shape (Nv,)
+    p_i = self.coefficients['p_i']  # shape (Nv, Ngp)
+    s_i = self.coefficients['s_i']  # shape (Nv, Ngp)
+    i = self.coefficients['ivector']  # shape (Nv, Ngp)
+    p_zero = self.coefficients['p_zero']  # shape (2, z)
+
+    pi_si = p_i * s_i
+    numerator = pi_si[:, :, None] + pi_si[:, None, :]
+
+    # Remove terms from the sum where p_i = 0 or p_j = 0
+    numerator[p_zero[0], :, p_zero[1]] = 0
+    numerator[p_zero[0], p_zero[1], :] = 0
+
+    divisor = p_i[:, :, None] + p_i[:, None, :]
+    divisor[divisor == 0] = 1  # Prevent division by 0 errors. (Numerator is 0 at those indices too)
+
+    complexity = numpy.sum(numpy.abs(i[:, :, None] - i[:, None, :]) * numerator / divisor, (1, 2)) / Nvp
+
     return complexity
 
   def getStrengthFeatureValue(self):
@@ -216,18 +243,27 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
 
     :math:`Strength = \frac{\sum^{N_g}_{i = 1}\sum^{N_g}_{j = 1}{(p_i + p_j)(i-j)^2}}{\sum^{N_g}_{i = 1}{s_i}}\text{, where }p_i \neq 0, p_j \neq 0`
 
-    Strenght is a measure of the primitives in an image. Its value is high when the primitives are easily defined and
+    Strength is a measure of the primitives in an image. Its value is high when the primitives are easily defined and
     visible, i.e. an image with slow change in intensity but more large coarse differences in gray level intensities.
 
     N.B. :math:`\sum^{N_g}_{i=1}{s_i}` potentially evaluates to 0 (in case of a completely homogeneous image).
     If this is the case, 0 is returned.
     """
-    p_i = self.coefficients['p_i']
-    s_i = self.coefficients['s_i']
-    i = self.coefficients['ivector']
-    sum_s_i = numpy.sum(s_i)
-    if sum_s_i == 0:
-      return 0
-    else:
-      strength = numpy.sum((p_i[:, None] + p_i[None, :]) * (i[:, None] - i[None, :]) ** 2) / sum_s_i
-      return strength
+    p_i = self.coefficients['p_i']  # shape (Nv, Ngp)
+    s_i = self.coefficients['s_i']  # shape (Nv, Ngp)
+    i = self.coefficients['ivector']  # shape (Nv, Ngp)
+    p_zero = self.coefficients['p_zero']  # shape (2, z)
+
+    sum_s_i = numpy.sum(s_i, 1)
+
+    strength = (p_i[:, :, None] + p_i[:, None, :]) * (i[:, :, None] - i[:, None, :]) ** 2
+
+    # Remove terms from the sum where p_i = 0 or p_j = 0
+    strength[p_zero[0], :, p_zero[1]] = 0
+    strength[p_zero[0], p_zero[1], :] = 0
+
+    strength = numpy.sum(strength, (1, 2))
+    strength[sum_s_i != 0] /= sum_s_i[sum_s_i != 0]
+    strength[sum_s_i == 0] = 0
+
+    return strength

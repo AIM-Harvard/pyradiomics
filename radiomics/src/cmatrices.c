@@ -13,7 +13,7 @@ int calculate_glcm(int *image, char *mask, int *size, int *strides, int *angles,
   int i, j, a, d;  // Iterator variables (image, angles, dimensions)
   int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
-// Output matrix variables
+  // Output matrix variables
   int glcm_idx, glcm_idx_max = Ng * Ng * Na;  // Index and max index of the texture array
 
   // Calculate size of image array

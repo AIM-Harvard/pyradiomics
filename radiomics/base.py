@@ -6,7 +6,7 @@ import numpy
 import SimpleITK as sitk
 import six
 
-from radiomics import cMatrices, deprecated, getProgressReporter, imageoperations
+from radiomics import deprecated, getProgressReporter, imageoperations
 
 
 class RadiomicsFeaturesBase(object):
@@ -44,7 +44,6 @@ class RadiomicsFeaturesBase(object):
     (dimensions z, y, x).
   - labelledVoxelCoordinates: tuple of 3 numpy arrays containing the z, x and y coordinates of the voxels included in
     the ROI, respectively. Length of each array is equal to total number of voxels inside ROI.
-  - boundingBoxSize: tuple of 3 integers containing the z, x and y sizes of the ROI bounding box, respectively.
   - matrix: copy of the imageArray variable, with gray values inside ROI discretized using the specified binWidth.
     This variable is only instantiated if a call to ``_applyBinning`` is added to an override of
     ``_initSegmentBasedCalculation`` in the feature class.
@@ -82,98 +81,40 @@ class RadiomicsFeaturesBase(object):
     self.inputImage = inputImage
     self.inputMask = inputMask
 
+    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
+
     if self.voxelBased:
       self._initVoxelBasedCalculation()
     else:
       self._initSegmentBasedCalculation()
 
   def _initSegmentBasedCalculation(self):
-    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
     self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)  # boolean array
-
-    self.labelledVoxelCoordinates = numpy.where(self.maskArray)
-    self.boundingBoxSize = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
 
   def _initVoxelBasedCalculation(self):
     self.masked = self.settings.get('maskedKernel', True)
 
-    self.imageArray = sitk.GetArrayFromImage(self.inputImage)
+    maskArray = sitk.GetArrayFromImage(self.inputMask) == self.label  # boolean array
+    self.labelledVoxelCoordinates = numpy.array(numpy.where(maskArray))
 
     # Set up the mask array for the gray value discretization
     if self.masked:
-      self.maskArray = (sitk.GetArrayFromImage(self.inputMask) == self.label)  # boolean array
+      self.maskArray = maskArray
     else:
-      self.maskArray = None  # This will cause the discretization to use the entire image
+      self.maskArray = numpy.ones(self.imageArray.shape)  # This will cause the discretization to use the entire image
 
-    # Prepare the kernels (1 per voxel in the ROI)
-    self.kernels = self._getKernelGenerator()
-
-  def _getKernelGenerator(self):
-    kernelRadius = self.settings.get('kernelRadius', 1)
-
-    ROI_mask = sitk.GetArrayFromImage(self.inputMask) == self.label
-    ROI_indices = numpy.array(numpy.where(ROI_mask))
-
-    # Get the size of the input, which depends on whether it is in masked mode or not
-    if self.masked:
-      size = numpy.max(ROI_indices, 1) - numpy.min(ROI_indices, 1) + 1
-    else:
-      size = numpy.array(self.imageArray.shape)
-
-    # Take the minimum size along each x, y and z dimension from either the size of the ROI or the kernel
-    # First add the kernel radius to the size, yielding shape (2, 3), then take the minimum along axis 0, getting back
-    # to shape (3,)
-    self.boundingBoxSize = numpy.min(numpy.insert([size], 1, kernelRadius * 2 + 1, axis=0), axis=0)
-
-    # Calculate the offsets, which are used to generate a list of kernel Coordinates
-    kernelOffsets = cMatrices.generate_angles(self.boundingBoxSize,
-                                              numpy.array(six.moves.range(1, kernelRadius + 1)),
-                                              True,  # Bi-directional
-                                              self.settings.get('force2D', False),
-                                              self.settings.get('force2Ddimension', 0))
-
-    # Generator loop that yields a kernel mask: a boolean array that defines the voxels included in the kernel
-    kernelMask = numpy.zeros(self.imageArray.shape, dtype='bool')  # Boolean array to hold mask defining current kernel
-
-    for idx in ROI_indices.T:  # Flip axes to get sets of 3 elements (z, y and x) for each voxel
-      kernelMask[:] = False  # Reset kernel mask
-
-      # Get coordinates for all potential voxels in this kernel
-      kernelCoordinates = kernelOffsets + idx
-
-      # Exclude voxels outside image bounds
-      kernelCoordinates = numpy.delete(kernelCoordinates, numpy.where(numpy.any(kernelCoordinates < 0, axis=1)), axis=0)
-      kernelCoordinates = numpy.delete(kernelCoordinates,
-                                       numpy.where(numpy.any(kernelCoordinates >= self.imageArray.shape, axis=1)), axis=0)
-
-      idx = tuple(idx)
-
-      # Transform indices to boolean mask array
-      kernelMask[tuple(kernelCoordinates.T)] = True
-      kernelMask[idx] = True  # Also include center voxel
-
-      if self.masked:
-        # Exclude voxels outside ROI
-        kernelMask = numpy.logical_and(kernelMask, ROI_mask)
-
-        # check if there are enough voxels to calculate texture, skip voxel if this is not the case.
-        if numpy.sum(kernelMask) <= 1:
-          continue
-
-      # Also yield the index, identifying which voxel this kernel belongs to
-      yield idx, kernelMask
-
-  def _initCalculation(self):
+  def _initCalculation(self, voxelCoordinates=None):
     """
     Last steps to prepare the class for extraction. This function calculates the texture matrices and coefficients in
     the respective feature classes
     """
     pass
 
-  def _applyBinning(self):
-    self.matrix, _ = imageoperations.binImage(self.imageArray, self.maskArray, **self.settings)
-    self.coefficients['grayLevels'] = numpy.unique(self.matrix[self.maskArray])
+  def _applyBinning(self, matrix):
+    matrix, _ = imageoperations.binImage(matrix, self.maskArray, **self.settings)
+    self.coefficients['grayLevels'] = numpy.unique(matrix[self.maskArray])
     self.coefficients['Ng'] = int(numpy.max(self.coefficients['grayLevels']))  # max gray level in the ROI
+    return matrix
 
   def enableFeatureByName(self, featureName, enable=True):
     """
@@ -248,21 +189,28 @@ class RadiomicsFeaturesBase(object):
 
   def _calculateVoxels(self):
     initValue = self.settings.get('initValue', 0)
+    voxelBatch = self.settings.get('voxelBatch', -1)
+
     # Initialize the output with empty numpy arrays
     for feature, enabled in six.iteritems(self.enabledFeatures):
       if enabled:
-        self.featureValues[feature] = numpy.full(self.imageArray.shape, initValue, dtype='float')
+        self.featureValues[feature] = numpy.full(list(self.inputImage.GetSize())[::-1], initValue, dtype='float')
 
     # Calculate the feature values for all enabled features
-    with self.progressReporter(self.kernels, 'Calculating voxels') as bar:
-      for vox_idx, kernelMask in bar:
-        self.maskArray = kernelMask
-        self.labelledVoxelCoordinates = numpy.where(self.maskArray)
+    voxel_count = self.labelledVoxelCoordinates.shape[1]
+    voxel_batch_idx = 0
+    if voxelBatch < 0:
+      voxelBatch = voxel_count
+    n_batches = numpy.ceil(float(voxel_count) / voxelBatch)
+    while voxel_batch_idx < voxel_count:
+      self.logger.debug('Calculating voxel batch no. %i/%i', int(voxel_batch_idx / voxelBatch) + 1, n_batches)
+      voxelCoords = self.labelledVoxelCoordinates[:, voxel_batch_idx:voxel_batch_idx + voxelBatch]
+      # Calculate the feature values for the current kernel
+      for success, featureName, featureValue in self._calculateFeatures(voxelCoords):
+        if success:
+          self.featureValues[featureName][tuple(voxelCoords)] = featureValue
 
-        # Calculate the feature values for the current kernel
-        for success, featureName, featureValue in self._calculateFeatures():
-          if success:  # Do not store results in case of an error
-            self.featureValues[featureName][vox_idx] = featureValue
+      voxel_batch_idx += voxelBatch
 
     # Convert the output to simple ITK image objects
     for feature, enabled in six.iteritems(self.enabledFeatures):
@@ -276,10 +224,10 @@ class RadiomicsFeaturesBase(object):
       # Always store the result. In case of an error, featureValue will be NaN
       self.featureValues[featureName] = numpy.squeeze(featureValue)
 
-  def _calculateFeatures(self):
+  def _calculateFeatures(self, voxelCoordinates=None):
     # Initialize the calculation
     # This function serves to calculate the texture matrices where applicable
-    self._initCalculation()
+    self._initCalculation(voxelCoordinates)
 
     self.logger.debug('Calculating features')
     for feature, enabled in six.iteritems(self.enabledFeatures):

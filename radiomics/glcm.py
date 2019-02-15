@@ -105,16 +105,16 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
     self.P_glcm = None
-    self._applyBinning()
+    self.imageArray = self._applyBinning(self.imageArray)
 
-  def _initCalculation(self):
-    self.P_glcm = self._calculateMatrix()
+  def _initCalculation(self, voxelCoordinates=None):
+    self.P_glcm = self._calculateMatrix(voxelCoordinates)
 
     self._calculateCoefficients()
 
     self.logger.debug('GLCM feature class initialized, calculated GLCM with shape %s', self.P_glcm.shape)
 
-  def _calculateMatrix(self):
+  def _calculateMatrix(self, voxelCoordinates=None):
     r"""
     Compute GLCMs for the input image for every direction in 3D.
     Calculated GLCMs are placed in array P_glcm with shape (i/j, a)
@@ -125,12 +125,18 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     Ng = self.coefficients['Ng']
 
-    P_glcm, angles = cMatrices.calculate_glcm(self.matrix,
-                                              self.maskArray,
-                                              numpy.array(self.settings.get('distances', [1])),
-                                              Ng,
-                                              self.settings.get('force2D', False),
-                                              self.settings.get('force2Ddimension', 0))
+    matrix_args = [
+      self.imageArray,
+      self.maskArray,
+      numpy.array(self.settings.get('distances', [1])),
+      Ng,
+      self.settings.get('force2D', False),
+      self.settings.get('force2Ddimension', 0)
+    ]
+    if self.voxelBased:
+      matrix_args += [self.settings.get('kernelRadius', 1), voxelCoordinates]
+
+    P_glcm, angles = cMatrices.calculate_glcm(*matrix_args)
 
     self.logger.debug('Process calculated matrix')
 

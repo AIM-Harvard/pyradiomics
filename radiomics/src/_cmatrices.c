@@ -375,7 +375,6 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
     region = calculate_glszm(image, mask, size, bb, strides, angles, Na, Nd, tempData + v * (2 * Ns + 1), Ng, Ns);
     if (region < 0) // Error occured
     {
-      free(tempData);
       Py_XDECREF(image_arr);
       Py_XDECREF(mask_arr);
       Py_XDECREF(voxels_arr);
@@ -429,13 +428,15 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
 
   // Set all elements to 0
   memset(glszm, 0, sizeof *glszm * Nvox * maxRegion * Ng);
-
-  if (!fill_glszm(tempData, glszm, Ng, maxRegion, Nvox))
+  for (v = 0; v < Nvox; v++)
   {
-    free(tempData);
-    Py_XDECREF(glszm_arr);
-    PyErr_SetString(PyExc_IndexError, "Error filling GLSZM.");
-    return NULL;
+    if (!fill_glszm(tempData + v * (2 * Ns + 1), glszm  + v * (Ng * maxRegion), Ng, maxRegion))
+    {
+      free(tempData);
+      Py_XDECREF(glszm_arr);
+      PyErr_SetString(PyExc_IndexError, "Error filling GLSZM.");
+      return NULL;
+    }
   }
 
   // Clean up
@@ -911,7 +912,6 @@ static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args)
   int force2D, force2Ddimension;
   int Nd, Na;
   int *size;
-  npy_intp dims[2];
   PyArrayObject *angles_arr;
 
   // Parse the input tuple
@@ -1117,25 +1117,25 @@ int try_parse_voxels_arr(PyObject *voxels_obj, PyArrayObject **voxels_arr, int N
       return -1;
     }
 
-    voxels_arr = (PyArrayObject *)PyArray_FROM_OTF(voxels_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
-    if(!voxels_arr)
+    *voxels_arr = (PyArrayObject *)PyArray_FROM_OTF(voxels_obj, NPY_INT, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
+    if(!(*voxels_arr))
       return -1;
 
-    if(PyArray_NDIM(voxels_arr) != 2)
+    if(PyArray_NDIM(*voxels_arr) != 2)
     {
-      Py_XDECREF(voxels_arr);
+      Py_XDECREF(*voxels_arr);
       PyErr_SetString(PyExc_RuntimeError, "Expecting voxel indices array to be 2-dimensional");
       return -1;
     }
 
-    if(PyArray_DIM(voxels_arr, 0) != Nd)
+    if(PyArray_DIM(*voxels_arr, 0) != Nd)
     {
-      Py_XDECREF(voxels_arr);
+      Py_XDECREF(*voxels_arr);
       PyErr_SetString(PyExc_RuntimeError, "Expecting voxel indices array to be 2-dimensional");
       return -1;
     }
 
-    *vox_cnt = PyArray_DIM(voxels_arr, 1);
+    *vox_cnt = PyArray_DIM(*voxels_arr, 1);
   }
   return 0;
 }

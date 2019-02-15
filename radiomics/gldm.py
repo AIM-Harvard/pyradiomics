@@ -69,25 +69,31 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.gldm_a = kwargs.get('gldm_a', 0)
 
     self.P_gldm = None
-    self._applyBinning()
+    self.imageArray = self._applyBinning(self.imageArray)
 
-  def _initCalculation(self):
-    self.P_gldm = self._calculateMatrix()
+  def _initCalculation(self, voxelCoordinates=None):
+    self.P_gldm = self._calculateMatrix(voxelCoordinates)
 
     self.logger.debug('Feature class initialized, calculated GLDM with shape %s', self.P_gldm.shape)
 
-  def _calculateMatrix(self):
+  def _calculateMatrix(self, voxelCoordinates=None):
     self.logger.debug('Calculating GLDM matrix in C')
 
     Ng = self.coefficients['Ng']
-    # shape (Nv, Ng, Nd)
-    P_gldm = cMatrices.calculate_gldm(self.matrix,
-                                      self.maskArray,
-                                      numpy.array(self.settings.get('distances', [1])),
-                                      Ng,
-                                      self.gldm_a,
-                                      self.settings.get('force2D', False),
-                                      self.settings.get('force2Ddimension', 0))
+
+    matrix_args = [
+      self.imageArray,
+      self.maskArray,
+      numpy.array(self.settings.get('distances', [1])),
+      Ng,
+      self.gldm_a,
+      self.settings.get('force2D', False),
+      self.settings.get('force2Ddimension', 0)
+    ]
+    if self.voxelBased:
+      matrix_args += [self.settings.get('kernelRadius', 1), voxelCoordinates]
+
+    P_gldm = cMatrices.calculate_gldm(*matrix_args)  # shape (Nv, Ng, Nd)
 
     # Delete rows that specify gray levels not present in the ROI
     NgVector = range(1, Ng + 1)  # All possible gray values

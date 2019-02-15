@@ -59,16 +59,16 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     super(RadiomicsGLSZM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.P_glszm = None
-    self._applyBinning()
+    self.imageArray = self._applyBinning(self.imageArray)
 
-  def _initCalculation(self):
-    self.P_glszm = self._calculateMatrix()
+  def _initCalculation(self, voxelCoordinates=None):
+    self.P_glszm = self._calculateMatrix(voxelCoordinates)
 
     self._calculateCoefficients()
 
     self.logger.debug('GLSZM feature class initialized, calculated GLSZM with shape %s', self.P_glszm.shape)
 
-  def _calculateMatrix(self):
+  def _calculateMatrix(self, voxelCoordinates=None):
     """
     Number of times a region with a
     gray level and voxel count occurs in an image. P_glszm[level, voxel_count] = # occurrences
@@ -77,15 +77,20 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     """
     self.logger.debug('Calculating GLSZM matrix in C')
     Ng = self.coefficients['Ng']
-    Ns = len(self.labelledVoxelCoordinates[0])
+    Ns = numpy.sum(self.maskArray)
 
-    # shape (Nvox, Ng, Ns)
-    P_glszm = cMatrices.calculate_glszm(self.matrix,
-                                        self.maskArray,
-                                        Ng,
-                                        Ns,
-                                        self.settings.get('force2D', False),
-                                        self.settings.get('force2Ddimension', 0))
+    matrix_args = [
+      self.imageArray,
+      self.maskArray,
+      Ng,
+      Ns,
+      self.settings.get('force2D', False),
+      self.settings.get('force2Ddimension', 0)
+    ]
+    if self.voxelBased:
+      matrix_args += [self.settings.get('kernelRadius', 1), voxelCoordinates]
+
+    P_glszm = cMatrices.calculate_glszm(*matrix_args)  # shape (Nvox, Ng, Ns)
 
     # Delete rows that specify gray levels not present in the ROI
     NgVector = range(1, Ng + 1)  # All possible gray values
@@ -110,7 +115,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Nz[Nz == 0] = 1  # set sum to numpy.spacing(1) if sum is 0?
 
     # Get the number of voxels represented by this GLSZM: Multiply the zones by their size and sum them
-    Np = numpy.sum(ps * jvector[None, :], 1)  # shape (Nvox,)
+    Np = numpy.sum(ps * jvector[None, :], 1)  # shape (Nvox, )
+    Np[Np == 0] = 1
 
     # Delete columns that specify zone sizes not present in the ROI
     emptyZoneSizes = numpy.where(numpy.sum(ps, 0) == 0)

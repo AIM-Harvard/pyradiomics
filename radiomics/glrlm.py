@@ -78,26 +78,33 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     self.weightingNorm = kwargs.get('weightingNorm', None)  # manhattan, euclidean, infinity
 
     self.P_glrlm = None
-    self._applyBinning()
+    self.imageArray = self._applyBinning(self.imageArray)
 
-  def _initCalculation(self):
-    self.P_glrlm = self._calculateMatrix()
+  def _initCalculation(self, voxelCoordinates=None):
+    self.P_glrlm = self._calculateMatrix(voxelCoordinates)
 
     self._calculateCoefficients()
 
     self.logger.debug('GLRLM feature class initialized, calculated GLRLM with shape %s', self.P_glrlm.shape)
 
-  def _calculateMatrix(self):
+  def _calculateMatrix(self, voxelCoordinates=None):
     self.logger.debug('Calculating GLRLM matrix in C')
 
     Ng = self.coefficients['Ng']
-    Nr = numpy.max(self.matrix.shape)
-    P_glrlm, angles = cMatrices.calculate_glrlm(self.matrix,
-                                                self.maskArray,
-                                                Ng,
-                                                Nr,
-                                                self.settings.get('force2D', False),
-                                                self.settings.get('force2Ddimension', 0))
+    Nr = numpy.max(self.imageArray.shape)
+
+    matrix_args = [
+      self.imageArray,
+      self.maskArray,
+      Ng,
+      Nr,
+      self.settings.get('force2D', False),
+      self.settings.get('force2Ddimension', 0)
+    ]
+    if self.voxelBased:
+      matrix_args += [self.settings.get('kernelRadius', 1), voxelCoordinates]
+
+    P_glrlm, angles = cMatrices.calculate_glrlm(*matrix_args)  # shape (Nvox, Ng, Nr, Na)
 
     self.logger.debug('Process calculated matrix')
 
@@ -161,7 +168,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     jvector = numpy.delete(jvector, emptyRunLenghts)
     pr = numpy.delete(pr, emptyRunLenghts, 1)
 
-    Np = numpy.sum(pr[:, :, 0] * jvector[None, :], 1)  # shape (Nvox,)
+    Np = numpy.sum(pr[:, :, 0] * jvector[None, :], 1, keepdims=True)  # shape (Nvox, 1)
+    Np[Np == 0] = 1
 
     self.coefficients['Np'] = Np
     self.coefficients['pr'] = pr

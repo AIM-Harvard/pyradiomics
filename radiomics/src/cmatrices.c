@@ -40,10 +40,15 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
         i += (size[d] - cur_idx[d] + bb[d]) * strides[d];
         cur_idx[d] = bb[d];  // Set cur_idx[d] to reflect the change to i
       }
+      else if (cur_idx[d] < bb[d])
+      {
+        i += (bb[d] - cur_idx[d]) * strides[d];
+        cur_idx[d] = bb[d];  // Set cur_idx[d] to reflect the change to i
+      }
     }
 
     cur_idx[0] = i / strides[0];
-    if (cur_idx[0] > bb[Nd])
+    if (cur_idx[0] > bb[Nd])  // No need to check < bb[d], as initialization sets this at bb[d]
       break; // Out-of-range in first dimension: end of bounding box reached
 
     if (mask[i])
@@ -125,20 +130,20 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
   // Loop over all voxels in the image
   for ( ; i < Ni; i++)
   {
-    // Calculate the current index in each dimension
+    // Calculate the current index in each dimension (except dimension 0, handled below)
     for (d = Nd - 1; d > 0; d--)  // Iterate in reverse direction to handle strides from small to large
     {
       cur_idx[d] = (i % strides[d - 1]) / strides[d];
       if (cur_idx[d] > bb[Nd + d])
-      {
         // Set the i to the lower bound of the bounding box
         // size[d] - cur_idx[d] ensures an overflow, causing the index in current dimension to be 0
         // Then, add bb[d] to ensure it is set to the lower bound of the bounding box
         i += (size[d] - cur_idx[d] + bb[d]) * strides[d];
-      }
+      else if (cur_idx[d] < bb[d])
+        i += (bb[d] - cur_idx[d]) * strides[d];
     }
 
-    if (i / strides[0] > bb[Nd])
+    if (i / strides[0] > bb[Nd])  // No need to check < bb[d], as initialization sets this at bb[d]
       break; // Out-of-range in first dimension: end of bounding box reached
 
     // Check if the current voxel is part of the segmentation and unprocessed
@@ -218,22 +223,21 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
   return maxSize;
 }
 
-int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion, int Nvox)
+int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion)
 {
   /* This function fills the GLSZM using the zones described in the tempData. See calculate_glszm() for more details.
    */
-  int v, i = 0;
-  int glszm_idx, glszm_idx_max = Nvox * Ng * maxRegion;  // Index and max index of the texture array
+  int i = 0;
+  int glszm_idx, glszm_idx_max = Ng * maxRegion;  // Index and max index of the texture array
 
-  for (v = 0; v < Nvox; v++)
-    while(tempData[v * (Ng * 2 + 1) + i * 2] > -1)
-    {
-      glszm_idx = v * Ng * maxRegion + (tempData[v * (Ng * 2 + 1) + i * 2] - 1) * maxRegion + tempData[v * (Ng * 2 + 1) + i * 2 + 1] - 1;
-      if (glszm_idx >= glszm_idx_max) return 0; // Index out of range
+  while(tempData[i * 2] > -1)
+  {
+    glszm_idx = (tempData[i * 2] - 1) * maxRegion + tempData[i * 2 + 1] - 1;
+    if (glszm_idx >= glszm_idx_max) return 0; // Index out of range
 
-      glszm[glszm_idx]++;
-      i++;
-    }
+    glszm[glszm_idx]++;
+    i++;
+  }
   return 1;
 }
 
@@ -298,19 +302,21 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
     for (i = start_i; i < Ni; i++)
     {
       // Calculate the current index in each dimension and ensure it is within the bounding box.
+      // (except dimension 0, handled below)
       for (d = Nd - 1; d > 0; d--)  // Iterate in reverse direction to handle strides from small to large
       {
         cur_idx = (i % strides[d - 1]) / strides[d];
         if (cur_idx > bb[Nd + d])
-        {
           // Set the i to the lower bound of the bounding box
           // size[d] - cur_idx[d] ensures an overflow, causing the index in current dimension to be 0
           // Then, add bb[d] to ensure it is set to the lower bound of the bounding box
           i += (size[d] - cur_idx + bb[d]) * strides[d];
-        }
+        else if (cur_idx < bb[d])
+          i += (bb[d] - cur_idx) * strides[d];
       }
 
-      if (i / strides[0] > bb[Nd])
+      cur_idx = i / strides[0];
+      if (i / strides[0] > bb[Nd])  // No need to check < bb[d], as initialization sets this at bb[d]
         break; // Out-of-range in first dimension: end of bounding box reached
 
       // loop over moving dimensions to check if the current voxel is a valid starting voxel
@@ -348,7 +354,7 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
 
         // Update all lower dimensions if necessary (ensuring it all stays within the bounding box)
         d--;  // Don't handle the current dimension (=last moving dimension), we just did that above...
-        for ( ; d > 1 ; d--)
+        for ( ; d > 0 ; d--)
         {
           cur_idx = (i % strides[d - 1]) / strides[d];
           if (cur_idx > bb[Nd + d])
@@ -358,6 +364,8 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
             // Then, add bb[d] to ensure it is set to the lower bound of the bounding box
             i += (size[d] - cur_idx + bb[d]) * strides[d];
           }
+          else if (cur_idx < bb[d])
+            i += (bb[d] - cur_idx) * strides[d];
         }
 
         if (i / strides[0] > bb[Nd])
@@ -499,7 +507,7 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *bb, int *strides, in
   // Loop over all voxels in the image
   for ( ; i < Ni; i++)
   {
-    // Calculate the current index in each dimension
+    // Calculate the current index in each dimension (except dimension 0, handled below)
     for (d = Nd - 1; d > 0; d--)  // Iterate in reverse direction to handle strides from small to large
     {
       cur_idx[d] = (i % strides[d - 1]) / strides[d];
@@ -511,10 +519,15 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *bb, int *strides, in
         i += (size[d] - cur_idx[d] + bb[d]) * strides[d];
         cur_idx[d] = bb[d];  // Set cur_idx[d] to reflect the change to i
       }
+      else if (cur_idx[d] < bb[d])
+      {
+        i += (bb[d] - cur_idx[d]) * strides[d];
+        cur_idx[d] = bb[d];  // Set cur_idx[d] to reflect the change to i
+      }
     }
 
     cur_idx[0] = i / strides[0];
-    if (cur_idx[0] > bb[Nd])
+    if (cur_idx[0] > bb[Nd])  // No need to check < bb[d], as initialization sets this at bb[d]
       break; // Out-of-range in first dimension: end of bounding box reached
 
     if (mask[i])
@@ -595,7 +608,7 @@ int calculate_gldm(int *image, char *mask, int *size, int *bb, int *strides, int
   // Loop over all voxels in the image
   for ( ; i < Ni; i++)
   {
-    // Calculate the current index in each dimension
+    // Calculate the current index in each dimension (except dimension 0, handled below)
     for (d = Nd - 1; d > 0; d--)  // Iterate in reverse direction to handle strides from small to large
     {
       cur_idx[d] = (i % strides[d - 1]) / strides[d];
@@ -607,10 +620,15 @@ int calculate_gldm(int *image, char *mask, int *size, int *bb, int *strides, int
         i += (size[d] - cur_idx[d] + bb[d]) * strides[d];
         cur_idx[d] = bb[d];  // Set cur_idx[d] to reflect the change to i
       }
+      else if (cur_idx[d] < bb[d])
+      {
+        i += (bb[d] - cur_idx[d]) * strides[d];
+        cur_idx[d] = bb[d];  // Set cur_idx[d] to reflect the change to i
+      }
     }
 
     cur_idx[0] = i / strides[0];
-    if (cur_idx[0] > bb[Nd])
+    if (cur_idx[0] > bb[Nd])  // No need to check < bb[d], as initialization sets this at bb[d]
       break; // Out-of-range in first dimension: end of bounding box reached
 
     if (mask[i])

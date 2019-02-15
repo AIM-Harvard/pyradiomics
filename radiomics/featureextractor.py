@@ -378,7 +378,10 @@ class RadiomicsFeaturesExtractor:
 
     if voxelBased:
       self.settings['voxelBased'] = True
+      kernelRadius = self.settings.get('kernelRadius', 1)
       self.logger.info('Starting voxel based extraction')
+    else:
+      kernelRadius = 0
 
     self.logger.info('Calculating features with label: %d', label)
     self.logger.debug('Enabled images types: %s', self._enabledImagetypes)
@@ -470,7 +473,7 @@ class RadiomicsFeaturesExtractor:
     # Calculate features for all (filtered) images in the generator
     for inputImage, imageTypeName, inputKwargs in imageGenerators:
       self.logger.info('Calculating features for %s image', imageTypeName)
-      inputImage, inputMask = imageoperations.cropToTumorMask(inputImage, mask, boundingBox)
+      inputImage, inputMask = imageoperations.cropToTumorMask(inputImage, mask, boundingBox, padDistance=kernelRadius)
       featureVector.update(self.computeFeatures(inputImage, inputMask, imageTypeName, **inputKwargs))
 
     self.logger.debug('Features extracted')

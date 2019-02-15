@@ -87,20 +87,25 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     super(RadiomicsNGTDM, self).__init__(inputImage, inputMask, **kwargs)
 
     self.P_ngtdm = None
-    self._applyBinning()
+    self.imageArray = self._applyBinning(self.imageArray)
 
-  def _initCalculation(self):
-    self.P_ngtdm = self._calculateMatrix()
+  def _initCalculation(self, voxelCoordinates=None):
+    self.P_ngtdm = self._calculateMatrix(voxelCoordinates)
     self._calculateCoefficients()
 
-  def _calculateMatrix(self):
-    # shape (Nvox, Ng, 3)
-    P_ngtdm = cMatrices.calculate_ngtdm(self.matrix,
-                                        self.maskArray,
-                                        numpy.array(self.settings.get('distances', [1])),
-                                        self.coefficients['Ng'],
-                                        self.settings.get('force2D', False),
-                                        self.settings.get('force2Ddimension', 0))
+  def _calculateMatrix(self, voxelCoordinates=None):
+    matrix_args = [
+      self.imageArray,
+      self.maskArray,
+      numpy.array(self.settings.get('distances', [1])),
+      self.coefficients['Ng'],
+      self.settings.get('force2D', False),
+      self.settings.get('force2Ddimension', 0)
+    ]
+    if self.voxelBased:
+      matrix_args += [self.settings.get('kernelRadius', 1), voxelCoordinates]
+
+    P_ngtdm = cMatrices.calculate_ngtdm(*matrix_args)  # shape (Nvox, Ng, 3)
 
     # Delete empty grey levels
     emptyGrayLevels = numpy.where(numpy.sum(P_ngtdm[:, :, 0], 0) == 0)

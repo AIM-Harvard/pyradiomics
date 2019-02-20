@@ -187,8 +187,12 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       else:
         self.logger.debug('No empty angles')
 
+    # Mark empty angles with NaN, allowing them to be ignored in feature calculation
+    sumP_glcm[sumP_glcm == 0] = numpy.nan
     # Normalize each glcm
-    return P_glcm / sumP_glcm[:, None, None, :]
+    P_glcm /= sumP_glcm[:, None, None, :]
+
+    return P_glcm
 
   # check if ivector and jvector can be replaced
   def _calculateCoefficients(self):
@@ -218,27 +222,13 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = numpy.sum(i[None, :, :, None] * self.P_glcm, (1, 2), keepdims=True)
     uy = numpy.sum(j[None, :, :, None] * self.P_glcm, (1, 2), keepdims=True)
 
-    # shape = (Nv, 1, 1, angles)
-    sigx = numpy.sum(self.P_glcm * ((i[None, :, :, None] - ux) ** 2), (1, 2), keepdims=True) ** 0.5
-    # shape = (Nv, 1, 1, angles)
-    sigy = numpy.sum(self.P_glcm * ((j[None, :, :, None] - uy) ** 2), (1, 2), keepdims=True) ** 0.5
-
     # shape = (Nv, 2*Ng-1, angles)
     pxAddy = numpy.array([numpy.sum(self.P_glcm[:, i + j == k, :], 1) for k in kValuesSum]).transpose((1, 0, 2))
     # shape = (Nv, Ng, angles)
     pxSuby = numpy.array([numpy.sum(self.P_glcm[:, numpy.abs(i - j) == k, :], 1) for k in kValuesDiff]).transpose((1, 0, 2))
 
-    # entropy of px # shape = (Nv, angles)
-    HX = (-1) * numpy.sum((px * numpy.log2(px + eps)), (1, 2))
-    # entropy of py # shape = (Nv, angles)
-    HY = (-1) * numpy.sum((py * numpy.log2(py + eps)), (1, 2))
     # shape = (Nv, angles)
     HXY = (-1) * numpy.sum((self.P_glcm * numpy.log2(self.P_glcm + eps)), (1, 2))
-
-    # shape = (Nv, angles)
-    HXY1 = (-1) * numpy.sum((self.P_glcm * numpy.log2(px * py + eps)), (1, 2))
-    # shape = (Nv, angles)
-    HXY2 = (-1) * numpy.sum(((px * py) * numpy.log2(px * py + eps)), (1, 2))
 
     self.coefficients['eps'] = eps
     self.coefficients['i'] = i
@@ -249,15 +239,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     self.coefficients['py'] = py
     self.coefficients['ux'] = ux
     self.coefficients['uy'] = uy
-    self.coefficients['sigx'] = sigx
-    self.coefficients['sigy'] = sigy
     self.coefficients['pxAddy'] = pxAddy
     self.coefficients['pxSuby'] = pxSuby
-    self.coefficients['HX'] = HX
-    self.coefficients['HY'] = HY
     self.coefficients['HXY'] = HXY
-    self.coefficients['HXY1'] = HXY1
-    self.coefficients['HXY2'] = HXY2
 
   def getAutocorrelationFeatureValue(self):
     r"""
@@ -271,7 +255,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     ac = numpy.sum(self.P_glcm * (i * j)[None, :, :, None], (1, 2))
-    return ac.mean(1)
+    return numpy.nanmean(ac, 1)
 
   def getJointAverageFeatureValue(self):
     r"""
@@ -307,7 +291,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
     cp = numpy.sum((self.P_glcm * (((i + j)[None, :, :, None] - ux - uy) ** 4)), (1, 2))
-    return cp.mean(1)
+    return numpy.nanmean(cp, 1)
 
   def getClusterShadeFeatureValue(self):
     r"""
@@ -325,7 +309,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
     cs = numpy.sum((self.P_glcm * (((i + j)[None, :, :, None] - ux - uy) ** 3)), (1, 2))
-    return cs.mean(1)
+    return numpy.nanmean(cs, 1)
 
   def getClusterTendencyFeatureValue(self):
     r"""
@@ -342,7 +326,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
     ct = numpy.sum((self.P_glcm * (((i + j)[None, :, :, None] - ux - uy) ** 2)), (1, 2))
-    return ct.mean(1)
+    return numpy.nanmean(ct, 1)
 
   def getContrastFeatureValue(self):
     r"""
@@ -357,7 +341,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     i = self.coefficients['i']
     j = self.coefficients['j']
     cont = numpy.sum((self.P_glcm * ((numpy.abs(i - j))[None, :, :, None] ** 2)), (1, 2))
-    return cont.mean(1)
+    return numpy.nanmean(cont, 1)
 
   def getCorrelationFeatureValue(self):
     r"""
@@ -378,13 +362,16 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     j = self.coefficients['j']
     ux = self.coefficients['ux']
     uy = self.coefficients['uy']
-    sigx = self.coefficients['sigx']
-    sigy = self.coefficients['sigy']
+
+    # shape = (Nv, 1, 1, angles)
+    sigx = numpy.sum(self.P_glcm * ((i[None, :, :, None] - ux) ** 2), (1, 2), keepdims=True) ** 0.5
+    # shape = (Nv, 1, 1, angles)
+    sigy = numpy.sum(self.P_glcm * ((j[None, :, :, None] - uy) ** 2), (1, 2), keepdims=True) ** 0.5
 
     corm = numpy.sum(self.P_glcm * (i[None, :, :, None] - ux) * (j[None, :, :, None] - uy), (1, 2), keepdims=True)
     corr = corm / (sigx * sigy + eps)
     corr[sigx * sigy == 0] = 1  # Set elements that would be divided by 0 to 1.
-    return corr.mean((1, 2, 3))
+    return numpy.nanmean(corr, (1, 2, 3))
 
   def getDifferenceAverageFeatureValue(self):
     r"""
@@ -400,7 +387,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = self.coefficients['pxSuby']
     kValuesDiff = self.coefficients['kValuesDiff']
     diffavg = numpy.sum((kValuesDiff[None, :, None] * pxSuby), 1)
-    return diffavg.mean(1)
+    return numpy.nanmean(diffavg, 1)
 
   def getDifferenceEntropyFeatureValue(self):
     r"""
@@ -415,7 +402,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = self.coefficients['pxSuby']
     eps = self.coefficients['eps']
     difent = (-1) * numpy.sum((pxSuby * numpy.log2(pxSuby + eps)), 1)
-    return difent.mean(1)
+    return numpy.nanmean(difent, 1)
 
   def getDifferenceVarianceFeatureValue(self):
     r"""
@@ -431,7 +418,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     kValuesDiff = self.coefficients['kValuesDiff']
     diffavg = numpy.sum((kValuesDiff[None, :, None] * pxSuby), 1, keepdims=True)
     diffvar = numpy.sum((pxSuby * ((kValuesDiff[None, :, None] - diffavg) ** 2)), 1)
-    return diffvar.mean(1)
+    return numpy.nanmean(diffvar, 1)
 
   @deprecated
   def getDissimilarityFeatureValue(self):
@@ -467,7 +454,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       Defined by IBSI as Angular Second Moment.
     """
     ene = numpy.sum((self.P_glcm ** 2), (1, 2))
-    return ene.mean(1)
+    return numpy.nanmean(ene, 1)
 
   def getJointEntropyFeatureValue(self):
     r"""
@@ -484,7 +471,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       Defined by IBSI as Joint entropy
     """
     ent = self.coefficients['HXY']
-    return ent.mean(1)
+    return numpy.nanmean(ent, 1)
 
   @deprecated
   def getHomogeneity1FeatureValue(self):
@@ -558,18 +545,26 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       In the case where both HX and HY are 0 (as is the case in a flat region), an arbitrary value of 0 is returned to
       prevent a division by 0. This is done on a per-angle basis (i.e. prior to any averaging).
     """
-    eps = self.coefficients['eps']
-    HX = self.coefficients['HX']
-    HY = self.coefficients['HY']
     HXY = self.coefficients['HXY']
-    HXY1 = self.coefficients['HXY1']
 
-    div = numpy.max(([HX, HY]), 0)
+    eps = self.coefficients['eps']
+    px = self.coefficients['px']
+    py = self.coefficients['py']
 
-    imc1 = (HXY - HXY1) / (div + eps)
+    # entropy of px # shape = (Nv, angles)
+    HX = (-1) * numpy.sum((px * numpy.log2(px + eps)), (1, 2))
+    # entropy of py # shape = (Nv, angles)
+    HY = (-1) * numpy.sum((py * numpy.log2(py + eps)), (1, 2))
+    # shape = (Nv, angles)
+    HXY1 = (-1) * numpy.sum((self.P_glcm * numpy.log2(px * py + eps)), (1, 2))
+
+    div = numpy.fmax(HX, HY)
+
+    imc1 = HXY - HXY1
+    imc1[div != 0] /= div[div != 0]
     imc1[div == 0] = 0  # Set elements that would be divided by 0 to 0
 
-    return imc1.mean(1)
+    return numpy.nanmean(imc1, 1)
 
   def getImc2FeatureValue(self):
     r"""
@@ -593,12 +588,18 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
       averaging).
     """
     HXY = self.coefficients['HXY']
-    HXY2 = self.coefficients['HXY2']
+
+    eps = self.coefficients['eps']
+    px = self.coefficients['px']
+    py = self.coefficients['py']
+
+    # shape = (Nv, angles)
+    HXY2 = (-1) * numpy.sum(((px * py) * numpy.log2(px * py + eps)), (1, 2))
 
     imc2 = (1 - numpy.e ** (-2 * (HXY2 - HXY))) ** 0.5
     imc2[HXY2 == HXY] = 0
 
-    return imc2.mean(1)
+    return numpy.nanmean(imc2, 1)
 
   def getIdmFeatureValue(self):
     r"""
@@ -614,7 +615,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = self.coefficients['pxSuby']
     kValuesDiff = self.coefficients['kValuesDiff']
     idm = numpy.sum(pxSuby / (1 + (kValuesDiff[None, :, None] ** 2)), 1)
-    return idm.mean(1)
+    return numpy.nanmean(idm, 1)
 
   def getMCCFeatureValue(self):
     r"""
@@ -652,7 +653,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
     MCC = numpy.sqrt(Q_eigenValue[:, :, -2])  # 2nd highest eigenvalue
 
-    return numpy.mean(MCC, 1).real
+    return numpy.nanmean(MCC, 1).real
 
   def getIdmnFeatureValue(self):
     r"""
@@ -672,7 +673,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     kValuesDiff = self.coefficients['kValuesDiff']
     Ng = self.coefficients['Ng']
     idmn = numpy.sum(pxSuby / (1 + ((kValuesDiff[None, :, None] ** 2) / (Ng ** 2))), 1)
-    return idmn.mean(1)
+    return numpy.nanmean(idmn, 1)
 
   def getIdFeatureValue(self):
     r"""
@@ -687,7 +688,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = self.coefficients['pxSuby']
     kValuesDiff = self.coefficients['kValuesDiff']
     invDiff = numpy.sum(pxSuby / (1 + kValuesDiff[None:, None]), 1)
-    return invDiff.mean(1)
+    return numpy.nanmean(invDiff, 1)
 
   def getIdnFeatureValue(self):
     r"""
@@ -705,7 +706,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     kValuesDiff = self.coefficients['kValuesDiff']
     Ng = self.coefficients['Ng']
     idn = numpy.sum(pxSuby / (1 + (kValuesDiff[None, :, None] / Ng)), 1)
-    return idn.mean(1)
+    return numpy.nanmean(idn, 1)
 
   def getInverseVarianceFeatureValue(self):
     r"""
@@ -719,7 +720,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxSuby = self.coefficients['pxSuby']
     kValuesDiff = self.coefficients['kValuesDiff']
     inv = numpy.sum(pxSuby[:, 1:, :] / kValuesDiff[None, 1:, None] ** 2, 1)  # Skip k = 0 (division by 0)
-    return inv.mean(1)
+    return numpy.nanmean(inv, 1)
 
   def getMaximumProbabilityFeatureValue(self):
     r"""
@@ -735,8 +736,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     .. note::
       Defined by IBSI as Joint maximum
     """
-    maxprob = self.P_glcm.max((1, 2))
-    return maxprob.mean(1)
+    maxprob = numpy.amax(self.P_glcm, (1, 2))
+    return numpy.nanmean(maxprob, 1)
 
   def getSumAverageFeatureValue(self):
     r"""
@@ -763,7 +764,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxAddy = self.coefficients['pxAddy']
     kValuesSum = self.coefficients['kValuesSum']
     sumavg = numpy.sum((kValuesSum[None, :, None] * pxAddy), 1)
-    return sumavg.mean(1)
+    return numpy.nanmean(sumavg, 1)
 
   @deprecated
   def getSumVarianceFeatureValue(self):
@@ -795,7 +796,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     pxAddy = self.coefficients['pxAddy']
     eps = self.coefficients['eps']
     sumentr = (-1) * numpy.sum((pxAddy * numpy.log2(pxAddy + eps)), 1)
-    return sumentr.mean(1)
+    return numpy.nanmean(sumentr, 1)
 
   def getSumSquaresFeatureValue(self):
     r"""
@@ -823,4 +824,4 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     ux = self.coefficients['ux']
     # Also known as Variance
     ss = numpy.sum((self.P_glcm * ((i[None, :, :, None] - ux) ** 2)), (1, 2))
-    return ss.mean(1)
+    return numpy.nanmean(ss, 1)

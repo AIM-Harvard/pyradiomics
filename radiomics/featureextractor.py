@@ -333,7 +333,7 @@ class RadiomicsFeaturesExtractor:
     self._enabledFeatures.update(enabledFeatures)
     self.logger.debug('Enabled features: %s', self._enabledFeatures)
 
-  def execute(self, imageFilepath, maskFilepath, label=None, voxelBased=False):
+  def execute(self, imageFilepath, maskFilepath, label=None, label_channel=None, voxelBased=False):
     """
     Compute radiomics signature for provide image and mask combination. It comprises of the following steps:
 
@@ -355,7 +355,13 @@ class RadiomicsFeaturesExtractor:
     :param maskFilepath: SimpleITK Image, or string pointing to labelmap file location
     :param label: Integer, value of the label for which to extract features. If not specified, last specified label
         is used. Default label is 1.
+    :param label_channel: Integer, index of the channel to use when maskFilepath yields a SimpleITK.Image with a vector
+        pixel type. Default index is 0.
+    :param voxelBased: Boolean, default False. If set to true, a voxel-based extraction is performed, segment-based
+        otherwise.
     :returns: dictionary containing calculated signature ("<imageType>_<featureClass>_<featureName>":value).
+        In case of segment-based extraction, value type for features is float, if voxel-based, type is SimpleITK.Image.
+        Type of diagnostic features differs, but can always be represented as a string.
     """
     geometryTolerance = self.settings.get('geometryTolerance')
     additionalInfo = self.settings.get('additionalInfo', False)
@@ -365,6 +371,9 @@ class RadiomicsFeaturesExtractor:
       self.settings['label'] = label
     else:
       label = self.settings.get('label', 1)
+
+    if label_channel is not None:
+      self.settings['label_channel'] = label_channel
 
     if self.geometryTolerance != geometryTolerance:
       self._setTolerance()

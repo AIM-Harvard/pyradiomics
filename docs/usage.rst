@@ -145,7 +145,7 @@ Interactive Use
     for key, val in six.iteritems(result):
       if isinstance(val, sitk.Image):  # Feature map
         sitk.WriteImage(val, key + '.nrrd', True)
-        print("Stored feature %s in %s" % (key, key + ".nrrd")
+        print("Stored feature %s in %s" % (key, key + ".nrrd"))
       else:  # Diagnostic information
         print("\t%s: %s" %(key, val))
 

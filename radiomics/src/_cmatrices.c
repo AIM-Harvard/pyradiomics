@@ -372,7 +372,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   {
     set_bb(v, bb, size, voxels, Nd, Nvox, kernelRadius, force2Ddimension);
 
-    region = calculate_glszm(image, mask, size, bb, strides, angles, Na, Nd, tempData + v * (2 * Ns + 1), Ng, Ns);
+    region = calculate_glszm(image, mask, size, bb, strides, angles, Na, Nd, tempData + v * (2 * Ns + 1), Ng, Ns, Nvox);
     if (region < 0) // Error occured
     {
       Py_XDECREF(image_arr);
@@ -1135,7 +1135,7 @@ int try_parse_voxels_arr(PyObject *voxels_obj, PyArrayObject **voxels_arr, int N
       return -1;
     }
 
-    *vox_cnt = PyArray_DIM(*voxels_arr, 1);
+    *vox_cnt = (int)PyArray_DIM(*voxels_arr, 1);
   }
   return 0;
 }

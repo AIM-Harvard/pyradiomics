@@ -87,7 +87,7 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
   return 1;
 }
 
-int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, int *angles, int Na, int Nd, int *tempData, int Ng, int Ns)
+int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, int *angles, int Na, int Nd, int *tempData, int Ng, int Ns, int Nvox)
 {
   /* Calculate the GLSZM: Count the number of connected zones with gray level i and size j in the ROI. Uses the angles
    * to find neighbours and pushes neighbours with the same gray level of the current zone onto a stack. Next, the last
@@ -109,6 +109,8 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
   // Stack to hold indices of a growing region
   int *regionStack;
   int stackTop = -1;
+  int *processedStack = NULL;
+  int processed_idx = -1;
 
   // Output matrix variables
   int gl, region;
@@ -117,6 +119,11 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
   int max_region_idx = Ns * 2;
 
   regionStack = (int *)malloc(sizeof *regionStack * Ns);
+
+  // If processing multiple voxels, use a processedStack to keep track of processed voxels.
+  // These need to be reset after processing to allow for reprocessing in the next kernel(s)
+  if (Nvox > 1)
+    processedStack = (int *)malloc(sizeof *processedStack * Ns);
 
   // Calculate size of image array, and set i at lower bound of bounding box
   Ni = size[0];
@@ -155,6 +162,15 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
       // Instantiate variable to hold region size at 0. Region increases for every found voxel.
       region = 0;
 
+      // Voxel-based: Add the current voxel to the processed stack to reset later.
+      if (processed_idx + 1 >= Ns)  // index out of range
+      {
+        regionCounter = -1;
+        break;
+      }
+      if (processedStack)
+        processedStack[++processed_idx] = i;
+
       // Start growing the region
       regionStack[++stackTop] = i; // Add the current voxel to the stack as 'starting point'
       mask[i] = 0;  // Mark current voxel as 'processed'
@@ -191,6 +207,17 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
           // increment the corresponding element in the GLCM
           if (j > 0 && mask[j] && (image[j] == gl))
           {
+            // Voxel-based: Add the current voxel to the processed stack to reset later.
+            if (processedStack)
+            {
+              if (processed_idx + 1 >= Ns)  // index out of range
+              {
+                regionCounter = -1;
+                break;
+              }
+              processedStack[++processed_idx] = j;
+            }
+
             // Push the voxel index to the stack for further processing
             regionStack[++stackTop] = j;
             // Voxel belongs to current region, mark it as 'processed'
@@ -199,11 +226,12 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
         } // next a
       }  // while (stackTop > -1)
 
+      if (regionCounter < 0)
+        break;
       if (regionCounter >= max_region_idx)
       {
-        free(regionStack);
-        free(cur_idx);
-        return -1; // index out of range
+        regionCounter = -1; // index out of range, mark as "failed"
+        break;
       }
       // Keep track of the largest region encountered, used to instantiate the GLSZM matrix later
       if (region > maxSize) maxSize = region;
@@ -218,8 +246,20 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
   free(cur_idx);
   free(regionStack);
 
-  if (regionCounter >= max_region_idx) return -1; // index out of range
+  // Reset all processed voxels (needed when computing voxel-based)
+  if (processedStack)
+  {
+    while (processed_idx > -1)
+    {
+      mask[processedStack[processed_idx]] = 1;
+      processed_idx--;
+    }
+    free(processedStack);
+  }
+
+  if (regionCounter < 0 || regionCounter >= max_region_idx) return -1; // index out of range
   tempData[(regionCounter * 2)] = -1; // Set the first element after last region to -1 to stop the loop in fill_glszm
+
   return maxSize;
 }
 

@@ -1,5 +1,5 @@
 int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int *angles, int Na, int Nd, double *glcm, int Ng);
-int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, int *angles, int Na, int Nd, int *tempData, int Ng, int Ns);
+int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, int *angles, int Na, int Nd, int *tempData, int Ng, int Ns, int Nvox);
 int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion);
 int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, int *angles, int Na, int Nd, double *glrlm, int Ng, int Nr);
 int calculate_ngtdm(int *image, char *mask, int *size, int *bb, int *strides, int *angles, int Na, int Nd, double *ngtdm, int Ng);

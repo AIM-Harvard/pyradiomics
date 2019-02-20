@@ -1,5 +1,4 @@
 import numpy
-import SimpleITK as sitk
 from six.moves import range
 
 from radiomics import base, cMatrices, deprecated
@@ -42,19 +41,14 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     kernelRadius = self.settings.get('kernelRadius', 1)
 
-    ROI_mask = sitk.GetArrayFromImage(self.inputMask) == self.label
-    ROI_indices = numpy.array(numpy.where(ROI_mask))
-
     # Get the size of the input, which depends on whether it is in masked mode or not
     if self.masked:
-      size = numpy.max(ROI_indices, 1) - numpy.min(ROI_indices, 1) + 1
+      size = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
     else:
       size = numpy.array(self.imageArray.shape)
 
-    # Take the minimum size along each x, y and z dimension from either the size of the ROI or the kernel
-    # First add the kernel radius to the size, yielding shape (2, 3), then take the minimum along axis 0, getting back
-    # to shape (3,)
-    boundingBoxSize = numpy.min(numpy.insert([size], 1, kernelRadius * 2 + 1, axis=0), axis=0)
+    # Take the minimum size along each dimension from either the size of the ROI or the kernel
+    boundingBoxSize = numpy.minimum(size, kernelRadius * 2 + 1)
 
     # Calculate the offsets, which can be used to generate a list of kernel Coordinates. Shape (Nd, Nk)
     self.kernelOffsets = cMatrices.generate_angles(boundingBoxSize,
@@ -82,7 +76,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       p_i = p_i.reshape((1, -1))
     else:
       # voxelCoordinates shape (Nd, Nvox)
-      voxelCoordinates = numpy.array(voxelCoordinates) + self.settings.get('kernelRadius', 1)  # adjust for padding
+      voxelCoordinates += self.settings.get('kernelRadius', 1)  # adjust for padding
       kernelCoords = self.kernelOffsets[:, None, :] + voxelCoordinates[:, :, None]  # Shape (Nd, Nvox, Nk)
       kernelCoords = tuple(kernelCoords)  # shape (Nd, (Nvox, Nk))
 

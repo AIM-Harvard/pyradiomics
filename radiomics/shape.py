@@ -38,6 +38,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
   """
 
   def __init__(self, inputImage, inputMask, **kwargs):
+    assert inputMask.GetDimension() == 3, 'Shape features are only available in 3D. If 2D, use shape2D instead'
     super(RadiomicsShape, self).__init__(inputImage, inputMask, **kwargs)
 
   def _initVoxelBasedCalculation(self):

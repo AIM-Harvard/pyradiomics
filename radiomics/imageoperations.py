@@ -277,7 +277,7 @@ def _checkROI(imageNode, maskNode, **kwargs):
 
   For the second check, a tolerance of 1e-3 is allowed.
 
-  If the ROI is valid, the bounding box (lower bounds and size in 3 directions: L_X, L_Y, L_Z, S_X, S_Y, S_Z) is
+  If the ROI is valid, the bounding box (lower bounds, followd by size in all dimensions (X, Y, Z ordered)) is
   returned. Otherwise, a ValueError is raised.
   """
   global logger
@@ -293,17 +293,18 @@ def _checkROI(imageNode, maskNode, **kwargs):
   if label not in lssif.GetLabels():
     raise ValueError('Label (%d) not present in mask', label)
 
-  # LBound and size of the bounding box, as (L_X, L_Y, L_Z, S_X, S_Y, S_Z)
+  # LBound and size of the bounding box, as (L_X, L_Y, [L_Z], S_X, S_Y, [S_Z])
   bb = numpy.array(lssif.GetBoundingBox(label))
+  Nd = maskNode.GetDimension()
 
   # Determine if the ROI is within the physical space of the image
 
   logger.debug('Comparing physical space of bounding box to physical space of image')
   # Step 1: Get the origin and UBound corners of the bounding box in physical space
   # The additional 0.5 represents the difference between the voxel center and the voxel corner
-  # Upper bound index of ROI = bb[:3] + bb[3:] - 1 (LBound + Size - 1), .5 is added to get corner
-  ROIBounds = (maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] - .5),  # Origin
-               maskNode.TransformContinuousIndexToPhysicalPoint(bb[:3] + bb[3:] - 0.5))  # UBound
+  # Upper bound index of ROI = bb[:Nd] + bb[Nd:] - 1 (LBound + Size - 1), .5 is added to get corner
+  ROIBounds = (maskNode.TransformContinuousIndexToPhysicalPoint(bb[:Nd] - .5),  # Origin
+               maskNode.TransformContinuousIndexToPhysicalPoint(bb[:Nd] + bb[Nd:] - 0.5))  # UBound
   # Step 2: Translate the ROI physical bounds to the image coordinate space
   ROIBounds = (imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[0]),  # Origin
                imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[1]))
@@ -415,6 +416,11 @@ def resampleImage(imageNode, maskNode, **kwargs):
   maskSpacing = numpy.array(maskNode.GetSpacing())
   imageSpacing = numpy.array(imageNode.GetSpacing())
 
+  Nd_resampled = len(resampledPixelSpacing)
+  Nd_mask = len(maskSpacing)
+  assert Nd_resampled == Nd_mask, \
+      'Wrong dimensionality (%i-D) of resampledPixelSpacing!, %i-D required' % (Nd_resampled, Nd_mask)
+
   # If spacing for a direction is set to 0, use the original spacing (enables "only in-slice" resampling)
   logger.debug('Where resampled spacing is set to 0, set it to the original spacing (mask)')
   resampledPixelSpacing = numpy.array(resampledPixelSpacing)
@@ -426,7 +432,7 @@ def resampleImage(imageNode, maskNode, **kwargs):
 
   # Do not resample in those directions where labelmap spans only one slice.
   maskSize = numpy.array(maskNode.GetSize())
-  resampledPixelSpacing = numpy.where(bb[3:] != 1, resampledPixelSpacing, maskSpacing)
+  resampledPixelSpacing = numpy.where(bb[Nd_mask:] != 1, resampledPixelSpacing, maskSpacing)
 
   # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
   # Tolerance = 1e-5 + 1e-8*abs(resampledSpacing)
@@ -440,8 +446,8 @@ def resampleImage(imageNode, maskNode, **kwargs):
   # Determine bounds of cropped volume in terms of new Index coordinate space,
   # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
   # Pad with an extra .5 to prevent data loss in case of upsampling. For Ubound this is (-1 + 0.5 = -0.5)
-  bbNewLBound = numpy.floor((bb[:3] - 0.5) * spacingRatio - padDistance)
-  bbNewUBound = numpy.ceil((bb[:3] + bb[3:] - 0.5) * spacingRatio + padDistance)
+  bbNewLBound = numpy.floor((bb[:Nd_mask] - 0.5) * spacingRatio - padDistance)
+  bbNewUBound = numpy.ceil((bb[:Nd_mask] + bb[Nd_mask:] - 0.5) * spacingRatio + padDistance)
 
   # Ensure resampling is not performed outside bounds of original image
   maxUbound = numpy.ceil(maskSize * spacingRatio) - 1
@@ -741,7 +747,8 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
 
   logger.debug('Generating Wavelet images')
 
-  axes = [2, 1, 0]
+  Nd = inputImage.GetDimension()
+  axes = list(range(Nd - 1, -1, -1))
   if kwargs.get('force2D', False):
     axes.remove(kwargs.get('force2Ddimension', 0))
 
@@ -773,11 +780,10 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
 
   matrix = sitk.GetArrayFromImage(inputImage)  # This function gets a numpy array from the SimpleITK Image "inputImage"
   matrix = numpy.asarray(matrix) # The function np.asarray converts "matrix" (which could be also a tuple) into an array.
-  if matrix.ndim != 3:
-    raise ValueError('Expected 3D data array')
 
   original_shape = matrix.shape
   # original_shape becomes a tuple (?,?,?) containing the number of rows, columns, and slices of the image
+  # this is of course dependent on the number of dimensions, but the same principle holds
   padding = tuple([(0, 1 if dim % 2 != 0 else 0) for dim in original_shape])
   # padding is necessary because of pywt.swtn (see function Notes)
   data = matrix.copy()  # creates a modifiable copy of "matrix" and we call it "data"
@@ -786,13 +792,17 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
   if not isinstance(wavelet, pywt.Wavelet):
     wavelet = pywt.Wavelet(wavelet)
 
-  for i in range(0, start_level):  # if start_level = 0 this for loop never gets executed
-    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0] # computes all decompositions and saves them in "dec" dict
-    data = dec['a' * len(axes)].copy()  # copies in "data" just the "aaa" decomposition (if len(axes) = 3)
+  for i in range(0, start_level):  # if start_level = 0 (default) this for loop never gets executed
+    # compute all decompositions and saves them in "dec" dict
+    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0]
+    # copies in "data" just the "aaa" decomposition (i.e. approximation; No of consecutive 'a's = len(axes))
+    data = dec['a' * len(axes)].copy()
 
   ret = []  # initialize empty list
   for i in range(start_level, start_level + level):
-    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0]  # computes the n-dimensional stationary wavelet transform
+    # compute the n-dimensional stationary wavelet transform
+    dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0]
+    # Copy the approximation into data (approximation in output / input for next levels)
     data = dec['a' * len(axes)].copy()
 
     dec_im = {}  # initialize empty dict
@@ -984,22 +994,28 @@ def getLBP2DImage(inputImage, inputMask, **kwargs):
     logger.warning('Could not load required package "skimage", cannot implement filter LBP 2D')
     return
 
-  # Warn the user if features are extracted in 3D, as this function calculates LBP in 2D
-  if not kwargs.get('force2D', False):
-    logger.warning('Calculating Local Binary Pattern in 2D, but extracting features in 3D. Use with caution!')
-
-  lbp_axis = kwargs.get('force2Ddimension', 0)
-
   lbp_radius = kwargs.get('lbp2DRadius', 1)
   lbp_samples = kwargs.get('lbp2DSamples', 8)
   lbp_method = kwargs.get('lbp2DMethod', 'uniform')
 
   im_arr = sitk.GetArrayFromImage(inputImage)
 
-  im_arr = im_arr.swapaxes(0, lbp_axis)
-  for idx in range(im_arr.shape[0]):
-    im_arr[idx, ...] = local_binary_pattern(im_arr[idx, ...], P=lbp_samples, R=lbp_radius, method=lbp_method)
-  im_arr = im_arr.swapaxes(0, lbp_axis)
+  Nd = inputImage.GetDimension()
+  if Nd == 3:
+    # Warn the user if features are extracted in 3D, as this function calculates LBP in 2D
+    if not kwargs.get('force2D', False):
+      logger.warning('Calculating Local Binary Pattern in 2D, but extracting features in 3D. Use with caution!')
+    lbp_axis = kwargs.get('force2Ddimension', 0)
+
+    im_arr = im_arr.swapaxes(0, lbp_axis)
+    for idx in range(im_arr.shape[0]):
+      im_arr[idx, ...] = local_binary_pattern(im_arr[idx, ...], P=lbp_samples, R=lbp_radius, method=lbp_method)
+    im_arr = im_arr.swapaxes(0, lbp_axis)
+  elif Nd == 2:
+    im_arr = local_binary_pattern(im_arr, P=lbp_samples, R=lbp_radius, method=lbp_method)
+  else:
+    logger.warning('LBP 2D is only available for 2D or 3D with forced 2D extraction')
+    return
 
   im = sitk.GetImageFromArray(im_arr)
   im.CopyInformation(inputImage)
@@ -1036,6 +1052,11 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
     Science, vol 7728. Springer, Berlin, Heidelberg. doi:10.1007/978-3-642-37410-4_3
   """
   global logger
+  Nd = inputImage.GetDimension()
+  if Nd != 3:
+    logger.warning('LBP 3D only available for 3 dimensional images, found %i dimensions', Nd)
+    return
+
   try:
     from scipy.stats import kurtosis
     from scipy.ndimage.interpolation import map_coordinates

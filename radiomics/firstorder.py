@@ -103,8 +103,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       Not present in IBSI feature definitions
     """
 
-    x, y, z = self.pixelSpacing
-    cubicMMPerVoxel = x * y * z
+    cubicMMPerVoxel = numpy.multiply.reduce(self.pixelSpacing)
 
     return cubicMMPerVoxel * self.getEnergyFeatureValue()
 

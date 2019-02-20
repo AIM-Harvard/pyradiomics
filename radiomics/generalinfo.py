@@ -49,8 +49,9 @@ class GeneralInfo:
 
     Adds the following:
 
-    - ImageHash: sha1 hash of the mask, which can be used to check if the same mask was used during reproducibility
+    - Hash: sha1 hash of the mask, which can be used to check if the same mask was used during reproducibility
       tests. (Only added when prefix is "original")
+    - Dimensionality: Number of dimensions (e.g. 2D, 3D) in the image. (Only added when prefix is "original")
     - Spacing: Pixel spacing (x, y, z) in mm.
     - Size: Dimensions (x, y, z) of the image in number of voxels.
     - Mean: Mean intensity value over all voxels in the image.
@@ -64,6 +65,7 @@ class GeneralInfo:
     """
     if prefix == 'original':
       self.generalInfo[self.generalInfo_prefix + 'Image-original_Hash'] = sitk.Hash(image)
+      self.generalInfo[self.generalInfo_prefix + 'Image-original_Dimensionality'] = '%iD' % image.GetDimension()
 
     self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Spacing'] = image.GetSpacing()
     self.generalInfo[self.generalInfo_prefix + 'Image-' + prefix + '_Size'] = image.GetSize()

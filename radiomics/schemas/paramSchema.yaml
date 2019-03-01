@@ -141,6 +141,10 @@ mapping:
         type: bool
       initValue:
         type: float
+      voxelBatch:
+        type: int
+        range:
+          min-ex: 0
 
   featureClass:
     type: map

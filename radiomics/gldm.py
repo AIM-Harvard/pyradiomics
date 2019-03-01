@@ -54,8 +54,8 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
   - distances [[1]]: List of integers. This specifies the distances between the center voxel and the neighbor, for which
     angles should be generated.
-  - gldm_a [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is considered
-    dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
+  - gldm_a [0]: float, :math:`\alpha` cutoff value for dependence. A neighbouring voxel with gray level :math:`j` is
+    considered dependent on center voxel with gray level :math:`i` if :math:`|i-j|\le\alpha`
 
   References:
 
@@ -69,43 +69,56 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.gldm_a = kwargs.get('gldm_a', 0)
 
     self.P_gldm = None
-    self._applyBinning()
+    self.imageArray = self._applyBinning(self.imageArray)
 
-  def _initCalculation(self):
-    self.coefficients['Np'] = len(self.labelledVoxelCoordinates[0])
-
-    self.P_gldm = self._calculateMatrix()
+  def _initCalculation(self, voxelCoordinates=None):
+    self.P_gldm = self._calculateMatrix(voxelCoordinates)
 
     self.logger.debug('Feature class initialized, calculated GLDM with shape %s', self.P_gldm.shape)
 
-  def _calculateMatrix(self):
+  def _calculateMatrix(self, voxelCoordinates=None):
     self.logger.debug('Calculating GLDM matrix in C')
 
     Ng = self.coefficients['Ng']
-    P_gldm = cMatrices.calculate_gldm(self.matrix,
-                                      self.maskArray,
-                                      numpy.array(self.settings.get('distances', [1])),
-                                      Ng,
-                                      self.gldm_a,
-                                      self.settings.get('force2D', False),
-                                      self.settings.get('force2Ddimension', 0))
+
+    matrix_args = [
+      self.imageArray,
+      self.maskArray,
+      numpy.array(self.settings.get('distances', [1])),
+      Ng,
+      self.gldm_a,
+      self.settings.get('force2D', False),
+      self.settings.get('force2Ddimension', 0)
+    ]
+    if self.voxelBased:
+      matrix_args += [self.settings.get('kernelRadius', 1), voxelCoordinates]
+
+    P_gldm = cMatrices.calculate_gldm(*matrix_args)  # shape (Nv, Ng, Nd)
 
     # Delete rows that specify gray levels not present in the ROI
     NgVector = range(1, Ng + 1)  # All possible gray values
     GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
     emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
 
-    P_gldm = numpy.delete(P_gldm, emptyGrayLevels - 1, 0)
+    P_gldm = numpy.delete(P_gldm, emptyGrayLevels - 1, 1)
 
-    jvector = numpy.arange(1, P_gldm.shape[1] + 1, dtype='float64')
+    jvector = numpy.arange(1, P_gldm.shape[2] + 1, dtype='float64')
 
-    pd = numpy.sum(P_gldm, 0)
-    pg = numpy.sum(P_gldm, 1)
+    # shape (Nv, Nd)
+    pd = numpy.sum(P_gldm, 1)
+    # shape (Nv, Ng)
+    pg = numpy.sum(P_gldm, 2)
 
     # Delete columns that dependence sizes not present in the ROI
-    P_gldm = numpy.delete(P_gldm, numpy.where(pd == 0), 1)
-    jvector = numpy.delete(jvector, numpy.where(pd == 0))
-    pd = numpy.delete(pd, numpy.where(pd == 0))
+    empty_sizes = numpy.sum(pd, 0)
+    P_gldm = numpy.delete(P_gldm, numpy.where(empty_sizes == 0), 2)
+    jvector = numpy.delete(jvector, numpy.where(empty_sizes == 0))
+    pd = numpy.delete(pd, numpy.where(empty_sizes == 0), 1)
+
+    Nz = numpy.sum(pd, 1)  # Nz per kernel, shape (Nv, )
+    Nz[Nz == 0] = 1  # set sum to numpy.spacing(1) if sum is 0?
+
+    self.coefficients['Nz'] = Nz
 
     self.coefficients['pd'] = pd
     self.coefficients['pg'] = pg
@@ -127,13 +140,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     """
     pd = self.coefficients['pd']
     jvector = self.coefficients['jvector']
-    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
+    Nz = self.coefficients['Nz']  # Nz = Np, see class docstring
 
-    try:
-      sde = numpy.sum(pd / (jvector ** 2)) / Nz
-      return sde
-    except ZeroDivisionError:
-      return numpy.core.nan
+    sde = numpy.sum(pd / (jvector[None, :] ** 2), 1) / Nz
+    return sde
 
   def getLargeDependenceEmphasisFeatureValue(self):
     r"""
@@ -147,13 +157,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     """
     pd = self.coefficients['pd']
     jvector = self.coefficients['jvector']
-    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
+    Nz = self.coefficients['Nz']
 
-    try:
-      lre = numpy.sum(pd * (jvector ** 2)) / Nz
-      return lre
-    except ZeroDivisionError:
-      return numpy.core.nan
+    lre = numpy.sum(pd * (jvector[None, :] ** 2), 1) / Nz
+    return lre
 
   def getGrayLevelNonUniformityFeatureValue(self):
     r"""
@@ -166,29 +173,29 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     correlates with a greater similarity in intensity values.
     """
     pg = self.coefficients['pg']
-    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
+    Nz = self.coefficients['Nz']
 
-    try:
-      gln = numpy.sum(pg ** 2) / Nz
-      return gln
-    except ZeroDivisionError:
-      return numpy.core.nan
+    gln = numpy.sum(pg ** 2, 1) / Nz
+    return gln
 
   @deprecated
   def getGrayLevelNonUniformityNormalizedFeatureValue(self):
     r"""
     **DEPRECATED. Gray Level Non-Uniformity Normalized (GLNN)**
 
-    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
+    :math:`GLNN = \frac{\sum^{N_g}_{i=1}\left(\sum^{N_d}_{j=1}{\textbf{P}(i,j)}\right)^2}{\sum^{N_g}_{i=1}
+    \sum^{N_d}_{j=1}{\textbf{P}(i,j)}^2}`
 
     .. warning::
       This feature has been deprecated, as it is mathematically equal to First Order - Uniformity
       :py:func:`~radiomics.firstorder.RadiomicsFirstOrder.getUniformityFeatureValue()`.
       See :ref:`here <radiomics-excluded-gldm-glnn-label>` for the proof. **Enabling this feature will result in the
-      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
+      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for
+      this feature**
     """
-    raise DeprecationWarning('GLDM - Gray Level Non-Uniformity Normalized is mathematically equal to First Order - Uniformity, '
-                             'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')
+    raise DeprecationWarning('GLDM - Gray Level Non-Uniformity Normalized is mathematically equal to First Order - '
+                             'Uniformity, see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more'
+                             'details')
 
   def getDependenceNonUniformityFeatureValue(self):
     r"""
@@ -201,13 +208,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     more homogeneity among dependencies in the image.
     """
     pd = self.coefficients['pd']
-    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
+    Nz = self.coefficients['Nz']
 
-    try:
-      dn = numpy.sum(pd ** 2) / Nz
-      return dn
-    except ZeroDivisionError:
-      return numpy.core.nan
+    dn = numpy.sum(pd ** 2, 1) / Nz
+    return dn
 
   def getDependenceNonUniformityNormalizedFeatureValue(self):
     r"""
@@ -220,13 +224,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     more homogeneity among dependencies in the image. This is the normalized version of the DLN formula.
     """
     pd = self.coefficients['pd']
-    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
+    Nz = self.coefficients['Nz']
 
-    try:
-      dnn = numpy.sum(pd ** 2) / (Nz ** 2)
-      return dnn
-    except ZeroDivisionError:
-      return numpy.core.nan
+    dnn = numpy.sum(pd ** 2, 1) / Nz ** 2
+    return dnn
 
   def getGrayLevelVarianceFeatureValue(self):
     r"""
@@ -239,11 +240,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     Measures the variance in grey level in the image.
     """
     ivector = self.coefficients['ivector']
-    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
-    pg = self.coefficients['pg'] / Nz  # divide by Nz to get the normalized matrix
+    Nz = self.coefficients['Nz']
+    pg = self.coefficients['pg'] / Nz[:, None]  # divide by Nz to get the normalized matrix
 
-    u_i = numpy.sum(pg * ivector)
-    glv = numpy.sum(pg * (ivector - u_i) ** 2)
+    u_i = numpy.sum(pg * ivector[None, :], 1, keepdims=True)
+    glv = numpy.sum(pg * (ivector[None, :] - u_i) ** 2, 1)
     return glv
 
   def getDependenceVarianceFeatureValue(self):
@@ -257,11 +258,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     Measures the variance in dependence size in the image.
     """
     jvector = self.coefficients['jvector']
-    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
-    pd = self.coefficients['pd'] / Nz  # divide by Nz to get the normalized matrix
+    Nz = self.coefficients['Nz']
+    pd = self.coefficients['pd'] / Nz[:, None]  # divide by Nz to get the normalized matrix
 
-    u_j = numpy.sum(pd * jvector)
-    dv = numpy.sum(pd * (jvector - u_j) ** 2)
+    u_j = numpy.sum(pd * jvector[None, :], 1, keepdims=True)
+    dv = numpy.sum(pd * (jvector[None, :] - u_j) ** 2, 1)
     return dv
 
   def getDependenceEntropyFeatureValue(self):
@@ -272,10 +273,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
       Dependence Entropy = -\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_d}_{j=1}{p(i,j)\log_{2}(p(i,j)+\epsilon)}
     """
     eps = numpy.spacing(1)
-    Nz = self.coefficients['Np']  # Nz = Np, see class docstring
-    p_gldm = self.P_gldm / Nz  # divide by Nz to get the normalized matrix
+    Nz = self.coefficients['Nz']
+    p_gldm = self.P_gldm / Nz[:, None, None]  # divide by Nz to get the normalized matrix
 
-    return -numpy.sum(p_gldm * numpy.log2(p_gldm + eps))
+    return -numpy.sum(p_gldm * numpy.log2(p_gldm + eps), (1, 2))
 
   @deprecated
   def getDependencePercentageFeatureValue(self):
@@ -287,8 +288,9 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
     .. warning::
       This feature has been deprecated, as it would always compute 1. See
-      :ref:`here <radiomics-excluded-gldm-dependence-percentage-label>` for more details. **Enabling this feature will result in the
-      logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
+      :ref:`here <radiomics-excluded-gldm-dependence-percentage-label>` for more details. **Enabling this feature will
+      result in the logging of a DeprecationWarning (does not interrupt extraction of other features), no value is
+      calculated for this features**
     """
     raise DeprecationWarning('GLDM - Dependence Percentage always computes 1, '
                              'see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details')
@@ -305,13 +307,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     """
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
-    Nz = self.coefficients['Np']
+    Nz = self.coefficients['Nz']
 
-    try:
-      lgle = numpy.sum(pg / (ivector ** 2)) / Nz
-      return lgle
-    except ZeroDivisionError:
-      return numpy.core.nan
+    lgle = numpy.sum(pg / (ivector[None, :] ** 2), 1) / Nz
+    return lgle
 
   def getHighGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -325,13 +324,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     """
     pg = self.coefficients['pg']
     ivector = self.coefficients['ivector']
-    Nz = self.coefficients['Np']
+    Nz = self.coefficients['Nz']
 
-    try:
-      hgle = numpy.sum(pg * (ivector ** 2)) / Nz
-      return hgle
-    except ZeroDivisionError:
-      return numpy.core.nan
+    hgle = numpy.sum(pg * (ivector[None, :] ** 2), 1) / Nz
+    return hgle
 
   def getSmallDependenceLowGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -344,13 +340,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    Nz = self.coefficients['Np']
+    Nz = self.coefficients['Nz']
 
-    try:
-      sdlgle = numpy.sum(self.P_gldm / ((ivector[:, None] ** 2) * (jvector[None, :] ** 2))) / Nz
-      return sdlgle
-    except ZeroDivisionError:
-      return numpy.core.nan
+    sdlgle = numpy.sum(self.P_gldm / ((ivector[None, :, None] ** 2) * (jvector[None, None, :] ** 2)), (1, 2)) / Nz
+    return sdlgle
 
   def getSmallDependenceHighGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -363,13 +356,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    Nz = self.coefficients['Np']
+    Nz = self.coefficients['Nz']
 
-    try:
-      sdhgle = numpy.sum(self.P_gldm * (ivector[:, None] ** 2) / (jvector[None, :] ** 2)) / Nz
-      return sdhgle
-    except ZeroDivisionError:
-      return numpy.core.nan
+    sdhgle = numpy.sum(self.P_gldm * (ivector[None, :, None] ** 2) / (jvector[None, None, :] ** 2), (1, 2)) / Nz
+    return sdhgle
 
   def getLargeDependenceLowGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -382,13 +372,10 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    Nz = self.coefficients['Np']
+    Nz = self.coefficients['Nz']
 
-    try:
-      ldlgle = numpy.sum(self.P_gldm * (jvector[None, :] ** 2) / (ivector[:, None] ** 2)) / Nz
-      return ldlgle
-    except ZeroDivisionError:
-      return numpy.core.nan
+    ldlgle = numpy.sum(self.P_gldm * (jvector[None, None, :] ** 2) / (ivector[None, :, None] ** 2), (1, 2)) / Nz
+    return ldlgle
 
   def getLargeDependenceHighGrayLevelEmphasisFeatureValue(self):
     r"""
@@ -401,10 +388,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     """
     ivector = self.coefficients['ivector']
     jvector = self.coefficients['jvector']
-    Nz = self.coefficients['Np']
+    Nz = self.coefficients['Nz']
 
-    try:
-      ldhgle = numpy.sum(self.P_gldm * ((jvector[None, :] ** 2) * (ivector[:, None] ** 2))) / Nz
-      return ldhgle
-    except ZeroDivisionError:
-      return numpy.core.nan
+    ldhgle = numpy.sum(self.P_gldm * ((jvector[None, None, :] ** 2) * (ivector[None, :, None] ** 2)), (1, 2)) / Nz
+    return ldhgle

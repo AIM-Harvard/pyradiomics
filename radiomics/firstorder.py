@@ -1,6 +1,7 @@
 import numpy
+from six.moves import range
 
-from radiomics import base, deprecated, imageoperations
+from radiomics import base, cMatrices, deprecated
 
 
 class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
@@ -33,33 +34,77 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     self.pixelSpacing = inputImage.GetSpacing()
     self.voxelArrayShift = kwargs.get('voxelArrayShift', 0)
+    self.discretizedImageArray = self._applyBinning(self.imageArray.copy())
 
-  def _initCalculation(self):
-    self.targetVoxelArray = self.imageArray[self.labelledVoxelCoordinates].astype('float')
-    self.discretizedTargetVoxelArray = None  # Lazy instantiation
+  def _initVoxelBasedCalculation(self):
+    super(RadiomicsFirstOrder, self)._initVoxelBasedCalculation()
+
+    kernelRadius = self.settings.get('kernelRadius', 1)
+
+    # Get the size of the input, which depends on whether it is in masked mode or not
+    if self.masked:
+      size = numpy.max(self.labelledVoxelCoordinates, 1) - numpy.min(self.labelledVoxelCoordinates, 1) + 1
+    else:
+      size = numpy.array(self.imageArray.shape)
+
+    # Take the minimum size along each dimension from either the size of the ROI or the kernel
+    boundingBoxSize = numpy.minimum(size, kernelRadius * 2 + 1)
+
+    # Calculate the offsets, which can be used to generate a list of kernel Coordinates. Shape (Nd, Nk)
+    self.kernelOffsets = cMatrices.generate_angles(boundingBoxSize,
+                                                   numpy.array(range(1, kernelRadius + 1)),
+                                                   True,  # Bi-directional
+                                                   self.settings.get('force2D', False),
+                                                   self.settings.get('force2Ddimension', 0))
+    self.kernelOffsets = numpy.append(self.kernelOffsets, [[0, 0, 0]], axis=0)  # add center voxel
+    self.kernelOffsets = self.kernelOffsets.transpose((1, 0))
+
+    self.imageArray = self.imageArray.astype('float')
+    self.imageArray[~self.maskArray] = numpy.nan
+    self.imageArray = numpy.pad(self.imageArray,
+                                pad_width=self.settings.get('kernelRadius', 1),
+                                mode='constant', constant_values=numpy.nan)
+    self.maskArray = numpy.pad(self.maskArray,
+                               pad_width=self.settings.get('kernelRadius', 1),
+                               mode='constant', constant_values=False)
+
+  def _initCalculation(self, voxelCoordinates=None):
+
+    if voxelCoordinates is None:
+      self.targetVoxelArray = self.imageArray[self.maskArray].astype('float').reshape((1, -1))
+      _, p_i = numpy.unique(self.discretizedImageArray[self.maskArray], return_counts=True)
+      p_i = p_i.reshape((1, -1))
+    else:
+      # voxelCoordinates shape (Nd, Nvox)
+      voxelCoordinates += self.settings.get('kernelRadius', 1)  # adjust for padding
+      kernelCoords = self.kernelOffsets[:, None, :] + voxelCoordinates[:, :, None]  # Shape (Nd, Nvox, Nk)
+      kernelCoords = tuple(kernelCoords)  # shape (Nd, (Nvox, Nk))
+
+      self.targetVoxelArray = self.imageArray[kernelCoords]  # shape (Nvox, Nk)
+
+      p_i = numpy.empty((voxelCoordinates.shape[1], len(self.coefficients['grayLevels'])))  # shape (Nvox, Ng)
+      for gl_idx, gl in enumerate(self.coefficients['grayLevels']):
+        p_i[:, gl_idx] = numpy.nansum(self.discretizedImageArray[kernelCoords] == gl, 1)
+
+    sumBins = numpy.sum(p_i, 1, keepdims=True).astype('float')
+    sumBins[sumBins == 0] = 1  # Prevent division by 0 errors
+    p_i = p_i.astype('float') / sumBins
+    self.coefficients['p_i'] = p_i
 
     self.logger.debug('First order feature class initialized')
 
   @staticmethod
-  def _moment(a, moment=1, axis=0):
+  def _moment(a, moment=1):
     r"""
     Calculate n-order moment of an array for a given axis
     """
 
     if moment == 1:
-      return numpy.float64(0.0)
+      return numpy.float(0.0)
     else:
-      mn = numpy.mean(a, axis, keepdims=True)
+      mn = numpy.nanmean(a, 1, keepdims=True)
       s = numpy.power((a - mn), moment)
-      return numpy.mean(s, axis)
-
-  def _getDiscretizedTargetVoxelArray(self):
-    if self.discretizedTargetVoxelArray is None:
-      binEdges = imageoperations.getBinEdges(self.targetVoxelArray, **self.settings)
-
-      self.discretizedTargetVoxelArray = numpy.histogram(self.targetVoxelArray, binEdges)[0]
-
-    return self.discretizedTargetVoxelArray
+      return numpy.nanmean(s, 1)
 
   def getEnergyFeatureValue(self):
     r"""
@@ -81,7 +126,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
 
-    return numpy.sum(shiftedParameterArray ** 2)
+    return numpy.nansum(shiftedParameterArray ** 2, 1)
 
   def getTotalEnergyFeatureValue(self):
     r"""
@@ -105,7 +150,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     cubicMMPerVoxel = numpy.multiply.reduce(self.pixelSpacing)
 
-    return cubicMMPerVoxel * self.getEnergyFeatureValue()
+    return self.getEnergyFeatureValue() * cubicMMPerVoxel
 
   def getEntropyFeatureValue(self):
     r"""
@@ -122,17 +167,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     .. note::
       Defined by IBSI as Intensity Histogram Entropy.
     """
+    p_i = self.coefficients['p_i']
 
     eps = numpy.spacing(1)
-    bins = self._getDiscretizedTargetVoxelArray()
-
-    sumBins = bins.sum()
-    if sumBins == 0:  # No segmented voxels
-      return 0
-
-    bins = bins + eps
-    bins = bins / float(sumBins)
-    return -1.0 * numpy.sum(bins * numpy.log2(bins))
+    return -1.0 * numpy.sum(p_i * numpy.log2(p_i + eps), 1)
 
   def getMinimumFeatureValue(self):
     r"""
@@ -142,7 +180,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       \textit{minimum} = \min(\textbf{X})
     """
 
-    return numpy.min(self.targetVoxelArray)
+    return numpy.nanmin(self.targetVoxelArray, 1)
 
   def get10PercentileFeatureValue(self):
     r"""
@@ -150,8 +188,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     The 10\ :sup:`th` percentile of :math:`\textbf{X}`
     """
-
-    return numpy.percentile(self.targetVoxelArray, 10)
+    return numpy.nanpercentile(self.targetVoxelArray, 10, axis=1)
 
   def get90PercentileFeatureValue(self):
     r"""
@@ -160,7 +197,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The 90\ :sup:`th` percentile of :math:`\textbf{X}`
     """
 
-    return numpy.percentile(self.targetVoxelArray, 90)
+    return numpy.nanpercentile(self.targetVoxelArray, 90, axis=1)
 
   def getMaximumFeatureValue(self):
     r"""
@@ -172,7 +209,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The maximum gray level intensity within the ROI.
     """
 
-    return numpy.max(self.targetVoxelArray)
+    return numpy.nanmax(self.targetVoxelArray, 1)
 
   def getMeanFeatureValue(self):
     r"""
@@ -184,7 +221,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The average gray level intensity within the ROI.
     """
 
-    return numpy.mean(self.targetVoxelArray)
+    return numpy.nanmean(self.targetVoxelArray, 1)
 
   def getMedianFeatureValue(self):
     r"""
@@ -193,7 +230,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The median gray level intensity within the ROI.
     """
 
-    return numpy.median(self.targetVoxelArray)
+    return numpy.nanmedian(self.targetVoxelArray, 1)
 
   def getInterquartileRangeFeatureValue(self):
     r"""
@@ -206,7 +243,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     image array, respectively.
     """
 
-    return numpy.percentile(self.targetVoxelArray, 75) - numpy.percentile(self.targetVoxelArray, 25)
+    return numpy.nanpercentile(self.targetVoxelArray, 75, 1) - numpy.nanpercentile(self.targetVoxelArray, 25, 1)
 
   def getRangeFeatureValue(self):
     r"""
@@ -218,7 +255,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     The range of gray values in the ROI.
     """
 
-    return numpy.max(self.targetVoxelArray) - numpy.min(self.targetVoxelArray)
+    return numpy.nanmax(self.targetVoxelArray, 1) - numpy.nanmin(self.targetVoxelArray, 1)
 
   def getMeanAbsoluteDeviationFeatureValue(self):
     r"""
@@ -230,7 +267,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     Mean Absolute Deviation is the mean distance of all intensity values from the Mean Value of the image array.
     """
 
-    return numpy.mean(numpy.absolute((numpy.mean(self.targetVoxelArray) - self.targetVoxelArray)))
+    u_x = numpy.nanmean(self.targetVoxelArray, 1, keepdims=True)
+    return numpy.nanmean(numpy.absolute(self.targetVoxelArray - u_x), 1)
 
   def getRobustMeanAbsoluteDeviationFeatureValue(self):
     r"""
@@ -247,9 +285,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
 
     prcnt10 = self.get10PercentileFeatureValue()
     prcnt90 = self.get90PercentileFeatureValue()
-    percentileArray = self.targetVoxelArray[(self.targetVoxelArray >= prcnt10) * (self.targetVoxelArray <= prcnt90)]
+    percentileArray = self.targetVoxelArray.copy()
+    percentileArray[percentileArray - prcnt10[:, None] < 0] = numpy.nan
+    percentileArray[percentileArray - prcnt90[:, None] > 0] = numpy.nan
 
-    return numpy.mean(numpy.absolute(percentileArray - numpy.mean(percentileArray)))
+    return numpy.nanmean(numpy.absolute(percentileArray - numpy.nanmean(percentileArray, 1, keepdims=True)), 1)
 
   def getRootMeanSquaredFeatureValue(self):
     r"""
@@ -272,7 +312,8 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       return 0
 
     shiftedParameterArray = self.targetVoxelArray + self.voxelArrayShift
-    return numpy.sqrt((numpy.sum(shiftedParameterArray ** 2)) / float(shiftedParameterArray.size))
+    Nvox = numpy.sum(~numpy.isnan(self.targetVoxelArray), 1).astype('float')
+    return numpy.sqrt(numpy.nansum(shiftedParameterArray ** 2, 1) / Nvox)
 
   @deprecated
   def getStandardDeviationFeatureValue(self):
@@ -293,9 +334,9 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       Not present in IBSI feature definitions (correlated with variance)
     """
 
-    return numpy.std(self.targetVoxelArray)
+    return numpy.nanstd(self.targetVoxelArray, axis=1)
 
-  def getSkewnessFeatureValue(self, axis=0):
+  def getSkewnessFeatureValue(self):
     r"""
     **16. Skewness**
 
@@ -318,15 +359,15 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       value of 0 is returned.
     """
 
-    m2 = self._moment(self.targetVoxelArray, 2, axis)
-    m3 = self._moment(self.targetVoxelArray, 3, axis)
+    m2 = self._moment(self.targetVoxelArray, 2)
+    m3 = self._moment(self.targetVoxelArray, 3)
 
-    if m2 == 0:  # Flat Region
-      return 0
+    m2[m2 == 0] = 1  # Flat Region, prevent division by 0 errors
+    m3[m2 == 0] = 0  # ensure Flat Regions are returned as 0
 
     return m3 / m2 ** 1.5
 
-  def getKurtosisFeatureValue(self, axis=0):
+  def getKurtosisFeatureValue(self):
     r"""
     **17. Kurtosis**
 
@@ -354,11 +395,11 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       distributions. The PyRadiomics kurtosis is not corrected, yielding a value 3 higher than the IBSI kurtosis.
     """
 
-    m2 = self._moment(self.targetVoxelArray, 2, axis)
-    m4 = self._moment(self.targetVoxelArray, 4, axis)
+    m2 = self._moment(self.targetVoxelArray, 2)
+    m4 = self._moment(self.targetVoxelArray, 4)
 
-    if m2 == 0:  # Flat Region
-      return 0
+    m2[m2 == 0] = 1  # Flat Region, prevent division by 0 errors
+    m4[m2 == 0] = 0  # ensure Flat Regions are returned as 0
 
     return m4 / m2 ** 2.0
 
@@ -373,7 +414,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     the spread of the distribution about the mean. By definition, :math:`\textit{variance} = \sigma^2`
     """
 
-    return numpy.std(self.targetVoxelArray) ** 2
+    return numpy.nanstd(self.targetVoxelArray, 1) ** 2
 
   def getUniformityFeatureValue(self):
     r"""
@@ -389,13 +430,5 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     .. note::
       Defined by IBSI as Intensity Histogram Uniformity.
     """
-
-    eps = numpy.spacing(1)
-    bins = self._getDiscretizedTargetVoxelArray()
-    sumBins = bins.sum()
-
-    if sumBins == 0:  # No segmented voxels
-      return 0
-
-    bins = bins / (float(sumBins + eps))
-    return numpy.sum(bins ** 2)
+    p_i = self.coefficients['p_i']
+    return numpy.nansum(p_i ** 2, 1)

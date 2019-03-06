@@ -25,6 +25,12 @@ mapping:
         type: bool
       label:
         type: int
+        range:
+          min-ex: 0
+      label_channel:
+        type: int
+        range:
+          min-ex: 0
       binWidth:
         type: float
         range:

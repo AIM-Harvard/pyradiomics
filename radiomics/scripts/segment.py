@@ -60,12 +60,15 @@ def _extractFeatures(case_idx, case, config, config_override):
     label = case.get('Label', None)  # Optional
     if isinstance(label, six.string_types):
       label = int(label)
+    label_channel = case.get('Label_channel', None)  # Optional
+    if isinstance(label_channel, six.string_types):
+      label_channel = int(label)
 
     # Instantiate Radiomics Feature extractor
     extractor = radiomics.featureextractor.RadiomicsFeaturesExtractor(config, **config_override)
 
     # Extract features
-    feature_vector.update(extractor.execute(imageFilepath, maskFilepath, label))
+    feature_vector.update(extractor.execute(imageFilepath, maskFilepath, label, label_channel))
 
     # Display message
     delta_t = datetime.now() - t

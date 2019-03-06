@@ -11,6 +11,48 @@ from six.moves import range
 logger = logging.getLogger(__name__)
 
 
+def getMask(mask, **kwargs):
+  """
+  Function to get the correct mask. Includes enforcing a correct pixel data type (UInt32).
+
+  Also supports extracting the mask for a segmentation (stored as SimpleITK Vector image) if necessary.
+  In this case, the mask at index ``label_channel`` is extracted. The resulting 3D volume is then treated as it were a
+  scalar input volume (i.e. with the region of interest defined by voxels with value matching ``label``).
+
+  Finally, checks if the mask volume contains an ROI identified by ``label``. Raises a value error if the label is not
+  present (including a list of valid labels found).
+
+  :param mask: SimpleITK Image object representing the mask. Can be a vector image to allow for overlapping masks.
+  :param kwargs: keyword arguments. If argument ``label_channel`` is present, this is used to select the channel.
+    Otherwise label_channel ``0`` is assumed.
+  :return: SimpleITK.Image with pixel type UInt32 representing the mask volume
+  """
+  global logger
+  label = kwargs.get('label', 1)
+  label_channel = kwargs.get('label_channel', 0)
+  if 'vector' in mask.GetPixelIDTypeAsString().lower():
+    logger.debug('Mask appears to be a segmentation object (=stored as vector image).')
+    n_components = mask.GetNumberOfComponentsPerPixel()
+    assert label_channel < n_components, \
+        "Mask %i requested, but segmentation object only contains %i objects" % (label_channel, n_components)
+
+    logger.info('Extracting mask at index %i', label_channel)
+    selector = sitk.VectorIndexSelectionCastImageFilter()
+    selector.SetIndex(label_channel)
+    mask = selector.Execute(mask)
+
+  logger.debug('Force casting mask to UInt32 to ensure correct datatype.')
+  mask = sitk.Cast(mask, sitk.sitkUInt32)
+
+  labels = numpy.unique(sitk.GetArrayFromImage(mask))
+  if len(labels) == 0:
+    raise ValueError('No labels found in this mask (i.e. nothing is segmented)!', label, labels[labels != 0])
+  if label not in labels:
+    raise ValueError('Label (%g) not present in mask. Choose from %s', label, labels[labels != 0])
+
+  return mask
+
+
 def getBinEdges(parameterValues, **kwargs):
   r"""
   Calculate and return the histogram using parameterValues (1D array of all segmented voxels in the image).

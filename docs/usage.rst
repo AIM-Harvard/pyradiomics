@@ -62,14 +62,16 @@ Command Line Use
   represents one combination of an image and a segmentation and contains at least 2 elements: 1) path/to/image,
   2) path/to/mask. The headers specify the column names and **must** be "Image" and "Mask" for image and mask location,
   respectively (capital sensitive). Additional columns may also be specified, all columns are copied to the output in
-  the same order (with calculated features appended after last column). To specify custom label values for each
+  the same order (with calculated features appended after last column). To specify custom values for ``label`` in each
   combination, a column "Label" can optionally be added, which specifies the desired extraction label for each
   combination. Values specified in this column take precedence over label values specified in the parameter file or on
-  the commandline. If a row contains no value, the default (or globally customized) value is used instead.
+  the commandline. If a row contains no value, the default (or globally customized) value is used instead. Similarly,
+  an optional value for the ``label_channel`` setting can be provided in a column "Label_channel".
 
   .. note::
 
     All headers should be unique and different from headers provided by PyRadiomics (``<filter>_<class>_<feature>``).
+    In case of conflict, values are overwritten by the PyRadiomics values.
 
 * By default, results are printed out to the console window. To store the results in a CSV-structured text file, add the
   ``-o <PATH>`` and ``-f csv`` arguments, where ``<PATH>`` specifies the filepath where the results should be stored.

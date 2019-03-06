@@ -76,7 +76,7 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
       p_i = p_i.reshape((1, -1))
     else:
       # voxelCoordinates shape (Nd, Nvox)
-      voxelCoordinates += self.settings.get('kernelRadius', 1)  # adjust for padding
+      voxelCoordinates = voxelCoordinates.copy() + self.settings.get('kernelRadius', 1)  # adjust for padding
       kernelCoords = self.kernelOffsets[:, None, :] + voxelCoordinates[:, :, None]  # Shape (Nd, Nvox, Nk)
       kernelCoords = tuple(kernelCoords)  # shape (Nd, (Nvox, Nk))
 

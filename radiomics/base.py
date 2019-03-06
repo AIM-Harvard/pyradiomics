@@ -101,7 +101,8 @@ class RadiomicsFeaturesBase(object):
     if self.masked:
       self.maskArray = maskArray
     else:
-      self.maskArray = numpy.ones(self.imageArray.shape)  # This will cause the discretization to use the entire image
+      # This will cause the discretization to use the entire image
+      self.maskArray = numpy.ones(self.imageArray.shape, dtype='bool')
 
   def _initCalculation(self, voxelCoordinates=None):
     """

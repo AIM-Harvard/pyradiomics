@@ -219,7 +219,7 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
 
   def getMaximumDiameterFeatureValue(self):
     r"""
-    **7. Maximum 3D diameter**
+    **7. Maximum 2D diameter**
 
     Maximum diameter is defined as the largest pairwise Euclidean distance between tumor surface mesh
     vertices.

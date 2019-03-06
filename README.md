@@ -40,7 +40,7 @@ Join the PyRadiomics community on google groups [here](https://groups.google.com
 Currently supports the following feature classes:
 
  - First Order Statistics
- - Shape-based
+ - Shape-based (2D and 3D)
  - Gray Level Cooccurence Matrix (GLCM)
  - Gray Level Run Length Matrix (GLRLM)
  - Gray Level Size Zone Matrix (GLSZM)

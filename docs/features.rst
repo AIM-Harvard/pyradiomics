@@ -8,7 +8,8 @@ This section contains the definitions of the various features that can be extrac
 subdivided into the following classes:
 
 * :py:class:`First Order Statistics <radiomics.firstorder.RadiomicsFirstOrder>` (19 features)
-* :py:class:`Shape-based <radiomics.shape.RadiomicsShape>` (16 features)
+* :py:class:`Shape-based (3D) <radiomics.shape.RadiomicsShape>` (16 features)
+* :py:class:`Shape-based (2D) <radiomics.shape2D.RadiomicsShape2D>` (10 features)
 * :py:class:`Gray Level Cooccurence Matrix <radiomics.glcm.RadiomicsGLCM>` (24 features)
 * :py:class:`Gray Level Run Length Matrix <radiomics.glrlm.RadiomicsGLRLM>` (16 features)
 * :py:class:`Gray Level Size Zone Matrix <radiomics.glszm.RadiomicsGLSZM>` (16 features)
@@ -37,10 +38,21 @@ First Order Features
 
 .. _radiomics-shape-label:
 
-Shape Features
---------------
+Shape Features (3D)
+-------------------
 
 .. automodule:: radiomics.shape
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
+.. _radiomics-shape2D-label:
+
+Shape Features (2D)
+-------------------
+
+.. automodule:: radiomics.shape2D
     :members:
     :undoc-members:
     :show-inheritance:

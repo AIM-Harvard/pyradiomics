@@ -61,7 +61,8 @@ Feature Classes
 Currently supports the following feature classes:
 
 * :py:class:`First Order Statistics <radiomics.firstorder.RadiomicsFirstOrder>`
-* :py:class:`Shape-based <radiomics.shape.RadiomicsShape>`
+* :py:class:`Shape-based (3D) <radiomics.shape.RadiomicsShape>`
+* :py:class:`Shape-based (2D) <radiomics.shape2D.RadiomicsShape2D>`
 * :py:class:`Gray Level Cooccurence Matrix <radiomics.glcm.RadiomicsGLCM>` (GLCM)
 * :py:class:`Gray Level Run Length Matrix <radiomics.glrlm.RadiomicsGLRLM>` (GLRLM)
 * :py:class:`Gray Level Size Zone Matrix <radiomics.glszm.RadiomicsGLSZM>` (GLSZM)

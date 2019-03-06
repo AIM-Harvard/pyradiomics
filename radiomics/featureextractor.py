@@ -51,12 +51,12 @@ class RadiomicsFeaturesExtractor:
     self._enabledImagetypes = {}
     self._enabledFeatures = {}
 
-    if len(args) == 1 and isinstance(args[0], six.string_types) and os.path.isfile(args[0]):
-      self.logger.info("Loading parameter file")
-      self._applyParams(paramsFile=args[0])
-    elif len(args) == 1 and isinstance(args[0], dict):
+    if len(args) == 1 and isinstance(args[0], dict):
         self.logger.info("Loading parameter dictionary")
         self._applyParams(paramsDict=args[0])
+    elif len(args) == 1 and str(args[0]) is not None and os.path.isfile(str(args[0])):
+      self.logger.info("Loading parameter file")
+      self._applyParams(paramsFile=args[0])
     else:
       # Set default settings and update with and changed settings contained in kwargs
       self.settings = self._getDefaultSettings()

@@ -371,6 +371,12 @@ voxels for which there is no calculated value.
 - ``initValue`` [0]: float, value to use for voxels outside the ROI, or voxels where calculation failed. If set to
   ``nan``, 3D slicer will treat them as transparent voxels
 
+- ``voxelBatch`` [-1]: integer > 0, this value controls the maximum number of voxels that are calculated in one batch.
+  Larger batches mean less loops in Python and therefore a quicker extraction, but do require more memory. This setting
+  allows the user to compromise between extraction speed and memory usage.
+  When providing this setting, the value is constrained to be > 0, only by not providing it is the default value of -1
+  used (which means: all voxels in 1 batch).
+
 .. _radiomics-parameter-file-label:
 
 --------------

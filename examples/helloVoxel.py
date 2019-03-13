@@ -112,6 +112,9 @@ for cls, features in six.iteritems(extractor._enabledFeatures):
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName, voxelBased=True)
 
-for featureName in featureVector.keys():
-  sitk.WriteImage(featureVector[featureName], '%s_%s.nrrd' % (testCase, featureName))
-  print('Computed %s, stored as "%s_%s.nrrd"' % (featureName, testCase, featureName))
+for featureName, featureValue in six.iteritems(featureVector):
+  if isinstance(featureValue, sitk.Image):
+    sitk.WriteImage(featureValue, '%s_%s.nrrd' % (testCase, featureName))
+    print('Computed %s, stored as "%s_%s.nrrd"' % (featureName, testCase, featureName))
+  else:
+    print('%s: %s' % (featureName, featureValue))

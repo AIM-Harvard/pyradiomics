@@ -30,7 +30,7 @@ mapping:
       label_channel:
         type: int
         range:
-          min-ex: 0
+          min: 0
       binWidth:
         type: float
         range:

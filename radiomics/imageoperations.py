@@ -239,7 +239,7 @@ def checkMask(imageNode, maskNode, **kwargs):
     # If lsif fails, and mask is corrected, it includes a check whether the label is present. Therefore, perform
     # this test here only if lsif does not fail on the first attempt.
     if label not in lsif.GetLabels():
-      raise ValueError('Label (%g) not present in mask', label)
+      raise ValueError('Label (%g) not present in mask' % label)
   except RuntimeError as e:
     # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
     if not kwargs.get('correctMask', False):
@@ -650,6 +650,9 @@ def resegmentMask(imageNode, maskNode, **kwargs):
     ma_arr[ma_arr] = im_arr[ma_arr] <= thresholds[1]
 
   roiSize = numpy.sum(ma_arr)
+
+  if roiSize == 0:
+    raise ValueError("Resegmentation excluded all voxels with label %i! Cannot extract features" % label)
 
   # Transform the boolean array back to an image with the correct voxels set to the label value
   newMask_arr = numpy.zeros(ma_arr.shape, dtype='int')

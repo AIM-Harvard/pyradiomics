@@ -223,7 +223,7 @@ class PyRadiomicsCommandLine:
       if case_error:
         errored_cases += 1
 
-      self.logger.info('Validation complete, errors found in %i case(s)', errored_cases)
+    self.logger.info('Validation complete, errors found in %i case(s)', errored_cases)
 
   def _processCases(self, case_generator):
     if self.num_workers > 1:  # multiple cases, parallel processing enabled

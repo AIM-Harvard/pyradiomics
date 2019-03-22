@@ -286,8 +286,13 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     prcnt10 = self.get10PercentileFeatureValue()
     prcnt90 = self.get90PercentileFeatureValue()
     percentileArray = self.targetVoxelArray.copy()
-    percentileArray[percentileArray - prcnt10[:, None] < 0] = numpy.nan
-    percentileArray[percentileArray - prcnt90[:, None] > 0] = numpy.nan
+
+    # First get a mask for all valid voxels
+    msk = ~numpy.isnan(percentileArray)
+    # Then, update the mask to reflect all valid voxels that are outside the the closed 10-90th percentile range
+    msk[msk] = ((percentileArray - prcnt10[:, None])[msk] < 0) | ((percentileArray - prcnt90[:, None])[msk] > 0)
+    # Finally, exclude the invalid voxels by setting them to numpy.nan.
+    percentileArray[msk] = numpy.nan
 
     return numpy.nanmean(numpy.absolute(percentileArray - numpy.nanmean(percentileArray, 1, keepdims=True)), 1)
 

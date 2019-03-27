@@ -271,7 +271,9 @@ def checkMask(imageNode, maskNode, **kwargs):
 
   logger.debug('Checking minimum number of dimensions requirements (%d)', minDims)
   ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
-  if ndims < minDims:
+  if ndims == 0:
+    raise ValueError('mask only contains 1 segmented voxel! Cannot extract features for a single voxel.')
+  elif ndims < minDims:
     raise ValueError('mask has too few dimensions (number of dimensions %d, minimum required %d)' % (ndims, minDims))
 
   if minSize is not None:
@@ -651,8 +653,9 @@ def resegmentMask(imageNode, maskNode, **kwargs):
 
   roiSize = numpy.sum(ma_arr)
 
-  if roiSize == 0:
-    raise ValueError("Resegmentation excluded all voxels with label %i! Cannot extract features" % label)
+  if roiSize <= 1:
+    raise ValueError("Resegmentation excluded too many voxels with label %i (retained %i voxel(s))! "
+                     "Cannot extract features" % (label, roiSize))
 
   # Transform the boolean array back to an image with the correct voxels set to the label value
   newMask_arr = numpy.zeros(ma_arr.shape, dtype='int')

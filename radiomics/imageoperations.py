@@ -60,7 +60,9 @@ def getBinEdges(parameterValues, **kwargs):
   **Fixed bin width:**
 
   Returns the bin edges, a list of the edges of the calculated bins, length is N(bins) + 1. Bins are defined such, that
-  the bin edges are equally spaced from zero, and that the leftmost edge :math:`\leq \min(X_{gl})`:
+  the bin edges are equally spaced from zero, and that the leftmost edge :math:`\leq \min(X_{gl})`. These bin edges
+  represent the half-open ranges of each bin :math:`[lower_edge, upper edge)` and result in gray value discretization as
+  follows:
 
   .. math::
     X_{b, i} = \lfloor \frac{X_{gl, i}}{W} \rfloor - \lfloor \frac {\min(X_{gl})}{W} \rfloor + 1
@@ -70,23 +72,10 @@ def getBinEdges(parameterValues, **kwargs):
   the bins are equally spaced from 0, whereas the second part ensures that the minimum gray level intensity inside the
   ROI after binning is always 1.
 
-  If the range of gray level intensities is equally dividable by the binWidth, i.e. :math:`(\max(X_{gl})- \min(X_{gl}))
-  \mod W = 0`, the maximum intensity will be encoded as numBins + 1, therefore the maximum number of gray
-  level intensities in the ROI after binning is number of bins + 1.
-
-  If dynamic binning is enabled (parameter `dynamicBinning`), and no custom binwidth has been defined for the filter,
-  the actual bin width used (:math:`W_{dyn}`) is defined as:
-
-  .. math::
-    W_{dyn} = W * \frac{\max(X_{der}) - \min(X_{der})}{\max(X_{ref}) - \min(X_{ref})}
-
-  Here, :math:`X_{der}` and :math:`X_{ref}` represent the intensities found in the ROI on the derived and original
-  images, respectively.
-
-  .. warning::
-    This is different from the assignment of voxels to the bins by ``numpy.histogram`` , which has half-open bins, with
-    the exception of the rightmost bin, which means this maximum values are assigned to the topmost bin.
-    ``numpy.digitize`` uses half-open bins, including the rightmost bin.
+  In the case where the maximum gray level intensity is equally dividable by the binWidth, i.e.
+  :math:`\max(X_{gl}) \mod W = 0`, this will result in that maximum gray level being assigned to bin
+  :math:`[\max(X_{gl}), \max(X_{gl}) + W)`, which is consistent with numpy.digitize, but different from the behaviour
+  of numpy.histogram, where the final bin has a closed range, including the maximum gray level.
 
   .. note::
     This method is slightly different from the fixed bin size discretization method described by IBSI. The two most

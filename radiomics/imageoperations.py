@@ -61,8 +61,8 @@ def getBinEdges(parameterValues, **kwargs):
 
   Returns the bin edges, a list of the edges of the calculated bins, length is N(bins) + 1. Bins are defined such, that
   the bin edges are equally spaced from zero, and that the leftmost edge :math:`\leq \min(X_{gl})`. These bin edges
-  represent the half-open ranges of each bin :math:`[lower_edge, upper edge)` and result in gray value discretization as
-  follows:
+  represent the half-open ranges of each bin :math:`[\text{lower_edge}, \text{upper_edge})` and result in gray value
+  discretization as follows:
 
   .. math::
     X_{b, i} = \lfloor \frac{X_{gl, i}}{W} \rfloor - \lfloor \frac {\min(X_{gl})}{W} \rfloor + 1
@@ -75,7 +75,8 @@ def getBinEdges(parameterValues, **kwargs):
   In the case where the maximum gray level intensity is equally dividable by the binWidth, i.e.
   :math:`\max(X_{gl}) \mod W = 0`, this will result in that maximum gray level being assigned to bin
   :math:`[\max(X_{gl}), \max(X_{gl}) + W)`, which is consistent with numpy.digitize, but different from the behaviour
-  of numpy.histogram, where the final bin has a closed range, including the maximum gray level.
+  of numpy.histogram, where the final bin has a closed range, including the maximum gray level, i.e.
+  :math:`[\max(X_{gl}) - W, \max(X_{gl})]`.
 
   .. note::
     This method is slightly different from the fixed bin size discretization method described by IBSI. The two most

@@ -468,6 +468,13 @@ class RadiomicsFeaturesExtractor:
     if not resegmentShape and resegmentedMask is not None:
       mask = resegmentedMask
 
+    dynamic_ref_range = None
+    if self.settings.get('dynamicBinning', False):
+      im_arr = sitk.GetArrayFromImage(image)
+      ma_arr = sitk.GetArrayFromImage(mask) == self.settings.get('label', 1)
+      target_voxel_arr = im_arr[ma_arr]
+      dynamic_ref_range = max(target_voxel_arr) - min(target_voxel_arr)
+
     # 6. Calculate other enabled feature classes using enabled image types
     # Make generators for all enabled image types
     self.logger.debug('Creating image type iterator')
@@ -476,6 +483,8 @@ class RadiomicsFeaturesExtractor:
       args = self.settings.copy()
       args.update(customKwargs)
       self.logger.info('Adding image type "%s" with custom settings: %s' % (imageType, str(customKwargs)))
+      if 'binWidth' not in customKwargs and imageType != 'Original':
+        args['dynamic_ref_range'] = dynamic_ref_range
       imageGenerators = chain(imageGenerators, getattr(imageoperations, 'get%sImage' % imageType)(image, mask, **args))
 
     self.logger.debug('Extracting features')

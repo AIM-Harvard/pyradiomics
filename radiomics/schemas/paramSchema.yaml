@@ -39,6 +39,8 @@ mapping:
         type: int
         range:
           min-ex: 0
+      dynamicBinning:
+        type: bool
       normalize:
         type: bool
       normalizeScale:

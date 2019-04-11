@@ -290,6 +290,9 @@ Feature Class Level
 - ``binCount`` [None]: integer, > 0, specifies the number of bins to create. The width of the bin is
   then determined by the range in the ROI. No definitive evidence is available on which method of discretization is
   superior, we advise a fixed bin width. See more :ref:`here <radiomics_fixed_bin_width>`.
+- ``dynamicBinning`` [False]: Boolean, if set to true, scales the bin width for derived images by the ratio of the range
+  in the image (ROI) and the range of the original image (ROI). This setting has no effect when a fixed bin count is
+  used, or when a custom bin width has been specified for the filter. See also :py:func:`getBinEdges()`.
 
 *Forced 2D extraction*
 

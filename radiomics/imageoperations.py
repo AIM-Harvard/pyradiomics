@@ -472,8 +472,11 @@ def resampleImage(imageNode, maskNode, **kwargs):
   # Tolerance = 1e-5 + 1e-8*abs(resampledSpacing)
   logger.debug('Comparing resampled spacing to original spacing (image and mask')
   if numpy.allclose(maskSpacing, resampledPixelSpacing) and numpy.allclose(imageSpacing, resampledPixelSpacing):
-    logger.info('New spacing equal to old, no resampling required')
-    return imageNode, maskNode
+    logger.info('New spacing equal to old, no resampling required, applying pre-crop')
+    low_up_bb = numpy.empty(Nd_mask * 2, dtype=int)
+    low_up_bb[::2] = bb[:3]
+    low_up_bb[1::2] = bb[:3] + bb[3:] - 1
+    return cropToTumorMask(imageNode, maskNode, low_up_bb, **kwargs)
 
   spacingRatio = maskSpacing / resampledPixelSpacing
 

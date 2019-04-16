@@ -226,6 +226,9 @@ class PyRadiomicsCommandLine:
     self.logger.info('Validation complete, errors found in %i case(s)', errored_cases)
 
   def _processCases(self, case_generator):
+    if self.args.out_dir is not None and not os.path.isdir(self.args.out_dir):
+      os.makedirs(self.args.out_dir)
+
     if self.num_workers > 1:  # multiple cases, parallel processing enabled
       self.logger.info('Input valid, starting parallel extraction from %d cases with %d workers...',
                        self.case_count, self.num_workers)

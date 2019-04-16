@@ -23,10 +23,10 @@ def extractSegment(case_idx, case, config, config_override, out_dir):
   filename = os.path.join(out_dir, 'features_%s.csv' % case_idx)
   if os.path.isfile(filename):
     # Output already generated, load result (prevents re-extraction in case of interrupted process)
-    with open(filename, 'w') as outputFile:
+    with open(filename, 'r') as outputFile:
       reader = csv.reader(outputFile)
-      headers = reader.rows[0]
-      values = reader.rows[1]
+      headers = six.next(reader)
+      values = six.next(reader)
       feature_vector = OrderedDict(zip(headers, values))
 
     caseLogger.info('Patient %s already processed, reading results...', case_idx)

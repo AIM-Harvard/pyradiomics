@@ -14,7 +14,7 @@ import threading
 import SimpleITK as sitk
 
 import radiomics
-from radiomics.featureextractor import RadiomicsFeaturesExtractor
+from radiomics.featureextractor import RadiomicsFeatureExtractor
 
 threading.current_thread().name = 'Main'
 
@@ -52,6 +52,7 @@ logHandler.setLevel(logging.INFO)
 logHandler.setFormatter(logging.Formatter('%(levelname)-.1s: (%(threadName)s) %(name)s: %(message)s'))
 rLogger.addHandler(logHandler)
 
+
 # Define filter that allows messages from specified filter and level INFO and up, and level WARNING and up from other
 # loggers.
 class info_filter(logging.Filter):
@@ -66,6 +67,7 @@ class info_filter(logging.Filter):
       return True
     return False
 
+
 # Adding the filter to the first handler of the radiomics logger limits the info messages on the output to just those
 # from radiomics.batch, but warnings and errors from the entire library are also printed to the output. This does not
 # affect the amount of logging stored in the log file.
@@ -75,6 +77,7 @@ outputhandler.setLevel(logging.INFO)  # Ensures that INFO messages are being pas
 outputhandler.addFilter(info_filter('radiomics.batch'))
 
 logging.getLogger('radiomics.batch').debug('Logging init')
+
 
 def run(case):
   global PARAMS, ROOT, TEMP_DIR
@@ -108,7 +111,7 @@ def run(case):
 
       # Instantiate Radiomics Feature extractor
 
-      extractor = RadiomicsFeaturesExtractor(PARAMS)
+      extractor = RadiomicsFeatureExtractor(PARAMS)
 
       # Extract features
       feature_vector.update(extractor.execute(imageFilepath, maskFilepath), label=label)
@@ -131,6 +134,7 @@ def run(case):
     ptLogger.error('Feature extraction failed!', exc_info=True)
 
   return feature_vector
+
 
 def _writeResults(featureVector):
   global HEADERS, OUTPUTCSV
@@ -209,7 +213,8 @@ if __name__ == '__main__':
       writer.writerows(results)
 
     if REMOVE_TEMP_DIR:
-      logger.info('Removing temporary directory %s (contains individual case results files)', os.path.join(ROOT, TEMP_DIR))
+      logger.info('Removing temporary directory %s (contains individual case results files)',
+                  os.path.join(ROOT, TEMP_DIR))
       shutil.rmtree(os.path.join(ROOT, TEMP_DIR))
   except Exception:
     logger.error('Error storing results into single file!', exc_info=True)

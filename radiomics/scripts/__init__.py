@@ -15,7 +15,7 @@ from pykwalify.compat import yaml
 import pykwalify.core
 import six.moves
 
-import radiomics
+import radiomics.featureextractor
 from . import segment, voxel
 
 
@@ -183,10 +183,10 @@ class PyRadiomicsCommandLine:
           cases[-1]['Mask'] = maPath
 
           self.case_count = len(cases)
-        caseGenerator = self._buildGenerator(cases)
+        caseGenerator = enumerate(cases, start=1)
         self.num_workers = min(self.case_count, self.args.jobs)
     elif self.args.mask is not None:
-      caseGenerator = self._buildGenerator([{'Image': self.args.input, 'Mask': self.args.mask}])
+      caseGenerator = [(1, {'Image': self.args.input, 'Mask': self.args.mask})]
     else:
       self.logger.error('Input is not recognized as batch, no mask specified, cannot compute result!')
       return None
@@ -196,14 +196,14 @@ class PyRadiomicsCommandLine:
   def _validateCases(self, case_generator):
     self.logger.info('Validating input for %i cases', self.case_count)
     errored_cases = 0
-    for case_idx, case, param, setting_overrides in case_generator:
-      if case_idx == 1 and param is not None:
-        if not os.path.isfile(param):
+    for case_idx, case in case_generator:
+      if case_idx == 1 and self.args.param is not None:
+        if not os.path.isfile(self.args.param):
           self.logger.error('Path for specified parameter file does not exist!')
         else:
           schemaFile, schemaFuncs = radiomics.getParameterValidationFiles()
 
-          c = pykwalify.core.Core(source_file=param, schema_files=[schemaFile], extensions=[schemaFuncs])
+          c = pykwalify.core.Core(source_file=self.args.param, schema_files=[schemaFile], extensions=[schemaFuncs])
           try:
             c.validate()
           except (KeyboardInterrupt, SystemExit):
@@ -226,6 +226,10 @@ class PyRadiomicsCommandLine:
     self.logger.info('Validation complete, errors found in %i case(s)', errored_cases)
 
   def _processCases(self, case_generator):
+    setting_overrides = self._parseOverrides()
+
+    extractor = radiomics.featureextractor.RadiomicsFeatureExtractor(self.args.param, **setting_overrides)
+
     if self.args.out_dir is not None and not os.path.isdir(self.args.out_dir):
       os.makedirs(self.args.out_dir)
 
@@ -235,6 +239,7 @@ class PyRadiomicsCommandLine:
       pool = Pool(self.num_workers)
       try:
         task = pool.map_async(partial(self.parallel_func,
+                                      extractor=extractor,
                                       out_dir=self.args.out_dir,
                                       logging_config=self.logging_config),
                               case_generator,
@@ -255,7 +260,7 @@ class PyRadiomicsCommandLine:
                        self.case_count)
       results = []
       for case in case_generator:
-        results.append(self.serial_func(*case, out_dir=self.args.out_dir))
+        results.append(self.serial_func(*case, extractor=extractor, out_dir=self.args.out_dir))
     else:
       # No cases defined in the batch
       self.logger.error('No cases to process...')
@@ -284,7 +289,8 @@ class PyRadiomicsCommandLine:
     elif self.args.format_path == 'basename':
       pathFormatter = os.path.basename
     else:
-      self.logger.warning('Unrecognized format for paths (%s), reverting to default ("absolute")', self.args.format_path)
+      self.logger.warning('Unrecognized format for paths (%s), reverting to default ("absolute")',
+                          self.args.format_path)
       pathFormatter = os.path.abspath
 
     for case_idx, case in enumerate(results, start=1):
@@ -311,20 +317,6 @@ class PyRadiomicsCommandLine:
       else:  # txt
         for k, v in six.iteritems(case):
           self.args.out.write('Case-%d_%s: %s\n' % (case_idx, k, v))
-
-  def _buildGenerator(self, cases):
-    setting_overrides = self._parseOverrides()
-
-    # Section for deprecated argument label
-    if self.args.label is not None:
-      self.logger.warning(
-        'Argument "label" is deprecated. To specify a custom label, use argument "setting" as follows:'
-        '"--setting=label:N", where N is the a label value.')
-      setting_overrides['label'] = self.args.label
-    # End deprecated section
-
-    for case_idx, case in enumerate(cases, start=1):
-      yield case_idx, case, self.args.param, setting_overrides
 
   def _parseOverrides(self):
     setting_overrides = {}
@@ -387,6 +379,14 @@ class PyRadiomicsCommandLine:
         raise
       except Exception:
         self.logger.warning('Could not parse value "%s" for setting "%s", skipping...', setting_value, setting_key)
+
+    # Section for deprecated argument label
+    if self.args.label is not None:
+      self.logger.warning(
+        'Argument "label" is deprecated. To specify a custom label, use argument "setting" as follows:'
+        '"--setting=label:N", where N is the a label value.')
+      setting_overrides['label'] = self.args.label
+    # End deprecated section
 
     return setting_overrides
 

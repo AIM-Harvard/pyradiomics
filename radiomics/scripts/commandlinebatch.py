@@ -92,9 +92,9 @@ def main():
   try:
     logger.debug("Initializing extractor")
     if args.param is not None:
-      extractor = featureextractor.RadiomicsFeaturesExtractor(args.param)
+      extractor = featureextractor.RadiomicsFeatureExtractor(args.param)
     else:
-      extractor = featureextractor.RadiomicsFeaturesExtractor()
+      extractor = featureextractor.RadiomicsFeatureExtractor()
   except Exception:
     logger.error('EXTRACTOR INITIALIZATION FAILED', exc_info=True)
     exit(-1)

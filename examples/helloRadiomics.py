@@ -40,7 +40,7 @@ settings['resampledPixelSpacing'] = None  # [3,3,3] is an example for defining r
 settings['interpolator'] = sitk.sitkBSpline
 
 # Initialize feature extractor
-extractor = featureextractor.RadiomicsFeaturesExtractor(**settings)
+extractor = featureextractor.RadiomicsFeatureExtractor(**settings)
 
 # By default, only original is enabled. Optionally enable some image types:
 # extractor.enableImageTypes(Original={}, LoG={}, Wavelet={})

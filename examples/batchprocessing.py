@@ -53,7 +53,7 @@ def main():
   logger.info('Patients: %d', len(flists))
 
   if os.path.isfile(params):
-    extractor = featureextractor.RadiomicsFeaturesExtractor(params)
+    extractor = featureextractor.RadiomicsFeatureExtractor(params)
   else:  # Parameter file not found, use hardcoded settings instead
     settings = {}
     settings['binWidth'] = 25
@@ -61,11 +61,11 @@ def main():
     settings['interpolator'] = sitk.sitkBSpline
     settings['enableCExtensions'] = True
 
-    extractor = featureextractor.RadiomicsFeaturesExtractor(**settings)
+    extractor = featureextractor.RadiomicsFeatureExtractor(**settings)
     # extractor.enableInputImages(wavelet= {'level': 2})
 
-  logger.info('Enabled input images types: %s', extractor._enabledImagetypes)
-  logger.info('Enabled features: %s', extractor._enabledFeatures)
+  logger.info('Enabled input images types: %s', extractor.enabledImagetypes)
+  logger.info('Enabled features: %s', extractor.enabledFeatures)
   logger.info('Current settings: %s', extractor.settings)
 
   headers = None

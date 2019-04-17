@@ -13,7 +13,7 @@ caseLogger = logging.getLogger('radiomics.script')
 _parallel_extraction_configured = False
 
 
-def extractVoxel(case_idx, case, config, config_override, out_dir):
+def extractVoxel(case_idx, case, extractor, out_dir):
   global caseLogger
 
   # Instantiate the output
@@ -37,9 +37,6 @@ def extractVoxel(case_idx, case, config, config_override, out_dir):
     label_channel = case.get('Label_channel', None)  # Optional
     if isinstance(label_channel, six.string_types):
       label_channel = int(label)
-
-    # Instantiate Radiomics Feature extractor
-    extractor = radiomics.featureextractor.RadiomicsFeaturesExtractor(config, **config_override)
 
     # Extract features
     result = extractor.execute(imageFilepath, maskFilepath, label, label_channel, voxelBased=True)
@@ -67,13 +64,15 @@ def extractVoxel(case_idx, case, config, config_override, out_dir):
   return feature_vector
 
 
-def extractVoxel_parallel(args, out_dir=None, logging_config=None):
+def extractVoxel_parallel(args, extractor, out_dir=None, logging_config=None):
   try:
+    # set thread name to patient name
+    threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
+
     if logging_config is not None:
-      # set thread name to patient name
-      threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
       _configureParallelExtraction(logging_config)
-    return extractVoxel(*args, out_dir=out_dir)
+
+    return extractVoxel(*args, extractor=extractor, out_dir=out_dir)
   except (KeyboardInterrupt, SystemExit):
     # Catch the error here, as this represents the interrupt of the child process.
     # The main process is also interrupted, and cancellation is further handled there

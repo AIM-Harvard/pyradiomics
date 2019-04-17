@@ -447,7 +447,7 @@ def main():
       params = []
       if args.parameters is not None:
         params = [args.parameters]
-      extractor = featureextractor.RadiomicsFeaturesExtractor(*params, **correctMaskSetting)
+      extractor = featureextractor.RadiomicsFeatureExtractor(*params, **correctMaskSetting)
 
     except Exception:
       scriptlogger.error(

@@ -306,7 +306,7 @@ class PyRadiomicsCommandLine:
           writer.writeheader()
         writer.writerow(case)  # if skip_nans is enabled, nan-values are written as empty strings
       elif self.args.format == 'json':
-        json.dump(case, self.args.out)
+        json.dump(case, self.args.out, indent=2)
         self.args.out.write('\n')
       else:  # txt
         for k, v in six.iteritems(case):

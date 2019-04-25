@@ -157,8 +157,8 @@ def main():
             row.append(featureVector.get(h, ""))
           writer.writerow(row)
         elif args.format == 'json':
-          json.dump(featureVector, args.out)
-          args.out.write('\n')
+          json.dump(featureVector, args.outFile)
+          args.outFile.write('\n')
       except Exception:
         logger.error('FEATURE EXTRACTION FAILED', exc_info=True)
 

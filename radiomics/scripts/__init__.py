@@ -208,8 +208,8 @@ class PyRadiomicsCommandLine:
             c.validate()
           except (KeyboardInterrupt, SystemExit):
             raise
-          except Exception as e:
-            self.logger.error('Parameter validation failed!\n%s' % e.message)
+          except Exception:
+            self.logger.error('Parameter validation failed!', exc_info=True)
             self.logger.debug("Validating case (%i/%i): %s", case_idx, self.case_count, case)
 
       case_error = False
@@ -305,18 +305,27 @@ class PyRadiomicsCommandLine:
       case['Image'] = pathFormatter(case['Image'])
       case['Mask'] = pathFormatter(case['Mask'])
 
-      # Write out results
+      # Write out results per case if format is 'csv' or 'txt', handle 'json' outside of this loop (issue #483)
       if self.args.format == 'csv':
         writer = csv.DictWriter(self.args.out, headers, lineterminator='\n', extrasaction='ignore')
         if case_idx == 1:
           writer.writeheader()
         writer.writerow(case)  # if skip_nans is enabled, nan-values are written as empty strings
-      elif self.args.format == 'json':
-        json.dump(case, self.args.out, indent=2)
-        self.args.out.write('\n')
-      else:  # txt
+      elif self.args.format == 'txt':
         for k, v in six.iteritems(case):
           self.args.out.write('Case-%d_%s: %s\n' % (case_idx, k, v))
+
+    # JSON dump of cases is handled outside of the loop, otherwise the resultant document would be invalid.
+    if self.args.format == 'json':
+      # JSON cannot serialize numpy arrays, even when that array represents a scalar value (PyRadiomics Feature values)
+      # Therefore, use this encoder, which first casts numpy arrays to python lists, which are JSON serializable
+      class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+          if isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+          return json.JSONEncoder.default(self, obj)
+
+      json.dump(results, self.args.out, cls=NumpyEncoder, indent=2)
 
   def _parseOverrides(self):
     setting_overrides = {}
@@ -474,5 +483,5 @@ def parse_args():
     return PyRadiomicsCommandLine().run()
   except Exception as e:
     logging.getLogger().error("Error executing PyRadiomics command line!", exc_info=True)
-    print("Error executing PyRadiomics command line!\n%s" % e.message)
+    print("Error executing PyRadiomics command line!\n%s" % e)
     return 4

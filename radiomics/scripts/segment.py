@@ -14,11 +14,11 @@ caseLogger = logging.getLogger('radiomics.script')
 _parallel_extraction_configured = False
 
 
-def extractSegment(case_idx, case, config, config_override, out_dir):
+def extractSegment(case_idx, case, extractor, out_dir):
   global caseLogger
 
   if out_dir is None:
-    return _extractFeatures(case_idx, case, config, config_override)
+    return _extractFeatures(case_idx, case, extractor)
 
   filename = os.path.join(out_dir, 'features_%s.csv' % case_idx)
   if os.path.isfile(filename):
@@ -32,7 +32,7 @@ def extractSegment(case_idx, case, config, config_override, out_dir):
     caseLogger.info('Patient %s already processed, reading results...', case_idx)
   else:
     # Extract the set of features. Set parallel_config flag to None, as any logging initialization is already handled.
-    feature_vector = _extractFeatures(case_idx, case, config, config_override)
+    feature_vector = _extractFeatures(case_idx, case, extractor)
 
     # Store results in temporary separate files to prevent write conflicts
     # This allows for the extraction to be interrupted. Upon restarting, already processed cases are found in the
@@ -45,7 +45,7 @@ def extractSegment(case_idx, case, config, config_override, out_dir):
   return feature_vector
 
 
-def _extractFeatures(case_idx, case, config, config_override):
+def _extractFeatures(case_idx, case, extractor):
   global caseLogger
 
   # Instantiate the output
@@ -63,9 +63,6 @@ def _extractFeatures(case_idx, case, config, config_override):
     label_channel = case.get('Label_channel', None)  # Optional
     if isinstance(label_channel, six.string_types):
       label_channel = int(label)
-
-    # Instantiate Radiomics Feature extractor
-    extractor = radiomics.featureextractor.RadiomicsFeaturesExtractor(config, **config_override)
 
     # Extract features
     feature_vector.update(extractor.execute(imageFilepath, maskFilepath, label, label_channel))
@@ -85,13 +82,15 @@ def _extractFeatures(case_idx, case, config, config_override):
   return feature_vector
 
 
-def extractSegment_parallel(args, out_dir=None, logging_config=None):
+def extractSegment_parallel(args, extractor, out_dir=None, logging_config=None):
   try:
+    # set thread name to patient name
+    threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
+
     if logging_config is not None:
-      # set thread name to patient name
-      threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
       _configureParallelExtraction(logging_config)
-    return extractSegment(*args, out_dir=out_dir)
+
+    return extractSegment(*args, extractor=extractor, out_dir=out_dir)
   except (KeyboardInterrupt, SystemExit):
     # Catch the error here, as this represents the interrupt of the child process.
     # The main process is also interrupted, and cancellation is further handled there

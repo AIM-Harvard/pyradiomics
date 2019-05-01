@@ -47,7 +47,7 @@ def main(argv=None):
       exit(1)
 
     logger.debug('Initializing extractor')
-    extractor = featureextractor.RadiomicsFeaturesExtractor(args.Configuration)
+    extractor = featureextractor.RadiomicsFeatureExtractor(args.Configuration)
 
     logger.debug('Starting extraction')
     featurevector = extractor.execute(*radiomics.getTestCase(args.TestCase))

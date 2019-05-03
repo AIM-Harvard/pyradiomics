@@ -295,7 +295,11 @@ class TID1500Metadata:
       scriptlogger.error("Exception checking for NaN: %s %s", str(e), value)
       return
 
-    measurement["value"] = '%E' % Decimal(value)
+    try:
+      measurement["value"] = '%E' % Decimal(float(value))
+    except Exception as e:
+      scriptlogger.error("Exception formatting %s as Decimal: %s", value, str(e))
+      scriptlogger.error("type of value: %s", type(value))
 
     measurement["units"] = unitsCode.getDict()
 

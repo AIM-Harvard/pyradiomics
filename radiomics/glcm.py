@@ -687,7 +687,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     """
     pxSuby = self.coefficients['pxSuby']
     kValuesDiff = self.coefficients['kValuesDiff']
-    invDiff = numpy.sum(pxSuby / (1 + kValuesDiff[None:, None]), 1)
+    invDiff = numpy.sum(pxSuby / (1 + kValuesDiff[None, :, None]), 1)
     return numpy.nanmean(invDiff, 1)
 
   def getIdnFeatureValue(self):

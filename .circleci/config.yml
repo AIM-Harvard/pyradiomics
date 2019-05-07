@@ -143,20 +143,19 @@ jobs:
       - image: circleci/python:3.6-jessie
         user: root
     steps:
-      - run:
-          name: Check Repo User
-          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
       - checkout
       - run:
           name: Install Miniconda
           command: |
-            wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+            wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
             bash miniconda.sh -b -p $HOME/miniconda
             hash -r
             echo 'export PATH=$HOME/miniconda/bin:$PATH' >> $BASH_ENV
+            echo 'export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH' >> $BASH_ENV
       - run:
           name: Configure Miniconda
-          command: bash ./conda/configure_conda.sh
+          command: |
+            bash ./conda/configure_conda.sh
       - run:
           name: Build Conda packages
           command: |
@@ -191,7 +190,7 @@ workflows:
             - build-3.7
       - build-3.7:
           <<: *build_job_template
-      - deploy: &deploy_template
+      - deploy:
           requires:
             - build-2.7
             - build-3.5
@@ -205,4 +204,8 @@ workflows:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
       - deploy_conda:
-          <<: *deploy_template
+          requires:
+            - build-2.7
+            - build-3.5
+            - build-3.6
+            - build-3.7

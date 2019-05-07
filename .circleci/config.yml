@@ -153,7 +153,9 @@ jobs:
             echo 'export PATH=$HOME/miniconda/bin:$PATH' >> $BASH_ENV
       - run:
           name: Configure Miniconda
-          command: bash ./conda/configure_conda.sh
+          command: |
+            conda install gcc_linux-64 gxx_linux-64 libgcc
+            bash ./conda/configure_conda.sh
       - run:
           name: Build Conda packages
           command: |

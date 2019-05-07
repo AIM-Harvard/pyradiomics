@@ -154,7 +154,7 @@ jobs:
       - run:
           name: Configure Miniconda
           command: |
-            conda install gcc_linux-64 gxx_linux-64 libgcc
+            conda install gcc_linux-64 libgcc
             bash ./conda/configure_conda.sh
       - run:
           name: Build Conda packages
@@ -164,10 +164,10 @@ jobs:
             conda build ./conda --python=3.5 --croot /conda-bld
             conda build ./conda --python=3.6 --croot /conda-bld
             conda build ./conda --python=3.7 --croot /conda-bld
-      - run:
-          name: Deploy Conda packages
-          command: |
-            anaconda -t $ANACONDA_TOKEN upload -u Radiomics /conda-bld/linux-64/pyradiomics-*.tar.bz2 --force
+      #- run:
+      #    name: Deploy Conda packages
+      #    command: |
+      #      anaconda -t $ANACONDA_TOKEN upload -u Radiomics /conda-bld/linux-64/pyradiomics-*.tar.bz2 --force
 
 workflows:
   version: 2

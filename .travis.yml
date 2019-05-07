@@ -67,9 +67,12 @@ deploy:
       bash miniconda.sh -b -p $HOME/miniconda;
       hash -r;
       export PATH=$HOME/miniconda/bin:$PATH;
+      conda config --set always_yes yes;
+      conda install gcc libgcc;
       bash ./conda/configure_conda.sh;
       conda build ./conda --python=$PYTHON_SHORT_VERSION --croot $HOME/conda-bld;
-      anaconda -t $ANACONDA_TOKEN upload -u Radiomics $HOME/conda-bld/osx-64/pyradiomics-*.tar.bz2 --force
+      #anaconda -t $ANACONDA_TOKEN upload -u Radiomics $HOME/conda-bld/osx-64/pyradiomics-*.tar.bz2 --force
     on:
-      tags: true
-      condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?$ && $TRAVIS_REPO_SLUG == Radiomics/pyradiomics
+      branch: deploy_conda
+    #  tags: true
+    #  condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?$ && $TRAVIS_REPO_SLUG == Radiomics/pyradiomics

@@ -9,8 +9,6 @@ build:
   number: "{{ GIT_DESCRIBE_NUMBER }}"
   entry_points:
     - pyradiomics=radiomics.scripts.__init__:parse_args
-  script_env:
-   - LD_LIBRARY_PATH # [linux]
 
 requirements:
   build:

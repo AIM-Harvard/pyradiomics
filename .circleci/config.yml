@@ -147,15 +147,13 @@ jobs:
       - run:
           name: Install Miniconda
           command: |
-            wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+            wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
             bash miniconda.sh -b -p $HOME/miniconda
             hash -r
             echo 'export PATH=$HOME/miniconda/bin:$PATH' >> $BASH_ENV
-            echo 'export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH' >> $BASH_ENV
       - run:
           name: Configure Miniconda
-          command: |
-            bash ./conda/configure_conda.sh
+          command: bash ./conda/configure_conda.sh
       - run:
           name: Build Conda packages
           command: |

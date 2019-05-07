@@ -63,9 +63,7 @@ deploy_script:
   - echo starting PyPi deployment
   - twine upload dist/*.whl -u %PYPI_USER% -p %PYPI_PASSWORD%
   - echo starting Anaconda deployment
-  - SET MINICONDA_PATH=C:\Miniconda3-x64\Scripts
-  - IF /I "%PYTHON_SHORT_VERSION%"=="2.7" SET MINICONDA_PATH=C:\Miniconda-x64\Scripts
-  - SET PATH=%MINICONDA_PATH%;%PATH%
+  - SET PATH=C:\Miniconda-x64\Scripts;%PATH%
   - ./conda/configure_conda.bat && conda build ./conda --python=%PYTHON_SHORT_VERSION% --croot C:/conda-bld
   - anaconda -t %ANACONDA_TOKEN% upload -u Radiomics C:/conda-bld/win-64/pyradiomics-*.tar.bz2 --force
   - echo finished deployment

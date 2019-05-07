@@ -67,6 +67,8 @@ deploy:
       bash miniconda.sh -b -p $HOME/miniconda;
       hash -r;
       export PATH=$HOME/miniconda/bin:$PATH;
+      conda config --set always_yes yes;
+      conda install gcc libgcc;
       bash ./conda/configure_conda.sh;
       conda build ./conda --python=$PYTHON_SHORT_VERSION --croot $HOME/conda-bld;
       anaconda -t $ANACONDA_TOKEN upload -u Radiomics $HOME/conda-bld/osx-64/pyradiomics-*.tar.bz2 --force

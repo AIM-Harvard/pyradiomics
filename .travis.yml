@@ -71,8 +71,7 @@ deploy:
       conda install gcc libgcc;
       bash ./conda/configure_conda.sh;
       conda build ./conda --python=$PYTHON_SHORT_VERSION --croot $HOME/conda-bld;
-      #anaconda -t $ANACONDA_TOKEN upload -u Radiomics $HOME/conda-bld/osx-64/pyradiomics-*.tar.bz2 --force
+      anaconda -t $ANACONDA_TOKEN upload -u Radiomics $HOME/conda-bld/osx-64/pyradiomics-*.tar.bz2 --force
     on:
-      branch: deploy_conda
-    #  tags: true
+      tags: true
     #  condition: $TRAVIS_TAG =~ ^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?$ && $TRAVIS_REPO_SLUG == Radiomics/pyradiomics

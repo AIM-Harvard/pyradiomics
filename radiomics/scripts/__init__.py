@@ -97,6 +97,9 @@ class PyRadiomicsCommandLine:
                                   '"absolute" (Default): Absolute file paths.\n'
                                   '"relative": File paths relative to current working directory.\n'
                                   '"basename": Only stores filename.')
+    outputGroup.add_argument('--unix-path', '-up', action='store_true',
+                             help='If specified, ensures that all paths in the output\n'
+                                  'use unix-style path separators ("/").')
 
     loggingGroup = parser.add_argument_group(title='Logging',
                                              description='Controls the (amount of) logging output to the '
@@ -241,7 +244,8 @@ class PyRadiomicsCommandLine:
         task = pool.map_async(partial(self.parallel_func,
                                       extractor=extractor,
                                       out_dir=self.args.out_dir,
-                                      logging_config=self.logging_config),
+                                      logging_config=self.logging_config,
+                                      unix_path=self.args.unix_path),
                               case_generator,
                               chunksize=min(10, self.case_count))
         # Wait for the results to be done. task.get() without timeout performs a blocking call, which prevents
@@ -260,7 +264,10 @@ class PyRadiomicsCommandLine:
                        self.case_count)
       results = []
       for case in case_generator:
-        results.append(self.serial_func(*case, extractor=extractor, out_dir=self.args.out_dir))
+        results.append(self.serial_func(*case,
+                                        extractor=extractor,
+                                        out_dir=self.args.out_dir,
+                                        unix_path=self.args.unix_path))
     else:
       # No cases defined in the batch
       self.logger.error('No cases to process...')
@@ -304,6 +311,10 @@ class PyRadiomicsCommandLine:
       # Format paths of image and mask files
       case['Image'] = pathFormatter(case['Image'])
       case['Mask'] = pathFormatter(case['Mask'])
+
+      if self.args.unix_path and os.path.sep != '/':
+        case['Image'] = case['Image'].replace(os.path.sep, '/')
+        case['Mask'] = case['Mask'].replace(os.path.sep, '/')
 
       # Write out results per case if format is 'csv' or 'txt', handle 'json' outside of this loop (issue #483)
       if self.args.format == 'csv':

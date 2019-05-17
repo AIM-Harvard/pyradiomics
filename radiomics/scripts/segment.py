@@ -14,8 +14,10 @@ caseLogger = logging.getLogger('radiomics.script')
 _parallel_extraction_configured = False
 
 
-def extractSegment(case_idx, case, extractor, out_dir):
+def extractSegment(case_idx, case, extractor, **kwargs):
   global caseLogger
+
+  out_dir = kwargs.get('out_dir', None)
 
   if out_dir is None:
     return _extractFeatures(case_idx, case, extractor)
@@ -82,7 +84,7 @@ def _extractFeatures(case_idx, case, extractor):
   return feature_vector
 
 
-def extractSegment_parallel(args, extractor, out_dir=None, logging_config=None):
+def extractSegment_parallel(args, logging_config=None, **kwargs):
   try:
     # set thread name to patient name
     threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
@@ -90,7 +92,7 @@ def extractSegment_parallel(args, extractor, out_dir=None, logging_config=None):
     if logging_config is not None:
       _configureParallelExtraction(logging_config)
 
-    return extractSegment(*args, extractor=extractor, out_dir=out_dir)
+    return extractSegment(*args, **kwargs)
   except (KeyboardInterrupt, SystemExit):
     # Catch the error here, as this represents the interrupt of the child process.
     # The main process is also interrupted, and cancellation is further handled there

@@ -25,8 +25,8 @@ with open('requirements-dev.txt', 'r') as fp:
 with open('requirements-setup.txt', 'r') as fp:
   setup_requirements = list(filter(bool, (line.strip() for line in fp)))
 
-with open('README.md', 'r') as fp:
-  long_description = fp.read()
+with open('README.md', 'rb') as fp:
+  long_description = fp.read().decode('utf-8')
 
 
 class NoseTestCommand(TestCommand):

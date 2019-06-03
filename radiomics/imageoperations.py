@@ -441,6 +441,7 @@ def resampleImage(imageNode, maskNode, **kwargs):
   resampledPixelSpacing = kwargs['resampledPixelSpacing']
   interpolator = kwargs.get('interpolator', sitk.sitkBSpline)
   padDistance = kwargs.get('padDistance', 5)
+  label = kwargs.get('label', 1)
 
   logger.debug('Resampling image and mask')
 
@@ -470,9 +471,21 @@ def resampleImage(imageNode, maskNode, **kwargs):
 
   # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
   # Tolerance = 1e-5 + 1e-8*abs(resampledSpacing)
-  logger.debug('Comparing resampled spacing to original spacing (image and mask')
-  if numpy.allclose(maskSpacing, resampledPixelSpacing) and numpy.allclose(imageSpacing, resampledPixelSpacing):
-    logger.info('New spacing equal to old, no resampling required, applying pre-crop')
+  logger.debug('Comparing resampled spacing to original spacing (image')
+  if numpy.allclose(imageSpacing, resampledPixelSpacing):
+    logger.info('New spacing equal to original image spacing, just resampling the mask')
+
+    # Ensure that image and mask geometry match
+    rif = sitk.ResampleImageFilter()
+    rif.SetReferenceImage(imageNode)
+    rif.SetInterpolator(sitk.sitkNearestNeighbor)
+    maskNode = rif.Execute(maskNode)
+
+    # re-calculate the bounding box of the mask
+    lssif = sitk.LabelShapeStatisticsImageFilter()
+    lssif.Execute(maskNode)
+    bb = numpy.array(lssif.GetBoundingBox(label))
+
     low_up_bb = numpy.empty(Nd_mask * 2, dtype=int)
     low_up_bb[::2] = bb[:3]
     low_up_bb[1::2] = bb[:3] + bb[3:] - 1

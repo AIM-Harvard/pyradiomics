@@ -11,7 +11,7 @@
 // **************************************************
 
 
-void calculate_meshDiameter(double *vertices, int v_idx, double *diameters);
+void calculate_meshDiameter(double *vertices, size_t v_idx, double *diameters);
 
 // Declare the look-up tables, these are filled at the bottom of this code file.
 static const int gridAngles[8][3];
@@ -27,8 +27,8 @@ int calculate_coefficients(char *mask, int *size, int *strides, double *spacing,
   int a_idx;  // Angle index (8 'angles', one pointing to each corner of the marching cube
 
   static const int points_edges[2][3] = {{6, 4, 3}, {6, 7, 11}};
-  int v_idx = -1;
-  int v_max = 0;
+  size_t v_idx = 0;
+  size_t v_max = 0;
   double *vertices;
 
   double sum;
@@ -98,7 +98,7 @@ int calculate_coefficients(char *mask, int *size, int *strides, double *spacing,
         // Because of the symmetry around the midpoint and the flip if cube_idx > 128, the 8th point will never appear
         // as segmented at this point. Therefore, to check if there are vertices on the adjacent edges (6, 7 and 11),
         // one only needs to check if the corresponding points (7th, 5th and 4th, respectively) are segmented.
-        if (v_idx + 9 >= v_max) // Overflow!
+        if (v_idx + 9 > v_max) // Overflow!
         {
           free(vertices);
           return 1;
@@ -108,9 +108,9 @@ int calculate_coefficients(char *mask, int *size, int *strides, double *spacing,
         {
           if (cube_idx & (1 << points_edges[0][t]))
           {
-            vertices[++v_idx] = (((double)iz) + vertList[points_edges[1][t]][0]) * spacing[0];
-            vertices[++v_idx] = (((double)iy) + vertList[points_edges[1][t]][1]) * spacing[1];
-            vertices[++v_idx] = (((double)ix) + vertList[points_edges[1][t]][2]) * spacing[2];
+            vertices[v_idx++] = (((double)iz) + vertList[points_edges[1][t]][0]) * spacing[0];
+            vertices[v_idx++] = (((double)iy) + vertList[points_edges[1][t]][1]) * spacing[1];
+            vertices[v_idx++] = (((double)ix) + vertList[points_edges[1][t]][2]) * spacing[2];
           }
         }
 
@@ -194,18 +194,18 @@ int calculate_coefficients(char *mask, int *size, int *strides, double *spacing,
   return 0;
 }
 
-void calculate_meshDiameter(double *points, int stack_top, double *diameters)
+void calculate_meshDiameter(double *points, size_t stack_top, double *diameters)
 {
   double a[3], b[3], ab[3];
   double distance;
-  int idx;
+  size_t idx;
 
   diameters[0] = 0;
   diameters[1] = 0;
   diameters[2] = 0;
   diameters[3] = 0;
 
-  stack_top++; // increment by 1, so when the first item is popped, it is the last item entered
+  // when the first item is popped, it is the last item entered
   while(stack_top > 0)
   {
     a[2] = points[--stack_top];
@@ -410,7 +410,7 @@ static const double vertList[12][3] = { { 0, 0, 0.5 }, { 0, 0.5, 1 }, { 0, 1, 0.
 // **************************************************
 
 
-double calculate_meshDiameter2D(double *points, int stack_top);
+double calculate_meshDiameter2D(double *points, size_t stack_top);
 
 // Declare the look-up tables, these are filled at the bottom of this code file.
 static const int gridAngles2D[4][2];
@@ -425,8 +425,8 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
   int a_idx;  // Angle index (4 'angles', one pointing to each corner of the marching cube
 
   static const int points_edges[2][2] = {{0, 2}, {3, 2}};
-  int v_idx = -1;
-  int v_max = 0;
+  size_t v_idx = 0;
+  size_t v_max = 0;
   double *vertices;
 
   double sum;
@@ -529,7 +529,7 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
       // Because of the symmetry around the midpoint and the flip if cube_idx > 0xF, the 4th point will never appear
       // as segmented at this point. Therefore, to check if there are vertices on the adjacent edges (3 and 2),
       // one only needs to check if the corresponding points (0 and 2, respectively) are segmented.
-      if (v_idx + 9 >= v_max) // Overflow!
+      if (v_idx + 9 > v_max) // Overflow!
       {
         free(vertices);
         return 1;
@@ -542,8 +542,8 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
       {
         if (square_idx & (1 << points_edges[0][t]))
         {
-          vertices[++v_idx] = (((double)iy) + vertList2D[points_edges[1][t]][0]) * spacing[0];
-          vertices[++v_idx] = (((double)ix) + vertList2D[points_edges[1][t]][1]) * spacing[1];
+          vertices[v_idx++] = (((double)iy) + vertList2D[points_edges[1][t]][0]) * spacing[0];
+          vertices[v_idx++] = (((double)ix) + vertList2D[points_edges[1][t]][1]) * spacing[1];
         }
       }
     }
@@ -560,14 +560,14 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
 }
 
 
-double calculate_meshDiameter2D(double *points, int stack_top)
+double calculate_meshDiameter2D(double *points, size_t stack_top)
 {
   double diameter = 0;
   double a[2], b[2], ab[3];
   double distance;
-  int idx;
+  size_t idx;
 
-  stack_top++; // increment by 1, so when the first item is popped, it is the last item entered
+  // so when the first item is popped, it is the last item entered
   while(stack_top > 0)
   {
     a[1] = points[--stack_top];

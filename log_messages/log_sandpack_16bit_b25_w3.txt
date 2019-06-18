@@ -1,0 +1,12 @@
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [3 3 3]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 17 bins for bin width 25 with edges: [11225 11250 11275 11300 11325 11350 11375 11400 11425 11450 11475 11500
+ 11525 11550 11575 11600 11625 11650])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 14, 3)
+DEBUG:radiomics.glszm: Calculating features

@@ -1,0 +1,2 @@
+DEBUG:radiomics.imageoperations: Checking mask with label 1
+DEBUG:radiomics.imageoperations: Calculating bounding box

@@ -1,0 +1,241 @@
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [10 10 10]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 11 bins for bin width 150 with edges: [10200 10350 10500 10650 10800 10950 11100 11250 11400 11550 11700 11850])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 10, 19)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [20 20 20]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 24 bins for bin width 150 with edges: [10050 10200 10350 10500 10650 10800 10950 11100 11250 11400 11550 11700
+ 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200 13350 13500
+ 13650])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 23, 39)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [30 30 30]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 25 bins for bin width 150 with edges: [ 9900 10050 10200 10350 10500 10650 10800 10950 11100 11250 11400 11550
+ 11700 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200 13350
+ 13500 13650])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 24, 60)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [40 40 40]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 36 bins for bin width 150 with edges: [ 9900 10050 10200 10350 10500 10650 10800 10950 11100 11250 11400 11550
+ 11700 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200 13350
+ 13500 13650 13800 13950 14100 14250 14400 14550 14700 14850 15000 15150
+ 15300])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 35, 79)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [50 50 50]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 44 bins for bin width 150 with edges: [ 9900 10050 10200 10350 10500 10650 10800 10950 11100 11250 11400 11550
+ 11700 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200 13350
+ 13500 13650 13800 13950 14100 14250 14400 14550 14700 14850 15000 15150
+ 15300 15450 15600 15750 15900 16050 16200 16350 16500])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 40, 96)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [60 60 60]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 52 bins for bin width 150 with edges: [ 9900 10050 10200 10350 10500 10650 10800 10950 11100 11250 11400 11550
+ 11700 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200 13350
+ 13500 13650 13800 13950 14100 14250 14400 14550 14700 14850 15000 15150
+ 15300 15450 15600 15750 15900 16050 16200 16350 16500 16650 16800 16950
+ 17100 17250 17400 17550 17700])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 45, 126)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [100 100 100]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 68 bins for bin width 150 with edges: [ 9900 10050 10200 10350 10500 10650 10800 10950 11100 11250 11400 11550
+ 11700 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200 13350
+ 13500 13650 13800 13950 14100 14250 14400 14550 14700 14850 15000 15150
+ 15300 15450 15600 15750 15900 16050 16200 16350 16500 16650 16800 16950
+ 17100 17250 17400 17550 17700 17850 18000 18150 18300 18450 18600 18750
+ 18900 19050 19200 19350 19500 19650 19800 19950 20100])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 53, 226)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [150 150 150]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 68 bins for bin width 150 with edges: [ 9900 10050 10200 10350 10500 10650 10800 10950 11100 11250 11400 11550
+ 11700 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200 13350
+ 13500 13650 13800 13950 14100 14250 14400 14550 14700 14850 15000 15150
+ 15300 15450 15600 15750 15900 16050 16200 16350 16500 16650 16800 16950
+ 17100 17250 17400 17550 17700 17850 18000 18150 18300 18450 18600 18750
+ 18900 19050 19200 19350 19500 19650 19800 19950 20100])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 59, 350)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [200 200 200]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 75 bins for bin width 150 with edges: [ 9900 10050 10200 10350 10500 10650 10800 10950 11100 11250 11400 11550
+ 11700 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200 13350
+ 13500 13650 13800 13950 14100 14250 14400 14550 14700 14850 15000 15150
+ 15300 15450 15600 15750 15900 16050 16200 16350 16500 16650 16800 16950
+ 17100 17250 17400 17550 17700 17850 18000 18150 18300 18450 18600 18750
+ 18900 19050 19200 19350 19500 19650 19800 19950 20100 20250 20400 20550
+ 20700 20850 21000 21150])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 70, 552)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [250 250 250]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 103 bins for bin width 150 with edges: [ 9750  9900 10050 10200 10350 10500 10650 10800 10950 11100 11250 11400
+ 11550 11700 11850 12000 12150 12300 12450 12600 12750 12900 13050 13200
+ 13350 13500 13650 13800 13950 14100 14250 14400 14550 14700 14850 15000
+ 15150 15300 15450 15600 15750 15900 16050 16200 16350 16500 16650 16800
+ 16950 17100 17250 17400 17550 17700 17850 18000 18150 18300 18450 18600
+ 18750 18900 19050 19200 19350 19500 19650 19800 19950 20100 20250 20400
+ 20550 20700 20850 21000 21150 21300 21450 21600 21750 21900 22050 22200
+ 22350 22500 22650 22800 22950 23100 23250 23400 23550 23700 23850 24000
+ 24150 24300 24450 24600 24750 24900 25050 25200])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 95, 809)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [300 300 300]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 261 bins for bin width 150 with edges: [ 9150  9300  9450  9600  9750  9900 10050 10200 10350 10500 10650 10800
+ 10950 11100 11250 11400 11550 11700 11850 12000 12150 12300 12450 12600
+ 12750 12900 13050 13200 13350 13500 13650 13800 13950 14100 14250 14400
+ 14550 14700 14850 15000 15150 15300 15450 15600 15750 15900 16050 16200
+ 16350 16500 16650 16800 16950 17100 17250 17400 17550 17700 17850 18000
+ 18150 18300 18450 18600 18750 18900 19050 19200 19350 19500 19650 19800
+ 19950 20100 20250 20400 20550 20700 20850 21000 21150 21300 21450 21600
+ 21750 21900 22050 22200 22350 22500 22650 22800 22950 23100 23250 23400
+ 23550 23700 23850 24000 24150 24300 24450 24600 24750 24900 25050 25200
+ 25350 25500 25650 25800 25950 26100 26250 26400 26550 26700 26850 27000
+ 27150 27300 27450 27600 27750 27900 28050 28200 28350 28500 28650 28800
+ 28950 29100 29250 29400 29550 29700 29850 30000 30150 30300 30450 30600
+ 30750 30900 31050 31200 31350 31500 31650 31800 31950 32100 32250 32400
+ 32550 32700 32850 33000 33150 33300 33450 33600 33750 33900 34050 34200
+ 34350 34500 34650 34800 34950 35100 35250 35400 35550 35700 35850 36000
+ 36150 36300 36450 36600 36750 36900 37050 37200 37350 37500 37650 37800
+ 37950 38100 38250 38400 38550 38700 38850 39000 39150 39300 39450 39600
+ 39750 39900 40050 40200 40350 40500 40650 40800 40950 41100 41250 41400
+ 41550 41700 41850 42000 42150 42300 42450 42600 42750 42900 43050 43200
+ 43350 43500 43650 43800 43950 44100 44250 44400 44550 44700 44850 45000
+ 45150 45300 45450 45600 45750 45900 46050 46200 46350 46500 46650 46800
+ 46950 47100 47250 47400 47550 47700 47850 48000 48150 48300])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 260, 1016)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [350 350 350]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 261 bins for bin width 150 with edges: [ 9150  9300  9450  9600  9750  9900 10050 10200 10350 10500 10650 10800
+ 10950 11100 11250 11400 11550 11700 11850 12000 12150 12300 12450 12600
+ 12750 12900 13050 13200 13350 13500 13650 13800 13950 14100 14250 14400
+ 14550 14700 14850 15000 15150 15300 15450 15600 15750 15900 16050 16200
+ 16350 16500 16650 16800 16950 17100 17250 17400 17550 17700 17850 18000
+ 18150 18300 18450 18600 18750 18900 19050 19200 19350 19500 19650 19800
+ 19950 20100 20250 20400 20550 20700 20850 21000 21150 21300 21450 21600
+ 21750 21900 22050 22200 22350 22500 22650 22800 22950 23100 23250 23400
+ 23550 23700 23850 24000 24150 24300 24450 24600 24750 24900 25050 25200
+ 25350 25500 25650 25800 25950 26100 26250 26400 26550 26700 26850 27000
+ 27150 27300 27450 27600 27750 27900 28050 28200 28350 28500 28650 28800
+ 28950 29100 29250 29400 29550 29700 29850 30000 30150 30300 30450 30600
+ 30750 30900 31050 31200 31350 31500 31650 31800 31950 32100 32250 32400
+ 32550 32700 32850 33000 33150 33300 33450 33600 33750 33900 34050 34200
+ 34350 34500 34650 34800 34950 35100 35250 35400 35550 35700 35850 36000
+ 36150 36300 36450 36600 36750 36900 37050 37200 37350 37500 37650 37800
+ 37950 38100 38250 38400 38550 38700 38850 39000 39150 39300 39450 39600
+ 39750 39900 40050 40200 40350 40500 40650 40800 40950 41100 41250 41400
+ 41550 41700 41850 42000 42150 42300 42450 42600 42750 42900 43050 43200
+ 43350 43500 43650 43800 43950 44100 44250 44400 44550 44700 44850 45000
+ 45150 45300 45450 45600 45750 45900 46050 46200 46350 46500 46650 46800
+ 46950 47100 47250 47400 47550 47700 47850 48000 48150 48300])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C
+DEBUG:radiomics.glszm: Calculating GLSZM coefficients
+DEBUG:radiomics.glszm: GLSZM feature class initialized, calculated GLSZM with shape (1, 260, 1303)
+DEBUG:radiomics.glszm: Calculating features
+DEBUG:radiomics.imageoperations: Checking mask with label 255
+DEBUG:radiomics.imageoperations: Calculating bounding box
+DEBUG:radiomics.imageoperations: Checking minimum number of dimensions requirements (2)
+DEBUG:radiomics.imageoperations: Cropping to size [400 400 400]
+DEBUG:radiomics.glszm: Initializing feature class
+DEBUG:radiomics.imageoperations: Discretizing gray levels inside ROI
+DEBUG:radiomics.imageoperations: Calculated 261 bins for bin width 150 with edges: [ 9150  9300  9450  9600  9750  9900 10050 10200 10350 10500 10650 10800
+ 10950 11100 11250 11400 11550 11700 11850 12000 12150 12300 12450 12600
+ 12750 12900 13050 13200 13350 13500 13650 13800 13950 14100 14250 14400
+ 14550 14700 14850 15000 15150 15300 15450 15600 15750 15900 16050 16200
+ 16350 16500 16650 16800 16950 17100 17250 17400 17550 17700 17850 18000
+ 18150 18300 18450 18600 18750 18900 19050 19200 19350 19500 19650 19800
+ 19950 20100 20250 20400 20550 20700 20850 21000 21150 21300 21450 21600
+ 21750 21900 22050 22200 22350 22500 22650 22800 22950 23100 23250 23400
+ 23550 23700 23850 24000 24150 24300 24450 24600 24750 24900 25050 25200
+ 25350 25500 25650 25800 25950 26100 26250 26400 26550 26700 26850 27000
+ 27150 27300 27450 27600 27750 27900 28050 28200 28350 28500 28650 28800
+ 28950 29100 29250 29400 29550 29700 29850 30000 30150 30300 30450 30600
+ 30750 30900 31050 31200 31350 31500 31650 31800 31950 32100 32250 32400
+ 32550 32700 32850 33000 33150 33300 33450 33600 33750 33900 34050 34200
+ 34350 34500 34650 34800 34950 35100 35250 35400 35550 35700 35850 36000
+ 36150 36300 36450 36600 36750 36900 37050 37200 37350 37500 37650 37800
+ 37950 38100 38250 38400 38550 38700 38850 39000 39150 39300 39450 39600
+ 39750 39900 40050 40200 40350 40500 40650 40800 40950 41100 41250 41400
+ 41550 41700 41850 42000 42150 42300 42450 42600 42750 42900 43050 43200
+ 43350 43500 43650 43800 43950 44100 44250 44400 44550 44700 44850 45000
+ 45150 45300 45450 45600 45750 45900 46050 46200 46350 46500 46650 46800
+ 46950 47100 47250 47400 47550 47700 47850 48000 48150 48300])
+DEBUG:radiomics.glszm: Calculating GLSZM matrix in C

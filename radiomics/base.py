@@ -176,6 +176,9 @@ class RadiomicsFeaturesBase(object):
     feature value as value. If an exception is thrown during calculation, the error is logged, and the value is set to
     NaN.
     """
+    if len(self.enabledFeatures) == 0:
+      self.enableAllFeatures()
+
     if self.voxelBased:
       self._calculateVoxels()
     else:

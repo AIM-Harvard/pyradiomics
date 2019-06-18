@@ -2,9 +2,87 @@
 Release Notes
 =============
 
+.. note::
+    **Upcoming changes in 3.0 release**
+
+    - Removal of deprecated code (e.g. ``commandlinebatch.py``, ``calculateFeatures()`` function in feature classes);
+      deprecated radiomics features are retained.
+    - End of official python 2.7 support
+
+      - No CI-tests for python 2.7
+      - No pre-build binaries for python 2.7 distributed on PyPi and Anaconda Cloud
+      - Compatibility code using six is retained (allowing local build).
+
 ------------
 Next Release
 ------------
+
+-----------------
+PyRadiomics 2.2.0
+-----------------
+
+.. warning::
+  In this release, the main interface class, :py:mod:`RadiomicsFeaturesExtractor <radiomics.featureextractor>`, was
+  renamed to :py:mod:`RadiomicsFeatureExtractor <radiomics.featureextractor>`
+  (no 's' between 'Feature' and 'Extractor'). This was done to avoid confusion between the module and class name.
+  (`#481 <https://github.com/Radiomics/pyradiomics/pull/481>`_)
+
+New Features
+############
+
+- Add 2D shape features (`#442 <https://github.com/Radiomics/pyradiomics/pull/442>`_)
+- Expose voxel-based feature extraction on the PyRadiomics command line interface.
+  (`#457 <https://github.com/Radiomics/pyradiomics/pull/457>`_)
+
+Labs
+####
+
+- Add notebook investigating reproducibility between PyRadiomics and USF tool (ITK-based;
+  `#458 <https://github.com/Radiomics/pyradiomics/pull/458>`_)
+
+Bug Fixes
+#########
+
+- Flatten array when applying gray value discretization of the entire image (voxel-based, full kernel;
+  `f87abcf <https://github.com/Radiomics/pyradiomics/commit/f87abcf>`_)
+- Fix incorrect removal of 'empty gray levels' in GLDM and GLRLM (voxel-based;
+  `4b18ce2 <https://github.com/Radiomics/pyradiomics/commit/4b18ce2>`_)
+- Fix incorrect instantiation of firstorder voxel-based extraction.
+  (`81e713a <https://github.com/Radiomics/pyradiomics/commit/81e713a>`_)
+- Force cast coefficients to float. Prevents overflow and type errors in feature calculation.
+  (`e9d60c7 <https://github.com/Radiomics/pyradiomics/commit/e9d60c7>`_)
+
+Tests
+#####
+
+- Removed support and continuous integration for Python 3.4 (not maintained since March 2019). Added support and CI for
+  Python 3.7. (`#486 <https://github.com/Radiomics/pyradiomics/pull/486>`_)
+
+Internal API
+############
+
+- Update C-extensions:
+
+  - Rewrite C code to work with N-Dimensional input. (`#463 <https://github.com/Radiomics/pyradiomics/pull/463>`_)
+  - Add batch-calculation of kernels and vectorized feature calculation to improve voxel-based extraction duration.
+    (`#466 <https://github.com/Radiomics/pyradiomics/pull/466>`_)
+
+- Add support for segmentation objects (multi-layer labelmaps;
+  `#445 <https://github.com/Radiomics/pyradiomics/pull/445>`_)
+
+- Refactor the commandline interface (`#481 <https://github.com/Radiomics/pyradiomics/pull/481>`_)
+
+  - Extractor instantiated once (resulting in only 1 validation of the parameter file, outside of paralellization loop)
+  - Simplify construction of the python generator of the cases that are to be extracted
+  - Remove now unnecessary functions
+
+Documentation
+#############
+
+- Update documentation (`#446 <https://github.com/Radiomics/pyradiomics/pull/446>`_,
+  `690891d <https://github.com/Radiomics/pyradiomics/commit/690891d>`_)
+- Fix some rendering errors (`723d868 <https://github.com/Radiomics/pyradiomics/commit/723d868>`_,
+  `e3eb427 <https://github.com/Radiomics/pyradiomics/commit/e3eb427>`_)
 
 -----------------
 PyRadiomics 2.1.2
@@ -53,7 +131,7 @@ Dependencies
 
 - Fix PyWavelets version to > 0.4.0, <= 1.0.0, due to compilation issue in SlicerRadiomics.
   (`c828b99 <https://github.com/Radiomics/pyradiomics/commit/c828b99>`_,
-   `SlicerRadiomics#50 <https://github.com/Radiomics/SlicerRadiomics/issues/50>`_)
+  `SlicerRadiomics#50 <https://github.com/Radiomics/SlicerRadiomics/issues/50>`_)
 
 -----------------
 PyRadiomics 2.1.0

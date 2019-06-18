@@ -123,7 +123,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     self.coefficients['pd'] = pd
     self.coefficients['pg'] = pg
 
-    self.coefficients['ivector'] = self.coefficients['grayLevels']
+    self.coefficients['ivector'] = self.coefficients['grayLevels'].astype(float)
     self.coefficients['jvector'] = jvector
 
     return P_gldm

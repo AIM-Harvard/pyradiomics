@@ -159,7 +159,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     pr = numpy.sum(self.P_glrlm, 1)  # shape (Nvox, Nr, Na)
     pg = numpy.sum(self.P_glrlm, 2)  # shape (Nvox, Ng, Na)
 
-    ivector = self.coefficients['grayLevels']  # shape (Ng,)
+    ivector = self.coefficients['grayLevels'].astype(float)  # shape (Ng,)
     jvector = numpy.arange(1, self.P_glrlm.shape[2] + 1, dtype=numpy.float64)  # shape (Nr,)
 
     # Delete columns that run lengths not present in the ROI

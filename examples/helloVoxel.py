@@ -9,7 +9,8 @@ import SimpleITK as sitk
 import six
 
 import radiomics
-from radiomics import featureextractor
+from radiomics import featureextractor, getFeatureClasses
+
 
 def tqdmProgressbar():
   """
@@ -25,6 +26,7 @@ def tqdmProgressbar():
 
   import tqdm
   radiomics.progressReporter = tqdm.tqdm
+
 
 def clickProgressbar():
   """
@@ -47,7 +49,7 @@ def clickProgressbar():
 
   import click
 
-  class progressWrapper():
+  class progressWrapper:
     def __init__(self, iterable, desc=''):
       # For a click progressbar, the description must be provided in the 'label' keyword argument.
       self.bar = click.progressbar(iterable, label=desc)
@@ -62,6 +64,7 @@ def clickProgressbar():
       return self.bar.__exit__(exc_type, exc_value, tb)  # Redirect to the __exit__ function of the click progressbar
 
   radiomics.progressReporter = progressWrapper
+
 
 # Get some test data
 testCase = 'lung2'
@@ -93,7 +96,8 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 # Initialize feature extractor using the settings file
-extractor = featureextractor.RadiomicsFeaturesExtractor(paramsFile)
+extractor = featureextractor.RadiomicsFeatureExtractor(paramsFile)
+featureClasses = getFeatureClasses()
 
 # Uncomment one of these functions to show how PyRadiomics can use the 'tqdm' or 'click' package to report progress when
 # running in full python mode. Assumes the respective package is installed (not included in the requirements)
@@ -102,12 +106,12 @@ tqdmProgressbar()
 # clickProgressbar()
 
 print("Active features:")
-for cls, features in six.iteritems(extractor._enabledFeatures):
-  if len(features) == 0:
-    features = [f for f, deprecated in six.iteritems(extractor.getFeatureNames(cls)) if not deprecated]
+for cls, features in six.iteritems(extractor.enabledFeatures):
+  if features is None or len(features) == 0:
+    features = [f for f, deprecated in six.iteritems(featureClasses[cls].getFeatureNames()) if not deprecated]
   for f in features:
     print(f)
-    print(getattr(extractor.featureClasses[cls], 'get%sFeatureValue' % f).__doc__)
+    print(getattr(featureClasses[cls], 'get%sFeatureValue' % f).__doc__)
 
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName, voxelBased=True)

@@ -107,7 +107,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     ps = numpy.sum(self.P_glszm, 1)  # shape (Nvox, Ns)
     pg = numpy.sum(self.P_glszm, 2)  # shape (Nvox, Ng)
 
-    ivector = self.coefficients['grayLevels']  # shape (Ng,)
+    ivector = self.coefficients['grayLevels'].astype(float)  # shape (Ng,)
     jvector = numpy.arange(1, self.P_glszm.shape[2] + 1, dtype=numpy.float64)  # shape (Ns,)
 
     # Get the number of zones in this GLSZM

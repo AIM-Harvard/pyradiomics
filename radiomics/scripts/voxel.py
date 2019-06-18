@@ -13,8 +13,11 @@ caseLogger = logging.getLogger('radiomics.script')
 _parallel_extraction_configured = False
 
 
-def extractVoxel(case_idx, case, config, config_override, out_dir):
+def extractVoxel(case_idx, case, extractor, **kwargs):
   global caseLogger
+
+  out_dir = kwargs.get('out_dir', None)
+  unix_path = kwargs.get('unix_path', False)
 
   # Instantiate the output
   feature_vector = OrderedDict(case)
@@ -38,9 +41,6 @@ def extractVoxel(case_idx, case, config, config_override, out_dir):
     if isinstance(label_channel, six.string_types):
       label_channel = int(label)
 
-    # Instantiate Radiomics Feature extractor
-    extractor = radiomics.featureextractor.RadiomicsFeaturesExtractor(config, **config_override)
-
     # Extract features
     result = extractor.execute(imageFilepath, maskFilepath, label, label_channel, voxelBased=True)
 
@@ -48,6 +48,8 @@ def extractVoxel(case_idx, case, config, config_override, out_dir):
       if isinstance(result[k], sitk.Image):
         target = os.path.join(out_dir, 'Case-%i_%s.nrrd' % (case_idx, k))
         sitk.WriteImage(result[k], target, True)
+        if unix_path and os.path.sep != '/':
+          target = target.replace(os.path.sep, '/')
         feature_vector[k] = target
       else:
         feature_vector[k] = result[k]
@@ -67,13 +69,15 @@ def extractVoxel(case_idx, case, config, config_override, out_dir):
   return feature_vector
 
 
-def extractVoxel_parallel(args, out_dir=None, logging_config=None):
+def extractVoxel_parallel(args, logging_config=None, **kwargs):
   try:
+    # set thread name to patient name
+    threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
+
     if logging_config is not None:
-      # set thread name to patient name
-      threading.current_thread().name = 'case %s' % args[0]  # args[0] = case_idx
       _configureParallelExtraction(logging_config)
-    return extractVoxel(*args, out_dir=out_dir)
+
+    return extractVoxel(*args, **kwargs)
   except (KeyboardInterrupt, SystemExit):
     # Catch the error here, as this represents the interrupt of the child process.
     # The main process is also interrupted, and cancellation is further handled there

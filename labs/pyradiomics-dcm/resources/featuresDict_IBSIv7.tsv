@@ -95,9 +95,9 @@ Angular second moment	8ZQL	glcm	JointEnergy
 (GLCM) Contrast	ACUI	glcm	Contrast	
 Dissimilarity	8S9J	glcm	Dissimilarity	Deprecated, same as DifferenceAverage
 Inverse difference	IB1Z	glcm	Id	
-Normalised inverse difference	NDRX	glcm	Idm	
-Inverse difference moment	WF0Z	glcm	Idmn	
-Normalised inverse difference moment	1QCO	glcm	Idn	
+Normalised inverse difference	NDRX	glcm	Idn
+Inverse difference moment	WF0Z	glcm	Idm
+Normalised inverse difference moment	1QCO	glcm	Idmn
 Inverse variance	E8JP	glcm	InverseVariance	
 Correlation	NI2N	glcm	Correlation	
 Autocorrelation	QWB0			

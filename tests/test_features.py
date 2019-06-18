@@ -8,25 +8,23 @@ import os
 from nose_parameterized import parameterized
 import six
 
-from radiomics.featureextractor import RadiomicsFeaturesExtractor
+from radiomics import getFeatureClasses
 from testUtils import custom_name_func, RadiomicsTestUtils
 
 testUtils = RadiomicsTestUtils()
 tests = sorted(testUtils.getTests())
 
-extractor = RadiomicsFeaturesExtractor()
-
 featureClass = None
+featureClasses = getFeatureClasses()
 
 
 class TestFeatures:
 
   def generate_scenarios():
-    global tests
-    global extractor
+    global tests, featureClasses
 
     for test in tests:
-      for featureClassName in extractor.getFeatureClassNames():
+      for featureClassName in featureClasses:
         # Get all feature names for which there is a baseline with current test case
         # Raises an assertion error when the class is not yet present in the baseline
         # Returns None if no baseline is present for this specific test case
@@ -40,7 +38,7 @@ class TestFeatures:
         uniqueFeatures = set([f.split('_')[-1] for f in baselineFeatureNames])
 
         # Get a list of all features for current class
-        featureNames = extractor.featureClasses[featureClassName].getFeatureNames()
+        featureNames = featureClasses[featureClassName].getFeatureNames()
         # Get a list of all non-deprecated features
         activeFeatures = set([f for (f, deprecated) in six.iteritems(featureNames) if not deprecated])
         # Check if all active features have a baseline (exclude deprecated features from this set)
@@ -53,13 +51,10 @@ class TestFeatures:
         for featureName in baselineFeatureNames:
           yield test, featureName
 
-  global testUtils
-
   @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
   def test_scenario(self, test, featureName):
     print("")
-    global testUtils
-    global extractor
+    global testUtils, featureClass, featureClasses
 
     featureName = featureName.split('_')
 
@@ -68,13 +63,12 @@ class TestFeatures:
 
     testOrClassChanged = testUtils.setFeatureClassAndTestCase(featureName[1], test)
 
-    global featureClass
     testImage = testUtils.getImage(featureName[0])
     testMask = testUtils.getMask(featureName[0])
 
     if featureClass is None or testOrClassChanged:
       logging.debug('Init %s' % featureName[1])
-      featureClass = extractor.featureClasses[featureName[1]](testImage, testMask, **testUtils.getSettings())
+      featureClass = featureClasses[featureName[1]](testImage, testMask, **testUtils.getSettings())
 
     assert (featureClass is not None)
 

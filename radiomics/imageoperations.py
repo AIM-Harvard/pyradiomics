@@ -60,7 +60,9 @@ def getBinEdges(parameterValues, **kwargs):
   **Fixed bin width:**
 
   Returns the bin edges, a list of the edges of the calculated bins, length is N(bins) + 1. Bins are defined such, that
-  the bin edges are equally spaced from zero, and that the leftmost edge :math:`\leq \min(X_{gl})`:
+  the bin edges are equally spaced from zero, and that the leftmost edge :math:`\leq \min(X_{gl})`. These bin edges
+  represent the half-open ranges of each bin :math:`[\text{lower_edge}, \text{upper_edge})` and result in gray value
+  discretization as follows:
 
   .. math::
     X_{b, i} = \lfloor \frac{X_{gl, i}}{W} \rfloor - \lfloor \frac {\min(X_{gl})}{W} \rfloor + 1
@@ -70,23 +72,11 @@ def getBinEdges(parameterValues, **kwargs):
   the bins are equally spaced from 0, whereas the second part ensures that the minimum gray level intensity inside the
   ROI after binning is always 1.
 
-  If the range of gray level intensities is equally dividable by the binWidth, i.e. :math:`(\max(X_{gl})- \min(X_{gl}))
-  \mod W = 0`, the maximum intensity will be encoded as numBins + 1, therefore the maximum number of gray
-  level intensities in the ROI after binning is number of bins + 1.
-
-  If dynamic binning is enabled (parameter `dynamicBinning`), and no custom binwidth has been defined for the filter,
-  the actual bin width used (:math:`W_{dyn}`) is defined as:
-
-  .. math::
-    W_{dyn} = W * \frac{\max(X_{der}) - \min(X_{der})}{\max(X_{ref}) - \min(X_{ref})}
-
-  Here, :math:`X_{der}` and :math:`X_{ref}` represent the intensities found in the ROI on the derived and original
-  images, respectively.
-
-  .. warning::
-    This is different from the assignment of voxels to the bins by ``numpy.histogram`` , which has half-open bins, with
-    the exception of the rightmost bin, which means this maximum values are assigned to the topmost bin.
-    ``numpy.digitize`` uses half-open bins, including the rightmost bin.
+  In the case where the maximum gray level intensity is equally dividable by the binWidth, i.e.
+  :math:`\max(X_{gl}) \mod W = 0`, this will result in that maximum gray level being assigned to bin
+  :math:`[\max(X_{gl}), \max(X_{gl}) + W)`, which is consistent with numpy.digitize, but different from the behaviour
+  of numpy.histogram, where the final bin has a closed range, including the maximum gray level, i.e.
+  :math:`[\max(X_{gl}) - W, \max(X_{gl})]`.
 
   .. note::
     This method is slightly different from the fixed bin size discretization method described by IBSI. The two most
@@ -239,7 +229,7 @@ def checkMask(imageNode, maskNode, **kwargs):
     # If lsif fails, and mask is corrected, it includes a check whether the label is present. Therefore, perform
     # this test here only if lsif does not fail on the first attempt.
     if label not in lsif.GetLabels():
-      raise ValueError('Label (%g) not present in mask', label)
+      raise ValueError('Label (%g) not present in mask' % label)
   except RuntimeError as e:
     # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
     if not kwargs.get('correctMask', False):
@@ -271,7 +261,9 @@ def checkMask(imageNode, maskNode, **kwargs):
 
   logger.debug('Checking minimum number of dimensions requirements (%d)', minDims)
   ndims = numpy.sum((boundingBox[1::2] - boundingBox[0::2] + 1) > 1)  # UBound - LBound + 1 = Size
-  if ndims < minDims:
+  if ndims == 0:
+    raise ValueError('mask only contains 1 segmented voxel! Cannot extract features for a single voxel.')
+  elif ndims < minDims:
     raise ValueError('mask has too few dimensions (number of dimensions %d, minimum required %d)' % (ndims, minDims))
 
   if minSize is not None:
@@ -449,6 +441,7 @@ def resampleImage(imageNode, maskNode, **kwargs):
   resampledPixelSpacing = kwargs['resampledPixelSpacing']
   interpolator = kwargs.get('interpolator', sitk.sitkBSpline)
   padDistance = kwargs.get('padDistance', 5)
+  label = kwargs.get('label', 1)
 
   logger.debug('Resampling image and mask')
 
@@ -478,10 +471,25 @@ def resampleImage(imageNode, maskNode, **kwargs):
 
   # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
   # Tolerance = 1e-5 + 1e-8*abs(resampledSpacing)
-  logger.debug('Comparing resampled spacing to original spacing (image and mask')
-  if numpy.allclose(maskSpacing, resampledPixelSpacing) and numpy.allclose(imageSpacing, resampledPixelSpacing):
-    logger.info('New spacing equal to old, no resampling required')
-    return imageNode, maskNode
+  logger.debug('Comparing resampled spacing to original spacing (image')
+  if numpy.allclose(imageSpacing, resampledPixelSpacing):
+    logger.info('New spacing equal to original image spacing, just resampling the mask')
+
+    # Ensure that image and mask geometry match
+    rif = sitk.ResampleImageFilter()
+    rif.SetReferenceImage(imageNode)
+    rif.SetInterpolator(sitk.sitkNearestNeighbor)
+    maskNode = rif.Execute(maskNode)
+
+    # re-calculate the bounding box of the mask
+    lssif = sitk.LabelShapeStatisticsImageFilter()
+    lssif.Execute(maskNode)
+    bb = numpy.array(lssif.GetBoundingBox(label))
+
+    low_up_bb = numpy.empty(Nd_mask * 2, dtype=int)
+    low_up_bb[::2] = bb[:3]
+    low_up_bb[1::2] = bb[:3] + bb[3:] - 1
+    return cropToTumorMask(imageNode, maskNode, low_up_bb, **kwargs)
 
   spacingRatio = maskSpacing / resampledPixelSpacing
 
@@ -650,6 +658,10 @@ def resegmentMask(imageNode, maskNode, **kwargs):
     ma_arr[ma_arr] = im_arr[ma_arr] <= thresholds[1]
 
   roiSize = numpy.sum(ma_arr)
+
+  if roiSize <= 1:
+    raise ValueError("Resegmentation excluded too many voxels with label %i (retained %i voxel(s))! "
+                     "Cannot extract features" % (label, roiSize))
 
   # Transform the boolean array back to an image with the correct voxels set to the label value
   newMask_arr = numpy.zeros(ma_arr.shape, dtype='int')

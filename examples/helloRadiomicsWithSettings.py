@@ -8,7 +8,7 @@ import os
 import six
 
 import radiomics
-from radiomics import featureextractor
+from radiomics import featureextractor, getFeatureClasses
 
 # Get some test data
 
@@ -37,15 +37,16 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 # Initialize feature extractor using the settings file
-extractor = featureextractor.RadiomicsFeaturesExtractor(paramsFile)
+extractor = featureextractor.RadiomicsFeatureExtractor(paramsFile)
+featureClasses = getFeatureClasses()
 
 print("Active features:")
-for cls, features in six.iteritems(extractor._enabledFeatures):
-  if len(features) == 0:
-    features = [f for f, deprecated in six.iteritems(extractor.getFeatureNames(cls)) if not deprecated]
+for cls, features in six.iteritems(extractor.enabledFeatures):
+  if features is None or len(features) == 0:
+    features = [f for f, deprecated in six.iteritems(featureClasses[cls].getFeatureNames()) if not deprecated]
   for f in features:
     print(f)
-    print(getattr(extractor.featureClasses[cls], 'get%sFeatureValue' % f).__doc__)
+    print(getattr(featureClasses[cls], 'get%sFeatureValue' % f).__doc__)
 
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)

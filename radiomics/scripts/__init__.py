@@ -15,7 +15,7 @@ from pykwalify.compat import yaml
 import pykwalify.core
 import six.moves
 
-import radiomics
+import radiomics.featureextractor
 from . import segment, voxel
 
 
@@ -97,6 +97,9 @@ class PyRadiomicsCommandLine:
                                   '"absolute" (Default): Absolute file paths.\n'
                                   '"relative": File paths relative to current working directory.\n'
                                   '"basename": Only stores filename.')
+    outputGroup.add_argument('--unix-path', '-up', action='store_true',
+                             help='If specified, ensures that all paths in the output\n'
+                                  'use unix-style path separators ("/").')
 
     loggingGroup = parser.add_argument_group(title='Logging',
                                              description='Controls the (amount of) logging output to the '
@@ -183,10 +186,10 @@ class PyRadiomicsCommandLine:
           cases[-1]['Mask'] = maPath
 
           self.case_count = len(cases)
-        caseGenerator = self._buildGenerator(cases)
+        caseGenerator = enumerate(cases, start=1)
         self.num_workers = min(self.case_count, self.args.jobs)
     elif self.args.mask is not None:
-      caseGenerator = self._buildGenerator([{'Image': self.args.input, 'Mask': self.args.mask}])
+      caseGenerator = [(1, {'Image': self.args.input, 'Mask': self.args.mask})]
     else:
       self.logger.error('Input is not recognized as batch, no mask specified, cannot compute result!')
       return None
@@ -196,20 +199,20 @@ class PyRadiomicsCommandLine:
   def _validateCases(self, case_generator):
     self.logger.info('Validating input for %i cases', self.case_count)
     errored_cases = 0
-    for case_idx, case, param, setting_overrides in case_generator:
-      if case_idx == 1 and param is not None:
-        if not os.path.isfile(param):
+    for case_idx, case in case_generator:
+      if case_idx == 1 and self.args.param is not None:
+        if not os.path.isfile(self.args.param):
           self.logger.error('Path for specified parameter file does not exist!')
         else:
           schemaFile, schemaFuncs = radiomics.getParameterValidationFiles()
 
-          c = pykwalify.core.Core(source_file=param, schema_files=[schemaFile], extensions=[schemaFuncs])
+          c = pykwalify.core.Core(source_file=self.args.param, schema_files=[schemaFile], extensions=[schemaFuncs])
           try:
             c.validate()
           except (KeyboardInterrupt, SystemExit):
             raise
-          except Exception as e:
-            self.logger.error('Parameter validation failed!\n%s' % e.message)
+          except Exception:
+            self.logger.error('Parameter validation failed!', exc_info=True)
             self.logger.debug("Validating case (%i/%i): %s", case_idx, self.case_count, case)
 
       case_error = False
@@ -223,17 +226,26 @@ class PyRadiomicsCommandLine:
       if case_error:
         errored_cases += 1
 
-      self.logger.info('Validation complete, errors found in %i case(s)', errored_cases)
+    self.logger.info('Validation complete, errors found in %i case(s)', errored_cases)
 
   def _processCases(self, case_generator):
+    setting_overrides = self._parseOverrides()
+
+    extractor = radiomics.featureextractor.RadiomicsFeatureExtractor(self.args.param, **setting_overrides)
+
+    if self.args.out_dir is not None and not os.path.isdir(self.args.out_dir):
+      os.makedirs(self.args.out_dir)
+
     if self.num_workers > 1:  # multiple cases, parallel processing enabled
       self.logger.info('Input valid, starting parallel extraction from %d cases with %d workers...',
                        self.case_count, self.num_workers)
       pool = Pool(self.num_workers)
       try:
         task = pool.map_async(partial(self.parallel_func,
+                                      extractor=extractor,
                                       out_dir=self.args.out_dir,
-                                      logging_config=self.logging_config),
+                                      logging_config=self.logging_config,
+                                      unix_path=self.args.unix_path),
                               case_generator,
                               chunksize=min(10, self.case_count))
         # Wait for the results to be done. task.get() without timeout performs a blocking call, which prevents
@@ -252,7 +264,10 @@ class PyRadiomicsCommandLine:
                        self.case_count)
       results = []
       for case in case_generator:
-        results.append(self.serial_func(*case, out_dir=self.args.out_dir))
+        results.append(self.serial_func(*case,
+                                        extractor=extractor,
+                                        out_dir=self.args.out_dir,
+                                        unix_path=self.args.unix_path))
     else:
       # No cases defined in the batch
       self.logger.error('No cases to process...')
@@ -281,7 +296,8 @@ class PyRadiomicsCommandLine:
     elif self.args.format_path == 'basename':
       pathFormatter = os.path.basename
     else:
-      self.logger.warning('Unrecognized format for paths (%s), reverting to default ("absolute")', self.args.format_path)
+      self.logger.warning('Unrecognized format for paths (%s), reverting to default ("absolute")',
+                          self.args.format_path)
       pathFormatter = os.path.abspath
 
     for case_idx, case in enumerate(results, start=1):
@@ -296,32 +312,31 @@ class PyRadiomicsCommandLine:
       case['Image'] = pathFormatter(case['Image'])
       case['Mask'] = pathFormatter(case['Mask'])
 
-      # Write out results
+      if self.args.unix_path and os.path.sep != '/':
+        case['Image'] = case['Image'].replace(os.path.sep, '/')
+        case['Mask'] = case['Mask'].replace(os.path.sep, '/')
+
+      # Write out results per case if format is 'csv' or 'txt', handle 'json' outside of this loop (issue #483)
       if self.args.format == 'csv':
         writer = csv.DictWriter(self.args.out, headers, lineterminator='\n', extrasaction='ignore')
         if case_idx == 1:
           writer.writeheader()
         writer.writerow(case)  # if skip_nans is enabled, nan-values are written as empty strings
-      elif self.args.format == 'json':
-        json.dump(case, self.args.out)
-        self.args.out.write('\n')
-      else:  # txt
+      elif self.args.format == 'txt':
         for k, v in six.iteritems(case):
           self.args.out.write('Case-%d_%s: %s\n' % (case_idx, k, v))
 
-  def _buildGenerator(self, cases):
-    setting_overrides = self._parseOverrides()
+    # JSON dump of cases is handled outside of the loop, otherwise the resultant document would be invalid.
+    if self.args.format == 'json':
+      # JSON cannot serialize numpy arrays, even when that array represents a scalar value (PyRadiomics Feature values)
+      # Therefore, use this encoder, which first casts numpy arrays to python lists, which are JSON serializable
+      class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+          if isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+          return json.JSONEncoder.default(self, obj)
 
-    # Section for deprecated argument label
-    if self.args.label is not None:
-      self.logger.warning(
-        'Argument "label" is deprecated. To specify a custom label, use argument "setting" as follows:'
-        '"--setting=label:N", where N is the a label value.')
-      setting_overrides['label'] = self.args.label
-    # End deprecated section
-
-    for case_idx, case in enumerate(cases, start=1):
-      yield case_idx, case, self.args.param, setting_overrides
+      json.dump(results, self.args.out, cls=NumpyEncoder, indent=2)
 
   def _parseOverrides(self):
     setting_overrides = {}
@@ -334,7 +349,7 @@ class PyRadiomicsCommandLine:
     self.logger.debug('Reading parameter schema')
     schemaFile, schemaFuncs = radiomics.getParameterValidationFiles()
     with open(schemaFile) as schema:
-      settingsSchema = yaml.load(schema)['mapping']['setting']['mapping']
+      settingsSchema = yaml.safe_load(schema)['mapping']['setting']['mapping']
 
     # parse single value function
     def parse_value(value, value_type):
@@ -384,6 +399,14 @@ class PyRadiomicsCommandLine:
         raise
       except Exception:
         self.logger.warning('Could not parse value "%s" for setting "%s", skipping...', setting_value, setting_key)
+
+    # Section for deprecated argument label
+    if self.args.label is not None:
+      self.logger.warning(
+        'Argument "label" is deprecated. To specify a custom label, use argument "setting" as follows:'
+        '"--setting=label:N", where N is the a label value.')
+      setting_overrides['label'] = self.args.label
+    # End deprecated section
 
     return setting_overrides
 
@@ -471,5 +494,5 @@ def parse_args():
     return PyRadiomicsCommandLine().run()
   except Exception as e:
     logging.getLogger().error("Error executing PyRadiomics command line!", exc_info=True)
-    print("Error executing PyRadiomics command line!\n%s" % e.message)
+    print("Error executing PyRadiomics command line!\n%s" % e)
     return 4

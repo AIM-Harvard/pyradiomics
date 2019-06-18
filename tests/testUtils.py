@@ -171,7 +171,7 @@ class RadiomicsTestUtils:
       imageTypes = self._current_config.get('EnabledImageTypes', {'Original': {}})
       settings = self._current_config.get('Settings', {})
 
-      extractor = featureextractor.RadiomicsFeaturesExtractor({'imageType': imageTypes, 'setting': settings})
+      extractor = featureextractor.RadiomicsFeatureExtractor({'imageType': imageTypes, 'setting': settings})
       self._image, self._mask = extractor.loadImage(self._image, self._mask)
 
       assert self._image is not None
@@ -378,7 +378,8 @@ class PyRadiomicsBaseline:
     config = {
       'TestCase': self.configuration[test].get('diagnostics_Configuration_TestCase', None),
       'Settings': ast.literal_eval(self.configuration[test].get('diagnostics_Configuration_Settings', '{}')),
-      'EnabledImageTypes': ast.literal_eval(self.configuration[test].get('diagnostics_Configuration_EnabledImageTypes', '{}'))
+      'EnabledImageTypes': ast.literal_eval(self.configuration[test].get('diagnostics_Configuration_EnabledImageTypes',
+                                                                         '{}'))
     }
 
     # ensure resegmentation is disable for shape class

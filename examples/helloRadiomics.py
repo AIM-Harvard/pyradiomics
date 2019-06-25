@@ -49,10 +49,10 @@ extractor = featureextractor.RadiomicsFeatureExtractor(**settings)
 extractor.disableAllFeatures()
 
 # Enable all features in firstorder
-# extractor.enableFeatureClassByName('firstorder')
+extractor.enableFeatureClassByName('glrlm')
 
 # Only enable mean and skewness in firstorder
-extractor.enableFeaturesByName(firstorder=['Mean', 'Skewness'])
+# extractor.enableFeaturesByName(firstorder=['Mean', 'Skewness'])
 
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)

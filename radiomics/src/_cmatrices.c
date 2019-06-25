@@ -163,8 +163,8 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   dims[2] = Ng;
   dims[3] = Na;
 
-  // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] * dims[2] * dims[3] > INT_MAX)
+  // Check that the maximum size of the array won't overflow the index variable (size_t)
+  if (dims[0] * dims[1] * dims[2] * dims[3] > SIZE_MAX)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -408,8 +408,8 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   dims[1] = Ng;
   dims[2] = maxRegion;
 
-  // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] * dims[2] > INT_MAX)
+  // Check that the maximum size of the array won't overflow the index variable (size_t)
+  if (dims[0] * dims[1] * dims[2] > SIZE_MAX)
   {
     free(tempData);
     PyErr_SetString(PyExc_RuntimeError, "Number of elements in GLSZM would overflow index variable! Increase bin width to prevent this error.");
@@ -509,8 +509,8 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   dims[2] = Nr;
   dims[3] = Na;
 
-  // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] * dims[2] * dims[3] > INT_MAX)
+  // Check that the maximum size of the array won't overflow the index variable (size_t)
+  if (dims[0] * dims[1] * dims[2] * dims[3] > SIZE_MAX)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -661,8 +661,8 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   dims[1] = Ng;
   dims[2] = 3;
 
-  // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] * dims[2] > INT_MAX)
+  // Check that the maximum size of the array won't overflow the index variable (size_t)
+  if (dims[0] * dims[1] * dims[2] > SIZE_MAX)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);
@@ -814,8 +814,8 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   dims[1] = Ng;
   dims[2] = Na * 2 + 1;  // No of possible dependency values = Na *2 + 1 (Na angels, 2 directions and +1 for no dependency)
 
-  // Check that the maximum size of the array won't overflow the index variable (int32)
-  if (dims[0] * dims[1] * dims[2] > INT_MAX)
+  // Check that the maximum size of the array won't overflow the index variable (size_t)
+  if (dims[0] * dims[1] * dims[2] > SIZE_MAX)
   {
     Py_XDECREF(image_arr);
     Py_XDECREF(mask_arr);

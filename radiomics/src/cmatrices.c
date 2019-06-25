@@ -9,12 +9,14 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
   */
 
   // Index and size variables of the image
-  int Ni;  // Size of the entire image array
-  int i, j, a, d;  // Iterator variables (image, angles, dimensions)
-  int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+  intptr_t Ni;  // Size of the entire image array
+  intptr_t i, j;  // Iterator variables (image)
+  intptr_t* cur_idx = (intptr_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+
+  size_t a, d;  // Iterator variables (angles, dimensions)
 
   // Output matrix variables
-  int glcm_idx, glcm_idx_max = Ng * Ng * Na;  // Index and max index of the texture array
+  size_t glcm_idx, glcm_idx_max = Ng * Ng * Na;  // Index and max index of the texture array
 
   // Calculate size of image array, and set i at lower bound of bounding box
   Ni = size[0];
@@ -102,28 +104,30 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
    */
 
   // Index and size variables of the image
-  int Ni;  // Size of the entire image array
-  int i, j, k, a, d;  // Iterator variables (image, angles, dimensions)
-  int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+  intptr_t Ni;  // Size of the entire image array
+  intptr_t i, j, k;  // Iterator variables (image)
+  intptr_t* cur_idx = (size_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
   // Stack to hold indices of a growing region
-  int *regionStack;
-  int stackTop = -1;
-  int *processedStack = NULL;
-  int processed_idx = -1;
+  intptr_t *regionStack;
+  intptr_t stackTop = 0;
+  intptr_t *processedStack = NULL;
+  intptr_t processed_idx = 0;
+
+  size_t a, d;  // Iterator variables (angles, dimensions)
 
   // Output matrix variables
   int gl, region;
   int maxSize = 0;
-  int regionCounter = 0;
-  int max_region_idx = Ns * 2;
+  intptr_t temp_idx = 0;
+  intptr_t temp_idx_max = Ns * 2;
 
-  regionStack = (int *)malloc(sizeof *regionStack * Ns);
+  regionStack = (intptr_t *)malloc(sizeof *regionStack * Ns);
 
   // If processing multiple voxels, use a processedStack to keep track of processed voxels.
   // These need to be reset after processing to allow for reprocessing in the next kernel(s)
   if (Nvox > 1)
-    processedStack = (int *)malloc(sizeof *processedStack * Ns);
+    processedStack = (intptr_t *)malloc(sizeof *processedStack * Ns);
 
   // Calculate size of image array, and set i at lower bound of bounding box
   Ni = size[0];
@@ -165,19 +169,19 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
       // Voxel-based: Add the current voxel to the processed stack to reset later.
       if (processed_idx + 1 >= Ns)  // index out of range
       {
-        regionCounter = -1;
+        temp_idx = -1;
         break;
       }
       if (processedStack)
-        processedStack[++processed_idx] = i;
+        processedStack[processed_idx++] = i;
 
       // Start growing the region
-      regionStack[++stackTop] = i; // Add the current voxel to the stack as 'starting point'
+      regionStack[stackTop++] = i; // Add the current voxel to the stack as 'starting point'
       mask[i] = 0;  // Mark current voxel as 'processed'
 
-      while (stackTop > -1)
+      while (stackTop > 0)
       {
-        k = regionStack[stackTop--];  // Get the next voxel to process, on first iteration, this equals i
+        k = regionStack[--stackTop];  // Get the next voxel to process, on first iteration, this equals i
 
         // Increment region size, as number of loops corresponds to number of voxels in current region
         region++;
@@ -212,35 +216,35 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
             {
               if (processed_idx + 1 >= Ns)  // index out of range
               {
-                regionCounter = -1;
+                temp_idx = -1;
                 break;
               }
-              processedStack[++processed_idx] = j;
+              processedStack[processed_idx++] = j;
             }
 
             // Push the voxel index to the stack for further processing
-            regionStack[++stackTop] = j;
+            regionStack[stackTop++] = j;
             // Voxel belongs to current region, mark it as 'processed'
             mask[j] = 0;
           }
         } // next a
       }  // while (stackTop > -1)
 
-      if (regionCounter < 0)
+      if (temp_idx < 0)
         break;
-      if (regionCounter >= max_region_idx)
+      if (temp_idx >= temp_idx_max)
       {
-        regionCounter = -1; // index out of range, mark as "failed"
+        temp_idx = -1; // index out of range, mark as "failed"
         break;
       }
       // Keep track of the largest region encountered, used to instantiate the GLSZM matrix later
       if (region > maxSize) maxSize = region;
 
       // Store the region size and gray level in the temporary output matrix
-      tempData[(regionCounter * 2)] = gl;
-      tempData[((regionCounter * 2) + 1)] = region;
+      tempData[(temp_idx * 2)] = gl;
+      tempData[((temp_idx * 2) + 1)] = region;
 
-      regionCounter++;
+      temp_idx++;
     }
   }
   free(cur_idx);
@@ -249,16 +253,15 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
   // Reset all processed voxels (needed when computing voxel-based)
   if (processedStack)
   {
-    while (processed_idx > -1)
+    while (processed_idx > 0)
     {
-      mask[processedStack[processed_idx]] = 1;
-      processed_idx--;
+      mask[processedStack[--processed_idx]] = 1;
     }
     free(processedStack);
   }
 
-  if (regionCounter < 0 || regionCounter >= max_region_idx) return -1; // index out of range
-  tempData[(regionCounter * 2)] = -1; // Set the first element after last region to -1 to stop the loop in fill_glszm
+  if (temp_idx < 0 || temp_idx >= temp_idx_max) return -1; // index out of range
+  tempData[(temp_idx * 2)] = -1; // Set the first element after last region to -1 to stop the loop in fill_glszm
 
   return maxSize;
 }
@@ -267,8 +270,8 @@ int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion)
 {
   /* This function fills the GLSZM using the zones described in the tempData. See calculate_glszm() for more details.
    */
-  int i = 0;
-  int glszm_idx, glszm_idx_max = Ng * maxRegion;  // Index and max index of the texture array
+  intptr_t i = 0;
+  size_t glszm_idx, glszm_idx_max = Ng * maxRegion;  // Index and max index of the texture array
 
   while(tempData[i * 2] > -1)
   {
@@ -295,20 +298,22 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
    * GLRLM accordingly.
    */
   // Index and size variables of the image
-  int Ni, start_i;  // Size of the entire image array
-  int i, j, a, d, md;  // Iterator variables (image, angles, dimensions)
-  int cnt_mDim;  // Variable to hold the number of moving dims
+  intptr_t Ni, start_i;  // Size of the entire image array
+  intptr_t i, j;  // Iterator variables (image)
+  intptr_t cur_idx;  // Only need a single int for index, as each the index is calculated and check separately for each dimension
+
+  size_t a, d, md;  // Iterator variables (angles, dimensions)
+  size_t cnt_mDim;  // Variable to hold the number of moving dims
   int multiElement;  // Variable to check whether the current angle only yields runs of length 1
 
   // Variables to track the non-zero offsets of the current angle (=moving dimensions)
   // and to help define the start voxels for the runs
-  int* mDims = (int *)malloc(sizeof *mDims * Nd);  // Array to hold mapping to moving dimensions
-  int* mDim_start = (int *)malloc(sizeof *mDim_start * Nd); // Array to hold start positions for moving dimensions (0 or size - 1)
-  int cur_idx;  // Only need a single int for index, as each the index is calculated and check separately for each dimension
+  size_t* mDims = (size_t *)malloc(sizeof *mDims * Nd);  // Array to hold mapping to moving dimensions
+  size_t* mDim_start = (size_t *)malloc(sizeof *mDim_start * Nd); // Array to hold start positions for moving dimensions (0 or size - 1)
 
   // Output matrix variables
   int gl, rl, elements;
-  int glrlm_idx, glrlm_idx_max = Ng * Nr * Na;  // Index and max index of the texture array
+  size_t glrlm_idx, glrlm_idx_max = Ng * Nr * Na;  // Index and max index of the texture array
 
   // Calculate size of image array, and calculate index of lower bound of bounding box (`start_i`)
   Ni = size[0];
@@ -348,8 +353,10 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
         cur_idx = (i % strides[d - 1]) / strides[d];
         if (cur_idx > bb[Nd + d])
           // Set the i to the lower bound of the bounding box
-          // size[d] - cur_idx[d] ensures an overflow, causing the index in current dimension to be 0
-          // Then, add bb[d] to ensure it is set to the lower bound of the bounding box
+          // size[d] - cur_idx[d] (i.e. add the difference between current index and size to i  --> advance along this
+          // dimension to index 'size'. As the max index in each dimension is equal to size - 1,
+          // this ensures an overflow, causing the index in current dimension to be 0 and in a lower dimension to be +1.
+          // Then, add bb[d] to ensure it is set to the lower bound of the bounding box in the current dimension
           i += (size[d] - cur_idx + bb[d]) * strides[d];
         else if (cur_idx < bb[d])
           i += (bb[d] - cur_idx) * strides[d];
@@ -381,7 +388,7 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
       if (cur_idx > -1)
       {
         // Oh oh, current voxel is not a starting position for any of the moving dimensions!
-        // Skip to a valid index by ensure to fastest changing moving dimension is set to a valid start position.
+        // Skip to a valid index by ensuring the fastest changing moving dimension is set to a valid start position.
         md = cnt_mDim - 1;
         d = mDims[md]; // Get the last moving dimension (i.e. the moving dimension with the smallest stride)
 
@@ -392,20 +399,23 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
         // Add size[d] to ensure the operation returns the modulus, not the remainder (% operator)
         i += ((mDim_start[md] - cur_idx + size[d]) % size[d]) * strides[d]; // Skip the rest of the voxels in this moving dimension
 
-        // Update all lower dimensions if necessary (ensuring it all stays within the bounding box)
-        d--;  // Don't handle the current dimension (=last moving dimension), we just did that above...
-        for ( ; d > 0 ; d--)
+        if (d > 1)
         {
-          cur_idx = (i % strides[d - 1]) / strides[d];
-          if (cur_idx > bb[Nd + d])
+          // Update all lower dimensions if necessary (ensuring it all stays within the bounding box)
+          d--;  // Don't handle the current dimension (=last moving dimension), we just did that above...
+          for ( ; d > 0 ; d--)  // don't handle d = 0, that is done below...
           {
-            // Set the i to the lower bound of the bounding box
-            // size[d] - cur_idx[d] ensures an overflow, causing the index in current dimension to be 0
-            // Then, add bb[d] to ensure it is set to the lower bound of the bounding box
-            i += (size[d] - cur_idx + bb[d]) * strides[d];
+            cur_idx = (i % strides[d - 1]) / strides[d];
+            if (cur_idx > bb[Nd + d])
+            {
+              // Set the i to the lower bound of the bounding box
+              // size[d] - cur_idx[d] ensures an overflow, causing the index in current dimension to be 0
+              // Then, add bb[d] to ensure it is set to the lower bound of the bounding box
+              i += (size[d] - cur_idx + bb[d]) * strides[d];
+            }
+            else if (cur_idx < bb[d])
+              i += (bb[d] - cur_idx) * strides[d];
           }
-          else if (cur_idx < bb[d])
-            i += (bb[d] - cur_idx) * strides[d];
         }
 
         if (i / strides[0] > bb[Nd])
@@ -515,14 +525,16 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *bb, int *strides, in
    *
    */
   // Index and size variables of the image
-  int gl;
-  int Ni;  // Size of the entire image array
-  int i, j, a, d;  // Iterator variables (image, angles, dimensions)
-  int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+  intptr_t Ni;  // Size of the entire image array
+  intptr_t i, j;  // Iterator variables (image)
+  intptr_t* cur_idx = (intptr_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+
+  size_t a, d;  // Iterator variables (angles, dimensions)
 
   // Output matrix variables
+  int gl;
   double count, sum, diff;
-  int ngtdm_idx, ngtdm_idx_max = Ng * 3;  // Index and max index of the texture array
+  intptr_t ngtdm_idx, ngtdm_idx_max = Ng * 3;  // Index and max index of the texture array
 
   // Fill gray levels (empty slices gray levels are later deleted in python)
   for (gl = 0; gl < Ng; gl++)
@@ -628,13 +640,15 @@ int calculate_gldm(int *image, char *mask, int *size, int *bb, int *strides, int
   */
 
   // Index and size variables of the image
-  int Ni;  // Size of the entire image array
-  int i, j, a, d;  // Iterator variables (image, angles, dimensions)
-  int* cur_idx = (int *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+  intptr_t Ni;  // Size of the entire image array
+  intptr_t i, j;  // Iterator variables (image)
+  intptr_t* cur_idx = (intptr_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+
+  size_t a, d;  // Iterator variables (angles, dimensions)
 
   // Output matrix variables
   int dep, diff;
-  int gldm_idx, gldm_idx_max = Ng * (Na * 2 + 1);  // Index and max index of the texture array
+  intptr_t gldm_idx, gldm_idx_max = Ng * (Na * 2 + 1);  // Index and max index of the texture array
 
   // Calculate size of image array, and set i at lower bound of bounding box
   Ni = size[0];

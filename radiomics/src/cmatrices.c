@@ -9,9 +9,9 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
   */
 
   // Index and size variables of the image
-  intptr_t Ni;  // Size of the entire image array
-  intptr_t i, j;  // Iterator variables (image)
-  intptr_t* cur_idx = (intptr_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+  size_t Ni;  // Size of the entire image array
+  size_t i, j;  // Iterator variables (image)
+  size_t* cur_idx = (size_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
   size_t a, d;  // Iterator variables (angles, dimensions)
 
@@ -64,15 +64,17 @@ int calculate_glcm(int *image, char *mask, int *size, int *bb, int *strides, int
           // Check if the current offset does not go out-of-range
           if (cur_idx[d] + angles[a * Nd + d] < bb[d] ||  cur_idx[d] + angles[a * Nd + d] > bb[Nd + d])
           {
-            j = -1;  // Set to -1 to signal out-of-range below
+            // Set to i to signal out-of-range below
+            // (normally j would never be equal to i, as an angle has at least 1 non-zero offset)
+            j = i;
             break;
           }
           j += angles[a * Nd + d] * strides[d];
         }
 
-        // If the neighbor voxel is not out of range (> 0) and part of the ROI (mask[j]),
+        // If the neighbor voxel is not out of range (signalled by setting j=i) and part of the ROI (mask[j]),
         // increment the corresponding element in the GLCM
-        if (j > 0 && mask[j])
+        if (j != i && mask[j])
         {
           glcm_idx = a + (image[j]-1) * Na + (image[i]-1) * Na * Ng;
           if (glcm_idx >= glcm_idx_max)
@@ -104,30 +106,30 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
    */
 
   // Index and size variables of the image
-  intptr_t Ni;  // Size of the entire image array
-  intptr_t i, j, k;  // Iterator variables (image)
-  intptr_t* cur_idx = (size_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+  size_t Ni;  // Size of the entire image array
+  size_t i, j, k;  // Iterator variables (image)
+  size_t* cur_idx = (size_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
   // Stack to hold indices of a growing region
-  intptr_t *regionStack;
-  intptr_t stackTop = 0;
-  intptr_t *processedStack = NULL;
-  intptr_t processed_idx = 0;
+  size_t *regionStack;
+  size_t stackTop = 0;
+  size_t *processedStack = NULL;
+  size_t processed_idx = 0;
 
   size_t a, d;  // Iterator variables (angles, dimensions)
 
   // Output matrix variables
   int gl, region;
   int maxSize = 0;
-  intptr_t temp_idx = 0;
-  intptr_t temp_idx_max = Ns * 2;
+  size_t temp_idx = 0;
+  size_t temp_idx_max = Ns * 2;
 
-  regionStack = (intptr_t *)malloc(sizeof *regionStack * Ns);
+  regionStack = (size_t *)malloc(sizeof *regionStack * Ns);
 
   // If processing multiple voxels, use a processedStack to keep track of processed voxels.
   // These need to be reset after processing to allow for reprocessing in the next kernel(s)
   if (Nvox > 1)
-    processedStack = (intptr_t *)malloc(sizeof *processedStack * Ns);
+    processedStack = (size_t *)malloc(sizeof *processedStack * Ns);
 
   // Calculate size of image array, and set i at lower bound of bounding box
   Ni = size[0];
@@ -169,8 +171,9 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
       // Voxel-based: Add the current voxel to the processed stack to reset later.
       if (processed_idx + 1 >= Ns)  // index out of range
       {
-        temp_idx = -1;
-        break;
+        free(cur_idx);
+        free(regionStack);
+        return -1;
       }
       if (processedStack)
         processedStack[processed_idx++] = i;
@@ -201,7 +204,9 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
             // Check if the current offset does not go out-of-range
             if (cur_idx[d] + angles[a * Nd + d] < bb[d] ||  cur_idx[d] + angles[a * Nd + d] > bb[Nd + d])
             {
-              j = -1;  // Set to -1 to signal out-of-range below
+              // Set to k to signal out-of-range below
+              // (normally j would never be equal to k, as an angle has at least 1 non-zero offset)
+              j = k;
               break;
             }
             j += angles[a * Nd + d] * strides[d];
@@ -209,15 +214,16 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
 
           // If the neighbor voxel is not out of range (> 0) and part of the ROI (mask[j]),
           // increment the corresponding element in the GLCM
-          if (j > 0 && mask[j] && (image[j] == gl))
+          if (j != k && mask[j] && (image[j] == gl))
           {
             // Voxel-based: Add the current voxel to the processed stack to reset later.
             if (processedStack)
             {
               if (processed_idx + 1 >= Ns)  // index out of range
               {
-                temp_idx = -1;
-                break;
+                free(cur_idx);
+                free(regionStack);
+                return -1;
               }
               processedStack[processed_idx++] = j;
             }
@@ -230,12 +236,11 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
         } // next a
       }  // while (stackTop > -1)
 
-      if (temp_idx < 0)
-        break;
-      if (temp_idx >= temp_idx_max)
+      if (temp_idx >= temp_idx_max)  // index out of range
       {
-        temp_idx = -1; // index out of range, mark as "failed"
-        break;
+        free(cur_idx);
+        free(regionStack);
+        return -1;
       }
       // Keep track of the largest region encountered, used to instantiate the GLSZM matrix later
       if (region > maxSize) maxSize = region;
@@ -260,7 +265,8 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
     free(processedStack);
   }
 
-  if (temp_idx < 0 || temp_idx >= temp_idx_max) return -1; // index out of range
+  if (temp_idx >= temp_idx_max)
+    return -1; // index out of range
   tempData[(temp_idx * 2)] = -1; // Set the first element after last region to -1 to stop the loop in fill_glszm
 
   return maxSize;
@@ -270,7 +276,7 @@ int fill_glszm(int *tempData, double *glszm, int Ng, int maxRegion)
 {
   /* This function fills the GLSZM using the zones described in the tempData. See calculate_glszm() for more details.
    */
-  intptr_t i = 0;
+  size_t i = 0;
   size_t glszm_idx, glszm_idx_max = Ng * maxRegion;  // Index and max index of the texture array
 
   while(tempData[i * 2] > -1)
@@ -298,9 +304,10 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
    * GLRLM accordingly.
    */
   // Index and size variables of the image
-  intptr_t Ni, start_i;  // Size of the entire image array
-  intptr_t i, j;  // Iterator variables (image)
-  intptr_t cur_idx;  // Only need a single int for index, as each the index is calculated and check separately for each dimension
+  size_t Ni, start_i;  // Size of the entire image array
+  size_t i, j;  // Iterator variables (image)
+  size_t cur_idx;  // Only need a single int for index, as each the index is calculated and check separately for each dimension
+  int start_voxel_valid;  // boolean indicating whether the current voxel is a valid starting voxel
 
   size_t a, d, md;  // Iterator variables (angles, dimensions)
   size_t cnt_mDim;  // Variable to hold the number of moving dims
@@ -369,6 +376,7 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
       // loop over moving dimensions to check if the current voxel is a valid starting voxel
       // a voxel is a starting voxel if it's index for a specific moving dimension matches the start index for
       // that dimension. If this is the case for ANY of the moving dimensions, the voxel is indeed a starting voxel
+      start_voxel_valid = 0;
       for (md = 0; md < cnt_mDim; md++)
       {
         d = mDims[md];
@@ -380,12 +388,12 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
 
         if (cur_idx == mDim_start[md])
         {
-          cur_idx = -1;  // Signals the start voxel is a valid start voxel
+          start_voxel_valid = 1;
           break;  // No need to check the rest, the voxel is valid
         }
       }
 
-      if (cur_idx > -1)
+      if (!start_voxel_valid)
       {
         // Oh oh, current voxel is not a starting position for any of the moving dimensions!
         // Skip to a valid index by ensuring the fastest changing moving dimension is set to a valid start position.
@@ -427,7 +435,11 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
       gl = -1;
       rl = 0;
       elements = 0;
-      while(j > -1)
+
+      // Run the body at least once, without checking if j==i.
+      // On the first execute j==i, but afterwards is changed. If j==i at the end of this do...while block, it is
+      // to signal that j has gone out-of-range and the run is done.
+      do
       {
         // Check if j belongs to the mask (i.e. part of some run)
         if (mask[j])
@@ -478,15 +490,19 @@ int calculate_glrlm(int *image, char *mask, int *size, int *bb, int *strides, in
             cur_idx = j / strides[d];
           else
             cur_idx = (j % strides[d - 1]) / strides[d];
+
           // Check if that is within the range [0, size[d])
           if (cur_idx + angles[a * Nd + d] < bb[d] ||  cur_idx + angles[a * Nd + d] > bb[Nd + d])
           {
-            j = -1;  // Set to -1 to signal out-of-range below
-            break;
+            j = i;  // Set j to i to signal the while loop to exit too.
+            break;  // Out of range! Run is done, so exit the loop
           }
+
           j += angles[a * Nd + d] * strides[d];
         }  // next md
-      }  // while (j > -1)
+      }
+      while (j != i);
+
       if (gl > -1)  // end current run (this is the case when the last voxel of the run was included in the mask)
       {
         glrlm_idx = (gl - 1) * Na * Nr + rl * Na + a;
@@ -525,16 +541,16 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *bb, int *strides, in
    *
    */
   // Index and size variables of the image
-  intptr_t Ni;  // Size of the entire image array
-  intptr_t i, j;  // Iterator variables (image)
-  intptr_t* cur_idx = (intptr_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+  size_t Ni;  // Size of the entire image array
+  size_t i, j;  // Iterator variables (image)
+  size_t* cur_idx = (size_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
   size_t a, d;  // Iterator variables (angles, dimensions)
 
   // Output matrix variables
   int gl;
   double count, sum, diff;
-  intptr_t ngtdm_idx, ngtdm_idx_max = Ng * 3;  // Index and max index of the texture array
+  size_t ngtdm_idx, ngtdm_idx_max = Ng * 3;  // Index and max index of the texture array
 
   // Fill gray levels (empty slices gray levels are later deleted in python)
   for (gl = 0; gl < Ng; gl++)
@@ -596,15 +612,17 @@ int calculate_ngtdm(int *image, char *mask, int *size, int *bb, int *strides, in
           // Check if the current offset does not go out-of-range
           if (cur_idx[d] + angles[a * Nd + d] < bb[d] ||  cur_idx[d] + angles[a * Nd + d] > bb[Nd + d])
           {
-            j = -1;  // Set to -1 to signal out-of-range below
+            // Set to i to signal out-of-range below
+            // (normally j would never be equal to i, as an angle has at least 1 non-zero offset)
+            j = i;
             break;
           }
           j += angles[a * Nd + d] * strides[d];
         }
 
-        // If the neighbor voxel is not out of range (> 0) and part of the ROI (mask[j]),
+        // If the neighbor voxel is not out of range (signalled by setting j=i) and part of the ROI (mask[j]),
         // increment the corresponding element in the GLCM
-        if (j > 0 && mask[j])
+        if (j != i && mask[j])
         {
            count++;
            sum += image[j];
@@ -640,15 +658,15 @@ int calculate_gldm(int *image, char *mask, int *size, int *bb, int *strides, int
   */
 
   // Index and size variables of the image
-  intptr_t Ni;  // Size of the entire image array
-  intptr_t i, j;  // Iterator variables (image)
-  intptr_t* cur_idx = (intptr_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
+  size_t Ni;  // Size of the entire image array
+  size_t i, j;  // Iterator variables (image)
+  size_t* cur_idx = (size_t *)malloc(sizeof *cur_idx * Nd);  // Temporary array to store current index by dimension
 
   size_t a, d;  // Iterator variables (angles, dimensions)
 
   // Output matrix variables
   int dep, diff;
-  intptr_t gldm_idx, gldm_idx_max = Ng * (Na * 2 + 1);  // Index and max index of the texture array
+  size_t gldm_idx, gldm_idx_max = Ng * (Na * 2 + 1);  // Index and max index of the texture array
 
   // Calculate size of image array, and set i at lower bound of bounding box
   Ni = size[0];
@@ -698,15 +716,17 @@ int calculate_gldm(int *image, char *mask, int *size, int *bb, int *strides, int
           // Check if the current offset does not go out-of-range
           if (cur_idx[d] + angles[a * Nd + d] < bb[d] ||  cur_idx[d] + angles[a * Nd + d] > bb[Nd + d])
           {
-            j = -1;  // Set to -1 to signal out-of-range below
+            // Set to i to signal out-of-range below
+            // (normally j would never be equal to i, as an angle has at least 1 non-zero offset)
+            j = i;
             break;
           }
           j += angles[a * Nd + d] * strides[d];
         }
 
-        // If the neighbor voxel is not out of range (> 0) and part of the ROI (mask[j]),
+        // If the neighbor voxel is not out of range (signalled by setting j=i) and part of the ROI (mask[j]),
         // increment the corresponding element in the GLCM
-        if (j > 0 && mask[j])
+        if (j != i && mask[j])
         {
           diff = image[i] - image[j];
           if (diff < 0) diff *= -1;  // Get absolute difference

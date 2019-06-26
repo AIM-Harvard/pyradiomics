@@ -117,7 +117,9 @@ static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
   // Initialize voxel-specific variables to default
   Nvox = 1;
   kernelRadius = 0;
-  voxels_obj = voxels_arr = voxels = NULL;
+  voxels_obj = NULL;
+  voxels_arr = NULL;
+  voxels = NULL;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOOiii|iO", &image_obj, &mask_obj, &distances_obj, &Ng, &force2D, &force2Ddimension, &kernelRadius, &voxels_obj))
@@ -270,7 +272,9 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
   // Initialize voxel-specific variables to default
   Nvox = 1;
   kernelRadius = 0;
-  voxels_obj = voxels_arr = voxels = NULL;
+  voxels_obj = NULL;
+  voxels_arr = NULL;
+  voxels = NULL;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOiiii|iO", &image_obj, &mask_obj, &Ng, &Ns, &force2D, &force2Ddimension, &kernelRadius, &voxels_obj))
@@ -463,7 +467,9 @@ static PyObject *cmatrices_calculate_glrlm(PyObject *self, PyObject *args)
   // Initialize voxel-specific variables to default
   Nvox = 1;
   kernelRadius = 0;
-  voxels_obj = voxels_arr = voxels = NULL;
+  voxels_obj = NULL;
+  voxels_arr = NULL;
+  voxels = NULL;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOiiii|iO", &image_obj, &mask_obj, &Ng, &Nr, &force2D, &force2Ddimension, &kernelRadius, &voxels_obj))
@@ -616,7 +622,9 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args)
   // Initialize voxel-specific variables to default
   Nvox = 1;
   kernelRadius = 0;
-  voxels_obj = voxels_arr = voxels = NULL;
+  voxels_obj = NULL;
+  voxels_arr = NULL;
+  voxels = NULL;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOOiii|iO", &image_obj, &mask_obj, &distances_obj, &Ng, &force2D, &force2Ddimension, &kernelRadius, &voxels_obj))
@@ -769,7 +777,9 @@ static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args)
   // Initialize voxel-specific variables to default
   Nvox = 1;
   kernelRadius = 0;
-  voxels_obj = voxels_arr = voxels = NULL;
+  voxels_obj = NULL;
+  voxels_arr = NULL;
+  voxels = NULL;
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OOOiiii|iO", &image_obj, &mask_obj, &distances_obj, &Ng, &alpha, &force2D, &force2Ddimension, &kernelRadius, &voxels_obj))

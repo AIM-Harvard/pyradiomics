@@ -147,14 +147,15 @@ def binImage(parameterMatrix, parameterMatrixCoordinates=None, **kwargs):
   global logger
   logger.debug('Discretizing gray levels inside ROI')
 
+  discretizedParameterMatrix = numpy.zeros(parameterMatrix.shape, dtype='int')
   if parameterMatrixCoordinates is None:
     binEdges = getBinEdges(parameterMatrix.flatten(), **kwargs)
-    parameterMatrix = numpy.digitize(parameterMatrix, binEdges)
+    discretizedParameterMatrix = numpy.digitize(parameterMatrix, binEdges)
   else:
     binEdges = getBinEdges(parameterMatrix[parameterMatrixCoordinates], **kwargs)
-    parameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterMatrix[parameterMatrixCoordinates], binEdges)
+    discretizedParameterMatrix[parameterMatrixCoordinates] = numpy.digitize(parameterMatrix[parameterMatrixCoordinates], binEdges)
 
-  return parameterMatrix, binEdges
+  return discretizedParameterMatrix, binEdges
 
 
 def checkMask(imageNode, maskNode, **kwargs):

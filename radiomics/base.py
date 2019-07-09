@@ -241,7 +241,7 @@ class RadiomicsFeaturesBase(object):
           yield True, feature, getattr(self, 'get%sFeatureValue' % feature)()
         except DeprecationWarning as deprecatedFeature:
           # Add a debug log message, as a warning is usually shown and would entail a too verbose output
-          self.logger.debug('Feature %s is deprecated: %s', feature, deprecatedFeature.message)
+          self.logger.debug('Feature %s is deprecated: %s', feature, deprecatedFeature.args[0])
         except Exception:
           self.logger.error('FAILED: %s', traceback.format_exc())
           yield False, feature, numpy.nan

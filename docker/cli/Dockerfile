@@ -68,7 +68,7 @@ RUN git clone git://cmake.org/cmake.git CMake && \
 
 # Build and install Python from source.
 WORKDIR /usr/src
-ENV PYTHON_VERSION 2.7.10
+ENV PYTHON_VERSION 3.6.9
 RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz && \
   tar xvzf Python-${PYTHON_VERSION}.tgz && \
   cd Python-${PYTHON_VERSION} && \

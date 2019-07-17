@@ -127,9 +127,9 @@ extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRad
  - PyWavelets (Wavelet filter)
  - pykwalify (Enabling yaml parameters file checking)
  - six (Python 3 Compatibility)
- - scipy (Only for LBP filter, install seperately to enable this filter)
- - scikit-image (Only for LBP filter, install seperately to enable this filter)
- - trimesh (Only for LBP filter, install seperately to enable this filter)
+ - scipy (Only for LBP filter, install separately to enable this filter)
+ - scikit-image (Only for LBP filter, install separately to enable this filter)
+ - trimesh (Only for LBP filter, install separately to enable this filter)
 
 See also the [requirements file](requirements.txt).
 

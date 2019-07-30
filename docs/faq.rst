@@ -92,15 +92,23 @@ What file types are supported by PyRadiomics for input image and mask?
 ######################################################################
 
 PyRadiomics uses SimpleITK for image loading and handling. Therefore, `all image types supported by SimpleITK <https://simpleitk.readthedocs.io/en/master/Documentation/docs/source/IO.html>`_ can be
-used as input for PyRadiomics. Please note that only one file location can be provided for image/mask. If you want to
-provide the image in DICOM format, load the DICOM images using SimpleITK functionality and pass the resultant image
-object instead.
+used as input for PyRadiomics. Please note that only one file location can be provided for image/mask.
 
-If your input images are DICOM, you should first confirm the DICOM files you have correspond to a single image series.
+If your input images are DICOM, things become more complicated. If you want to process a single 2D image slice stored in
+DICOM format, you can use it as any other format. However, if you are processing a volumetric dataset, you should first confirm the DICOM files you have correspond to a single image series.
 If you are not sure, you can sort the data such that you have a single directory per series using, for example,
 `dicomsort <https://github.com/pieper/dicomsort>`_. You can then convert the DICOM series into an ITK-readable
 volumetric format using `plastimatch convert <http://plastimatch.org/plastimatch.html#plastimatch-convert>`_ or
-`dcm2niix <https://github.com/rordenlab/dcm2niix>`_. We also provide a "labs" (experimental) script
+`dcm2niix <https://github.com/rordenlab/dcm2niix>`_.
+
+If your label is defined in DICOM format, this can mean different things. First, check what is the modality of the dataset
+with the label. You can check that by using `dcmdump <https://support.dcmtk.org/docs/dcmdump.html>`_, and then checking the line that says "Modality". You can find the binary packages of this tool `here <https://github.com/QIICR/atom-dicom-dump#install-dcmtk-andor-gdcm>`_ (you can also use `dicom-dump package <https://github.com/QIICR/atom-dicom-dump>`_ if you want to look at DICOM files more conveniently from the `Atom editor <https://atom.io>`_).
+
+* If the modality is an image (e.g., CT or MR), use `plastimatch` or `dcm2niix` to convert the image into a 3D volume.
+* If the modality is RT, use `plastimatch` to convert contours of the structure sets into 3D volumes.
+* If the modality is SEG, use `dcmqi <https://github.com/QIICR/dcmqi`_ to convert voxel segmentations into 3D volumes.
+
+We also provide a "labs" (experimental) script
 `pyradiomics-dcm <https://github.com/Radiomics/pyradiomics/tree/master/labs/pyradiomics-dcm>`_ that can do those
 conversions automatically and also saves the resulting features as DICOM SR.
 

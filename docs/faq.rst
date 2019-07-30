@@ -91,7 +91,7 @@ made using 2 or 4 spaces.
 What file types are supported by PyRadiomics for input image and mask?
 ######################################################################
 
-PyRadiomics uses SimpleITK for image loading and handling. Therefore, all image types supported by SimpleITK can be
+PyRadiomics uses SimpleITK for image loading and handling. Therefore, `all image types supported by SimpleITK <https://simpleitk.readthedocs.io/en/master/Documentation/docs/source/IO.html>`_ can be
 used as input for PyRadiomics. Please note that only one file location can be provided for image/mask. If you want to
 provide the image in DICOM format, load the DICOM images using SimpleITK functionality and pass the resultant image
 object instead.

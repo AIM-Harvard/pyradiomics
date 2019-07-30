@@ -106,7 +106,7 @@ with the label. You can check that by using `dcmdump <https://support.dcmtk.org/
 
 * If the modality is an image (e.g., CT or MR), use `plastimatch` or `dcm2niix` to convert the image into a 3D volume.
 * If the modality is RT, use `plastimatch` to convert contours of the structure sets into 3D volumes.
-* If the modality is SEG, use `dcmqi <https://github.com/QIICR/dcmqi`_ to convert voxel segmentations into 3D volumes.
+* If the modality is SEG, use `dcmqi <https://github.com/QIICR/dcmqi>`_ to convert voxel segmentations into 3D volumes.
 
 We also provide a "labs" (experimental) script
 `pyradiomics-dcm <https://github.com/Radiomics/pyradiomics/tree/master/labs/pyradiomics-dcm>`_ that can do those

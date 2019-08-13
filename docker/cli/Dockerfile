@@ -86,25 +86,28 @@ RUN git clone https://github.com/martine/ninja.git && \
   mv ninja /usr/bin/ && \
   cd .. && rm -rf ninja
 
+# Setup Python package manager (pip)
+WORKDIR /usr/src
+RUN python3 --version && \
+  wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py && \
+  python3 get-pip.py
+
 # Setup necessary python packages
 WORKDIR /usr/src
-RUN python --version && \
-  wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py && \
-  python get-pip.py && \
-  pip install wheel>=0.29.0 && \
-  pip install setuptools>=28.0.0 && \
-  pip install scipy && \
-  pip install trimesh && \
-  pip install scikit-image && \
-  pip install --trusted-host www.itk.org -f https://itk.org/SimpleITKDoxygen/html/PyDownloadPage.html SimpleITK>=0.9.1 && \
-  python -c "import SimpleITK; print('SimpleITK Version:' + SimpleITK.Version_VersionString())"
+RUN pip3 install wheel>=0.29.0 && \
+  pip3 install setuptools>=28.0.0 && \
+  pip3 install scipy && \
+  pip3 install trimesh && \
+  pip3 install scikit-image && \
+  pip3 install --trusted-host www.itk.org -f https://itk.org/SimpleITKDoxygen/html/PyDownloadPage.html SimpleITK>=0.9.1 && \
+  python3 -c "import SimpleITK; print('SimpleITK Version:' + SimpleITK.Version_VersionString())"
 
 # Install PyRadiomics
 WORKDIR /usr/src
 RUN git clone https://github.com/radiomics/pyradiomics.git && \
   cd pyradiomics && \
-  pip install -r requirements.txt && \
-  python setup.py install
+  pip3 install -r requirements.txt && \
+  python3 setup.py install
 
 WORKDIR /usr/src
 ENTRYPOINT ["pyradiomics"]

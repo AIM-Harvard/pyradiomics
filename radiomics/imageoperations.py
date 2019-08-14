@@ -45,10 +45,10 @@ def getMask(mask, **kwargs):
   mask = sitk.Cast(mask, sitk.sitkUInt32)
 
   labels = numpy.unique(sitk.GetArrayFromImage(mask))
-  if len(labels) == 0:
-    raise ValueError('No labels found in this mask (i.e. nothing is segmented)!', label, labels[labels != 0])
+  if len(labels) == 1:
+    raise ValueError('No labels found in this mask (i.e. nothing is segmented)!')
   if label not in labels:
-    raise ValueError('Label (%g) not present in mask. Choose from %s', label, labels[labels != 0])
+    raise ValueError('Label (%g) not present in mask. Choose from %s' % (label, labels[labels != 0]))
 
   return mask
 

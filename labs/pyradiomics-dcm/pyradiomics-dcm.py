@@ -20,7 +20,6 @@ from radiomics import featureextractor
 scriptlogger = logging.getLogger('radiomics.dicom')
 scriptlogger.setLevel(logging.DEBUG)
 
-
 def dcmImageToNRRD(inputDICOMImageDir, tempDir):
   scanNRRDFile = os.path.join(tempDir, "image.nrrd")
   if not os.path.isfile(scanNRRDFile):
@@ -35,7 +34,7 @@ def dcmImageToNIfTI(inputDICOMImageDir, tempDir):
   scanJSONFile = os.path.join(inputDICOMImageDir, "volume.json")
   # will save to volume.nii
   if not os.path.isfile(destScanNIfTIFile):
-    cmd = ['dcm2niix', "-m", "y", inputDICOMImageDir]
+    cmd = ['dcm2niix', "-m", "y", "-f", "volume", inputDICOMImageDir]
     call(cmd)
     shutil.move(scanNIfTIFile, destScanNIfTIFile)
     if os.path.isfile(scanJSONFile):

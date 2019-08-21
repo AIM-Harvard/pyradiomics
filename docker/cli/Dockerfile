@@ -3,7 +3,8 @@ MAINTAINER http://github.com/radiomics
 
 RUN yum update -y && \
   yum groupinstall -y "Development Tools" && \
-  yum install -y curl \
+  yum install -y bzip2-devel \
+   curl \
    curl-devel \
    coreutils \
    freetype-devel \

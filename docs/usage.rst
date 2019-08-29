@@ -160,51 +160,6 @@ PyRadiomics in 3D Slicer
 A convenient front-end interface is provided as the 'Radiomics' extension for 3D Slicer. It is available
 `here <https://github.com/Radiomics/SlicerRadiomics>`_.
 
-------------------------------
-Using feature classes directly
-------------------------------
-
-* This represents an example where feature classes are used directly, circumventing checks and preprocessing done by
-  the radiomics feature extractor class, and is not intended as standard use.
-
-* (LINUX) To run from source code, add pyradiomics to the environment variable PYTHONPATH (Not necessary when
-  PyRadiomics is installed):
-
-  *  ``setenv PYTHONPATH /path/to/pyradiomics/radiomics``
-
-* Start the python interactive session:
-
-  * ``python``
-
-* Import the necessary classes::
-
-     from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm, getTestCase
-     import SimpleITK as sitk
-     import six
-     import sys, os
-
-* Set up a data directory variable::
-
-    dataDir = '/path/to/pyradiomics/data'
-
-* You will find sample data files brain1_image.nrrd and brain1_label.nrrd in that directory.
-
-* Use SimpleITK to read a the brain image and mask::
-
-     imageName, maskName = getTestCase('brain1', dataDir)
-     image = sitk.ReadImage(imageName)
-     mask = sitk.ReadImage(maskName)
-
-* Calculate the first order features::
-
-     firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
-     firstOrderFeatures.enableAllFeatures()  # On the feature class level, all features are disabled by default.
-     firstOrderFeatures.calculateFeatures()
-     for (key,val) in six.iteritems(firstOrderFeatures.featureValues):
-       print("\t%s: %s" % (key, val))
-
-* See the :ref:`radiomics-features-label` section for more features that you can calculate.
-
 .. _radiomics-logging-label:
 
 ------------------
@@ -234,5 +189,5 @@ handler to the pyradiomics logger::
     radiomics.logger.setLevel(logging.DEBUG)
 
 To store a log file when running pyradiomics from the commandline, specify a file location in the optional
-``--log-file`` argument. The amount of logging that is stored is controlled by the ``--log-level`` argument
+``--log-file`` argument. The amount of logging that is stored is controlled by the ``--logging-level`` argument
 (default level WARNING and up).

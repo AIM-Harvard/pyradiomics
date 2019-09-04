@@ -19,7 +19,7 @@ RUN pip3 install pandas!=0.25.0 && \
 # Copy the required DCMQI tools from the latest DCMQI docker image
 COPY --from=qiicr/dcmqi:latest /usr/bin/tid1500writer /usr/bin/segimage2itkimage /usr/bin/
 # Copy the pyradiomics-dcm.py script to ensure latest changes are included in the image
-COPY ./labs/pyradiomics-dcm/pyradiomics-dcm.py /usr/src/pyradiomics/labs/pyradiomics-dcm/
+COPY ./labs/pyradiomics-dcm/* /usr/src/pyradiomics/labs/pyradiomics-dcm/
 
 WORKDIR /usr/src/pyradiomics/labs/pyradiomics-dcm
 ENTRYPOINT ["python3", "pyradiomics-dcm.py"]

@@ -228,31 +228,33 @@ class RadiomicsFeatureExtractor:
         Type of diagnostic features differs, but can always be represented as a string.
     """
     global geometryTolerance, logger
-    tolerance = self.settings.get('geometryTolerance')
-    additionalInfo = self.settings.get('additionalInfo', False)
-    resegmentShape = self.settings.get('resegmentShape', False)
+    _settings = self.settings.copy()
+
+    tolerance = _settings.get('geometryTolerance')
+    additionalInfo = _settings.get('additionalInfo', False)
+    resegmentShape = _settings.get('resegmentShape', False)
 
     if label is not None:
-      self.settings['label'] = label
+      _settings['label'] = label
     else:
-      label = self.settings.get('label', 1)
+      label = _settings.get('label', 1)
 
     if label_channel is not None:
-      self.settings['label_channel'] = label_channel
+      _settings['label_channel'] = label_channel
 
     if geometryTolerance != tolerance:
       self._setTolerance()
 
     if additionalInfo:
       generalInfo = generalinfo.GeneralInfo()
-      generalInfo.addGeneralSettings(self.settings)
+      generalInfo.addGeneralSettings(_settings)
       generalInfo.addEnabledImageTypes(self.enabledImagetypes)
     else:
       generalInfo = None
 
     if voxelBased:
-      self.settings['voxelBased'] = True
-      kernelRadius = self.settings.get('kernelRadius', 1)
+      _settings['voxelBased'] = True
+      kernelRadius = _settings.get('kernelRadius', 1)
       logger.info('Starting voxel based extraction')
     else:
       kernelRadius = 0
@@ -260,15 +262,15 @@ class RadiomicsFeatureExtractor:
     logger.info('Calculating features with label: %d', label)
     logger.debug('Enabled images types: %s', self.enabledImagetypes)
     logger.debug('Enabled features: %s', self.enabledFeatures)
-    logger.debug('Current settings: %s', self.settings)
+    logger.debug('Current settings: %s', _settings)
 
     # 1. Load the image and mask
     featureVector = collections.OrderedDict()
-    image, mask = self.loadImage(imageFilepath, maskFilepath, generalInfo)
+    image, mask = self.loadImage(imageFilepath, maskFilepath, generalInfo, **_settings)
 
     # 2. Check whether loaded mask contains a valid ROI for feature extraction and get bounding box
     # Raises a ValueError if the ROI is invalid
-    boundingBox, correctedMask = imageoperations.checkMask(image, mask, **self.settings)
+    boundingBox, correctedMask = imageoperations.checkMask(image, mask, **_settings)
 
     # Update the mask if it had to be resampled
     if correctedMask is not None:
@@ -280,11 +282,11 @@ class RadiomicsFeatureExtractor:
 
     # 5. Resegment the mask if enabled (parameter regsegmentMask is not None)
     resegmentedMask = None
-    if self.settings.get('resegmentRange', None) is not None:
-      resegmentedMask = imageoperations.resegmentMask(image, mask, **self.settings)
+    if _settings.get('resegmentRange', None) is not None:
+      resegmentedMask = imageoperations.resegmentMask(image, mask, **_settings)
 
       # Recheck to see if the mask is still valid, raises a ValueError if not
-      boundingBox, correctedMask = imageoperations.checkMask(image, resegmentedMask, **self.settings)
+      boundingBox, correctedMask = imageoperations.checkMask(image, resegmentedMask, **_settings)
 
       if generalInfo is not None:
         generalInfo.addMaskElements(image, resegmentedMask, label, 'resegmented')
@@ -300,7 +302,7 @@ class RadiomicsFeatureExtractor:
 
     if not voxelBased:
       # 4. If shape descriptors should be calculated, handle it separately here
-      featureVector.update(self.computeShape(image, mask, boundingBox))
+      featureVector.update(self.computeShape(image, mask, boundingBox, **_settings))
 
     # (Default) Only use resegemented mask for feature classes other than shape
     # can be overridden by specifying `resegmentShape` = True
@@ -312,7 +314,7 @@ class RadiomicsFeatureExtractor:
     logger.debug('Creating image type iterator')
     imageGenerators = []
     for imageType, customKwargs in six.iteritems(self.enabledImagetypes):
-      args = self.settings.copy()
+      args = _settings.copy()
       args.update(customKwargs)
       logger.info('Adding image type "%s" with custom settings: %s' % (imageType, str(customKwargs)))
       imageGenerators = chain(imageGenerators, getattr(imageoperations, 'get%sImage' % imageType)(image, mask, **args))
@@ -328,7 +330,8 @@ class RadiomicsFeatureExtractor:
 
     return featureVector
 
-  def loadImage(self, ImageFilePath, MaskFilePath, generalInfo=None):
+  @staticmethod
+  def loadImage(ImageFilePath, MaskFilePath, generalInfo=None, **kwargs):
     """
     Load and pre-process the image and labelmap.
     If ImageFilePath is a string, it is loaded as SimpleITK Image and assigned to ``image``,
@@ -342,14 +345,23 @@ class RadiomicsFeatureExtractor:
 
     If resampling is enabled, both image and mask are resampled and cropped to the tumor mask (with additional
     padding as specified in padDistance) after assignment of image and mask.
+
+    :param ImageFilePath: SimpleITK.Image object or string pointing to SimpleITK readable file representing the image
+                          to use.
+    :param MaskFilePath: SimpleITK.Image object or string pointing to SimpleITK readable file representing the mask
+                         to use.
+    :param generalInfo: GeneralInfo Object. If provided, it is used to store diagnostic information of the
+                        pre-processing.
+    :param kwargs: Dictionary containing the settings to use for this particular image type.
+    :return: 2 SimpleITK.Image objects representing the loaded image and mask, respectively.
     """
     global logger
 
-    normalize = self.settings.get('normalize', False)
-    interpolator = self.settings.get('interpolator')
-    resampledPixelSpacing = self.settings.get('resampledPixelSpacing')
-    preCrop = self.settings.get('preCrop', False)
-    label = self.settings.get('label', 1)
+    normalize = kwargs.get('normalize', False)
+    interpolator = kwargs.get('interpolator')
+    resampledPixelSpacing = kwargs.get('resampledPixelSpacing')
+    preCrop = kwargs.get('preCrop', False)
+    label = kwargs.get('label', 1)
 
     logger.info('Loading image and mask')
     if isinstance(ImageFilePath, six.string_types) and os.path.isfile(ImageFilePath):
@@ -367,7 +379,7 @@ class RadiomicsFeatureExtractor:
       raise ValueError('Error reading mask Filepath or SimpleITK object')
 
     # process the mask
-    mask = imageoperations.getMask(mask, **self.settings)
+    mask = imageoperations.getMask(mask, **kwargs)
 
     if generalInfo is not None:
       generalInfo.addImageElements(image)
@@ -377,16 +389,16 @@ class RadiomicsFeatureExtractor:
 
     # This point is only reached if image and mask loaded correctly
     if normalize:
-      image = imageoperations.normalizeImage(image, **self.settings)
+      image = imageoperations.normalizeImage(image, **kwargs)
 
     if interpolator is not None and resampledPixelSpacing is not None:
-      image, mask = imageoperations.resampleImage(image, mask, **self.settings)
+      image, mask = imageoperations.resampleImage(image, mask, **kwargs)
       if generalInfo is not None:
         generalInfo.addImageElements(image, 'interpolated')
-        generalInfo.addMaskElements(image, mask, self.settings.get('label', 1), 'interpolated')
+        generalInfo.addMaskElements(image, mask, label, 'interpolated')
 
     elif preCrop:
-      bb, correctedMask = imageoperations.checkMask(image, mask, **self.settings)
+      bb, correctedMask = imageoperations.checkMask(image, mask, **kwargs)
       if correctedMask is not None:
         # Update the mask if it had to be resampled
         mask = correctedMask
@@ -394,11 +406,11 @@ class RadiomicsFeatureExtractor:
         # Mask checks failed
         raise ValueError('Mask checks failed during pre-crop')
 
-      image, mask = imageoperations.cropToTumorMask(image, mask, bb, **self.settings)
+      image, mask = imageoperations.cropToTumorMask(image, mask, bb, **kwargs)
 
     return image, mask
 
-  def computeShape(self, image, mask, boundingBox):
+  def computeShape(self, image, mask, boundingBox, **kwargs):
     """
     Calculate the shape (2D and/or 3D) features for the passed image and mask.
 
@@ -406,6 +418,7 @@ class RadiomicsFeatureExtractor:
     :param mask: SimpleITK.Image object representing the mask used
     :param boundingBox: The boundingBox calculated by :py:func:`~imageoperations.checkMask()`, i.e. a tuple with lower
       (even indices) and upper (odd indices) bound of the bounding box for each dimension.
+    :param kwargs: Dictionary containing the settings to use.
     :return: collections.OrderedDict containing the calculated shape features. If no features are calculated, an empty
       OrderedDict will be returned.
     """
@@ -420,7 +433,7 @@ class RadiomicsFeatureExtractor:
     def compute(shape_type):
       logger.info('Computing %s', shape_type)
       featureNames = enabledFeatures[shape_type]
-      shapeClass = getFeatureClasses()[shape_type](croppedImage, croppedMask, **self.settings)
+      shapeClass = getFeatureClasses()[shape_type](croppedImage, croppedMask, **kwargs)
 
       if featureNames is not None:
         for feature in featureNames:
@@ -440,8 +453,8 @@ class RadiomicsFeatureExtractor:
 
     if 'shape2D' in enabledFeatures.keys():
       if Nd == 3:
-        force2D = self.settings.get('force2D', False)
-        force2Ddimension = self.settings.get('force2Ddimension', 0)
+        force2D = kwargs.get('force2D', False)
+        force2Ddimension = kwargs.get('force2Ddimension', 0)
         if not force2D:
           logger.warning('parameter force2D must be set to True to enable shape2D extraction')
         elif not (boundingBox[1::2] - boundingBox[0::2] + 1)[force2Ddimension] > 1:

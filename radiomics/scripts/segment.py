@@ -64,7 +64,7 @@ def _extractFeatures(case_idx, case, extractor):
       label = int(label)
     label_channel = case.get('Label_channel', None)  # Optional
     if isinstance(label_channel, six.string_types):
-      label_channel = int(label)
+      label_channel = int(label_channel)
 
     # Extract features
     feature_vector.update(extractor.execute(imageFilepath, maskFilepath, label, label_channel))

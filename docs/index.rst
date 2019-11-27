@@ -155,7 +155,7 @@ Developers
 
 Contact
 -------
-We are happy to help you with any questions. Please contact us on the `pyradiomics email list <https://groups.google.com/forum/#!forum/pyradiomics>`_.
+We are happy to help you with any questions. Please contact us on the `Radiomics community section of the 3D Slicer Discourse <https://discourse.slicer.org/>`_.
 
 We'd welcome your contributions to PyRadiomics. Please read the
 :ref:`contributing guidelines <radiomics-contributing-label>` on how to contribute to PyRadiomics. Information on

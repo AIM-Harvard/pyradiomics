@@ -158,7 +158,7 @@ This package is covered by the open source [3-clause BSD License](LICENSE.txt).
 <sup>6</sup>Isomics
 
 ### Contact
-We are happy to help you with any questions. Please contact us on the [pyradiomics email list](https://groups.google.com/forum/#!forum/pyradiomics).
+We are happy to help you with any questions. Please contact us on the [Radiomics community section of the 3D Slicer Discourse](https://discourse.slicer.org/c/community/radiomics).
 
 We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.rst) on how to
 contribute to PyRadiomics.

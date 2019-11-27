@@ -47,53 +47,67 @@ the output is a SimpleITK image of the parameter map instead of a float value *f
 Command Line Use
 ----------------
 
-* PyRadiomics can be used directly from the commandline via the entry point ``pyradiomics``. Depending on the input
-  provided, PyRadiomics is run in either single-extraction or batch-extraction mode.
+PyRadiomics can be used directly from the commandline via the entry point ``pyradiomics``. Depending on the input
+provided, PyRadiomics is run in either single-extraction or batch-extraction mode. All options available on the
+commandline can be listed by running::
 
-* To extract features from a single image and segmentation run::
+    pyradiomics -h
+
+Single image/mask
+#################
+To extract features from a single image and segmentation run::
 
     pyradiomics <path/to/image> <path/to/segmentation>
 
-* To extract features from a batch run::
+Batch Mode
+##########
+To extract features from a batch run::
 
     pyradiomics <path/to/input>
 
-* The input file for batch processing is a CSV file where the first row is contains headers and each subsequent row
-  represents one combination of an image and a segmentation and contains at least 2 elements: 1) path/to/image,
-  2) path/to/mask. The headers specify the column names and **must** be "Image" and "Mask" for image and mask location,
-  respectively (capital sensitive). Additional columns may also be specified, all columns are copied to the output in
-  the same order (with calculated features appended after last column). To specify custom values for ``label`` in each
-  combination, a column "Label" can optionally be added, which specifies the desired extraction label for each
-  combination. Values specified in this column take precedence over label values specified in the parameter file or on
-  the commandline. If a row contains no value, the default (or globally customized) value is used instead. Similarly,
-  an optional value for the ``label_channel`` setting can be provided in a column "Label_channel".
+The input file for batch processing is a CSV file where the first row is contains headers and each subsequent row
+represents one combination of an image and a segmentation and contains at least 2 elements: 1) path/to/image,
+2) path/to/mask. The headers specify the column names and **must** be "Image" and "Mask" for image and mask location,
+respectively (capital sensitive). Additional columns may also be specified, all columns are copied to the output in
+the same order (with calculated features appended after last column). To specify custom values for ``label`` in each
+combination, a column "Label" can optionally be added, which specifies the desired extraction label for each
+combination. Values specified in this column take precedence over label values specified in the parameter file or on
+the commandline. If a row contains no value, the default (or globally customized) value is used instead. Similarly,
+an optional value for the ``label_channel`` setting can be provided in a column "Label_channel".
 
-  .. note::
+.. note::
 
-    All headers should be unique and different from headers provided by PyRadiomics (``<filter>_<class>_<feature>``).
-    In case of conflict, values are overwritten by the PyRadiomics values.
+  All headers should be unique and different from headers provided by PyRadiomics (``<filter>_<class>_<feature>``).
+  In case of conflict, values are overwritten by the PyRadiomics values.
 
-* By default, results are printed out to the console window. To store the results in a CSV-structured text file, add the
-  ``-o <PATH>`` and ``-f csv`` arguments, where ``<PATH>`` specifies the filepath where the results should be stored.
-  e.g.::
+.. note::
+
+  In batch processing, it is possible to speed up the process by applying multiprocessing. This is done on the
+  case-level (i.e. each thread processes a single case). You can enable this by adding the ``--jobs`` parameter,
+  specifying how many parallel threads you want to use.
+
+Customization
+#############
+Extraction can be customized by specifying a :ref:`parameter file <radiomics-parameter-file-label>` in the ``--param``
+argument and/or by specifying override settings (only :ref:`type 3 customization <radiomics-settings-label>`) in the
+``--setting`` argument. Multiple overrides can be used by specifying ``--setting`` multiple times.
+
+Output
+######
+By default, results are printed out to the console window. To store the results in a CSV-structured text file, add the
+``-o <PATH>`` and ``-f csv`` arguments, where ``<PATH>`` specifies the filepath where the results should be stored.
+e.g.::
 
     pyradiomics <path/to/image> <path/to/segmentation> -o results.csv -f csv
     pyradiomics <path/to/input> -o results.csv -f csv
 
-* Extraction can be customized by specifying a `parameter file <radiomics-parameter-file-label>` in the ``--param``
-  argument and/or by specifying override settings (only `type 3 customization <radiomics-settings-label>`) in the
-  ``--setting`` argument. Multiple overrides can be used by specifying ``--setting`` multiple times.
-
-* To extract feature maps ("voxel-based" extraction), simply add the argument ``--mode voxel``. The calculated feature
-  maps are then stored as images (NRRD format) in the current working directory. The name convention used is
-  "Case-<idx>_<FeatureName>.nrrd". An alternative output directory can be provided in the ``--out-dir`` command line
-  switch. The results that are printed to the console window or the out file will still contain the diagnostic
-  information, and the value of the extracted features is set to the location the feature maps are stored.
-
-* For more information on the possible command line arguments, run::
-
-    pyradiomics -h
-
+Voxel-based Radiomics
+#####################
+To extract feature maps ("voxel-based" extraction), simply add the argument ``--mode voxel``. The calculated feature
+maps are then stored as images (NRRD format) in the current working directory. The name convention used is
+"Case-<idx>_<FeatureName>.nrrd". An alternative output directory can be provided in the ``--out-dir`` command line
+switch. The results that are printed to the console window or the out file will still contain the diagnostic
+information, and the value of the extracted features is set to the location where the feature maps are stored.
 
 ---------------
 Interactive Use
@@ -160,51 +174,6 @@ PyRadiomics in 3D Slicer
 A convenient front-end interface is provided as the 'Radiomics' extension for 3D Slicer. It is available
 `here <https://github.com/Radiomics/SlicerRadiomics>`_.
 
-------------------------------
-Using feature classes directly
-------------------------------
-
-* This represents an example where feature classes are used directly, circumventing checks and preprocessing done by
-  the radiomics feature extractor class, and is not intended as standard use.
-
-* (LINUX) To run from source code, add pyradiomics to the environment variable PYTHONPATH (Not necessary when
-  PyRadiomics is installed):
-
-  *  ``setenv PYTHONPATH /path/to/pyradiomics/radiomics``
-
-* Start the python interactive session:
-
-  * ``python``
-
-* Import the necessary classes::
-
-     from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm, getTestCase
-     import SimpleITK as sitk
-     import six
-     import sys, os
-
-* Set up a data directory variable::
-
-    dataDir = '/path/to/pyradiomics/data'
-
-* You will find sample data files brain1_image.nrrd and brain1_label.nrrd in that directory.
-
-* Use SimpleITK to read a the brain image and mask::
-
-     imageName, maskName = getTestCase('brain1', dataDir)
-     image = sitk.ReadImage(imageName)
-     mask = sitk.ReadImage(maskName)
-
-* Calculate the first order features::
-
-     firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
-     firstOrderFeatures.enableAllFeatures()  # On the feature class level, all features are disabled by default.
-     firstOrderFeatures.calculateFeatures()
-     for (key,val) in six.iteritems(firstOrderFeatures.featureValues):
-       print("\t%s: %s" % (key, val))
-
-* See the :ref:`radiomics-features-label` section for more features that you can calculate.
-
 .. _radiomics-logging-label:
 
 ------------------
@@ -234,5 +203,5 @@ handler to the pyradiomics logger::
     radiomics.logger.setLevel(logging.DEBUG)
 
 To store a log file when running pyradiomics from the commandline, specify a file location in the optional
-``--log-file`` argument. The amount of logging that is stored is controlled by the ``--log-level`` argument
+``--log-file`` argument. The amount of logging that is stored is controlled by the ``--logging-level`` argument
 (default level WARNING and up).

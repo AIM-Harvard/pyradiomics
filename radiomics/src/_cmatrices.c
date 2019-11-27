@@ -1075,7 +1075,7 @@ int try_parse_arrays(PyObject *image_obj, PyObject *mask_obj, PyArrayObject **im
   {
     Py_XDECREF(*image_arr);
     Py_XDECREF(*mask_arr);
-    PyErr_SetString(PyExc_ValueError, "Expected a image and mask to have equal number of dimensions.");
+    PyErr_SetString(PyExc_ValueError, "Expected image and mask to have equal number of dimensions.");
     return -1;
   }
 

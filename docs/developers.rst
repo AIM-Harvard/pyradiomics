@@ -165,6 +165,51 @@ To design a custom progress reporter, the following code can be adapted and used
             pass  # If nothing needs to be closed or handled, so just specify 'pass'
 
 ------------------------------
+Using feature classes directly
+------------------------------
+
+* This represents an example where feature classes are used directly, circumventing checks and preprocessing done by
+  the radiomics feature extractor class, and is not intended as standard use.
+
+* (LINUX) To run from source code, add pyradiomics to the environment variable PYTHONPATH (Not necessary when
+  PyRadiomics is installed):
+
+  *  ``setenv PYTHONPATH /path/to/pyradiomics/radiomics``
+
+* Start the python interactive session:
+
+  * ``python``
+
+* Import the necessary classes::
+
+     from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm, getTestCase
+     import SimpleITK as sitk
+     import six
+     import sys, os
+
+* Set up a data directory variable::
+
+    dataDir = '/path/to/pyradiomics/data'
+
+* You will find sample data files brain1_image.nrrd and brain1_label.nrrd in that directory.
+
+* Use SimpleITK to read a the brain image and mask::
+
+     imageName, maskName = getTestCase('brain1', dataDir)
+     image = sitk.ReadImage(imageName)
+     mask = sitk.ReadImage(maskName)
+
+* Calculate the first order features::
+
+     firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
+     firstOrderFeatures.enableAllFeatures()  # On the feature class level, all features are disabled by default.
+     firstOrderFeatures.calculateFeatures()
+     for (key,val) in six.iteritems(firstOrderFeatures.featureValues):
+       print("\t%s: %s" % (key, val))
+
+* See the :ref:`radiomics-features-label` section for more features that you can calculate.
+
+------------------------------
 Addtional points for attention
 ------------------------------
 

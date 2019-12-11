@@ -147,7 +147,7 @@ Interactive Use
 
 * Instantiate the feature extractor class with the parameter file::
 
-    extractor = featureextractor.RadiomicsFeaturesExtractor(params)
+    extractor = featureextractor.RadiomicsFeatureExtractor(params)
 
 * Calculate the features (segment-based)::
 

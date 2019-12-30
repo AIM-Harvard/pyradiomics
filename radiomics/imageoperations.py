@@ -488,8 +488,8 @@ def resampleImage(imageNode, maskNode, **kwargs):
     bb = numpy.array(lssif.GetBoundingBox(label))
 
     low_up_bb = numpy.empty(Nd_mask * 2, dtype=int)
-    low_up_bb[::2] = bb[:3]
-    low_up_bb[1::2] = bb[:3] + bb[3:] - 1
+    low_up_bb[::2] = bb[:Nd_mask]
+    low_up_bb[1::2] = bb[:Nd_mask] + bb[Nd_mask:] - 1
     return cropToTumorMask(imageNode, maskNode, low_up_bb, **kwargs)
 
   spacingRatio = maskSpacing / resampledPixelSpacing

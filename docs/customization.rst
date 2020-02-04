@@ -296,7 +296,7 @@ Feature Class Level
   the 'slice' can be defined in ``force2Ddimension``. If input ROI is already a 2D ROI, features are automatically
   extracted in 2D.
 - ``force2Ddimension`` [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. A value of 0 represents the native acquisition plane for the images (usually axial for CT and axial, coronal or sagittal for MRI).
-  Similarly, 1 identifies the out-of plane y dimension (e.g. coronal plane for an axial image) and 2 the x dimension (e.g. sagital plane for an acial image). if
+  Similarly, 1 identifies the out-of plane y dimension (e.g. coronal plane for an axial image) and 2 the out-of-plane x dimension (e.g. sagittal plane for an acial image). if
   ``force2Dextraction`` is set to False, this parameter has no effect.
 
 *Texture matrix weighting*

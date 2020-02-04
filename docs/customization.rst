@@ -153,7 +153,7 @@ Feature Extractor Level
 *Resampling the image*
 
 - ``resampledPixelSpacing`` [None]: List of 3 floats (>= 0), sets the size of the voxel in (x, y, z) plane when resampling.
-  A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) mask.For example, to perform only in-plane resampling, the x and y values alone should be edited (e.g.: [2,2,0]). In-plane resolution is always relative to image acquisition plane (i.e. axial, coronal or sagittal).
+  A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) mask. For example, to perform only in-plane resampling, the x and y values alone should be edited (e.g.: [2,2,0]). In-plane resolution is always relative to image acquisition plane (i.e. axial, coronal or sagittal).
 - ``interpolator`` [sitkBSpline]: SimpleITK constant or string name thereof, sets interpolator to use for resampling.
   Enumerated value, possible values:
 

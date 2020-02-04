@@ -172,7 +172,7 @@ class RadiomicsTestUtils:
       settings = self._current_config.get('Settings', {})
 
       extractor = featureextractor.RadiomicsFeatureExtractor({'imageType': imageTypes, 'setting': settings})
-      self._image, self._mask = extractor.loadImage(self._image, self._mask)
+      self._image, self._mask = extractor.loadImage(self._image, self._mask, **settings)
 
       assert self._image is not None
       assert self._mask is not None

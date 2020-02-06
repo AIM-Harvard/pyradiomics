@@ -18,7 +18,7 @@ Example
 
 * PyRadiomics example code and data is available in the `Github repository <https://github.com/Radiomics/pyradiomics>`_
 
-* The sample sample data is provided in ``pyradiomics/data``
+* The sample data is provided in ``pyradiomics/data``
 
 * Use `jupyter <http://jupyter.org/>`_ to run the helloRadiomics example, located in ``pyradiomics/examples/Notebooks``
 

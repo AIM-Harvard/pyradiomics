@@ -153,8 +153,7 @@ Feature Extractor Level
 *Resampling the image*
 
 - ``resampledPixelSpacing`` [None]: List of 3 floats (>= 0), sets the size of the voxel in (x, y, z) plane when resampling.
-  A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) mask, thereby
-  enabling only in-plane resampling, for example.
+  A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) mask. For example, to perform only in-plane resampling, the x and y values alone should be edited (e.g.: [2,2,0]). In-plane resolution is always relative to image acquisition plane (i.e. axial, coronal or sagittal).
 - ``interpolator`` [sitkBSpline]: SimpleITK constant or string name thereof, sets interpolator to use for resampling.
   Enumerated value, possible values:
 
@@ -296,9 +295,8 @@ Feature Class Level
 - ``force2D`` [False]: Boolean, set to true to force a by slice texture calculation. Dimension that identifies
   the 'slice' can be defined in ``force2Ddimension``. If input ROI is already a 2D ROI, features are automatically
   extracted in 2D.
-- ``force2Ddimension`` [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. Value 0
-  identifies the 'z' dimension (axial plane feature extraction), and features will be extracted from the xy plane.
-  Similarly, 1 identifies the y dimension (coronal plane) and 2 the x dimension (saggital plane). if
+- ``force2Ddimension`` [0]: int, range 0-2. Specifies the 'slice' dimension for a by-slice feature extraction. A value of 0 represents the native acquisition plane for the images (usually axial for CT and axial, coronal or sagittal for MRI).
+  Similarly, 1 identifies the out-of plane y dimension (e.g. coronal plane for an axial image) and 2 the out-of-plane x dimension (e.g. sagittal plane for an acial image). if
   ``force2Dextraction`` is set to False, this parameter has no effect.
 
 *Texture matrix weighting*

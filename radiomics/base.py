@@ -6,7 +6,7 @@ import numpy
 import SimpleITK as sitk
 import six
 
-from radiomics import deprecated, getProgressReporter, imageoperations
+from radiomics import getProgressReporter, imageoperations
 
 
 class RadiomicsFeaturesBase(object):
@@ -185,11 +185,6 @@ class RadiomicsFeaturesBase(object):
       self._calculateSegment()
 
     return self.featureValues
-
-  @deprecated
-  def calculateFeatures(self):
-    self.logger.warning('calculateFeatures() is deprecated, use execute() instead.')
-    self.execute()
 
   def _calculateVoxels(self):
     initValue = self.settings.get('initValue', 0)

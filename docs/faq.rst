@@ -363,11 +363,11 @@ Miscellaneous
 Which python versions is PyRadiomics compatible with?
 #####################################################
 
-PyRadiomics is compatible with both python 2 and python 3. However, the automated testing only uses python versions 2.7,
-3.5, 3.6 and 3.7 (only 64 bits architecture). Python < 2.6 is not supported. Other python versions may be compatible with
-PyRadiomics, but this is not actively tested and therefore not guaranteed to work. In the future, support for python 2.7
-will also be dropped, to compatibility fixes are retained. This means that future releases of PyRadiomics will only have
-pre-built wheels for Python versions >= 3.5.
+PyRadiomics is compatible with python 3. Python 2 support was dropped in PyRadiomics version 3.0, though compatibility
+code was retained. However, the automated testing only uses python versions 3.5, 3.6 and 3.7 (64 bits architecture).
+Python < 2.6 is not supported. Other python versions may be compatible with PyRadiomics, but this is not actively tested
+and therefore not guaranteed to work. Pre-built wheels are only available for the tested versions of python (3.5, 3.6
+and 3.7)
 
 A new version of PyRadiomics is available! Where can I find out what changed?
 #############################################################################
@@ -390,15 +390,14 @@ I found a bug! Where do I report it?
 
 We strive to keep PyRadiomics as bug free as possible by thoroughly testing new additions before including them in the
 stable version. However, nothing is perfect, and some bugs may therefore exist. Report yours by
-`opening an issue <https://github.com/Radiomics/pyradiomics/issues>`_ on the GitHub or contact us at the
-`pyradiomics email list <https://groups.google.com/forum/#!forum/pyradiomics>`_. If you want to help in fixing it, we'd
-welcome you to open up a `pull request <https://github.com/Radiomics/pyradiomics/pulls>`_ with your suggested fix.
+`opening an issue <https://github.com/Radiomics/pyradiomics/issues>`_ on the GitHub. If you want to help in fixing it,
+we'd welcome you to open up a `pull request <https://github.com/Radiomics/pyradiomics/pulls>`_ with your suggested fix.
 
 My question is not listed here...
 #################################
 
 If you have a question that is not listed here, check the
-`pyradiomics email list <https://groups.google.com/forum/#!forum/pyradiomics>`_ or the
+`pyradiomics forum on 3D Slicer discourse <https://discourse.slicer.org/c/community/radiomics/23>`_ or the
 `issues on GitHub <https://github.com/Radiomics/pyradiomics/issues>`_. Feel free to post a new question or issue and
 we'll try to get back to you ASAP.
 

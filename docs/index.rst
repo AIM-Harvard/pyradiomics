@@ -114,8 +114,8 @@ See also the `requirements file <https://github.com/Radiomics/pyradiomics/blob/m
 Installation
 ------------
 
-PyRadiomics is OS independent and compatible with both Python 2.7 and Python >=3.4. As of version 2.0,
-PyRadiomics releases are also made available on PyPi. To install PyRadiomics, ensure you have python
+PyRadiomics is OS independent and compatible with and Python >=3.5. Pre-built binaries are available on
+PyPi and Conda. To install PyRadiomics, ensure you have python
 installed and run:
 
 *  ``python -m pip install pyradiomics``
@@ -155,7 +155,7 @@ Developers
 
 Contact
 -------
-We are happy to help you with any questions. Please contact us on the `Radiomics community section of the 3D Slicer Discourse <https://discourse.slicer.org/>`_.
+We are happy to help you with any questions. Please contact us on the `Radiomics community section of the 3D Slicer Discourse <https://discourse.slicer.org/c/community/radiomics/23>`_.
 
 We'd welcome your contributions to PyRadiomics. Please read the
 :ref:`contributing guidelines <radiomics-contributing-label>` on how to contribute to PyRadiomics. Information on

@@ -21,37 +21,21 @@ jobs:
           command: echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > /etc/ssh/ssh_config
       - checkout
       - run:
-          # Jupyter datascience notebook does not support python 2 anymore, install it manually.
-          # See also https://github.com/jupyter/docker-stacks/issues/432
-          # Next, install python 2 kernel globally, so it can be found from the root
-          name: Install Python 2 Kernel
+          name: Install pyradiomics in Python 3
           command: |
-            conda create -n python2 python=2 ipykernel
-            pip install kernda --no-cache
-            $CONDA_DIR/envs/python2/bin/python -m ipykernel install
-            kernda -o -y /usr/local/share/jupyter/kernels/python2/kernel.json
-            pip uninstall kernda -y
-      - run:
-          name: Install pyradiomics in Python 2 and 3
-          command: |
-            source activate python2
-            python -m pip install --no-cache-dir -r requirements.txt
-            python -m pip install --no-cache-dir -r requirements-dev.txt
-            python setup.py install
             source activate root
             python -m pip install --no-cache-dir -r requirements.txt
             python -m pip install --no-cache-dir -r requirements-dev.txt
             python setup.py install
       - run:
-          name: test notebooks in python 2 and 3
+          name: test notebooks in python 3
           command: |
-            jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
-  build-2.7: &build_template
+  build-3.5: &build_template
     working_directory: /pyradiomics
     docker:
-      - image: circleci/python:2.7-jessie
+      - image: circleci/python:3.5-jessie
         user: root
     steps:
       - checkout
@@ -74,12 +58,6 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: dist
-
-  build-3.5:
-    <<: *build_template
-    docker:
-      - image: circleci/python:3.5-jessie
-        user: root
 
   build-3.6:
     <<: *build_template
@@ -163,7 +141,6 @@ jobs:
           name: Build Conda packages
           command: |
             mkdir  /conda-bld
-            conda build ./conda --python=2.7 --croot /conda-bld
             conda build ./conda --python=3.5 --croot /conda-bld
             conda build ./conda --python=3.6 --croot /conda-bld
             conda build ./conda --python=3.7 --croot /conda-bld
@@ -176,26 +153,22 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build-2.7: &build_job_template
+      - build-3.5: &build_job_template
           filters:
             tags:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
-      - build-3.5:
-          <<: *build_job_template
       - build-3.6:
+          <<: *build_job_template
+      - build-3.7:
           <<: *build_job_template
       - test-notebooks:
           requires:
-            - build-2.7
             - build-3.5
             - build-3.6
             - build-3.7
-      - build-3.7:
-          <<: *build_job_template
       - deploy: &deploy_template
           requires:
-            - build-2.7
             - build-3.5
             - build-3.6
             - build-3.7

@@ -1,4 +1,4 @@
-# pyradiomics v2.2.0
+# pyradiomics v3.0
 
 ## Build Status
 
@@ -76,8 +76,8 @@ The documentation can then be viewed in a browser by opening `PACKAGE_ROOT\build
 Furthermore, an instruction video is available [here](http://radiomics.io/pyradiomics.html).
 
 ### Installation
-PyRadiomics is OS independent and compatible with both Python 2.7 and Python 3.4, 3.5 and 3.6. As of version 2.0,
-PyRadiomics releases are also made available on PyPi. To install PyRadiomics, ensure you have python
+PyRadiomics is OS independent and compatible with Python >= 3.5. Pre-built binaries are available on
+PyPi and Conda. To install PyRadiomics, ensure you have python
 installed and run:
 
     `python -m pip install pyradiomics`
@@ -158,7 +158,7 @@ This package is covered by the open source [3-clause BSD License](LICENSE.txt).
 <sup>6</sup>Isomics
 
 ### Contact
-We are happy to help you with any questions. Please contact us on the [Radiomics community section of the 3D Slicer Discourse](https://discourse.slicer.org/c/community/radiomics).
+We are happy to help you with any questions. Please contact us on the [Radiomics community section of the 3D Slicer Discourse](https://discourse.slicer.org/c/community/radiomics/23).
 
 We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.rst) on how to
 contribute to PyRadiomics.

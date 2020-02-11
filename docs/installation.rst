@@ -14,19 +14,28 @@ There are three ways you can use pyradiomics:
 1. Install via pip
 ------------------
 
-As of version 2.0.0, PyRadiomics will be available for installation via pip. For the python versions
+Pre-built binaries are available on PyPi for installation via pip. For the python versions
 mentioned below, wheels are automatically generated for each release of PyRadiomics, allowing you to
 install pyradiomics without having to compile anything. For other python versions, a source distribution
 is also available, but this requires compiling the C extensions.
 
-* Ensure that you have ``python`` installed on your machine, version 2.7, 3.4, 3.5 or 3.6 (64-bits).
+* Ensure that you have ``python`` installed on your machine, version 3.5, 3.6 or 3.7 (64-bits).
 
-* Install PyRadiomics:
+* Install PyRadiomics::
 
-    * ``python -m pip install pyradiomics``
+    python -m pip install pyradiomics
+
+--------------------
+2. Install via conda
+--------------------
+
+Besides pre-built binaries for PyPi, PyRadiomics is also available on conda cloud.
+To install PyRadiomics on Conda, run::
+
+    conda install -c radiomics pyradiomics
 
 ----------------------
-2. Install from source
+3. Install from source
 ----------------------
 
 PyRadiomics can also be installed from source code. This allows for the bleeding edge version, but does
@@ -35,21 +44,22 @@ of texture matrices and some shape features.
 
 * Ensure you have the version control system ``git`` installed on your machine.
 
-* Ensure that you have ``python`` installed on your machine, at least version 2.7 or 3.4 (64-bits).
+* Ensure that you have ``python`` installed on your machine, at least version 3.5 (64-bits).
 
-* Clone the repository:
+* Clone the repository::
 
-  * ``git clone git://github.com/Radiomics/pyradiomics``
+    git clone git://github.com/Radiomics/pyradiomics
 
 
-* For unix like systems (MacOSX, linux):
+* For unix like systems (MacOSX, linux)::
 
-  * ``cd pyradiomics``
-  * ``python -m pip install -r requirements.txt``
-  * ``python setup.py install``
+      cd pyradiomics
+      python -m pip install -r requirements.txt
+      python setup.py install
 
-  To use your build for interactive use and development:
-  * ``python setup.py build_ext --inplace``
+  * To use your build for interactive use and development::
+
+      python setup.py build_ext --inplace
 
   * If you don't have sudo/admin rights on your machine, you need to locally install numpy, nose, tqdm, PyWavelets, SimpleITK (specified in requirements.txt).
     In a bash shell::
@@ -59,11 +69,11 @@ of texture matrices and some shape features.
       pip install --user -r requirements.txt
       export PYTHONPATH=$HOME/.local/lib64/python2.7/site-packages
 
-* For Windows:
+* For Windows::
 
-  * ``cd pyradiomics``
-  * ``python -m pip install -r requirements.txt``
-  * ``python setup.py install``
+    cd pyradiomics
+    python -m pip install -r requirements.txt
+    python setup.py install
 
 * If the installation fails, check out the :ref:`radiomics-faq-label`. If your error is not listed there,
   contact us by `creating an issue <https://github.com/Radiomics/pyradiomics/issues/new>`_ on the PyRadiomics
@@ -90,14 +100,14 @@ This approach may be preferred if you are interested in using pyradiomics from t
 First, you will need to install Docker on your system, if it is not installed already. You can follow the instructions below to do this.
 
 Once Docker is installed, you can issue ``docker pull radiomics/pyradiomics:CLI`` command in the shell to download the pyradiomics Docker image.
-After that you can invoke pyradiomics tool as follows:
+After that you can invoke pyradiomics tool as follows::
 
-  ``docker run radiomics/pyradiomics:CLI --help``
+  docker run radiomics/pyradiomics:CLI --help
 
 Docker containers cannot directly access the filesystem of the host. In order to pass files as arguments to pyradiomics and to access files that converters create,
-an extra step is required to specify which directories will be used for file exchange using the -v argument:
+an extra step is required to specify which directories will be used for file exchange using the -v argument::
 
-  ``-v <HOST_DIR>:<CONTAINER_DIR>``
+  -v <HOST_DIR>:<CONTAINER_DIR>
 
 The argument above will make the ``HOST_DIR`` path available within the container at ``CONTAINER_DIR`` location. The files that will be read or written by the
 converter run from the docker container should be referred to via the ``CONTAINER_DIR`` path.
@@ -121,12 +131,11 @@ Note `the system requirements <https://docs.docker.com/docker-for-windows/>`_:
 
 **IMPORTANT**: You will also need to share the drive you will be using to communicate data to and from Docker image in Docker Settings as shown in the screenshot below.
 
-Most likely you will experience the display of an error message similar to the one shown below:
+Most likely you will experience the display of an error message similar to the one shown below::
 
-
-  ``C:\Program Files\Docker\Docker\Resources\bin\docker.exe: Error response from daemon: \``
-  ``C: drive is not shared. Please share it in Docker for Windows Settings.``
-  ``See 'C:\Program Files\Docker\Docker\Resources\bin\docker.exe run --help'.``
+  C:\Program Files\Docker\Docker\Resources\bin\docker.exe: Error response from daemon:
+  C: drive is not shared. Please share it in Docker for Windows Settings.
+  See 'C:\Program Files\Docker\Docker\Resources\bin\docker.exe run --help'.
 
 If you have this error, make sure that the drive, where the ``HOST_DIR`` is located, is shared:
 

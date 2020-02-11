@@ -2,20 +2,50 @@
 Release Notes
 =============
 
-.. note::
-    **Upcoming changes in 3.0 release**
-
-    - Removal of deprecated code (e.g. ``commandlinebatch.py``, ``calculateFeatures()`` function in feature classes);
-      deprecated radiomics features are retained.
-    - End of official python 2.7 support
-
-      - No CI-tests for python 2.7
-      - No pre-build binaries for python 2.7 distributed on PyPi and Anaconda Cloud
-      - Compatibility code using six is retained (allowing local build).
-
 ------------
 Next Release
 ------------
+
+---------------
+PyRadiomics 3.0
+---------------
+
+.. warning::
+  As of this release, Python 2.7 testing is removed. Compatibility code such as it is will be left in place, but
+  future changes will not be checked for backwards compatibility. Moreover, no pre-built binaries for python 2.7
+  will be distributed on PyPi or Conda.
+  Finally, some deprecated code is removed (``commandlinebatch.py`` and ``calculateFeatures()``).
+
+Bug Fixes
+#########
+
+- Fix broken Conda deployment (`51c5849 <https://github.com/Radiomics/pyradiomics/commit/51c5849>`_)
+- Fix error in IBSI mapping (labs/pyradiomics-dcm) (`54d6689 <https://github.com/Radiomics/pyradiomics/commit/54d6689>`_)
+- Fix resampling error when spacing is correct, but sizes are different (`ac7458e <https://github.com/Radiomics/pyradiomics/commit/ac7458e>`_)
+- Fix label channel selection (`54a3782 <https://github.com/Radiomics/pyradiomics/commit/54a3782>`_)
+- Use local scope of settings, preventing race conditions in parallel extraction (`43578f7 <https://github.com/Radiomics/pyradiomics/commit/43578f7>`_)
+- Fix resampling for 2D input (`#545 <https://github.com/Radiomics/pyradiomics/pull/545>`_)
+
+Internal API
+############
+
+- Update C API to use large datatype for index pointers (`#500 <https://github.com/Radiomics/pyradiomics/pull/500>`_,
+  `#501 <https://github.com/Radiomics/pyradiomics/pull/501>`_)
+- Update docker CLI to use python 3.6.9 and fix bugs to allow integration with pyradiomics-dcm lab (`#527 <https://github.com/Radiomics/pyradiomics/pull/527>`_)
+- Add option to force path to UNIX style paths, even on windows (`3c0708a <https://github.com/Radiomics/pyradiomics/commit/3c0708a>`_)
+- Removed deprecated code (`fedaa5e <https://github.com/Radiomics/pyradiomics/commit/fedaa5e>`_)
+
+Testing
+#######
+
+- Remove testing and deployment for python 2.7 (`a5a7e61 <https://github.com/Radiomics/pyradiomics/commit/a5a7e61>`_)
+
+Documentation
+#############
+
+- Refactor documentation (`#536 <https://github.com/Radiomics/pyradiomics/pull/536>`_)
+- Fix various typos/wording
+- Clarify use of force2D, and add example settings file (`#558 <https://github.com/Radiomics/pyradiomics/pull/558>`_)
 
 -----------------
 PyRadiomics 2.2.0

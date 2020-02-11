@@ -86,8 +86,7 @@ setup(
 
   entry_points={
     'console_scripts': [
-      'pyradiomics=radiomics.scripts.__init__:parse_args',
-      'pyradiomicsbatch=radiomics.scripts.commandlinebatch:main'  # Deprecated entry point
+      'pyradiomics=radiomics.scripts.__init__:parse_args'
     ]},
 
   description='Radiomics features library for python',

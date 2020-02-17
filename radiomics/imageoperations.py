@@ -560,7 +560,7 @@ def resampleImage(imageNode, maskNode, **kwargs):
 def normalizeImage(image, **kwargs):
   r"""
   Normalizes the image by centering it at the mean with standard deviation. Normalization is based on all gray values in
-  the image, not just those inside the segementation.
+  the image, not just those inside the segmentation.
 
   :math:`f(x) = \frac{s(x - \mu_x)}{\sigma_x}`
 

@@ -143,7 +143,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     # Delete rows and columns that specify gray levels not present in the ROI
     NgVector = range(1, Ng + 1)  # All possible gray values
     GrayLevels = self.coefficients['grayLevels']  # Gray values present in ROI
-    emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)))  # Gray values NOT present in ROI
+    emptyGrayLevels = numpy.array(list(set(NgVector) - set(GrayLevels)), dtype=int)  # Gray values NOT present in ROI
 
     P_glcm = numpy.delete(P_glcm, emptyGrayLevels - 1, 1)
     P_glcm = numpy.delete(P_glcm, emptyGrayLevels - 1, 2)

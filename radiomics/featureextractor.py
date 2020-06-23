@@ -6,6 +6,7 @@ from itertools import chain
 import json
 import logging
 import os
+import pathlib
 
 import pykwalify.core
 import SimpleITK as sitk
@@ -55,7 +56,9 @@ class RadiomicsFeatureExtractor:
     if len(args) == 1 and isinstance(args[0], dict):
       logger.info("Loading parameter dictionary")
       self._applyParams(paramsDict=args[0])
-    elif len(args) == 1 and str(args[0]) is not None and os.path.isfile(str(args[0])):
+    elif len(args) == 1 and (isinstance(args[0], six.string_types) or isinstance(args[0], pathlib.PurePath)):
+      if not os.path.isfile(args[0]):
+        raise IOError("Parameter file %s does not exist." % args[0])
       logger.info("Loading parameter file %s", str(args[0]))
       self._applyParams(paramsFile=args[0])
     else:

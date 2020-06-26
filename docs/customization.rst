@@ -150,11 +150,11 @@ Feature Extractor Level
   outliers are removed. If normalizing is disabled, this has no effect. See also
   :py:func:`~radiomics.imageoperations.normalizeImage`.
 
-*Resampling the image*
+*Resampling the image/mask*
 
 - ``resampledPixelSpacing`` [None]: List of 3 floats (>= 0), sets the size of the voxel in (x, y, z) plane when resampling.
-  A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) mask. For example, to perform only in-plane resampling, the x and y values alone should be edited (e.g.: [2,2,0]). In-plane resolution is always relative to image acquisition plane (i.e. axial, coronal or sagittal).
-- ``interpolator`` [sitkBSpline]: SimpleITK constant or string name thereof, sets interpolator to use for resampling.
+  A value of 0 is replaced with the spacing for that dimension as it is in the original (non-resampled) image or mask. For example, to perform only in-plane resampling, the x and y values alone should be edited (e.g.: [2,2,0]). In-plane resolution is always relative to image acquisition plane (i.e. axial, coronal or sagittal).
+- ``interpolator`` [sitkBSpline]: SimpleITK constant or string name thereof, sets interpolator to use for resampling. The choice of ``interpolator`` is only applied to resampling images, while ``sitkNearestNeighbor`` is always used for resampling masks in order to preserve label values.
   Enumerated value, possible values:
 
     - sitkNearestNeighbor (= 1)

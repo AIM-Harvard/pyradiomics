@@ -169,14 +169,18 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
       region = 0;
 
       // Voxel-based: Add the current voxel to the processed stack to reset later.
-      if (processed_idx + 1 >= Ns)  // index out of range
-      {
-        free(cur_idx);
-        free(regionStack);
-        return -1;
-      }
       if (processedStack)
+      {
+        if (processed_idx >= Ns)  // index out of range
+        {
+          free(cur_idx);
+          free(regionStack);
+          return -1;
+        }
+        // ++ after processed_idx --> use first, then increase
+        // (i.e. returned value = x, processed_idx value after statement = x + 1)
         processedStack[processed_idx++] = i;
+      }
 
       // Start growing the region
       regionStack[stackTop++] = i; // Add the current voxel to the stack as 'starting point'
@@ -219,12 +223,14 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
             // Voxel-based: Add the current voxel to the processed stack to reset later.
             if (processedStack)
             {
-              if (processed_idx + 1 >= Ns)  // index out of range
+              if (processed_idx >= Ns)  // index out of range
               {
                 free(cur_idx);
                 free(regionStack);
                 return -1;
               }
+              // ++ after processed_idx --> use first, then increase
+              // (i.e. returned value = x, processed_idx value after statement = x + 1)
               processedStack[processed_idx++] = j;
             }
 
@@ -258,10 +264,10 @@ int calculate_glszm(int *image, char *mask, int *size, int *bb, int *strides, in
   // Reset all processed voxels (needed when computing voxel-based)
   if (processedStack)
   {
+    // -- before processed_idx --> then increase first, then use
+    // (i.e. returned value = x - 1, processed_idx value after statement = x - 1)
     while (processed_idx > 0)
-    {
       mask[processedStack[--processed_idx]] = 1;
-    }
     free(processedStack);
   }
 

@@ -219,7 +219,7 @@ class _DummyProgressReporter(object):
   In this class, the __iter__ function redirects to the __iter__ function of the iterable passed at initialization.
   The __enter__ and __exit__ functions enable usage in a 'with' statement
   """
-  def __init__(self, iterable, desc=''):
+  def __init__(self, iterable=None, desc='', total=None):
     self.desc = desc  # A description is not required, but is provided by PyRadiomics
     self.iterable = iterable  # Iterable is required
 
@@ -231,6 +231,9 @@ class _DummyProgressReporter(object):
 
   def __exit__(self, exc_type, exc_value, tb):
     pass  # Nothing needs to be closed or handled, so just specify 'pass'
+
+  def update(self, n=1):
+    pass  # Nothing needs to be updated, so just specify 'pass'
 
 
 def getProgressReporter(*args, **kwargs):

@@ -201,15 +201,17 @@ class RadiomicsFeaturesBase(object):
     if voxelBatch < 0:
       voxelBatch = voxel_count
     n_batches = numpy.ceil(float(voxel_count) / voxelBatch)
-    while voxel_batch_idx < voxel_count:
-      self.logger.debug('Calculating voxel batch no. %i/%i', int(voxel_batch_idx / voxelBatch) + 1, n_batches)
-      voxelCoords = self.labelledVoxelCoordinates[:, voxel_batch_idx:voxel_batch_idx + voxelBatch]
-      # Calculate the feature values for the current kernel
-      for success, featureName, featureValue in self._calculateFeatures(voxelCoords):
-        if success:
-          self.featureValues[featureName][tuple(voxelCoords)] = featureValue
+    with self.progressReporter(total=n_batches, desc='batch') as pbar:
+      while voxel_batch_idx < voxel_count:
+        self.logger.debug('Calculating voxel batch no. %i/%i', int(voxel_batch_idx / voxelBatch) + 1, n_batches)
+        voxelCoords = self.labelledVoxelCoordinates[:, voxel_batch_idx:voxel_batch_idx + voxelBatch]
+        # Calculate the feature values for the current kernel
+        for success, featureName, featureValue in self._calculateFeatures(voxelCoords):
+          if success:
+            self.featureValues[featureName][tuple(voxelCoords)] = featureValue
 
-      voxel_batch_idx += voxelBatch
+        voxel_batch_idx += voxelBatch
+        pbar.update(1)  # Update progress bar
 
     # Convert the output to simple ITK image objects
     for feature, enabled in six.iteritems(self.enabledFeatures):

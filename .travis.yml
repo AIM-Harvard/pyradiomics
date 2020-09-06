@@ -32,7 +32,8 @@ cache:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir $HOME/bin; ln -s $(which pip2) $HOME/bin/pip; fi
-  - pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0
+  - brew install gettext  # Fix proposed in https://github.com/scikit-build/cmake-python-distributions/pull/113
+  - pip install scikit-ci scikit-ci-addons
   - ci_addons --install ../addons
 
 install:

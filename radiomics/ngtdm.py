@@ -47,7 +47,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
 
   For gray level 2, there are 2 pixels, therefore:
 
-  :math:`s_2 = |2-15/5| + |2-15/5| = 2`
+  :math:`s_2 = |2-15/5| + |2-9/3| = 2`
 
   Similar for gray values 3 and 5:
 

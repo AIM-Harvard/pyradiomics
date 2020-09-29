@@ -1,5 +1,5 @@
 numpy>=1.9.2
 SimpleITK>=0.9.1
-PyWavelets>=0.4.0, <=1.0.0
+PyWavelets>=0.4.0
 pykwalify>=1.6.0
 six>=1.10.0

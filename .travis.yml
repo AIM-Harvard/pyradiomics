@@ -20,19 +20,38 @@ matrix:
     - os: osx
       language: generic
       env:
-        - PYTHON_VERSION=3.7.2
+        - PYTHON_VERSION=3.7.8
         - PYTHON_SHORT_VERSION=3.7
+
+before_cache:
+  # Cleanup to avoid the cache to grow indefinitely as new package versions are released
+  # see https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
+  - brew cleanup
 
 cache:
   directories:
-    - $HOME/.pyenv/versions/3.7.2
+    # Cache downloaded bottles
+    - $HOME/Library/Caches/Homebrew
+    # pyenv
+    - $HOME/.pyenv_cache
+    - $HOME/.pyenv/versions/3.7.8
     - $HOME/.pyenv/versions/3.6.5
     - $HOME/.pyenv/versions/3.5.5
+    # scikit-ci-addons
     - $HOME/downloads
 
 before_install:
+  - |
+      # Workaround the following error occuring because python installation is cached but gettext dependency is not
+      #   dyld: Library not loaded: /usr/local/opt/gettext/lib/libintl.8.dylib
+      #     Referenced from: /Users/travis/.pyenv/versions/3.7.2/bin/python
+      #     Reason: Incompatible library version: python requires version 11.0.0 or later, but libintl.8.dylib provides version 10.0.0
+      # See https://github.com/scikit-build/cmake-python-distributions/issues/112 and
+      # https://github.com/scikit-build/cmake-python-distributions/pull/113
+      if [[ "$TRAVIS_OS_NAME" == "osx" && "${PYTHON_VERSION}" == "3.7.8" ]]; then
+        brew install gettext
+      fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir $HOME/bin; ln -s $(which pip2) $HOME/bin/pip; fi
-  - brew install gettext  # Fix proposed in https://github.com/scikit-build/cmake-python-distributions/pull/113
   - pip install scikit-ci scikit-ci-addons
   - ci_addons --install ../addons
 

@@ -48,9 +48,7 @@ before_install:
       #     Reason: Incompatible library version: python requires version 11.0.0 or later, but libintl.8.dylib provides version 10.0.0
       # See https://github.com/scikit-build/cmake-python-distributions/issues/112 and
       # https://github.com/scikit-build/cmake-python-distributions/pull/113
-      if [[ "$TRAVIS_OS_NAME" == "osx" && "${PYTHON_VERSION}" == "3.7.8" ]]; then
-        brew install gettext
-      fi
+      brew install gettext
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir $HOME/bin; ln -s $(which pip2) $HOME/bin/pip; fi
   - pip install scikit-ci scikit-ci-addons
   - ci_addons --install ../addons

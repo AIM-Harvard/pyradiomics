@@ -16,25 +16,8 @@ LABEL org.label-schema.build-data=$BUILD_DATE \
 USER root
 ADD . /root/pyradiomics
 
-# Jupyter datascience notebook does not support python 2 anymore, install it manually.
-# "source activate python2 || (...)" first checks if the python 2 environment exists,
-# and only installs if the environment does not exist
-# See also https://github.com/jupyter/docker-stacks/issues/432
-# Next, also install python 2 kernel globally, so it can be found from the root
-RUN /bin/bash -c "source activate python2 \
-    || (conda create -n python2 python=2 ipykernel \
-    && pip install kernda --no-cache \
-    && $CONDA_DIR/envs/python2/bin/python -m ipykernel install \
-    && kernda -o -y /usr/local/share/jupyter/kernels/python2/kernel.json \
-    && pip uninstall kernda -y)"
-
 # Install in Python 3
 RUN /bin/bash -c "source activate root \
-    && cd /root/pyradiomics \
-    && python -m pip install --no-cache-dir -r requirements.txt \
-    && python setup.py install"
-# Python 2
-RUN /bin/bash -c "source activate python2 \
     && cd /root/pyradiomics \
     && python -m pip install --no-cache-dir -r requirements.txt \
     && python setup.py install"
@@ -61,7 +44,6 @@ USER jovyan
 RUN jupyter trust /home/jovyan/work/notebooks/*.ipynb
 
 # Run the notebooks
-RUN jupyter nbconvert --ExecutePreprocessor.kernel_name=python2 --ExecutePreprocessor.timeout=-1 --to notebook --execute /home/jovyan/work/notebooks/helloRadiomics.ipynb /home/jovyan/work/notebooks/helloFeatureClass.ipynb /home/jovyan/work/notebooks/PyRadiomicsExample.ipynb
 RUN jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --execute /home/jovyan/work/notebooks/helloRadiomics.ipynb /home/jovyan/work/notebooks/helloFeatureClass.ipynb /home/jovyan/work/notebooks/PyRadiomicsExample.ipynb
 
 # The user's data will show up as /data

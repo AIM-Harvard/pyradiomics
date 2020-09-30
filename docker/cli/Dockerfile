@@ -52,7 +52,7 @@ RUN wget --no-check-certificate https://www.kernel.org/pub/software/scm/git/git-
 
 # Build and install CMake from source.
 WORKDIR /usr/src
-RUN git clone git://cmake.org/cmake.git CMake && \
+RUN git clone https://gitlab.kitware.com/cmake/cmake.git CMake && \
     cd CMake && \
     git checkout v3.7.2 && \
     mkdir /usr/src/CMake-build && \

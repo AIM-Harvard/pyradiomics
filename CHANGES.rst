@@ -6,6 +6,49 @@ Release Notes
 Next Release
 ------------
 
+-----------------
+PyRadiomics 3.0.1
+-----------------
+
+Bug Fixes
+#########
+
+- Fix bug causing ``IndexError`` when no gray levels are 'empty'.
+  (`#592 <https://github.com/Radiomics/pyradiomics/pull/592>`_)
+- Fail initialization of feature extractor when the passed parameter file path
+  does not point to existing file. (`#587 <https://github.com/Radiomics/pyradiomics/pull/587>`_)
+- Fix out-of-range check in GLSZM C calculation.
+  (`#635 <https://github.com/Radiomics/pyradiomics/pull/635>`_)
+- Fix bug in Travis CI testing (MacOS platform).
+  (`#643 <https://github.com/Radiomics/pyradiomics/pull/643>`_,
+  `#646 <https://github.com/Radiomics/pyradiomics/pull/646>`_)
+- Fix cmake URL and remove python2 support from DockerFiles.
+  (`#645 <https://github.com/Radiomics/pyradiomics/pull/645>`_)
+
+Examples
+########
+
+- Add example settings for forced-2D extraction in MR.
+  (`#613 <https://github.com/Radiomics/pyradiomics/pull/613>`_,
+  `#644 <https://github.com/Radiomics/pyradiomics/pull/644>`_)
+
+Documentation
+#############
+
+- Fix typos in documentation.  (`9d26a6b8 <https://github.com/Radiomics/pyradiomics/commit/9d26a6b8>`_,
+  `896682d7 <https://github.com/Radiomics/pyradiomics/commit/896682d7>`_,
+  `e100f1d0 <https://github.com/Radiomics/pyradiomics/commit/e100f1d0>`_,
+  `#639 <https://github.com/Radiomics/pyradiomics/pull/639>`_)
+- Further clarify resampling. (`#599 <https://github.com/Radiomics/pyradiomics/pull/599>`_)
+
+Internal API
+############
+
+- Fail gracefully when grayvalues < 1 are encountered in the discretized image.
+  (`#602 <https://github.com/Radiomics/pyradiomics/pull/602>`_)
+- Add optional progress reporting for voxel-based extraction.
+  (`#636 <https://github.com/Radiomics/pyradiomics/pull/636>`_)
+
 ---------------
 PyRadiomics 3.0
 ---------------

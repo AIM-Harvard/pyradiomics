@@ -34,7 +34,8 @@ Fillion-Robin, J. C., Pieper, S.,  Aerts, H. J. W. L. (2017). Computational Radi
 Phenotype. Cancer Research, 77(21), e104–e107. https://doi.org/10.1158/0008-5472.CAN-17-0339*
 
 ### Join the Community!
-Join the PyRadiomics community on google groups [here](https://groups.google.com/forum/#!forum/pyradiomics).
+
+Please join the [Radiomics community section of the 3D Slicer Discourse](https://discourse.slicer.org/c/community/radiomics/23).
 
 ### Feature Classes
 Currently supports the following feature classes:

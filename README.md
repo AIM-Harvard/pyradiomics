@@ -164,5 +164,5 @@ We are happy to help you with any questions. Please contact us on the [Radiomics
 We welcome contributions to PyRadiomics. Please read the [contributing guidelines](CONTRIBUTING.rst) on how to
 contribute to PyRadiomics.
 
-**This work was supported in part by the US National Cancer Institute grant 
-5U24CA194354, QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE.**
+**This work was supported in part by the US National Cancer Institute grants: 
+U24CA194354 - QUANTITATIVE RADIOMICS SYSTEM DECODING THE TUMOR PHENOTYPE and U01CA190234 - TUMOR GENOTYPE AND RADIOMIC PHENOTYPE IN LUNG CANCER**

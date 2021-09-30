@@ -364,6 +364,19 @@ def main():
             "will be used by default.",
     choices=['plastimatch', 'dcm2nixx'],
     default="plastimatch")
+  parser.add_argument(
+    '--geometry-tolerance',
+    dest="geometryTolerance",
+    metavar="<number>",
+    help="Decimal number setting geometry tolerance for the extractor. Defaults to 1e-6.",
+    default=1e-6)
+  parser.add_argument(
+    '--correct-mask',
+    dest="correctMask",
+    help="Boolean flag argument. If present, PyRadiomics will attempt to resample the mask to the image"
+         + " geometry if the mask check fails.",
+    action='store_true',
+    default=False)
 
   args = parser.parse_args()
 
@@ -440,17 +453,14 @@ def main():
 
     try:
       scriptlogger.debug("Initializing extractor")
-      # TODO: most likely, there will be geometric inconsistencies that will throw
-      # pyradiomics off by exceeding the default tolerance. Need to decide if we
-      # should always resample, or set tolerance to a larger number, or expose in
-      # the command line.
-      correctMaskSetting = {}
-      correctMaskSetting["setting"] = {
-        "geometryTolerance": 0.001, "correctMask": True}
+      extractionSettings = {
+        "geometryTolerance": float(args.geometryTolerance),
+        "correctMask": True if args.correctMask else False
+      }
       params = []
       if args.parameters is not None:
         params = [args.parameters]
-      extractor = featureextractor.RadiomicsFeatureExtractor(*params, **correctMaskSetting)
+      extractor = featureextractor.RadiomicsFeatureExtractor(*params, **extractionSettings)
 
     except Exception:
       scriptlogger.error(

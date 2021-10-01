@@ -48,19 +48,27 @@ Support for DICOM Radiotherapy Structure Sets for defining region of interest ma
 
 optional arguments:
   -h, --help            show this help message and exit
-  --input-image-dir Input DICOM image directory
-                        Directory with the input DICOM series. It is expected
-                        that a single series is corresponding to a single
-                        scalar volume.
-  --input-seg-file Input DICOM SEG file
-                        Input segmentation defined as aDICOM Segmentation
-                        object.
-  --output-dir Directory to store the output file
-                        Directory for saving the resulting DICOM file.
-  --parameters pyradiomics extraction parameters
-  --temp-dir Temporary directory
-  --features-dict Dictionary mapping pyradiomics feature names to the IBSI defined features.
-  --volume-reconstructor Choose the tool to be used for reconstructing image volume from the DICOM image series. Allowed options are plastimatch or dcm2niix (should be installed on the system). plastimatch will be used by default.
+  --input-image-dir <folder>
+                        Path to the directory with the input DICOM series. It is expected that a single
+                        series is corresponding to a single scalar volume.
+  --input-seg-file <file>
+                        Path to the input segmentation defined as a DICOM Segmentation object.
+  --output-dir <folder>
+                        Path to the directory for saving the resulting DICOM file.
+  --parameters <parameters>
+                        Pyradiomics feature extractor positional arguments
+  --temp-dir <folder>   Path to the directory to store intermediate results
+  --features-dict <file>
+                        Path to the dictionary mapping pyradiomics feature names to the IBSI defined
+                        features.
+  --volume-reconstructor <plastimatch or dcm2niix>
+                        Choose the tool to be used for reconstructing image volume from the DICOM image
+                        series. Allowed options are plastimatch or dcm2niix (should be installed on the
+                        system). plastimatch will be used by default.
+  --geometry-tolerance <number>
+                        Decimal number setting geometry tolerance for the extractor. Defaults to 1e-6.
+  --correct-mask        Boolean flag argument. If present, PyRadiomics will attempt to resample the mask
+                        to the image geometry if the mask check fails.
 ```
 
 # Sample invocation

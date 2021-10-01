@@ -320,50 +320,66 @@ class TID1500Metadata:
 def main():
   parser = argparse.ArgumentParser(
     usage="%(prog)s --input-image <dir> --input-seg <name> --output-sr <name>\n\n"
-          "Warning: This is a \"pyradiomics labs\" script, which means it is an experimental feature in development!\n"
-          "The intent of this helper script is to enable pyradiomics feature extraction directly from/to DICOM data.\n"
-          "The segmentation defining the region of interest must be defined as a DICOM Segmentation image.\n"
-          "Support for DICOM Radiotherapy Structure Sets for defining region of interest may be added in the future.\n")
+          + "Warning: This is a \"pyradiomics labs\" script, which means it is an experimental feature in development!\n"
+          + "The intent of this helper script is to enable pyradiomics feature extraction directly from/to DICOM data.\n"
+          + "The segmentation defining the region of interest must be defined as a DICOM Segmentation image.\n"
+          + "Support for DICOM Radiotherapy Structure Sets for defining region of interest may be added in the future.\n")
   parser.add_argument(
     '--input-image-dir',
     dest="inputDICOMImageDir",
-    metavar='Input DICOM image directory',
-    help="Directory with the input DICOM series."
-         " It is expected that a single series is corresponding to a single scalar volume.",
+    metavar="<folder>",
+    help="Path to the directory with the input DICOM series."
+         + " It is expected that a single series is corresponding to a single scalar volume.",
     required=True)
   parser.add_argument(
     '--input-seg-file',
     dest="inputSEG",
-    metavar='Input DICOM SEG file',
-    help="Input segmentation defined as a"
-         "DICOM Segmentation object.",
+    metavar="<file>",
+    help="Path to the input segmentation defined as a DICOM Segmentation object.",
     required=True)
   parser.add_argument(
     '--output-dir',
     dest="outputDir",
-    metavar='Directory to store the output file',
-    help="Directory for saving the resulting DICOM file.",
+    metavar="<folder>",
+    help="Path to the directory for saving the resulting DICOM file.",
     required=True)
   parser.add_argument(
     '--parameters',
     dest="parameters",
-    metavar="pyradiomics extraction parameters")
+    metavar="<parameters>",
+    help="Pyradiomics feature extractor positional arguments")
   parser.add_argument(
     '--temp-dir',
     dest="tempDir",
-    metavar="Temporary directory")
+    metavar="<folder>",
+    help="Path to the directory to store intermediate results")
   parser.add_argument(
     '--features-dict',
     dest="featuresDict",
-    metavar="Dictionary mapping pyradiomics feature names to the IBSI defined features.")
+    metavar="<file>",
+    help="Path to the dictionary mapping pyradiomics feature names to the IBSI defined features.")
   parser.add_argument(
     '--volume-reconstructor',
     dest="volumeReconstructor",
-    metavar="Choose the tool to be used for reconstructing image volume from the DICOM image series."
-            " Allowed options are plastimatch or dcm2niix (should be installed on the system). plastimatch "
-            "will be used by default.",
-    choices=['plastimatch', 'dcm2nixx'],
+    metavar="<plastimatch or dcm2niix>",
+    help="Choose the tool to be used for reconstructing image volume from the DICOM image series."
+         + " Allowed options are plastimatch or dcm2niix (should be installed on the system). plastimatch"
+         + " will be used by default.",
+    choices=['plastimatch', 'dcm2niix'],
     default="plastimatch")
+  parser.add_argument(
+    '--geometry-tolerance',
+    dest="geometryTolerance",
+    metavar="<number>",
+    help="Decimal number setting geometry tolerance for the extractor. Defaults to 1e-6.",
+    default=1e-6)
+  parser.add_argument(
+    '--correct-mask',
+    dest="correctMask",
+    help="Boolean flag argument. If present, PyRadiomics will attempt to resample the mask to the image"
+         + " geometry if the mask check fails.",
+    action='store_true',
+    default=False)
 
   args = parser.parse_args()
 
@@ -440,17 +456,14 @@ def main():
 
     try:
       scriptlogger.debug("Initializing extractor")
-      # TODO: most likely, there will be geometric inconsistencies that will throw
-      # pyradiomics off by exceeding the default tolerance. Need to decide if we
-      # should always resample, or set tolerance to a larger number, or expose in
-      # the command line.
-      correctMaskSetting = {}
-      correctMaskSetting["setting"] = {
-        "geometryTolerance": 0.001, "correctMask": True}
+      extractionSettings = {
+        "geometryTolerance": float(args.geometryTolerance),
+        "correctMask": True if args.correctMask else False
+      }
       params = []
       if args.parameters is not None:
         params = [args.parameters]
-      extractor = featureextractor.RadiomicsFeatureExtractor(*params, **correctMaskSetting)
+      extractor = featureextractor.RadiomicsFeatureExtractor(*params, **extractionSettings)
 
     except Exception:
       scriptlogger.error(

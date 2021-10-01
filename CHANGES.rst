@@ -49,6 +49,13 @@ Internal API
 - Add optional progress reporting for voxel-based extraction.
   (`#636 <https://github.com/Radiomics/pyradiomics/pull/636>`_)
 
+Labs
+####
+
+- Expose mask correction and geometry tolerance settings in pyradiomics-dcm CLI
+  (`#724 <https://github.com/AIM-Harvard/pyradiomics/pull/724>`_)
+
+
 ---------------
 PyRadiomics 3.0
 ---------------

@@ -20,11 +20,11 @@ Example
 
 * The sample data is provided in ``pyradiomics/data``
 
-* Use `jupyter <http://jupyter.org/>`_ to run the helloRadiomics example, located in ``pyradiomics/examples/Notebooks``
+* Use `jupyter <http://jupyter.org/>`_ to run the helloRadiomics example, located in ``pyradiomics/notebooks``
 
 * Jupyter can also be used to run the example notebook as shown in the instruction video
 
-  * The example notebook can be found in ``pyradiomics/examples/Notebooks``
+  * The example notebook can be found in ``pyradiomics/notebooks``
 
   * The parameter file used in the instruction video is available in ``pyradiomics/examples/exampleSettings``
 

@@ -186,7 +186,7 @@ The mathematical proof is as follows:
 
 (4) Because in the PyRadiomics definition incomplete dependence zones are allowed, every voxel in the ROI has a
     dependence zone. Therefore, :math:`N_z = N_p` and :math:`\sum^{N_d}_{j=1}{\textbf{P}(i,j)}` equals the number of voxels
-    with gray level :math:`i` and is equal to :math:`\textbf{P}(i)`, the first order histogram with :math:`N_g` discreet
+    with gray level :math:`i` and is equal to :math:`\textbf{P}(i)`, the first order histogram with :math:`N_g` discrete
     gray levels, as defined in first order.
 
 (5) As defined in first order, :math:`p(i) = \frac{\textbf{P}(i)}{N_p}`

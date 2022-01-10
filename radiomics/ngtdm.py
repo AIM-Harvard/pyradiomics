@@ -68,7 +68,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
   0 & \mbox{for} & n_i = 0 \end{array}}\right.`
   be the sum of absolute differences for gray level :math:`i`
 
-  :math:`N_g` be the number of discreet gray levels
+  :math:`N_g` be the number of discrete gray levels
 
   :math:`N_{g,p}` be the number of gray levels where :math:`p_i \neq 0`
 

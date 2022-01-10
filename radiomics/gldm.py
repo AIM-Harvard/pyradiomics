@@ -35,8 +35,8 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
 
   Let:
 
-  - :math:`N_g` be the number of discreet intensity values in the image
-  - :math:`N_d` be the number of discreet dependency sizes in the image
+  - :math:`N_g` be the number of discrete intensity values in the image
+  - :math:`N_d` be the number of discrete dependency sizes in the image
   - :math:`N_z` be the number of dependency zones in the image, which is equal to
     :math:`\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\textbf{P}(i,j)}`
   - :math:`\textbf{P}(i,j)` be the dependence matrix

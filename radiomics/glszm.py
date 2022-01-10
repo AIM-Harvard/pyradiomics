@@ -35,8 +35,8 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
 
   Let:
 
-  - :math:`N_g` be the number of discreet intensity values in the image
-  - :math:`N_s` be the number of discreet zone sizes in the image
+  - :math:`N_g` be the number of discrete intensity values in the image
+  - :math:`N_s` be the number of discrete zone sizes in the image
   - :math:`N_p` be the number of voxels in the image
   - :math:`N_z` be the number of zones in the ROI, which is equal to :math:`\sum^{N_g}_{i=1}\sum^{N_s}_{j=1}
     {\textbf{P}(i,j)}` and :math:`1 \leq N_z \leq N_p`

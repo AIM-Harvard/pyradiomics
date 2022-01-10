@@ -47,8 +47,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   - :math:`p(i,j)` be the normalized co-occurence matrix and equal to
     :math:`\frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
   - :math:`N_g` be the number of discrete intensity levels in the image
-  - :math:`p_x(i) = \sum^{N_g}_{j=1}{P(i,j)}` be the marginal row probabilities
-  - :math:`p_y(j) = \sum^{N_g}_{i=1}{P(i,j)}` be the marginal column probabilities
+  - :math:`p_x(i) = \sum^{N_g}_{j=1}{p(i,j)}` be the marginal row probabilities
+  - :math:`p_y(j) = \sum^{N_g}_{i=1}{p(i,j)}` be the marginal column probabilities
   - :math:`\mu_x` be the mean gray level intensity of :math:`p_x` and defined as
     :math:`\mu_x = \displaystyle\sum^{N_g}_{i=1}{p_x(i)i}`
   - :math:`\mu_y` be the mean gray level intensity of :math:`p_y` and defined as
@@ -354,7 +354,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
     linear dependency of gray level values to their respective voxels in the GLCM.
 
     .. note::
-      When there is only 1 discreet gray value in the ROI (flat region), :math:`\sigma_x` and :math:`\sigma_y` will be
+      When there is only 1 discrete gray value in the ROI (flat region), :math:`\sigma_x` and :math:`\sigma_y` will be
       0. In this case, an arbitrary value of 1 is returned instead. This is assessed on a per-angle basis.
     """
     eps = self.coefficients['eps']

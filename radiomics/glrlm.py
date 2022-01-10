@@ -32,8 +32,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
 
   Let:
 
-  - :math:`N_g` be the number of discreet intensity values in the image
-  - :math:`N_r` be the number of discreet run lengths in the image
+  - :math:`N_g` be the number of discrete intensity values in the image
+  - :math:`N_r` be the number of discrete run lengths in the image
   - :math:`N_p` be the number of voxels in the image
   - :math:`N_r(\theta)` be the number of runs in the image along angle :math:`\theta`, which is equal to
     :math:`\sum^{N_g}_{i=1}\sum^{N_r}_{j=1}{\textbf{P}(i,j|\theta)}` and :math:`1 \leq N_r(\theta) \leq N_p`

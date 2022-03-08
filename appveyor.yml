@@ -1,4 +1,4 @@
-version: "0.0.1.{build}"
+version: "3.0.{build}"
 
 environment:
   matrix:
@@ -30,14 +30,14 @@ environment:
       BLOCK: "0"
 
     - PYTHON_DIR: "C:\\Python38-x64"
-      PYTHON_VERSION: "3.8.x"
-      PYTHON_SHORT_VERSION: "3.8"
+      PYTHON_VERSION: "3.9.x"
+      PYTHON_SHORT_VERSION: "3.9"
       PYTHON_ARCH: "64"
       BLOCK: "0"
 
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  - python -m pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0
+  - python -m pip install scikit-ci scikit-ci-addons
   - python -m ci_addons --install ../addons
   - python -m pip install twine
 
@@ -70,6 +70,7 @@ deploy_script:
   - twine upload dist/*.whl -u %PYPI_USER% -p %PYPI_PASSWORD%
   - echo starting Anaconda deployment
   - SET PATH=C:\Miniconda-x64\Scripts;%PATH%
+  - conda config --set always_yes yes
   - ./conda/configure_conda.bat && conda build ./conda --python=%PYTHON_SHORT_VERSION% --croot C:/conda-bld
   - anaconda -t %ANACONDA_TOKEN% upload -u Radiomics C:/conda-bld/win-64/pyradiomics-*.tar.bz2 --force
   - echo finished deployment

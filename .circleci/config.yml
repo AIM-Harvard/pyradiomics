@@ -105,7 +105,7 @@ jobs:
           name: Install patchelf auditwheel, twine
           command: |
             apt-get install patchelf  # needed to run auditwheel
-            python -m pip install auditwheel
+            python -m pip install "auditwheel<3.2.0"
             python -m pip install twine
       # only attach the workspace at this point to prevent the removal of source distributions
       - attach_workspace:

@@ -23,6 +23,18 @@ environment:
       PYTHON_ARCH: "64"
       BLOCK: "0"
 
+    - PYTHON_DIR: "C:\\Python38-x64"
+      PYTHON_VERSION: "3.8.x"
+      PYTHON_SHORT_VERSION: "3.8"
+      PYTHON_ARCH: "64"
+      BLOCK: "0"
+
+    - PYTHON_DIR: "C:\\Python38-x64"
+      PYTHON_VERSION: "3.8.x"
+      PYTHON_SHORT_VERSION: "3.8"
+      PYTHON_ARCH: "64"
+      BLOCK: "0"
+
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - python -m pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0

@@ -62,19 +62,31 @@ jobs:
   build-3.6:
     <<: *build_template
     docker:
-      - image: circleci/python:3.6-jessie
+      - image: cimg/python:3.6
         user: root
 
   build-3.7:
     <<: *build_template
     docker:
-    - image: circleci/python:3.7
-      user: root
+      - image: cimg/python:3.7
+        user: root
+
+  build-3.8:
+    <<: *build_template
+    docker:
+      - image: cimg/python:3.8
+        user: root
+
+  build-3.9:
+    <<: *build_template
+    docker:
+      - image: cimg/python:3.9
+        user: root
 
   deploy:
     working_directory: /pyradiomics
     docker:
-      - image: circleci/python:3.6-jessie
+      - image: cimg/python:3.6
         user: root
     steps:
       - run:
@@ -84,7 +96,7 @@ jobs:
       - run:
           name: Setup SciKit-CI
           command: |
-            pip install scikit-ci==0.13.0 scikit-ci-addons==0.11.0
+            pip install scikit-ci scikit-ci-addons
             ci_addons --install ../addons
       - run:
           name: Install
@@ -118,7 +130,7 @@ jobs:
   deploy_conda:
     working_directory: /pyradiomics
     docker:
-      - image: circleci/python:3.6-jessie
+      - image: cimg/python:3.8
         user: root
     steps:
       - run:
@@ -144,6 +156,8 @@ jobs:
             conda build ./conda --python=3.5 --croot /conda-bld
             conda build ./conda --python=3.6 --croot /conda-bld
             conda build ./conda --python=3.7 --croot /conda-bld
+            conda build ./conda --python=3.8 --croot /conda-bld
+            conda build ./conda --python=3.9 --croot /conda-bld
       - run:
           name: Deploy Conda packages
           command: |
@@ -162,16 +176,24 @@ workflows:
           <<: *build_job_template
       - build-3.7:
           <<: *build_job_template
+      - build-3.8:
+          <<: *build_job_template
+      - build-3.9:
+          <<: *build_job_template
       - test-notebooks:
           requires:
             - build-3.5
             - build-3.6
             - build-3.7
+            - build-3.8
+            - build-3.9
       - deploy: &deploy_template
           requires:
             - build-3.5
             - build-3.6
             - build-3.7
+            - build-3.8
+            - build-3.9
           filters:
             branches:
               ignore:

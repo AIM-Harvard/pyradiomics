@@ -319,17 +319,18 @@ class TID1500Metadata:
 
 def main():
   parser = argparse.ArgumentParser(
-    usage="%(prog)s --input-image <dir> --input-seg <name> --output-sr <name>\n\n"
-          + "Warning: This is a \"pyradiomics labs\" script, which means it is an experimental feature in development!\n"
-          + "The intent of this helper script is to enable pyradiomics feature extraction directly from/to DICOM data.\n"
-          + "The segmentation defining the region of interest must be defined as a DICOM Segmentation image.\n"
-          + "Support for DICOM Radiotherapy Structure Sets for defining region of interest may be added in the future.\n")
+    usage="""%(prog)s --input-image <dir> --input-seg <name> --output-sr <name>\n\n
+
+Warning: This is a \"pyradiomics labs\" script, which means it is an experimental feature in development!
+The intent of this helper script is to enable pyradiomics feature extraction directly from/to DICOM data.
+The segmentation defining the region of interest must be defined as a DICOM Segmentation image.
+Support for DICOM Radiotherapy Structure Sets for defining region of interest may be added in the future.""")
   parser.add_argument(
     '--input-image-dir',
     dest="inputDICOMImageDir",
     metavar="<folder>",
     help="Path to the directory with the input DICOM series."
-         + " It is expected that a single series is corresponding to a single scalar volume.",
+         " It is expected that a single series is corresponding to a single scalar volume.",
     required=True)
   parser.add_argument(
     '--input-seg-file',
@@ -363,8 +364,8 @@ def main():
     dest="volumeReconstructor",
     metavar="<plastimatch or dcm2niix>",
     help="Choose the tool to be used for reconstructing image volume from the DICOM image series."
-         + " Allowed options are plastimatch or dcm2niix (should be installed on the system). plastimatch"
-         + " will be used by default.",
+         " Allowed options are plastimatch or dcm2niix (should be installed on the system). plastimatch"
+         " will be used by default.",
     choices=['plastimatch', 'dcm2niix'],
     default="plastimatch")
   parser.add_argument(
@@ -377,7 +378,7 @@ def main():
     '--correct-mask',
     dest="correctMask",
     help="Boolean flag argument. If present, PyRadiomics will attempt to resample the mask to the image"
-         + " geometry if the mask check fails.",
+         " geometry if the mask check fails.",
     action='store_true',
     default=False)
 

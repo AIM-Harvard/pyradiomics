@@ -3,18 +3,18 @@
 ## Build Status
 
 | Linux                          | macOS                         | Windows                       |
-|--------------------------------|-------------------------------|-------------------------------|
+| ------------------------------ | ----------------------------- | ----------------------------- |
 | [![][circleci]][circleci-lnk]  | [![][travisci]][travisci-lnk] | [![][appveyor]][appveyor-lnk] |
 
 
 [appveyor]: https://ci.appveyor.com/api/projects/status/tw69xbbeyluk7fl7/branch/master?svg=true
-[appveyor-lnk]: https://ci.appveyor.com/project/Radiomics/pyradiomics/branch/master
+[appveyor-lnk]: https://ci.appveyor.com/project/AIM-Harvard/pyradiomics/branch/master
 
-[circleci]: https://circleci.com/gh/Radiomics/pyradiomics.svg?style=svg&circle-token=a4748cf0de5fad2c12bc93a485282378551c3584
-[circleci-lnk]: https://circleci.com/gh/Radiomics/pyradiomics
+[circleci]: https://circleci.com/gh/AIM-Harvard/pyradiomics.svg?style=svg&circle-token=a4748cf0de5fad2c12bc93a485282378551c3584
+[circleci-lnk]: https://circleci.com/gh/AIM-Harvard/pyradiomics
 
-[travisci]: https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master
-[travisci-lnk]: https://travis-ci.org/Radiomics/pyradiomics
+[travisci]: https://travis-ci.com/AIM-Harvard/pyradiomics.svg?branch=master
+[travisci-lnk]: https://travis-ci.com/AIM-Harvard/pyradiomics
 
 ## Radiomics feature extraction in Python
 This is an open-source python package for the extraction of Radiomics features from medical imaging.

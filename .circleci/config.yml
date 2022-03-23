@@ -33,17 +33,17 @@ jobs:
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
   build-mac:
-    working_directory: /pyradiomics
+    working_directory: ~/pyradiomics
     macos:
       xcode: 12.5.1
-      environment:
-        PYTHON_VERSION: 3.5
-        PYTHON_SHORT_VERSION: 3.5
-        PATH: $<HOME>/.pyenv/versions/$<PYTHON_VERSION>/bin:$<PATH>
+    environment:
+      PYTHON_VERSION: 3.5
+      PYTHON_SHORT_VERSION: 3.5
+      PATH: $<HOME>/.pyenv/versions/$<PYTHON_VERSION>/bin:$<PATH>
     steps:
       - checkout
       - attach_workspace:
-          at: /pyradiomics
+          at: ~/pyradiomics
       - run:
           name: Setup MAC OS environment
           # Workaround the following error occurring because python installation is cached but gettext dependency is not

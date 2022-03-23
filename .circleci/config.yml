@@ -32,10 +32,53 @@ jobs:
           command: |
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
+  build-mac:
+    working_directory: /pyradiomics
+    macos:
+      xcode: 12.5.1
+      environment:
+        PYTHON_VERSION: 3.5
+        PYTHON_SHORT_VERSION: 3.5
+        PATH: $<HOME>/.pyenv/versions/$<PYTHON_VERSION>/bin:$<PATH>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /pyradiomics
+      - run:
+          name: Setup MAC OS environment
+          # Workaround the following error occurring because python installation is cached but gettext dependency is not
+          #   dyld: Library not loaded: /usr/local/opt/gettext/lib/libintl.8.dylib
+          #     Referenced from: /Users/travis/.pyenv/versions/3.7.2/bin/python
+          #     Reason: Incompatible library version: python requires version 11.0.0 or later, but libintl.8.dylib provides version 10.0.0
+          # See https://github.com/scikit-build/cmake-python-distributions/issues/112 and
+          # https://github.com/scikit-build/cmake-python-distributions/pull/113
+          command: |
+            brew update
+            brew install gettext
+            mkdir $HOME/bin
+            ln -s $(which pip3) $HOME/bin/pip
+      - run:
+          name: Setup SciKit-CI
+          command: |
+            pip install scikit-ci scikit-ci-addons
+            ci_addons --install ../addons
+      - run:
+          name: Setup PyEnv
+          command: |
+            python3 ../addons/travis/install_pyenv.py
+      - run:
+          name: Install
+          command: ci install
+      - run:
+          name: Test
+          command: ci test
+      - run:
+          name: Build Distribution
+          command: ci after_test
   build-3.5: &build_template
     working_directory: /pyradiomics
     docker:
-      - image: circleci/python:3.5-jessie
+      - image: cimg/python:3.5
         user: root
     steps:
       - checkout
@@ -167,11 +210,13 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build-3.5: &build_job_template
+      - build-mac: &build_job_template
           filters:
             tags:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
+      - build-3.5:
+          <<: *build_job_template
       - build-3.6:
           <<: *build_job_template
       - build-3.7:

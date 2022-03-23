@@ -37,13 +37,10 @@ jobs:
     macos:
       xcode: 12.5.1
     environment:
-      PYTHON_VERSION: 3.5
-      PYTHON_SHORT_VERSION: 3.5
-      PATH: $<HOME>/.pyenv/versions/$<PYTHON_VERSION>/bin:$<PATH>
+      PYTHON_VERSION: 3.9.11
+      PYTHON_SHORT_VERSION: 3.9
+      PATH: $HOME/.pyenv/versions/$PYTHON_VERSION/bin:$PATH
     steps:
-      - run:
-          name: install git
-          command: brew install git
       - checkout
       - attach_workspace:
           at: ~/pyradiomics
@@ -58,8 +55,10 @@ jobs:
           command: |
             brew update
             brew install gettext
+            brew install pyenv
             mkdir $HOME/bin
             ln -s $(which pip3) $HOME/bin/pip
+            ln -s $(which python3) $HOME/bin/python
       - run:
           name: Setup SciKit-CI
           command: |
@@ -68,7 +67,7 @@ jobs:
       - run:
           name: Setup PyEnv
           command: |
-            python3 ../addons/travis/install_pyenv.py
+            python ../addons/travis/install_pyenv.py
       - run:
           name: Install
           command: ci install
@@ -220,14 +219,24 @@ workflows:
                 - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
       - build-35:
           <<: *build_job_template
+          requires:
+            - build-mac
       - build-36:
           <<: *build_job_template
+          requires:
+            - build-mac
       - build-37:
           <<: *build_job_template
+          requires:
+            - build-mac
       - build-38:
           <<: *build_job_template
+          requires:
+            - build-mac
       - build-39:
           <<: *build_job_template
+          requires:
+            - build-mac
       - test-notebooks:
           requires:
             - build-35

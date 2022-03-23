@@ -2,7 +2,7 @@
 # docker pull circleci/picard
 # docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd):$(pwd) -v ~/.circleci/:/root/.circleci --workdir $(pwd) circleci/picard circleci build
 
-version: 2
+version: 2.1
 jobs:
   test-notebooks:
     working_directory: /pyradiomics
@@ -75,7 +75,7 @@ jobs:
       - run:
           name: Build Distribution
           command: ci after_test
-  build-3.5: &build_template
+  build-35: &build_template
     working_directory: /pyradiomics
     docker:
       - image: cimg/python:3.5
@@ -100,27 +100,27 @@ jobs:
           command: ci after_test
       - persist_to_workspace:
           root: .
-          paths: dist
+          paths: [dist]
 
-  build-3.6:
+  build-36:
     <<: *build_template
     docker:
       - image: cimg/python:3.6
         user: root
 
-  build-3.7:
+  build-37:
     <<: *build_template
     docker:
       - image: cimg/python:3.7
         user: root
 
-  build-3.8:
+  build-38:
     <<: *build_template
     docker:
       - image: cimg/python:3.8
         user: root
 
-  build-3.9:
+  build-39:
     <<: *build_template
     docker:
       - image: cimg/python:3.9
@@ -215,30 +215,30 @@ workflows:
             tags:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
-      - build-3.5:
+      - build-35:
           <<: *build_job_template
-      - build-3.6:
+      - build-36:
           <<: *build_job_template
-      - build-3.7:
+      - build-37:
           <<: *build_job_template
-      - build-3.8:
+      - build-38:
           <<: *build_job_template
-      - build-3.9:
+      - build-39:
           <<: *build_job_template
       - test-notebooks:
           requires:
-            - build-3.5
-            - build-3.6
-            - build-3.7
-            - build-3.8
-            - build-3.9
+            - build-35
+            - build-36
+            - build-37
+            - build-38
+            - build-39
       - deploy: &deploy_template
           requires:
-            - build-3.5
-            - build-3.6
-            - build-3.7
-            - build-3.8
-            - build-3.9
+            - build-35
+            - build-36
+            - build-37
+            - build-38
+            - build-39
           filters:
             branches:
               ignore:

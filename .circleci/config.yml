@@ -41,6 +41,9 @@ jobs:
       PYTHON_SHORT_VERSION: 3.5
       PATH: $<HOME>/.pyenv/versions/$<PYTHON_VERSION>/bin:$<PATH>
     steps:
+      - run:
+          name: install git
+          command: brew install git
       - checkout
       - attach_workspace:
           at: ~/pyradiomics

@@ -114,7 +114,7 @@ def run(case):
       extractor = RadiomicsFeatureExtractor(PARAMS)
 
       # Extract features
-      feature_vector.update(extractor.execute(imageFilepath, maskFilepath), label=label)
+      feature_vector.update(extractor.execute(imageFilepath, maskFilepath, label=label))
 
       # Store results in temporary separate files to prevent write conflicts
       # This allows for the extraction to be interrupted. Upon restarting, already processed cases are found in the

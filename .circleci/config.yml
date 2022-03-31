@@ -41,9 +41,6 @@ jobs:
       PYTHON_SHORT_VERSION: 3.9
       PATH: $HOME/.pyenv/versions/$PYTHON_VERSION/bin:$PATH
     steps:
-      - checkout
-      - attach_workspace:
-          at: ~/pyradiomics
       - run:
           name: Setup MAC OS environment
           # Workaround the following error occurring because python installation is cached but gettext dependency is not
@@ -68,6 +65,9 @@ jobs:
           name: Setup PyEnv
           command: |
             python ../addons/travis/install_pyenv.py
+      - checkout
+      - attach_workspace:
+          at: ~/pyradiomics
       - run:
           name: Install
           command: ci install

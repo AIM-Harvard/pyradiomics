@@ -53,7 +53,7 @@ jobs:
             brew update
             brew install gettext
             brew install pyenv
-            mkdir $HOME/bin
+            mkdir -p $HOME/bin
             ln -s $(which pip3) $HOME/bin/pip
             ln -s $(which python3) $HOME/bin/python
       - run:

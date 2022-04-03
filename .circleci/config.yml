@@ -37,7 +37,7 @@ jobs:
     macos:
       xcode: 12.5.1
     environment:
-      PYTHON_VERSION: 3.5.10
+      PYTHON_VERSION: 3.5.9
       PYTHON_SHORT_VERSION: 3.5
     steps:
       - run:
@@ -85,7 +85,7 @@ jobs:
   build-mac-36:
     <<: *build_mac_template
     environment:
-      PYTHON_VERSION: 3.6.13
+      PYTHON_VERSION: 3.6.12
       PYTHON_SHORT_VERSION: 3.6
 
   build-mac-37:
@@ -97,13 +97,13 @@ jobs:
   build-mac-38:
     <<: *build_mac_template
     environment:
-      PYTHON_VERSION: 3.8.11
+      PYTHON_VERSION: 3.8.10
       PYTHON_SHORT_VERSION: 3.7
 
   build-mac-39:
     <<: *build_mac_template
     environment:
-      PYTHON_VERSION: 3.9.11
+      PYTHON_VERSION: 3.9.5
       PYTHON_SHORT_VERSION: 3.9
 
   build-35: &build_template

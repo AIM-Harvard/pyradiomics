@@ -39,7 +39,6 @@ jobs:
     environment:
       PYTHON_VERSION: 3.9.11
       PYTHON_SHORT_VERSION: 3.9
-      PATH: $HOME/.pyenv/versions/$PYTHON_VERSION/bin:$HOME/bin:$PATH
     steps:
       - run:
           name: Setup MAC OS environment
@@ -53,6 +52,9 @@ jobs:
             brew update
             brew install gettext
             brew install pyenv
+            echo $PATH
+            echo 'export PATH=$HOME/.pyenv/versions/$PYTHON_VERSION/bin:$HOME/bin:$PATH' >> $BASH_ENV
+            echo $PATH
             mkdir -p $HOME/bin
             ln -s $(which pip3) $HOME/bin/pip
             ln -s $(which python3) $HOME/bin/python
@@ -65,6 +67,7 @@ jobs:
       - run:
           name: Setup PyEnv
           command: |
+            echo $PATH
             python ../addons/travis/install_pyenv.py
       - checkout
       - attach_workspace:

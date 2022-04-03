@@ -39,7 +39,7 @@ jobs:
     environment:
       PYTHON_VERSION: 3.9.11
       PYTHON_SHORT_VERSION: 3.9
-      PATH: $HOME/.pyenv/versions/$PYTHON_VERSION/bin:$PATH
+      PATH: $HOME/.pyenv/versions/$PYTHON_VERSION/bin:$HOME/bin:$PATH
     steps:
       - run:
           name: Setup MAC OS environment
@@ -59,6 +59,7 @@ jobs:
       - run:
           name: Setup SciKit-CI
           command: |
+            echo $PATH
             pip install scikit-ci scikit-ci-addons
             ci_addons --install ../addons
       - run:

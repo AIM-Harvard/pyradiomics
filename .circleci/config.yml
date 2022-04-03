@@ -32,13 +32,13 @@ jobs:
           command: |
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
-  build-mac-35: &build_mac_template
+  build-mac-37: &build_mac_template
     working_directory: ~/pyradiomics
     macos:
       xcode: 12.5.1
     environment:
-      PYTHON_VERSION: 3.5.9
-      PYTHON_SHORT_VERSION: 3.5
+      PYTHON_VERSION: 3.7.10
+      PYTHON_SHORT_VERSION: 3.7
     steps:
       - run:
           name: Setup MAC OS environment
@@ -81,18 +81,6 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: [dist]
-
-  build-mac-36:
-    <<: *build_mac_template
-    environment:
-      PYTHON_VERSION: 3.6.12
-      PYTHON_SHORT_VERSION: 3.6
-
-  build-mac-37:
-    <<: *build_mac_template
-    environment:
-      PYTHON_VERSION: 3.7.10
-      PYTHON_SHORT_VERSION: 3.7
 
   build-mac-38:
     <<: *build_mac_template
@@ -241,15 +229,11 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build-mac-35: &build_job_template
+      - build-mac-37: &build_job_template
           filters:
             tags:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
-      - build-mac-36:
-          <<: *build_job_template
-      - build-mac-37:
-          <<: *build_job_template
       - build-mac-38:
           <<: *build_job_template
       - build-mac-39:

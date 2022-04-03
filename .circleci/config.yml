@@ -32,13 +32,13 @@ jobs:
           command: |
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
-  build-mac:
+  build-mac-35: &build_mac_template
     working_directory: ~/pyradiomics
     macos:
       xcode: 12.5.1
     environment:
-      PYTHON_VERSION: 3.9.11
-      PYTHON_SHORT_VERSION: 3.9
+      PYTHON_VERSION: 3.5.10
+      PYTHON_SHORT_VERSION: 3.5
     steps:
       - run:
           name: Setup MAC OS environment
@@ -49,26 +49,22 @@ jobs:
           # See https://github.com/scikit-build/cmake-python-distributions/issues/112 and
           # https://github.com/scikit-build/cmake-python-distributions/pull/113
           command: |
-            brew update
+            echo "HOMEBREW_NO_AUTO_UPDATE=1" >> $BASH_ENV
             brew install gettext
             brew install pyenv
-            echo $PATH
             echo 'export PATH=$HOME/.pyenv/versions/$PYTHON_VERSION/bin:$HOME/bin:$PATH' >> $BASH_ENV
-            echo $PATH
             mkdir -p $HOME/bin
             ln -s $(which pip3) $HOME/bin/pip
             ln -s $(which python3) $HOME/bin/python
+            pyenv install --list
       - run:
           name: Setup SciKit-CI
           command: |
-            echo $PATH
             pip install scikit-ci scikit-ci-addons
             ci_addons --install ../addons
       - run:
           name: Setup PyEnv
-          command: |
-            echo $PATH
-            python ../addons/travis/install_pyenv.py
+          command: python ../addons/travis/install_pyenv.py
       - checkout
       - attach_workspace:
           at: ~/pyradiomics
@@ -81,6 +77,34 @@ jobs:
       - run:
           name: Build Distribution
           command: ci after_test
+      - persist_to_workspace:
+          root: .
+          paths: [dist]
+
+  build-mac-36:
+    <<: *build_mac_template
+    environment:
+      PYTHON_VERSION: 3.6.13
+      PYTHON_SHORT_VERSION: 3.6
+
+  build-mac-37:
+    <<: *build_mac_template
+    environment:
+      PYTHON_VERSION: 3.7.10
+      PYTHON_SHORT_VERSION: 3.7
+
+  build-mac-38:
+    <<: *build_mac_template
+    environment:
+      PYTHON_VERSION: 3.8.11
+      PYTHON_SHORT_VERSION: 3.7
+
+  build-mac-39:
+    <<: *build_mac_template
+    environment:
+      PYTHON_VERSION: 3.9.11
+      PYTHON_SHORT_VERSION: 3.9
+
   build-35: &build_template
     working_directory: /pyradiomics
     docker:
@@ -216,31 +240,29 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build-mac: &build_job_template
+      - build-mac-35: &build_job_template
           filters:
             tags:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
+      - build-mac-36:
+          <<: *build_job_template
+      - build-mac-37:
+          <<: *build_job_template
+      - build-mac-38:
+          <<: *build_job_template
+      - build-mac-39:
+          <<: *build_job_template
       - build-35:
           <<: *build_job_template
-          requires:
-            - build-mac
       - build-36:
           <<: *build_job_template
-          requires:
-            - build-mac
       - build-37:
           <<: *build_job_template
-          requires:
-            - build-mac
       - build-38:
           <<: *build_job_template
-          requires:
-            - build-mac
       - build-39:
           <<: *build_job_template
-          requires:
-            - build-mac
       - test-notebooks:
           requires:
             - build-35

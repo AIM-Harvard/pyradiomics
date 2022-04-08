@@ -3,7 +3,13 @@
 from distutils import sysconfig
 import platform
 
-import numpy
+try:
+    import numpy
+except:  # noqa: E722
+    from unittest.mock import MagicMock
+    sys.modules["numpy"] = MagicMock()
+    import numpy
+
 from setuptools import Extension, setup
 import versioneer
 

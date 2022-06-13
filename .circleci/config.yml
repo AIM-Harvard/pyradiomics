@@ -94,10 +94,10 @@ jobs:
       PYTHON_VERSION: 3.9.5
       PYTHON_SHORT_VERSION: 3.9
 
-  build-35: &build_template
+  build-36: &build_template
     working_directory: /pyradiomics
     docker:
-      - image: cimg/python:3.5
+      - image: cimg/python:3.6
         user: root
     steps:
       - checkout
@@ -120,12 +120,6 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: [dist]
-
-  build-36:
-    <<: *build_template
-    docker:
-      - image: cimg/python:3.6
-        user: root
 
   build-37:
     <<: *build_template
@@ -259,7 +253,6 @@ jobs:
           name: Build Conda packages
           command: |
             mkdir  /conda-bld
-            conda build ./conda --python=3.5 --croot /conda-bld
             conda build ./conda --python=3.6 --croot /conda-bld
             conda build ./conda --python=3.7 --croot /conda-bld
             conda build ./conda --python=3.8 --croot /conda-bld
@@ -282,8 +275,6 @@ workflows:
           <<: *build_job_template
       - build-mac-39:
           <<: *build_job_template
-      - build-35:
-          <<: *build_job_template
       - build-36:
           <<: *build_job_template
       - build-37:
@@ -292,20 +283,14 @@ workflows:
           <<: *build_job_template
       - build-39:
           <<: *build_job_template
-      - test-notebooks:
+      - test-notebooks: &requires_template
           requires:
-            - build-35
             - build-36
             - build-37
             - build-38
             - build-39
       - test_deploy:
-          requires:
-            - build-35
-            - build-36
-            - build-37
-            - build-38
-            - build-39
+          <<: *requires_template
           filters:
             branches:
               ignore:
@@ -314,12 +299,7 @@ workflows:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*((a|b|rc)[0-9]+)/
       - deploy:
-          requires:
-            - build-35
-            - build-36
-            - build-37
-            - build-38
-            - build-39
+          <<: *requires_template
           filters:
             branches:
               ignore:
@@ -328,12 +308,7 @@ workflows:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*/
       - deploy_conda:
-          requires:
-            - build-35
-            - build-36
-            - build-37
-            - build-38
-            - build-39
+          <<: *requires_template
           filters:
             branches:
               ignore:

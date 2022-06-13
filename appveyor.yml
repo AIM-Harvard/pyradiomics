@@ -58,7 +58,7 @@ on_finish:
 
 deploy_script:
   - echo checking deployment
-  - ps: if ($env:APPVEYOR_REPO_NAME -notmatch 'Radiomics/pyradiomics') { appveyor exit }
+  - ps: if ($env:APPVEYOR_REPO_NAME -notmatch 'AIM-Harvard/pyradiomics') { appveyor exit }
   - ps: if ($env:APPVEYOR_REPO_TAG_NAME -notmatch '^v?[0-9]+(\.[0-9]+)*(rc\d+)?$') { appveyor exit }
   - echo starting PyPi deployment
   - ps: if ($env:APPVEYOR_REPO_TAG_NAME -match '^v?[0-9]+(\.[0-9]+)*$') { twine upload dist/*.whl -u %PYPI_USER% -p %PYPI_PASSWORD% }

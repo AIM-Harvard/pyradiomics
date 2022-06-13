@@ -147,7 +147,7 @@ jobs:
     steps:
       - run:
           name: Check Repo User
-          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
+          command: if [[ $CIRCLE_PROJECT_USERNAME != "AIM-Harvard" ]]; then circleci step halt; fi
       - checkout
       - run:
           name: Setup SciKit-CI
@@ -191,7 +191,7 @@ jobs:
     steps:
       - run:
           name: Check Repo User
-          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
+          command: if [[ $CIRCLE_PROJECT_USERNAME != "AIM-Harvard" ]]; then circleci step halt; fi
       - checkout
       - run:
           name: Setup SciKit-CI
@@ -235,7 +235,7 @@ jobs:
     steps:
       - run:
           name: Check Repo User
-          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
+          command: if [[ $CIRCLE_PROJECT_USERNAME != "AIM-Harvard" ]]; then circleci step halt; fi
       - checkout
       - run:
           name: Install Miniconda
@@ -289,6 +289,9 @@ workflows:
             - build-37
             - build-38
             - build-39
+            - build-mac-37
+            - build-mac-38
+            - build-mac-39
       - test_deploy:
           <<: *requires_template
           filters:

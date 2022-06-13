@@ -160,6 +160,7 @@ jobs:
       - run:
           name: Install patchelf auditwheel, twine
           command: |
+            apt update
             apt-get install patchelf  # needed to run auditwheel
             python -m pip install "auditwheel<3.2.0"
             python -m pip install twine
@@ -204,6 +205,7 @@ jobs:
       - run:
           name: Install patchelf auditwheel, twine
           command: |
+            apt update
             apt-get install patchelf  # needed to run auditwheel
             python -m pip install "auditwheel<3.2.0"
             python -m pip install twine

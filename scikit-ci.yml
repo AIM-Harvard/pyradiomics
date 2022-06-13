@@ -31,7 +31,7 @@ install:
     - $<RUN_ENV> pip install wheel>=0.29.0
     - $<RUN_ENV> pip install setuptools>=38.6.0
     - $<RUN_ENV> pip install numpy>=1.9.2
-    - $<RUN_ENV> pip install --trusted-host www.itk.org -f https://itk.org/SimpleITKDoxygen/html/PyDownloadPage.html SimpleITK>=0.9.1
+    - $<RUN_ENV> pip install SimpleITK>=0.9.1
     - $<RUN_ENV> python -c "import SimpleITK; print('SimpleITK Version:' + SimpleITK.Version_VersionString())"
     - $<RUN_ENV> pip install -r requirements.txt
     - $<RUN_ENV> pip install -r requirements-dev.txt

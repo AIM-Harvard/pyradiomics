@@ -145,6 +145,50 @@ jobs:
       - image: cimg/python:3.9
         user: root
 
+  test_deploy:
+    working_directory: /pyradiomics
+    docker:
+      - image: cimg/python:3.6
+        user: root
+    steps:
+      - run:
+          name: Check Repo User
+          command: if [[ $CIRCLE_PROJECT_USERNAME != "Radiomics" ]]; then circleci step halt; fi
+      - checkout
+      - run:
+          name: Setup SciKit-CI
+          command: |
+            pip install scikit-ci scikit-ci-addons
+            ci_addons --install ../addons
+      - run:
+          name: Install
+          command: ci install
+      - run:
+          name: Install patchelf auditwheel, twine
+          command: |
+            apt-get install patchelf  # needed to run auditwheel
+            python -m pip install "auditwheel<3.2.0"
+            python -m pip install twine
+      # only attach the workspace at this point to prevent the removal of source distributions
+      - attach_workspace:
+          at: /pyradiomics
+      - run:
+          name: Create sdist
+          command: python setup.py sdist
+      - run:
+          name: Fix Distribution Wheels
+          command: |
+            ls ./dist/*-linux_$(uname -m).whl  # This will prevent further deployment if no wheels are found
+            # Since there are no external shared libraries to bundle into the wheels
+            # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
+            for whl in $(ls ./dist/*-linux_$(uname -m).whl); do
+                auditwheel repair $whl -w ./dist/
+                rm $whl
+            done
+      - run:
+          name: Deploy source and linux wheels
+          command: twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_TEST_USER -p $PYPI_TEST_PASSWORD -r testpypi
+
   deploy:
     working_directory: /pyradiomics
     docker:
@@ -233,7 +277,7 @@ workflows:
           filters:
             tags:
               only:
-                - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
+                - /^v?[0-9]+(\.[0-9]+)*((a|b|rc)[0-9]+)?/
       - build-mac-38:
           <<: *build_job_template
       - build-mac-39:
@@ -255,7 +299,7 @@ workflows:
             - build-37
             - build-38
             - build-39
-      - deploy: &deploy_template
+      - test_deploy:
           requires:
             - build-35
             - build-36
@@ -268,6 +312,32 @@ workflows:
                 - /.*/
             tags:
               only:
-                - /^v?[0-9]+(\.[0-9]+)*(rc[0-9]+)?/
+                - /^v?[0-9]+(\.[0-9]+)*((a|b|rc)[0-9]+)/
+      - deploy:
+          requires:
+            - build-35
+            - build-36
+            - build-37
+            - build-38
+            - build-39
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^v?[0-9]+(\.[0-9]+)*/
       - deploy_conda:
-          <<: *deploy_template
+          requires:
+            - build-35
+            - build-36
+            - build-37
+            - build-38
+            - build-39
+          filters:
+            branches:
+              ignore:
+                - /.*/
+            tags:
+              only:
+                - /^v?[0-9]+(\.[0-9]+)*((a|b|rc)[0-9]+)?/

@@ -27,7 +27,7 @@ class TestMatrices:
       if testCase.startswith('test'):
         continue
       for className, featureClass in six.iteritems(featureClasses):
-        assert(featureClass is not None)
+        assert featureClass is not None
         if "_calculateMatrix" in dir(featureClass):
           logging.debug('generate_scenarios: featureClass = %s', className)
           yield testCase, className

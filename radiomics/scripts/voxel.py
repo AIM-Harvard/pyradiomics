@@ -39,7 +39,7 @@ def extractVoxel(case_idx, case, extractor, **kwargs):
       label = int(label)
     label_channel = case.get('Label_channel', None)  # Optional
     if isinstance(label_channel, six.string_types):
-      label_channel = int(label)
+      label_channel = int(label_channel)
 
     # Extract features
     result = extractor.execute(imageFilepath, maskFilepath, label, label_channel, voxelBased=True)

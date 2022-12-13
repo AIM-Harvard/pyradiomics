@@ -176,7 +176,7 @@ jobs:
             done
       - run:
           name: Deploy source and linux wheels
-          command: twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_TEST_USER -p $PYPI_TEST_PASSWORD -r testpypi
+          command: python -m twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_TEST_USER -p $PYPI_TEST_PASSWORD -r testpypi
 
   deploy:
     working_directory: /pyradiomics
@@ -221,7 +221,7 @@ jobs:
             done
       - run:
           name: Deploy source and linux wheels
-          command: twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_USER -p $PYPI_PASSWORD
+          command: python -m twine upload ./dist/*.whl ./dist/*.tar.gz -u $PYPI_USER -p $PYPI_PASSWORD
 
   deploy_conda:
     working_directory: /pyradiomics

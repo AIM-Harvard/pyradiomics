@@ -94,10 +94,10 @@ jobs:
       PYTHON_VERSION: 3.9.5
       PYTHON_SHORT_VERSION: 3.9
 
-  build-36: &build_template
+  build-37: &build_template
     working_directory: /pyradiomics
     docker:
-      - image: cimg/python:3.6
+      - image: cimg/python:3.7
         user: root
     steps:
       - checkout
@@ -121,12 +121,6 @@ jobs:
           root: .
           paths: [dist]
 
-  build-37:
-    <<: *build_template
-    docker:
-      - image: cimg/python:3.7
-        user: root
-
   build-38:
     <<: *build_template
     docker:
@@ -142,7 +136,7 @@ jobs:
   test_deploy:
     working_directory: /pyradiomics
     docker:
-      - image: cimg/python:3.6
+      - image: cimg/python:3.8
         user: root
     steps:
       - run:
@@ -277,8 +271,6 @@ workflows:
           <<: *build_job_template
       - build-mac-39:
           <<: *build_job_template
-      - build-36:
-          <<: *build_job_template
       - build-37:
           <<: *build_job_template
       - build-38:
@@ -287,7 +279,6 @@ workflows:
           <<: *build_job_template
       - test-notebooks: &requires_template
           requires:
-            - build-36
             - build-37
             - build-38
             - build-39

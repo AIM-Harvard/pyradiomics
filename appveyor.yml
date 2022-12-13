@@ -1,35 +1,27 @@
 version: "3.0.{build}"
 
 environment:
+  PYTHON_ARCH: "64"
+  BLOCK: "0"
+
   matrix:
 
     # Visual Studio (Python 3, 64 bit)
 
-    - PYTHON_DIR: "C:\\Python36-x64"
-      PYTHON_VERSION: "3.6.x"
-      PYTHON_SHORT_VERSION: "3.6"
-      PYTHON_ARCH: "64"
-      BLOCK: "0"
-
     - PYTHON_DIR: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7.x"
       PYTHON_SHORT_VERSION: "3.7"
-      PYTHON_ARCH: "64"
-      BLOCK: "0"
 
     - PYTHON_DIR: "C:\\Python38-x64"
       PYTHON_VERSION: "3.8.x"
       PYTHON_SHORT_VERSION: "3.8"
-      PYTHON_ARCH: "64"
-      BLOCK: "0"
 
-    - PYTHON_DIR: "C:\\Python38-x64"
+    - PYTHON_DIR: "C:\\Python39-x64"
       PYTHON_VERSION: "3.9.x"
       PYTHON_SHORT_VERSION: "3.9"
-      PYTHON_ARCH: "64"
-      BLOCK: "0"
 
 init:
+  - ps: $env:PATH=$env:PYTHON_DIR + ";" + $env:PYTHON_DIR + "\\Scripts;" + $env:PATH
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - python -m pip install scikit-ci scikit-ci-addons
   - python -m ci_addons --install ../addons
@@ -38,16 +30,16 @@ init:
   - ps: ../addons/appveyor/rolling-build.ps1
 
 install:
-  - python -m ci install
+  - ci install
 
 build_script:
-  - python -m ci build
+  - ci build
 
 test_script:
-  - python -m ci test
+  - ci test
 
 after_test:
-  - python -m ci after_test
+  - ci after_test
 
 artifacts:
   - path: dist/*
@@ -66,7 +58,8 @@ deploy_script:
   - echo starting Anaconda deployment
   - SET PATH=C:\Miniconda-x64\Scripts;%PATH%
   - conda config --set always_yes yes
-  - ./conda/configure_conda.bat && conda build ./conda --python=%PYTHON_SHORT_VERSION% --croot C:/conda-bld
+  - ./conda/configure_conda.bat
+  - conda build ./conda --python=%PYTHON_SHORT_VERSION% --croot C:/conda-bld
   - anaconda -t %ANACONDA_TOKEN% upload -u Radiomics C:/conda-bld/win-64/pyradiomics-*.tar.bz2 --force
   - echo finished deployment
 

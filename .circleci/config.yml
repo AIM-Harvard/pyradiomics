@@ -177,7 +177,7 @@ jobs:
             # Since there are no external shared libraries to bundle into the wheels
             # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
             for whl in $(ls ./dist/*-linux_$(uname -m).whl); do
-                auditwheel repair $whl -w ./dist/
+                python -m auditwheel repair $whl -w ./dist/
                 rm $whl
             done
       - run:
@@ -222,7 +222,7 @@ jobs:
             # Since there are no external shared libraries to bundle into the wheels
             # this step will fixup the wheel switching from 'linux' to 'manylinux1' tag
             for whl in $(ls ./dist/*-linux_$(uname -m).whl); do
-                auditwheel repair $whl -w ./dist/
+                python -m auditwheel repair $whl -w ./dist/
                 rm $whl
             done
       - run:

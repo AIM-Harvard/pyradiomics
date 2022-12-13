@@ -1,5 +1,6 @@
 version: "3.0.{build}"
 
+image: Visual Studio 2019
 environment:
   PYTHON_ARCH: "64"
   BLOCK: "0"
@@ -23,6 +24,7 @@ environment:
 init:
   - ps: $env:PATH=$env:PYTHON_DIR + ";" + $env:PYTHON_DIR + "\\Scripts;" + $env:PATH
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  - ps: python -c "import sys;print(sys.version, sys.executable)"
   - python -m pip install scikit-ci scikit-ci-addons
   - python -m ci_addons --install ../addons
   - python -m pip install twine

@@ -1,15 +1,10 @@
-# to run this test, from directory above:
-# setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/test_features.py
-
 import logging
 import os
 
-from nose_parameterized import parameterized
 import six
 
 from radiomics import getFeatureClasses
-from testUtils import custom_name_func, RadiomicsTestUtils
+from testUtils import RadiomicsTestUtils
 
 testUtils = RadiomicsTestUtils()
 tests = sorted(testUtils.getTests())
@@ -18,8 +13,13 @@ featureClass = None
 featureClasses = getFeatureClasses()
 
 
+def pytest_generate_tests(metafunc):
+  metafunc.parametrize(["testCase", "featureName"], metafunc.cls.generate_scenarios())
+
+
 class TestFeatures:
 
+  @staticmethod
   def generate_scenarios():
     global tests, featureClasses
 
@@ -51,17 +51,16 @@ class TestFeatures:
         for featureName in baselineFeatureNames:
           yield test, featureName
 
-  @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
-  def test_scenario(self, test, featureName):
+  def test_scenario(self, testCase, featureName):
     print("")
     global testUtils, featureClass, featureClasses
 
     featureName = featureName.split('_')
 
-    logging.debug('test_scenario: test = %s, featureClassName = %s, featureName = %s', test, featureName[1],
+    logging.debug('test_scenario: test = %s, featureClassName = %s, featureName = %s', testCase, featureName[1],
                   featureName[-1])
 
-    testOrClassChanged = testUtils.setFeatureClassAndTestCase(featureName[1], test)
+    testOrClassChanged = testUtils.setFeatureClassAndTestCase(featureName[1], testCase)
 
     testImage = testUtils.getImage(featureName[0])
     testMask = testUtils.getMask(featureName[0])

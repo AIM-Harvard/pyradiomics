@@ -113,8 +113,8 @@ class GeneralInfo:
     lssif = sitk.LabelShapeStatisticsImageFilter()
     lssif.Execute(mask)
 
-    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_BoundingBox'] = lssif.GetBoundingBox(label)
-    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_VoxelNum'] = lssif.GetNumberOfPixels(label)
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_BoundingBox'] = lssif.GetBoundingBox(int(label))
+    self.generalInfo[self.generalInfo_prefix + 'Mask-' + prefix + '_VoxelNum'] = lssif.GetNumberOfPixels(int(label))
 
     labelMap = (mask == label)
     ccif = sitk.ConnectedComponentImageFilter()

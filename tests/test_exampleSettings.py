@@ -1,13 +1,14 @@
-# to run this test, from directory above:
-# setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/test_exampleSettings.py
-
 import os
 
-from nose_parameterized import parameterized
 import pykwalify.core
 
 from radiomics import getParameterValidationFiles
+
+
+schemaFile, schemaFuncs = getParameterValidationFiles()
+
+def pytest_generate_tests(metafunc):
+  metafunc.parametrize("settingsFile", metafunc.cls.generate_scenarios())
 
 
 def exampleSettings_name_func(testcase_func, param_num, param):
@@ -15,10 +16,9 @@ def exampleSettings_name_func(testcase_func, param_num, param):
 
 
 class TestExampleSettings:
-  def __init__(self):
-    self.schemaFile, self.schemaFuncs = getParameterValidationFiles()
 
-  def generateScenarios():
+  @staticmethod
+  def generate_scenarios():
     dataDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'examples', 'exampleSettings')
     if os.path.isdir(dataDir):
       settingsFiles = [fname for fname in os.listdir(dataDir) if fname.endswith('.yaml') or fname.endswith('.yml')]
@@ -26,10 +26,10 @@ class TestExampleSettings:
       for fname in settingsFiles:
         yield os.path.join(dataDir, fname)
 
-  @parameterized.expand(generateScenarios(), testcase_func_name=exampleSettings_name_func)
   def test_scenarios(self, settingsFile):
+    global schemaFile, schemaFuncs
 
-    assert os.path.isfile(self.schemaFile)
-    assert os.path.isfile(self.schemaFuncs)
-    c = pykwalify.core.Core(source_file=settingsFile, schema_files=[self.schemaFile], extensions=[self.schemaFuncs])
+    assert os.path.isfile(schemaFile)
+    assert os.path.isfile(schemaFuncs)
+    c = pykwalify.core.Core(source_file=settingsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
     c.validate()

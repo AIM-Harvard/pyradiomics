@@ -8,7 +8,7 @@ import threading
 import SimpleITK as sitk
 import six
 
-import radiomics.featureextractor
+import radiomics
 
 caseLogger = logging.getLogger('radiomics.script')
 _parallel_extraction_configured = False

@@ -19,6 +19,13 @@ def getMask(mask, **kwargs):
   In this case, the mask at index ``label_channel`` is extracted. The resulting 3D volume is then treated as it were a
   scalar input volume (i.e. with the region of interest defined by voxels with value matching ``label``).
 
+  .. note::
+    If only one or non-overlapping Segments are defined when using 3D Slicer, it may be the case that it is stored as a
+    labelmap (i.e. only 1 ``label_channel``, with different segmentations identified by different values for ``label``).
+    This is easy to check by loading the mask as a SimpleITK image and checking the `GetNumberOfComponentsPerPixel()`,
+    if the return value is ``1``, it is a label map (i.e. use ``label``), otherwise it is a VectorImage (i.e. use
+    ``label_channel``).
+
   Finally, checks if the mask volume contains an ROI identified by ``label``. Raises a value error if the label is not
   present (including a list of valid labels found).
 
@@ -38,7 +45,7 @@ def getMask(mask, **kwargs):
 
     logger.info('Extracting mask at index %i', label_channel)
     selector = sitk.VectorIndexSelectionCastImageFilter()
-    selector.SetIndex(label_channel)
+    selector.SetIndex(int(label_channel))
     mask = selector.Execute(mask)
 
   logger.debug('Force casting mask to UInt32 to ensure correct datatype.')
@@ -216,7 +223,7 @@ def checkMask(imageNode, maskNode, **kwargs):
 
   correctedMask = None
 
-  label = kwargs.get('label', 1)
+  label = int(kwargs.get('label', 1))
   minDims = kwargs.get('minimumROIDimensions', 2)
   minSize = kwargs.get('minimumROISize', None)
 
@@ -316,7 +323,7 @@ def _checkROI(imageNode, maskNode, **kwargs):
   returned. Otherwise, a ValueError is raised.
   """
   global logger
-  label = kwargs.get('label', 1)
+  label = int(kwargs.get('label', 1))
 
   logger.debug('Checking ROI validity')
 
@@ -442,7 +449,7 @@ def resampleImage(imageNode, maskNode, **kwargs):
   resampledPixelSpacing = kwargs['resampledPixelSpacing']
   interpolator = kwargs.get('interpolator', sitk.sitkBSpline)
   padDistance = kwargs.get('padDistance', 5)
-  label = kwargs.get('label', 1)
+  label = int(kwargs.get('label', 1))
 
   logger.debug('Resampling image and mask')
 

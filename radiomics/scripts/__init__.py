@@ -15,6 +15,7 @@ from pykwalify.compat import yaml
 import pykwalify.core
 import six.moves
 
+import radiomics
 import radiomics.featureextractor
 from . import segment, voxel
 

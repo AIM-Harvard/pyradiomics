@@ -45,11 +45,7 @@ build:
 
 test:
   commands:
-    - $<RUN_ENV> python setup.py test  --args="--with-xunit --logging-level=DEBUG"
-
-  circleci:
-    commands:
-      - cp nosetests.xml $CIRCLE_TEST_REPORTS
+    - $<RUN_ENV> pytest
 
 after_test:
   commands:

@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "numpy", "versioneer"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyradiomics"
+version = "3.0.1a1"
+authors = [
+    { name = "PyRadimiomics Community", email = "pyradiomics@googlegroups.com"}
+]
+description = "Radiomics features library for python"
+readme = "README.md"
+requires-python =">=3.5"
+license = { file = "LICENSE.txt"}
+keywords = [ "radiomics", "cancerimaging", "medicalresearch", "computationalimaging" ]
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Environment :: Console',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: BSD License',
+    'Operating System :: OS Independent',
+    'Programming Language :: C',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Topic :: Scientific/Engineering :: Bio-Informatics'
+]
+dependencies = [
+    "numpy",
+    "SimpleITK",
+    "PyWavelets",
+    "pykwalify",
+    "six"
+]
+
+[project.scripts]
+pyradiomics = "radiomics.scripts.__init__:parse_args"
+
+[project.urls]
+"Homepaget" = "http://github.com/AIM-Harvard/pyradiomics#readme"
+"Radiomics.io" = "https://www.radiomics.io/"
+"Documentation" = "https://pyradiomics.readthedocs.io/en/latest/index.html"
+"Docker" = "https://hub.docker.com/r/radiomics/pyradiomics/"
+"Github" = "https://github.com/AIM-Harvard/pyradiomics"

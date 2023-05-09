@@ -8,7 +8,7 @@ from radiomics import getTestCase, imageoperations
 
 logger = logging.getLogger('radiomics.testing')
 testCases = ('test_wavelet_64x64x64', 'test_wavelet_37x37x37')
-baselineFile = '../data/baseline/wavelet.npy'
+baselineFile = os.path.join(os.path.dirname(__file__), '../data/baseline/wavelet.npy')
 
 
 def pytest_generate_tests(metafunc):

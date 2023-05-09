@@ -41,7 +41,7 @@ before_build:
 
 build:
   commands:
-    - $<RUN_ENV> python setup.py build_ext
+    - $<RUN_ENV> python setup.py develop
 
 test:
   commands:

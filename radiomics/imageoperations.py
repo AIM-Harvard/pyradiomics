@@ -19,6 +19,13 @@ def getMask(mask, **kwargs):
   In this case, the mask at index ``label_channel`` is extracted. The resulting 3D volume is then treated as it were a
   scalar input volume (i.e. with the region of interest defined by voxels with value matching ``label``).
 
+  .. note::
+    If only one or non-overlapping Segments are defined when using 3D Slicer, it may be the case that it is stored as a
+    labelmap (i.e. only 1 ``label_channel``, with different segmentations identified by different values for ``label``).
+    This is easy to check by loading the mask as a SimpleITK image and checking the `GetNumberOfComponentsPerPixel()`,
+    if the return value is ``1``, it is a label map (i.e. use ``label``), otherwise it is a VectorImage (i.e. use
+    ``label_channel``).
+
   Finally, checks if the mask volume contains an ROI identified by ``label``. Raises a value error if the label is not
   present (including a list of valid labels found).
 

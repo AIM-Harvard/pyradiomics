@@ -38,7 +38,7 @@ def getMask(mask, **kwargs):
 
     logger.info('Extracting mask at index %i', label_channel)
     selector = sitk.VectorIndexSelectionCastImageFilter()
-    selector.SetIndex(label_channel)
+    selector.SetIndex(int(label_channel))
     mask = selector.Execute(mask)
 
   logger.debug('Force casting mask to UInt32 to ensure correct datatype.')
@@ -216,7 +216,7 @@ def checkMask(imageNode, maskNode, **kwargs):
 
   correctedMask = None
 
-  label = kwargs.get('label', 1)
+  label = int(kwargs.get('label', 1))
   minDims = kwargs.get('minimumROIDimensions', 2)
   minSize = kwargs.get('minimumROISize', None)
 
@@ -316,7 +316,7 @@ def _checkROI(imageNode, maskNode, **kwargs):
   returned. Otherwise, a ValueError is raised.
   """
   global logger
-  label = kwargs.get('label', 1)
+  label = int(kwargs.get('label', 1))
 
   logger.debug('Checking ROI validity')
 
@@ -442,7 +442,7 @@ def resampleImage(imageNode, maskNode, **kwargs):
   resampledPixelSpacing = kwargs['resampledPixelSpacing']
   interpolator = kwargs.get('interpolator', sitk.sitkBSpline)
   padDistance = kwargs.get('padDistance', 5)
-  label = kwargs.get('label', 1)
+  label = int(kwargs.get('label', 1))
 
   logger.debug('Resampling image and mask')
 

@@ -43,8 +43,8 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   Let:
 
   - :math:`\epsilon` be an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`)
-  - :math:`\textbf{P}(i,j)` be the co-occurence matrix for an arbitrary :math:`\delta` and :math:`\theta`
-  - :math:`p(i,j)` be the normalized co-occurence matrix and equal to
+  - :math:`\textbf{P}(i,j)` be the co-occurrence matrix for an arbitrary :math:`\delta` and :math:`\theta`
+  - :math:`p(i,j)` be the normalized co-occurrence matrix and equal to
     :math:`\frac{\textbf{P}(i,j)}{\sum{\textbf{P}(i,j)}}`
   - :math:`N_g` be the number of discrete intensity levels in the image
   - :math:`p_x(i) = \sum^{N_g}_{j=1}{p(i,j)}` be the marginal row probabilities

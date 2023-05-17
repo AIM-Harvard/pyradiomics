@@ -3,7 +3,7 @@
 ## Build Status
 
 | Linux / MacOS                 | Windows                       |
-|-------------------------------| ----------------------------- |
+| ----------------------------- | ----------------------------- |
 | [![][circleci]][circleci-lnk] | [![][appveyor]][appveyor-lnk] |
 
 
@@ -39,7 +39,7 @@ Currently supports the following feature classes:
 
  - First Order Statistics
  - Shape-based (2D and 3D)
- - Gray Level Cooccurence Matrix (GLCM)
+ - Gray Level Co-occurrence Matrix (GLCM)
  - Gray Level Run Length Matrix (GLRLM)
  - Gray Level Size Zone Matrix (GLSZM)
  - Gray Level Dependece Matrix (GLDM)

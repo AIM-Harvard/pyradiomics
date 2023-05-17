@@ -26,5 +26,5 @@ setup(
 
   packages=['radiomics', 'radiomics.scripts'],
   ext_modules=ext,
-  zip_safe=False,
+  zip_safe=False
 )

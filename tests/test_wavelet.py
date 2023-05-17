@@ -1,11 +1,6 @@
-# to run this test, from directory above:
-# setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/test_features.py
-
 import logging
 import os
 
-from nose_parameterized import parameterized
 import numpy
 import SimpleITK as sitk
 
@@ -13,43 +8,16 @@ from radiomics import getTestCase, imageoperations
 
 logger = logging.getLogger('radiomics.testing')
 testCases = ('test_wavelet_64x64x64', 'test_wavelet_37x37x37')
-baselineFile = '../data/baseline/wavelet.npy'
+baselineFile = os.path.join(os.path.dirname(__file__), '../data/baseline/wavelet.npy')
 
 
-def custom_name_func(testcase_func, param_num, param):
-  """
-  A custom test name function that will ensure that the tests are run such that they're batched with all tests for a
-  given data set are run together, avoiding re-reading the data more than necessary. Tests are run in alphabetical
-  order, so put the test case first. An alternate option is to right justify the test number (param_num) with zeroes
-  so that the numerical and alphabetical orders are the same. Not providing this method when there are more than 10
-  tests results in tests running in an order similar to:
-
-  test_*.test_scenario_0_*
-
-  test_*.test_scenario_10_*
-
-  test_*.test_scenario_11_*
-
-  ...
-
-  test_*.test_scenario_19_*
-
-  test_*.test_scenario_1_*
-
-  test_*.test_scenario_20_*
-  """
-  global logger
-
-  logger.debug('custom_name_func: function name = %s, param_num = {0:0>3}, param.args = %s'.format(param_num),
-               testcase_func.__name__, param.args)
-  return str("%s_%s" % (
-    testcase_func.__name__,
-    parameterized.to_safe_name(param.args[0]),
-  ))
+def pytest_generate_tests(metafunc):
+  metafunc.parametrize(["testCase", "image", "mask", "baseline"], metafunc.cls.generate_scenarios())
 
 
 class TestWavelet:
 
+  @staticmethod
   def generate_scenarios():
     global logger, testCases, baselineFile
 
@@ -85,11 +53,10 @@ class TestWavelet:
         level = wavelet_name.split('-')[1]
         yield '_'.join((testCase, 'preCropped', wavelet_name)), image, mask, baselineDict[level]
 
-  @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
-  def test_scenario(self, test, image, mask, baseline):
+  def test_scenario(self, testCase, image, mask, baseline):
     global logger, testUtils, featureClasses
 
-    logger.debug('test_scenario: testCase = %s,', test)
+    logger.debug('test_scenario: testCase = %s,', testCase)
 
     im_arr = sitk.GetArrayFromImage(image)
     ma_arr = sitk.GetArrayFromImage(mask) == 1  # Conver to boolean array, label = 1

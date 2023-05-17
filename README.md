@@ -2,19 +2,16 @@
 
 ## Build Status
 
-| Linux                          | macOS                         | Windows                       |
-|--------------------------------|-------------------------------|-------------------------------|
-| [![][circleci]][circleci-lnk]  | [![][travisci]][travisci-lnk] | [![][appveyor]][appveyor-lnk] |
+| Linux / MacOS                 | Windows                       |
+| ----------------------------- | ----------------------------- |
+| [![][circleci]][circleci-lnk] | [![][appveyor]][appveyor-lnk] |
 
 
-[appveyor]: https://ci.appveyor.com/api/projects/status/tw69xbbeyluk7fl7/branch/master?svg=true
-[appveyor-lnk]: https://ci.appveyor.com/project/Radiomics/pyradiomics/branch/master
+[appveyor]: https://ci.appveyor.com/api/projects/status/kvu7897q0v4imwdc?svg=true
+[appveyor-lnk]: https://ci.appveyor.com/project/AIM-Harvard/pyradiomics-k4sto
 
-[circleci]: https://circleci.com/gh/Radiomics/pyradiomics.svg?style=svg&circle-token=a4748cf0de5fad2c12bc93a485282378551c3584
-[circleci-lnk]: https://circleci.com/gh/Radiomics/pyradiomics
-
-[travisci]: https://travis-ci.org/Radiomics/pyradiomics.svg?branch=master
-[travisci-lnk]: https://travis-ci.org/Radiomics/pyradiomics
+[circleci]: https://dl.circleci.com/status-badge/img/gh/AIM-Harvard/pyradiomics/tree/master.svg?style=shield
+[circleci-lnk]: https://circleci.com/gh/AIM-Harvard/pyradiomics
 
 ## Radiomics feature extraction in Python
 This is an open-source python package for the extraction of Radiomics features from medical imaging.
@@ -120,7 +117,7 @@ For more information on using docker, see
 PyRadiomics can be easily used in a Python script through the `featureextractor`
 module. Furthermore, PyRadiomics provides a commandline script, `pyradiomics`, for both single image extraction and 
 batchprocessing. Finally, a convenient front-end interface is provided as the 'Radiomics'
-extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRadiomics).
+extension for 3D Slicer, available [here](https://github.com/AIM-Harvard/SlicerRadiomics).
 
 ### 3rd-party packages used in pyradiomics:
  - SimpleITK (Image loading and preprocessing)
@@ -135,7 +132,7 @@ extension for 3D Slicer, available [here](https://github.com/Radiomics/SlicerRad
 See also the [requirements file](requirements.txt).
 
 ### 3D Slicer
-PyRadiomics is also available as an [extension](https://github.com/Radiomics/SlicerRadiomics) to [3D Slicer](slicer.org). 
+PyRadiomics is also available as an [extension](https://github.com/AIM-Harvard/SlicerRadiomics) to [3D Slicer](slicer.org). 
 Download and install the 3D slicer [nightly build](http://download.slicer.org/), the extension is then available in the
 extension manager under "SlicerRadiomics".
 

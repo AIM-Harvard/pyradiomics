@@ -6,7 +6,7 @@ include requirements-dev.txt
 include requirements-setup.txt
 include versioneer.py
 
-recursive-include radiomics *
+recursive-include src/radiomics *
 
 recursive-include data/baseline *
 recursive-include data *_image.nrrd
@@ -24,4 +24,3 @@ recursive-include bin *.py
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[cod]
-recursive-exclude * nosetests.xml

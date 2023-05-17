@@ -1,11 +1,9 @@
-
 import ast
 import csv
 import logging
 import math
 import os
 
-from nose_parameterized import parameterized
 import numpy
 import SimpleITK as sitk
 import six
@@ -14,38 +12,6 @@ from radiomics import featureextractor, getTestCase, imageoperations
 
 # Get the logger. This is done outside the class, as it is needed by both the class and the custom_name_func
 logger = logging.getLogger('radiomics.testing')
-
-
-def custom_name_func(testcase_func, param_num, param):
-  """
-  A custom test name function that will ensure that the tests are run such that they're batched with all tests for a
-  given data set are run together, avoiding re-reading the data more than necessary. Tests are run in alphabetical
-  order, so put the test case first. An alternate option is to right justify the test number (param_num) with zeroes
-  so that the numerical and alphabetical orders are the same. Not providing this method when there are more than 10
-  tests results in tests running in an order similar to:
-
-  test_*.test_scenario_0_*
-
-  test_*.test_scenario_10_*
-
-  test_*.test_scenario_11_*
-
-  ...
-
-  test_*.test_scenario_19_*
-
-  test_*.test_scenario_1_*
-
-  test_*.test_scenario_20_*
-  """
-  global logger
-
-  logger.debug('custom_name_func: function name = %s, param_num = {0:0>3}, param.args = %s'.format(param_num),
-               testcase_func.__name__, param.args)
-  return str("%s_%s" % (
-    testcase_func.__name__,
-    parameterized.to_safe_name("_".join(str(x) for x in param.args)),
-  ))
 
 
 class RadiomicsTestUtils:

@@ -1,16 +1,11 @@
-# to run this test, from directory above:
-# setenv PYTHONPATH /path/to/pyradiomics/radiomics
-# nosetests --nocapture -v tests/test_features.py
-
 import logging
 import os
 
-from nose_parameterized import parameterized
 import numpy
 import six
 
 from radiomics import getFeatureClasses, testCases
-from testUtils import custom_name_func, RadiomicsTestUtils
+from testUtils import RadiomicsTestUtils
 
 
 testUtils = RadiomicsTestUtils()
@@ -18,8 +13,13 @@ testUtils = RadiomicsTestUtils()
 featureClasses = getFeatureClasses()
 
 
+def pytest_generate_tests(metafunc):
+  metafunc.parametrize(["testCase", "featureClassName"], metafunc.cls.generate_scenarios())
+
+
 class TestMatrices:
 
+  @staticmethod
   def generate_scenarios():
     global featureClasses
 
@@ -27,23 +27,22 @@ class TestMatrices:
       if testCase.startswith('test'):
         continue
       for className, featureClass in six.iteritems(featureClasses):
-        assert(featureClass is not None)
+        assert featureClass is not None
         if "_calculateMatrix" in dir(featureClass):
           logging.debug('generate_scenarios: featureClass = %s', className)
           yield testCase, className
 
-  @parameterized.expand(generate_scenarios(), testcase_func_name=custom_name_func)
-  def test_scenario(self, test, featureClassName):
+  def test_scenario(self, testCase, featureClassName):
     global testUtils, featureClasses
 
-    logging.debug('test_scenario: testCase = %s, featureClassName = %s', test, featureClassName)
+    logging.debug('test_scenario: testCase = %s, featureClassName = %s', testCase, featureClassName)
 
-    baselineFile = os.path.join(testUtils.getDataDir(), 'baseline', '%s_%s.npy' % (test, featureClassName))
+    baselineFile = os.path.join(testUtils.getDataDir(), 'baseline', '%s_%s.npy' % (testCase, featureClassName))
     assert os.path.isfile(baselineFile)
 
     baselineMatrix = numpy.load(baselineFile)
 
-    testUtils.setFeatureClassAndTestCase(featureClassName, test)
+    testUtils.setFeatureClassAndTestCase(featureClassName, testCase)
 
     testImage = testUtils.getImage('original')
     testMask = testUtils.getMask('original')

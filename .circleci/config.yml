@@ -280,7 +280,6 @@ jobs:
       - run:
           name: Configure Miniconda
           command: |
-            conda install gcc_linux-64 libgcc
             bash ./conda/configure_conda.sh
       - run:
           name: Build Conda packages

@@ -277,6 +277,7 @@ jobs:
             brew install pyenv
             pyenv install miniconda3-latest
             echo 'export PATH=$HOME/.pyenv/versions/miniconda3-latest/bin:$PATH' >> $BASH_ENV
+      - checkout
       - run:
           name: Configure Miniconda
           command: |

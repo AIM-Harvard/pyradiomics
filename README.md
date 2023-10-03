@@ -1,5 +1,16 @@
 # pyradiomics v3.1.0
 
+This is a fork of the `pyradiomics` original package. It seems that the package is not properly maintained since early 
+2022, and it especially causes issues with the distribution through poetry as the build is not properly handled for 
+python>3.6. The goal of this fork is to circumvent this issue and others that may arise until the main package gets 
+a proper release.
+
+In order to add this version of `pyradiomics` to a project, run
+
+    poetry add git+https://github.com/owkin/pyradiomics
+
+Below is the original README.
+
 ## Build Status
 
 | Linux / MacOS                 | Windows                       |

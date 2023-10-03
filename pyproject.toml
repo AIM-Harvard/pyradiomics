@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools>=61.0", "numpy", "versioneer"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0", "numpy", "versioneer", "poetry-core>=1.0.0"]
+build-backend = ["poetry.core.masonry.api", "setuptools.build_meta"]
 
-[project]
+[tool.poetry]
 name = "pyradiomics"
-version = "3.0.1a1"
-authors = [
-    { name = "PyRadimiomics Community", email = "pyradiomics@googlegroups.com"}
+packages = [
+    {include = "radiomics"}
 ]
+version = "3.0.1a1"
+authors = ["PyRadimiomics Community",  "pyradiomics@googlegroups.com"]
 description = "Radiomics features library for python"
 readme = "README.md"
-requires-python =">=3.5"
-license = { file = "LICENSE.txt"}
+license = "LICENSE.txt"
 keywords = [ "radiomics", "cancerimaging", "medicalresearch", "computationalimaging" ]
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -26,22 +26,19 @@ classifiers = [
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
     'Topic :: Scientific/Engineering :: Bio-Informatics'
 ]
-dependencies = [
-    "numpy",
-    "SimpleITK",
-    "PyWavelets",
-    "pykwalify",
-    "six"
-]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.21.2"
+SimpleITK = "^2.1.1"
+PyWavelets = "^1.1.1"
+pykwalify = "^1.8.0"
+six = "^1.16.0"
 
 [project.scripts]
 pyradiomics = "radiomics.scripts.__init__:parse_args"
 
-[project.urls]
-"Homepaget" = "http://github.com/AIM-Harvard/pyradiomics#readme"
-"Radiomics.io" = "https://www.radiomics.io/"
-"Documentation" = "https://pyradiomics.readthedocs.io/en/latest/index.html"
-"Docker" = "https://hub.docker.com/r/radiomics/pyradiomics/"
-"Github" = "https://github.com/AIM-Harvard/pyradiomics"

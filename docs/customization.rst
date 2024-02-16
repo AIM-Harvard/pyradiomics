@@ -405,7 +405,7 @@ above. This is reflected in the structure of the document as follows::
     <Customization Category>:
       <Setting Name>: <value>
       ...
-    <Customization Categort>:
+    <Customization Category>:
       ...
 
 Blank lines may be inserted to increase readability, these are ignored by the parser. Additional comments are also

@@ -369,6 +369,11 @@ class RadiomicsFeatureExtractor:
     logger.info('Loading image and mask')
     if isinstance(ImageFilePath, six.string_types) and os.path.isfile(ImageFilePath):
       image = sitk.ReadImage(ImageFilePath)
+    elif isinstance(ImageFilePath, six.string_types) and os.path.isdir(ImageFilePath):
+      reader = sitk.ImageSeriesReader()
+      dicom_names = reader.GetGDCMSeriesFileNames(ImageFilePath)
+      reader.SetFileNames(dicom_names)
+      image = reader.Execute()
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       image = ImageFilePath
     else:

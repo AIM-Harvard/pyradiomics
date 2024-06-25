@@ -133,7 +133,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
     **1. Small Dependence Emphasis (SDE)**
 
     .. math::
-      SDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{i^2}}}{N_z}
+      SDE = \frac{\sum^{N_g}_{i=1}\sum^{N_d}_{j=1}{\frac{\textbf{P}(i,j)}{j^2}}}{N_z}
 
     A measure of the distribution of small dependencies, with a greater value indicative
     of smaller dependence and less homogeneous textures.

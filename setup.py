@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils import sysconfig
+import sysconfig
 import platform
 
 import numpy
@@ -8,10 +8,10 @@ from setuptools import Extension, setup
 import versioneer
 
 if platform.architecture()[0].startswith('32'):
-  raise Exception('PyRadiomics requires 64 bits python')
+    raise Exception('PyRadiomics requires 64 bits python')
 
 commands = versioneer.get_cmdclass()
-incDirs = [sysconfig.get_python_inc(), numpy.get_include()]
+incDirs = [sysconfig.get_paths()['include'], numpy.get_include()]
 
 ext = [Extension("radiomics._cmatrices", ["radiomics/src/_cmatrices.c", "radiomics/src/cmatrices.c"],
                  include_dirs=incDirs),

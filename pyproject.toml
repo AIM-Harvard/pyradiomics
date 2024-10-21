@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pyradiomics"
 version = "3.1.1"
 authors = [
-    { name = "PyRadimiomics Community", email = "pyradiomics@googlegroups.com"}
+    { name = "PyRadiomics Community", email = "pyradiomics@googlegroups.com"}
 ]
 description = "Radiomics features library for python"
 readme = "README.md"

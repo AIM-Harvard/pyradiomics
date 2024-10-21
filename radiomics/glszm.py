@@ -295,7 +295,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
     Here, :math:`\epsilon` is an arbitrarily small positive number (:math:`\approx 2.2\times10^{-16}`).
 
     ZE measures the uncertainty/randomness in the distribution of zone sizes and gray levels. A higher value indicates
-    more heterogeneneity in the texture patterns.
+    more heterogeneity in the texture patterns.
     """
     eps = numpy.spacing(1)
     Nz = self.coefficients['Nz']

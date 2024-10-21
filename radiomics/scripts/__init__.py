@@ -19,6 +19,7 @@ import radiomics
 import radiomics.featureextractor
 from . import segment, voxel
 
+from ruamel.yaml import YAML
 
 class PyRadiomicsCommandLine:
 
@@ -350,7 +351,8 @@ class PyRadiomicsCommandLine:
     self.logger.debug('Reading parameter schema')
     schemaFile, schemaFuncs = radiomics.getParameterValidationFiles()
     with open(schemaFile) as schema:
-      settingsSchema = yaml.safe_load(schema)['mapping']['setting']['mapping']
+      yaml = YAML(typ='safe', pure=True)
+      settingsSchema = yaml.load(schema)['mapping']['setting']['mapping']
 
     # parse single value function
     def parse_value(value, value_type):

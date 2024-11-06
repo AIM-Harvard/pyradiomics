@@ -32,13 +32,13 @@ jobs:
           command: |
             jupyter nbconvert --ExecutePreprocessor.kernel_name=python3 --ExecutePreprocessor.timeout=-1 --to notebook --output-dir /tmp --execute  notebooks/helloRadiomics.ipynb notebooks/helloFeatureClass.ipynb notebooks/PyRadiomicsExample.ipynb
 
-  build-mac-37: &build_mac_template
+  build-mac-38: &build_mac_template
     working_directory: ~/pyradiomics
     macos:
-      xcode: 12.5.1
+      xcode: 15.3.0
     environment:
-      PYTHON_VERSION: 3.7.10
-      PYTHON_SHORT_VERSION: 3.7
+      PYTHON_VERSION: 3.8.10
+      PYTHON_SHORT_VERSION: 3.8
     steps:
       - run:
           name: Setup MAC OS environment
@@ -82,22 +82,21 @@ jobs:
           root: .
           paths: [dist]
 
-  build-mac-38:
-    <<: *build_mac_template
-    environment:
-      PYTHON_VERSION: 3.8.10
-      PYTHON_SHORT_VERSION: 3.7
-
   build-mac-39:
     <<: *build_mac_template
     environment:
       PYTHON_VERSION: 3.9.5
       PYTHON_SHORT_VERSION: 3.9
 
-  build-37: &build_template
-    working_directory: /pyradiomics
+  build-mac-310:
+    <<: *build_mac_template
+    environment:
+      PYTHON_VERSION: 3.10.12
+      PYTHON_SHORT_VERSION: 3.10
+
+  build-38: &build_template
     docker:
-      - image: cimg/python:3.7
+      - image: cimg/python:3.8
         user: root
     steps:
       - checkout
@@ -121,22 +120,22 @@ jobs:
           root: .
           paths: [dist]
 
-  build-38:
-    <<: *build_template
-    docker:
-      - image: cimg/python:3.8
-        user: root
-
   build-39:
     <<: *build_template
     docker:
       - image: cimg/python:3.9
         user: root
 
+  build-310:
+    <<: *build_template
+    docker:
+      - image: cimg/python:3.10
+        user: root
+
   test_deploy:
     working_directory: /pyradiomics
     docker:
-      - image: cimg/python:3.8
+      - image: cimg/python:3.9
         user: root
     steps:
       - run:
@@ -181,7 +180,7 @@ jobs:
   deploy:
     working_directory: /pyradiomics
     docker:
-      - image: cimg/python:3.6
+      - image: cimg/python:3.9
         user: root
     steps:
       - run:
@@ -249,10 +248,9 @@ jobs:
           name: Build Conda packages
           command: |
             mkdir  /conda-bld
-            conda build ./conda --python=3.6 --croot /conda-bld
-            conda build ./conda --python=3.7 --croot /conda-bld
             conda build ./conda --python=3.8 --croot /conda-bld
             conda build ./conda --python=3.9 --croot /conda-bld
+            conda build ./conda --python=3.10 --croot /conda-bld
       - run:
           name: Deploy Conda packages
           command: |
@@ -286,10 +284,9 @@ jobs:
           name: Build Conda packages
           command: |
             mkdir  ~/conda-bld
-            conda build ./conda --python=3.6 --croot ~/conda-bld
-            conda build ./conda --python=3.7 --croot ~/conda-bld
             conda build ./conda --python=3.8 --croot ~/conda-bld
             conda build ./conda --python=3.9 --croot ~/conda-bld
+            conda build ./conda --python=3.10 --croot ~/conda-bld
       - run:
           name: Deploy Conda packages
           command: |
@@ -299,29 +296,29 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build-mac-37: &build_job_template
+      - build-mac-38: &build_job_template
           filters:
             tags:
               only:
                 - /^v?[0-9]+(\.[0-9]+)*((a|b|rc)[0-9]+)?/
-      - build-mac-38:
-          <<: *build_job_template
       - build-mac-39:
           <<: *build_job_template
-      - build-37:
+      - build-mac-310:
           <<: *build_job_template
       - build-38:
           <<: *build_job_template
       - build-39:
           <<: *build_job_template
+      - build-310:
+          <<: *build_job_template
       - test-notebooks: &requires_template
           requires:
-            - build-37
             - build-38
             - build-39
-            - build-mac-37
+            - build-310
             - build-mac-38
             - build-mac-39
+            - build-mac-310
       - test_deploy:
           <<: *requires_template
           filters:

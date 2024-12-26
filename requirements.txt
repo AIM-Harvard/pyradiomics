@@ -3,3 +3,4 @@ SimpleITK
 PyWavelets
 pykwalify
 six
+itk

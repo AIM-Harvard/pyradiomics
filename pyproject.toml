@@ -33,7 +33,8 @@ dependencies = [
     "SimpleITK",
     "PyWavelets",
     "pykwalify",
-    "six"
+    "six",
+    "itk"
 ]
 
 [project.scripts]

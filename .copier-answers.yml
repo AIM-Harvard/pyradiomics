@@ -1,0 +1,12 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 2025.01.22-2-g6a4b022
+_src_path: gh:scientific-python/cookie
+backend: skbuild
+email: pyradiomics@googlegroups.com
+full_name: Pyradiomics Community
+license: BSD
+org: AIM-Harvard
+project_name: pyradiomics
+project_short_description: Radiomics features library for python
+url: https://github.com/AIM-Harvard/pyradiomics
+vcs: true

@@ -6,7 +6,7 @@ include requirements-dev.txt
 include requirements-setup.txt
 include versioneer.py
 
-recursive-include src/radiomics *
+recursive-include radiomics *
 
 recursive-include data/baseline *
 recursive-include data *_image.nrrd

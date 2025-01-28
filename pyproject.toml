@@ -1,16 +1,16 @@
 [build-system]
-requires = ["setuptools>=61.0", "numpy", "versioneer[toml]"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.10", "numpy"]
+build-backend = "scikit_build_core.build"
+
 
 [project]
 name = "pyradiomics"
-dynamic = ["version"]
 authors = [
     { name = "PyRadiomics Community", email = "pyradiomics@googlegroups.com"}
 ]
 description = "Radiomics features library for python"
 readme = "README.md"
-requires-python =">=3.5"
+requires-python =">=3.8"
 license = { file = "LICENSE.txt"}
 keywords = [ "radiomics", "cancerimaging", "medicalresearch", "computationalimaging" ]
 classifiers = [
@@ -28,6 +28,7 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Topic :: Scientific/Engineering :: Bio-Informatics'
 ]
+dynamic = ["version"]
 dependencies = [
     "numpy",
     "SimpleITK",
@@ -36,19 +37,148 @@ dependencies = [
     "six"
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest >=6",
+    "pytest-cov >=3",
+]
+dev = [
+    "pytest >=6",
+    "pytest-cov >=3",
+]
+docs = [
+    "sphinx>=7.0",
+    "myst_parser>=0.13",
+    "sphinx_copybutton",
+    "sphinx_autodoc_typehints",
+    "furo>=2023.08.17",
+]
+
 [project.scripts]
 pyradiomics = "radiomics.scripts.__init__:parse_args"
 
 [project.urls]
 "Homepage" = "https://github.com/AIM-Harvard/pyradiomics#readme"
+"Bug Tracker" = "https://github.com/AIM-Harvard/pyradiomics/issues"
+Discussions = "https://github.com/AIM-Harvard/pyradiomics/discussions"
+Changelog = "https://github.com/AIM-Harvard/pyradiomics/changes.rst"
 "Radiomics.io" = "https://www.radiomics.io/"
 "Documentation" = "https://pyradiomics.readthedocs.io/en/latest/index.html"
 "Docker" = "https://hub.docker.com/r/radiomics/pyradiomics/"
 "Github" = "https://github.com/AIM-Harvard/pyradiomics"
 
-[tool.versioneer]
-VCS = "git"
-versionfile_source = "radiomics/_version.py"
-versionfile_build = "radiomics/_version.py"
-style = "pep440-post"
-tag_prefix = ""
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+build-dir = "build/{wheel_tag}"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["radiomics/_version.py"]
+wheel.packages = ['radiomics', 'radiomics.scripts']
+wheel.exclude = ['radiomics/src']
+
+
+[tool.setuptools_scm]
+write_to = "radiomics/_version.py"
+
+
+[tool.uv]
+dev-dependencies = [
+    "pyradiomics[test]",
+]
+
+
+[tool.cibuildwheel]
+test-command = "pytest tests"
+test-extras = ["test"]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+xfail_strict = true
+filterwarnings = [
+    "error",
+]
+log_cli_level = "INFO"
+testpaths = [
+    "tests",
+]
+
+
+[tool.coverage]
+run.source = ["radiomics"]
+report.exclude_also = [
+    '\.\.\.',
+    'if typing.TYPE_CHECKING:',
+]
+
+
+[tool.mypy]
+files = ["radiomics", "tests"]
+python_version = "3.9"
+warn_unused_configs = true
+strict = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+warn_unreachable = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = "radiomics.*"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+
+[tool.ruff]
+
+[tool.ruff.lint]
+extend-select = [
+    "ARG",      # flake8-unused-arguments
+    "B",        # flake8-bugbear
+    "C4",       # flake8-comprehensions
+    "EM",       # flake8-errmsg
+    "EXE",      # flake8-executable
+    "G",        # flake8-logging-format
+    "I",        # isort
+    "ICN",      # flake8-import-conventions
+    "NPY",      # NumPy specific rules
+    "PD",       # pandas-vet
+    "PGH",      # pygrep-hooks
+    "PIE",      # flake8-pie
+    "PL",       # pylint
+    "PT",       # flake8-pytest-style
+    "PTH",      # flake8-use-pathlib
+    "RET",      # flake8-return
+    "RUF",      # Ruff-specific
+    "SIM",      # flake8-simplify
+    "T20",      # flake8-print
+    "UP",       # pyupgrade
+    "YTT",      # flake8-2020
+]
+ignore = [
+    "PLR09",    # Too many <...>
+    "PLR2004",  # Magic value used in comparison
+    "ISC001",   # Conflicts with formatter
+]
+isort.required-imports = ["from __future__ import annotations"]
+# Uncomment if using a _compat.typing backport
+# typing-modules = ["pyradiomics._compat.typing"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["T20"]
+"noxfile.py" = ["T20"]
+
+
+[tool.pylint]
+py-version = "3.9"
+ignore-paths = [".*/_version.py"]
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+messages_control.disable = [
+    "design",
+    "fixme",
+    "line-too-long",
+    "missing-module-docstring",
+    "missing-function-docstring",
+    "wrong-import-position",
+]

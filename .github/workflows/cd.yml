@@ -1,0 +1,85 @@
+name: wheels
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+  pull_request:
+    paths:
+      - .github/workflows/cd.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Many color libraries just need this to be set to any value, but at least
+  # one distinguishes color depth, where "3" -> "256-bit color".
+  FORCE_COLOR: 3
+
+jobs:
+  make_sdist:
+    name: Make SDist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build SDist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+
+  build_wheels:
+    name: Wheel on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pypa/cibuildwheel@v2.22
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: wheelhouse/*.whl
+
+  upload_all:
+    needs: [build_wheels, make_sdist]
+    environment: pypi
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate artifact attestations
+        uses: actions/attest-build-provenance@v2.1.0
+        with:
+          subject-path: "dist/*"
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Remember to tell (test-)pypi about this repo before publishing
+          # Remove this line to publish to PyPI
+          repository-url: https://test.pypi.org/legacy/

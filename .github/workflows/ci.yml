@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+      - refactor-build-system
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

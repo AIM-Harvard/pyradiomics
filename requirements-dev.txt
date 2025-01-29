@@ -1,5 +1,0 @@
-pytest
-flake8
-flake8-import-order
-sphinx>=1.4
-sphinx_rtd_theme>=0.2.2

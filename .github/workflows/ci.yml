@@ -60,7 +60,7 @@ jobs:
           allow-prereleases: true
 
       - name: Install package
-        run: python -m pip install .[test]
+        run: python -m pip install -e .[test]
 
       - name: Test package
         run: >-

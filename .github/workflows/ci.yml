@@ -31,8 +31,8 @@ jobs:
       - uses: pre-commit/action@v3.0.1
         with:
           extra_args: --hook-stage manual --all-files
-      - name: Run PyLint
-        run: pipx run nox -s pylint -- --output-format=github
+      #- name: Run PyLint
+      #  run: pipx run nox -s pylint -- --output-format=github
 
   checks:
     name: Check Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}

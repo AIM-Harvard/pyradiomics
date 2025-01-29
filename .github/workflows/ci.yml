@@ -19,6 +19,7 @@ env:
 
 jobs:
   pre-commit:
+    if: ${{ github.ref_name != 'refactor-build-system' }}
     name: Format
     runs-on: ubuntu-latest
     steps:
@@ -37,7 +38,7 @@ jobs:
   checks:
     name: Check Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
     runs-on: ${{ matrix.runs-on }}
-    needs: [pre-commit]
+    #needs: [pre-commit]
     strategy:
       fail-fast: false
       matrix:

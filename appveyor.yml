@@ -9,10 +9,6 @@ environment:
 
     # Visual Studio (Python 3, 64 bit)
 
-    - PYTHON_DIR: "C:\\Python37-x64"
-      PYTHON_VERSION: "3.7.x"
-      PYTHON_SHORT_VERSION: "3.7"
-
     - PYTHON_DIR: "C:\\Python38-x64"
       PYTHON_VERSION: "3.8.x"
       PYTHON_SHORT_VERSION: "3.8"
@@ -20,6 +16,11 @@ environment:
     - PYTHON_DIR: "C:\\Python39-x64"
       PYTHON_VERSION: "3.9.x"
       PYTHON_SHORT_VERSION: "3.9"
+
+    - PYTHON_DIR: "C:\\Python310-x64"
+      PYTHON_VERSION: "3.10.x"
+      PYTHON_SHORT_VERSION: "3.10"
+
 
 init:
   - ps: $env:PATH=$env:PYTHON_DIR + ";" + $env:PYTHON_DIR + "\\Scripts;" + $env:PATH

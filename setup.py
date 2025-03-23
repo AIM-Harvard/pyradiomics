@@ -16,6 +16,10 @@ incDirs = [sysconfig.get_python_inc(), numpy.get_include()]
 ext = [Extension("radiomics._cmatrices", ["radiomics/src/_cmatrices.c", "radiomics/src/cmatrices.c"],
                  include_dirs=incDirs),
        Extension("radiomics._cshape", ["radiomics/src/_cshape.c", "radiomics/src/cshape.c"],
+                 include_dirs=incDirs),
+       Extension("radiomics.cuda._cmatrices", ["radiomics/src/cuda/_cmatrices.c", "radiomics/src/cuda/cmatrices.c"],
+                 include_dirs=incDirs),
+       Extension("radiomics.cuda._cshape", ["radiomics/src/cuda/_cshape.c", "radiomics/src/cuda/cshape.c"],
                  include_dirs=incDirs)]
 
 setup(
@@ -24,7 +28,7 @@ setup(
   version=versioneer.get_version(),
   cmdclass=commands,
 
-  packages=['radiomics', 'radiomics.scripts'],
+  packages=['radiomics', 'radiomics.scripts', 'radiomics.cuda'],
   ext_modules=ext,
   zip_safe=False
 )

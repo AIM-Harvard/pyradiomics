@@ -8,11 +8,14 @@ import os
 import pkgutil
 import sys
 import tempfile
+import subprocess
 
 import numpy  # noqa: F401
 from six.moves import urllib
 
 from . import imageoperations
+
+
 
 
 def deprecated(func):
@@ -259,6 +262,31 @@ def getProgressReporter(*args, **kwargs):
     return progressReporter(*args, **kwargs)
   else:
     return _DummyProgressReporter(*args, **kwargs)
+  
+def checkGpuAvailability():
+  """
+  Check if CUDA and GPU are available for computation.
+  
+  This function checks for NVIDIA GPU availability using 'lspci | grep -i nvidia'
+  and CUDA toolkit availability using 'nvcc --version'.
+  
+  Returns:
+    bool: True if both NVIDIA GPU and CUDA toolkit are available, False otherwise.
+  """
+  
+  try:
+    # Check for NVIDIA GPU
+    gpu_check = subprocess.run('lspci | grep -i nvidia', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    has_gpu = gpu_check.returncode == 0 and len(gpu_check.stdout) > 0
+    
+    # Check for CUDA toolkit
+    cuda_check = subprocess.run('nvcc --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    has_cuda = cuda_check.returncode == 0
+    
+    return has_gpu and has_cuda
+  except Exception:
+    return False
+
 
 progressReporter = None
 
@@ -283,8 +311,14 @@ testCases = ('brain1', 'brain2', 'breast1', 'lung1', 'lung2', 'test_wavelet_64x6
 cMatrices = None  # set cMatrices to None to prevent an import error in the feature classes.
 cShape = None
 try:
-  from radiomics import _cmatrices as cMatrices  # noqa: F401
-  from radiomics import _cshape as cShape  # noqa: F401
+  if checkGpuAvailability() == True:
+    from radiomics.cuda import _cmatrices as cMatrices  # noqa: F401
+    from radiomics.cuda import _cshape as cShape  # noqa: F401
+    logger.info('Using GPU-accelerated computation')
+  else:
+    from radiomics import _cmatrices as cMatrices  # noqa: F401
+    from radiomics import _cshape as cShape  # noqa: F401
+    logger.info('Using CPU computation')
 except ImportError as e:
   if os.path.isdir(os.path.join(os.path.dirname(__file__), '..', 'data')):
     # It looks like PyRadiomics is run from source (in which case "setup.py develop" must have been run)

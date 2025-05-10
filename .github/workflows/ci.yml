@@ -55,11 +55,11 @@ jobs:
           allow-prereleases: true
 
       - name: Install package
-        run: python -m pip install -e .[test]
+        run: python3 -m pip install -e .[test]
 
       - name: Test package
         run: >-
-          python -m pytest -ra --cov --cov-report=xml --cov-report=term
+          python3 -m pytest -ra --cov --cov-report=xml --cov-report=term
           --durations=20
 
       - name: Upload coverage report

@@ -159,7 +159,7 @@ def getTestCase(testCase, dataDirectory=None):
         testCase = testCase[:-3]
 
     if testCase not in testCases:
-        raise ValueError('Testcase "%s" not recognized!' % testCase)
+        raise ValueError(f'Testcase "{testCase}" not recognized!')
 
     logger.debug("Getting test case %s", testCase)
 
@@ -169,8 +169,8 @@ def getTestCase(testCase, dataDirectory=None):
             'No data directory specified, using temporary directory "%s"', dataDirectory
         )
 
-    im_name = "%s_image.nrrd" % testCase
-    ma_name = "{}_label{}.nrrd".format(testCase, "_2D" if label2D else "")
+    im_name = f"{testCase}_image.nrrd"
+    ma_name = f"{testCase}_label{'_2D' if label2D else ''}.nrrd"
 
     def get_or_download(fname):
         target = os.path.join(dataDirectory, fname)

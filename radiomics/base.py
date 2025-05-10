@@ -259,7 +259,7 @@ class RadiomicsFeaturesBase:
             if enabled:
                 try:
                     # Use getattr to get the feature calculation methods, then use '()' to evaluate those methods
-                    yield True, feature, getattr(self, "get%sFeatureValue" % feature)()
+                    yield True, feature, getattr(self, f"get{feature}FeatureValue")()
                 except DeprecationWarning as deprecatedFeature:
                     # Add a debug log message, as a warning is usually shown and would entail a too verbose output
                     self.logger.debug(

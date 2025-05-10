@@ -68,7 +68,7 @@ firstOrderFeatures.enableFeatureByName("Mean", True)
 print("Will calculate the following first order features: ")
 for f in firstOrderFeatures.enabledFeatures.keys():
     print("  ", f)
-    print(getattr(firstOrderFeatures, "get%sFeatureValue" % f).__doc__)
+    print(getattr(firstOrderFeatures, f"get{f}FeatureValue").__doc__)
 
 print("Calculating first order features...")
 results = firstOrderFeatures.execute()
@@ -87,7 +87,7 @@ shapeFeatures.enableAllFeatures()
 print("Will calculate the following Shape features: ")
 for f in shapeFeatures.enabledFeatures.keys():
     print("  ", f)
-    print(getattr(shapeFeatures, "get%sFeatureValue" % f).__doc__)
+    print(getattr(shapeFeatures, f"get{f}FeatureValue").__doc__)
 
 print("Calculating Shape features...")
 results = shapeFeatures.execute()
@@ -106,7 +106,7 @@ glcmFeatures.enableAllFeatures()
 print("Will calculate the following GLCM features: ")
 for f in glcmFeatures.enabledFeatures.keys():
     print("  ", f)
-    print(getattr(glcmFeatures, "get%sFeatureValue" % f).__doc__)
+    print(getattr(glcmFeatures, f"get{f}FeatureValue").__doc__)
 
 print("Calculating GLCM features...")
 results = glcmFeatures.execute()
@@ -125,7 +125,7 @@ glrlmFeatures.enableAllFeatures()
 print("Will calculate the following GLRLM features: ")
 for f in glrlmFeatures.enabledFeatures.keys():
     print("  ", f)
-    print(getattr(glrlmFeatures, "get%sFeatureValue" % f).__doc__)
+    print(getattr(glrlmFeatures, f"get{f}FeatureValue").__doc__)
 
 print("Calculating GLRLM features...")
 results = glrlmFeatures.execute()
@@ -144,7 +144,7 @@ glszmFeatures.enableAllFeatures()
 print("Will calculate the following GLSZM features: ")
 for f in glszmFeatures.enabledFeatures.keys():
     print("  ", f)
-    print(getattr(glszmFeatures, "get%sFeatureValue" % f).__doc__)
+    print(getattr(glszmFeatures, f"get{f}FeatureValue").__doc__)
 
 print("Calculating GLSZM features...")
 results = glszmFeatures.execute()
@@ -168,7 +168,7 @@ if applyLog:
         logFirstorderFeatures.enableAllFeatures()
         results = logFirstorderFeatures.execute()
         for key, val in results.items():
-            laplacianFeatureName = "{}_{}".format(imageTypeName, key)
+            laplacianFeatureName = f"{imageTypeName}_{key}"
             print("  ", laplacianFeatureName, ":", val)
 #
 # Show FirstOrder features, calculated on a wavelet filtered image
@@ -186,5 +186,5 @@ if applyWavelet:
         results = waveletFirstOrderFeaturs.execute()
         print("Calculated firstorder features with wavelet ", decompositionName)
         for key, val in results.items():
-            waveletFeatureName = "{}_{}".format(str(decompositionName), key)
+            waveletFeatureName = f"{str(decompositionName)}_{key}"
             print("  ", waveletFeatureName, ":", val)

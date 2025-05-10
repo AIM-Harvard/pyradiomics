@@ -29,6 +29,6 @@ class TestDocStrings:
         global featureClasses
         logging.info("%s", featureName)
         features = featureClasses[featureClassName]
-        doc = getattr(features, "get%sFeatureValue" % featureName).__doc__
+        doc = getattr(features, f"get{featureName}FeatureValue").__doc__
         logging.info("%s", doc)
         assert doc is not None

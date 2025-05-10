@@ -63,4 +63,4 @@ print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)
 
 for featureName in featureVector.keys():
-    print("Computed {}: {}".format(featureName, featureVector[featureName]))
+    print(f"Computed {featureName}: {featureVector[featureName]}")

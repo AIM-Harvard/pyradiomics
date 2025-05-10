@@ -62,7 +62,7 @@ class RadiomicsFeatureExtractor:
             isinstance(args[0], str) or isinstance(args[0], pathlib.PurePath)
         ):
             if not os.path.isfile(args[0]):
-                raise OSError("Parameter file %s does not exist." % args[0])
+                raise OSError(f"Parameter file {args[0]} does not exist.")
             logger.info("Loading parameter file %s", str(args[0]))
             self._applyParams(paramsFile=args[0])
         else:
@@ -355,7 +355,7 @@ class RadiomicsFeatureExtractor:
             )
             imageGenerators = chain(
                 imageGenerators,
-                getattr(imageoperations, "get%sImage" % imageType)(image, mask, **args),
+                getattr(imageoperations, f"get{imageType}Image")(image, mask, **args),
             )
 
         logger.debug("Extracting features")
@@ -489,7 +489,7 @@ class RadiomicsFeatureExtractor:
                     shapeClass.enableFeatureByName(feature)
 
             for featureName, featureValue in shapeClass.execute().items():
-                newFeatureName = "original_{}_{}".format(shape_type, featureName)
+                newFeatureName = f"original_{shape_type}_{featureName}"
                 featureVector[newFeatureName] = featureValue
 
         Nd = mask.GetDimension()
@@ -573,11 +573,7 @@ class RadiomicsFeatureExtractor:
                         featureClass.enableFeatureByName(feature)
 
                 for featureName, featureValue in featureClass.execute().items():
-                    newFeatureName = "{}_{}_{}".format(
-                        imageTypeName,
-                        featureClassName,
-                        featureName,
-                    )
+                    newFeatureName = f"{imageTypeName}_{featureClassName}_{featureName}"
                     featureVector[newFeatureName] = featureValue
 
         return featureVector

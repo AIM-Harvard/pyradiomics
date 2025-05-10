@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # pyradiomics documentation build configuration file, created by
 # sphinx-quickstart on Tue Jun 28 13:27:28 2016.
@@ -12,7 +11,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from __future__ import print_function
 
 import sys
 import os

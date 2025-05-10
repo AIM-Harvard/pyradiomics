@@ -45,7 +45,7 @@ class TestMatrices:
         baselineFile = os.path.join(
             testUtils.getDataDir(),
             "baseline",
-            "%s_%s.npy" % (testCase, featureClassName),
+            "{}_{}.npy".format(testCase, featureClassName),
         )
         assert os.path.isfile(baselineFile)
 

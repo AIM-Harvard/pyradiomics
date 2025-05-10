@@ -55,7 +55,7 @@ class RadiomicsGLSZM(base.RadiomicsFeaturesBase):
   """
 
     def __init__(self, inputImage, inputMask, **kwargs):
-        super(RadiomicsGLSZM, self).__init__(inputImage, inputMask, **kwargs)
+        super().__init__(inputImage, inputMask, **kwargs)
 
         self.P_glszm = None
         self.imageArray = self._applyBinning(self.imageArray)

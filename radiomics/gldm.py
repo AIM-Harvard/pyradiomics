@@ -64,7 +64,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
   """
 
     def __init__(self, inputImage, inputMask, **kwargs):
-        super(RadiomicsGLDM, self).__init__(inputImage, inputMask, **kwargs)
+        super().__init__(inputImage, inputMask, **kwargs)
 
         self.gldm_a = kwargs.get("gldm_a", 0)
 

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import logging
 
 import numpy
@@ -906,14 +904,14 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
             if idx == 1:
                 inputImageName = "wavelet-%s" % (decompositionName)
             else:
-                inputImageName = "wavelet%s-%s" % (idx, decompositionName)
+                inputImageName = "wavelet{}-{}".format(idx, decompositionName)
             logger.debug("Yielding %s image", inputImageName)
             yield decompositionImage, inputImageName, kwargs
 
     if len(ret) == 1:
         inputImageName = "wavelet-%s" % ("L" * len(axes))
     else:
-        inputImageName = "wavelet%s-%s" % (len(ret), ("L" * len(axes)))
+        inputImageName = "wavelet{}-{}".format(len(ret), ("L" * len(axes)))
     logger.debug("Yielding approximation (%s) image", inputImageName)
     yield approx, inputImageName, kwargs
 

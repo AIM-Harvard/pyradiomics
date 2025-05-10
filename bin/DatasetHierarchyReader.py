@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function
-
 import collections
 import glob
 import os
 
 
-class DatasetHierarchyReader(object):
+class DatasetHierarchyReader:
     def __init__(self, inputDatasetDirectory, filetype=".nrrd"):
         self.inputDatasetDirectory = inputDatasetDirectory
         self.filetype = filetype

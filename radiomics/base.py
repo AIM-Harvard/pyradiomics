@@ -8,7 +8,7 @@ import SimpleITK as sitk
 from radiomics import getProgressReporter, imageoperations
 
 
-class RadiomicsFeaturesBase(object):
+class RadiomicsFeaturesBase:
     """
     This is the abstract class, which defines the common interface for the feature classes. All feature classes inherit
     (directly of indirectly) from this class.

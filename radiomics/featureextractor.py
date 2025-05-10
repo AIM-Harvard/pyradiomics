@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function
-
 import collections
 from itertools import chain
 import json
@@ -65,7 +62,7 @@ class RadiomicsFeatureExtractor:
             isinstance(args[0], str) or isinstance(args[0], pathlib.PurePath)
         ):
             if not os.path.isfile(args[0]):
-                raise IOError("Parameter file %s does not exist." % args[0])
+                raise OSError("Parameter file %s does not exist." % args[0])
             logger.info("Loading parameter file %s", str(args[0]))
             self._applyParams(paramsFile=args[0])
         else:
@@ -492,7 +489,7 @@ class RadiomicsFeatureExtractor:
                     shapeClass.enableFeatureByName(feature)
 
             for featureName, featureValue in shapeClass.execute().items():
-                newFeatureName = "original_%s_%s" % (shape_type, featureName)
+                newFeatureName = "original_{}_{}".format(shape_type, featureName)
                 featureVector[newFeatureName] = featureValue
 
         Nd = mask.GetDimension()
@@ -576,7 +573,7 @@ class RadiomicsFeatureExtractor:
                         featureClass.enableFeatureByName(feature)
 
                 for featureName, featureValue in featureClass.execute().items():
-                    newFeatureName = "%s_%s_%s" % (
+                    newFeatureName = "{}_{}_{}".format(
                         imageTypeName,
                         featureClassName,
                         featureName,

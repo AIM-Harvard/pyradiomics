@@ -29,14 +29,14 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
     """
 
     def __init__(self, inputImage, inputMask, **kwargs):
-        super(RadiomicsFirstOrder, self).__init__(inputImage, inputMask, **kwargs)
+        super().__init__(inputImage, inputMask, **kwargs)
 
         self.pixelSpacing = inputImage.GetSpacing()
         self.voxelArrayShift = kwargs.get("voxelArrayShift", 0)
         self.discretizedImageArray = self._applyBinning(self.imageArray.copy())
 
     def _initVoxelBasedCalculation(self):
-        super(RadiomicsFirstOrder, self)._initVoxelBasedCalculation()
+        super()._initVoxelBasedCalculation()
 
         kernelRadius = self.settings.get("kernelRadius", 1)
 

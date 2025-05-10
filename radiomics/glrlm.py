@@ -73,7 +73,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
   """
 
     def __init__(self, inputImage, inputMask, **kwargs):
-        super(RadiomicsGLRLM, self).__init__(inputImage, inputMask, **kwargs)
+        super().__init__(inputImage, inputMask, **kwargs)
 
         self.weightingNorm = kwargs.get(
             "weightingNorm", None

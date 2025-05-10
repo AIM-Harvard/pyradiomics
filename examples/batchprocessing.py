@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 
 import collections
 import csv
@@ -43,7 +42,7 @@ def main():
 
     flists = []
     try:
-        with open(inputCSV, "r") as inFile:
+        with open(inputCSV) as inFile:
             cr = csv.DictReader(inFile, lineterminator="\n")
             flists = [row for row in cr]
     except Exception:

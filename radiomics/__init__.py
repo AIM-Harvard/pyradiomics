@@ -170,7 +170,7 @@ def getTestCase(testCase, dataDirectory=None):
         )
 
     im_name = "%s_image.nrrd" % testCase
-    ma_name = "%s_label%s.nrrd" % (testCase, "_2D" if label2D else "")
+    ma_name = "{}_label{}.nrrd".format(testCase, "_2D" if label2D else "")
 
     def get_or_download(fname):
         target = os.path.join(dataDirectory, fname)
@@ -225,7 +225,7 @@ def getParameterValidationFiles():
     return schemaFile, schemaFuncs
 
 
-class _DummyProgressReporter(object):
+class _DummyProgressReporter:
     """
     This class represents the dummy Progress reporter and is used for where progress reporting is implemented, but not
     enabled (when the progressReporter is not set or verbosity level > INFO).

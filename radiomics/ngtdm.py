@@ -84,7 +84,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
   """
 
     def __init__(self, inputImage, inputMask, **kwargs):
-        super(RadiomicsNGTDM, self).__init__(inputImage, inputMask, **kwargs)
+        super().__init__(inputImage, inputMask, **kwargs)
 
         self.P_ngtdm = None
         self.imageArray = self._applyBinning(self.imageArray)

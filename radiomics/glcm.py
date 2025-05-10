@@ -1,5 +1,4 @@
 import numpy
-from six.moves import range
 
 from radiomics import base, cMatrices, deprecated
 

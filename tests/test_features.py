@@ -1,8 +1,6 @@
 import logging
 import os
 
-import six
-
 from radiomics import getFeatureClasses
 from testUtils import RadiomicsTestUtils
 
@@ -40,7 +38,7 @@ class TestFeatures:
         # Get a list of all features for current class
         featureNames = featureClasses[featureClassName].getFeatureNames()
         # Get a list of all non-deprecated features
-        activeFeatures = set([f for (f, deprecated) in six.iteritems(featureNames) if not deprecated])
+        activeFeatures = set([f for (f, deprecated) in featureNames.items() if not deprecated])
         # Check if all active features have a baseline (exclude deprecated features from this set)
         if len(activeFeatures - uniqueFeatures) > 0:
           raise AssertionError('Missing baseline for active features %s', activeFeatures - uniqueFeatures)

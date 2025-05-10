@@ -2,7 +2,6 @@ import logging
 import os
 
 import numpy
-import six
 
 from radiomics import getFeatureClasses, testCases
 from testUtils import RadiomicsTestUtils
@@ -26,7 +25,7 @@ class TestMatrices:
     for testCase in testCases:
       if testCase.startswith('test'):
         continue
-      for className, featureClass in six.iteritems(featureClasses):
+      for className, featureClass in featureClasses.items():
         assert featureClass is not None
         if "_calculateMatrix" in dir(featureClass):
           logging.debug('generate_scenarios: featureClass = %s', className)

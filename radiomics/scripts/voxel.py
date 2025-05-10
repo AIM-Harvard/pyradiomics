@@ -5,7 +5,6 @@ import os
 import threading
 
 import SimpleITK as sitk
-import six
 
 import radiomics
 
@@ -35,10 +34,10 @@ def extractVoxel(case_idx, case, extractor, **kwargs):
     imageFilepath = case['Image']  # Required
     maskFilepath = case['Mask']  # Required
     label = case.get('Label', None)  # Optional
-    if isinstance(label, six.string_types):
+    if isinstance(label, str):
       label = int(label)
     label_channel = case.get('Label_channel', None)  # Optional
-    if isinstance(label_channel, six.string_types):
+    if isinstance(label_channel, str):
       label_channel = int(label_channel)
 
     # Extract features

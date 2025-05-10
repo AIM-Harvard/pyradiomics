@@ -6,7 +6,6 @@ import os
 import threading
 
 import SimpleITK as sitk
-import six
 
 import radiomics
 
@@ -27,8 +26,8 @@ def extractSegment(case_idx, case, extractor, **kwargs):
     # Output already generated, load result (prevents re-extraction in case of interrupted process)
     with open(filename, 'r') as outputFile:
       reader = csv.reader(outputFile)
-      headers = six.next(reader)
-      values = six.next(reader)
+      headers = next(reader)
+      values = next(reader)
       feature_vector = OrderedDict(zip(headers, values))
 
     caseLogger.info('Patient %s already processed, reading results...', case_idx)
@@ -60,10 +59,10 @@ def _extractFeatures(case_idx, case, extractor):
     imageFilepath = case['Image']  # Required
     maskFilepath = case['Mask']  # Required
     label = case.get('Label', None)  # Optional
-    if isinstance(label, six.string_types):
+    if isinstance(label, str):
       label = int(label)
     label_channel = case.get('Label_channel', None)  # Optional
-    if isinstance(label_channel, six.string_types):
+    if isinstance(label_channel, str):
       label_channel = int(label_channel)
 
     # Extract features

@@ -830,11 +830,6 @@ Bug fixes
 - Fix datatype error when calling ``SimpleITK.ResampleImageFilter.SetSize()`` (only causes error in python 3,
   `#205 <https://github.com/AIM-Harvard/pyradiomics/pull/205>`_)
 
-Requirements
-############
-
-- Add requirement for ``six>=1.10.0``, needed to make PyRadiomics compatible with both python 2 and 3.
-
 Documentation
 #############
 
@@ -865,8 +860,7 @@ Internal API
   feature classes and filters at initialization of the toolbox, and ensures feature classes are imported at
   initialization. (`#190 <https://github.com/AIM-Harvard/pyradiomics/pull/190>`_,
   `#198 <https://github.com/AIM-Harvard/pyradiomics/pull/198>`_)
-- Python 3 Compatibility. Add support for compatibility with python 2.7 and python >= 3.4. This is achieved using
-  package ``six``.
+- Python 3 Compatibility is required
 - Standardize function names for calculating matrices in python and with C extensions to ``_calculateMatrix`` and
   ``_calculateCMatrix``, respectively.
 - Make C code consistent with C89 convention. All variables (pointers for python objects) are initialized at top of each

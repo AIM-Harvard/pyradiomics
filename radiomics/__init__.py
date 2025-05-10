@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 import numpy  # noqa: F401
-from six.moves import urllib
+import urllib.request
 
 from . import imageoperations
 

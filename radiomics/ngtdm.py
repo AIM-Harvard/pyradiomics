@@ -4,7 +4,7 @@ from radiomics import base, cMatrices
 
 
 class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
-  r"""
+    r"""
   A Neighbouring Gray Tone Difference Matrix quantifies the difference between a gray value and the average gray value
   of its neighbours within distance :math:`\delta`. The sum of absolute differences for gray level :math:`i` is stored in the matrix.
   Let :math:`\textbf{X}_{gl}` be a set of segmented voxels and :math:`x_{gl}(j_x,j_y,j_z) \in \textbf{X}_{gl}` be the gray level of a voxel at postion
@@ -83,192 +83,209 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     Systems, Man and Cybernetics, IEEE Transactions on 19:1264-1274 (1989). doi: 10.1109/21.44046
   """
 
-  def __init__(self, inputImage, inputMask, **kwargs):
-    super(RadiomicsNGTDM, self).__init__(inputImage, inputMask, **kwargs)
+    def __init__(self, inputImage, inputMask, **kwargs):
+        super(RadiomicsNGTDM, self).__init__(inputImage, inputMask, **kwargs)
 
-    self.P_ngtdm = None
-    self.imageArray = self._applyBinning(self.imageArray)
+        self.P_ngtdm = None
+        self.imageArray = self._applyBinning(self.imageArray)
 
-  def _initCalculation(self, voxelCoordinates=None):
-    self.P_ngtdm = self._calculateMatrix(voxelCoordinates)
-    self._calculateCoefficients()
+    def _initCalculation(self, voxelCoordinates=None):
+        self.P_ngtdm = self._calculateMatrix(voxelCoordinates)
+        self._calculateCoefficients()
 
-  def _calculateMatrix(self, voxelCoordinates=None):
-    matrix_args = [
-      self.imageArray,
-      self.maskArray,
-      numpy.array(self.settings.get('distances', [1])),
-      self.coefficients['Ng'],
-      self.settings.get('force2D', False),
-      self.settings.get('force2Ddimension', 0)
-    ]
-    if self.voxelBased:
-      matrix_args += [self.settings.get('kernelRadius', 1), voxelCoordinates]
+    def _calculateMatrix(self, voxelCoordinates=None):
+        matrix_args = [
+            self.imageArray,
+            self.maskArray,
+            numpy.array(self.settings.get("distances", [1])),
+            self.coefficients["Ng"],
+            self.settings.get("force2D", False),
+            self.settings.get("force2Ddimension", 0),
+        ]
+        if self.voxelBased:
+            matrix_args += [self.settings.get("kernelRadius", 1), voxelCoordinates]
 
-    P_ngtdm = cMatrices.calculate_ngtdm(*matrix_args)  # shape (Nvox, Ng, 3)
+        P_ngtdm = cMatrices.calculate_ngtdm(*matrix_args)  # shape (Nvox, Ng, 3)
 
-    # Delete empty grey levels
-    emptyGrayLevels = numpy.where(numpy.sum(P_ngtdm[:, :, 0], 0) == 0)
-    P_ngtdm = numpy.delete(P_ngtdm, emptyGrayLevels, 1)
+        # Delete empty grey levels
+        emptyGrayLevels = numpy.where(numpy.sum(P_ngtdm[:, :, 0], 0) == 0)
+        P_ngtdm = numpy.delete(P_ngtdm, emptyGrayLevels, 1)
 
-    return P_ngtdm
+        return P_ngtdm
 
-  def _calculateCoefficients(self):
-    # No of voxels that have a valid region, lesser equal to Np
-    Nvp = numpy.sum(self.P_ngtdm[:, :, 0], 1)  # shape (Nvox,)
-    self.coefficients['Nvp'] = Nvp  # shape (Nv,)
+    def _calculateCoefficients(self):
+        # No of voxels that have a valid region, lesser equal to Np
+        Nvp = numpy.sum(self.P_ngtdm[:, :, 0], 1)  # shape (Nvox,)
+        self.coefficients["Nvp"] = Nvp  # shape (Nv,)
 
-    # Normalize P_ngtdm[:, 0] (= n_i) to obtain p_i
-    self.coefficients['p_i'] = self.P_ngtdm[:, :, 0] / Nvp[:, None]
+        # Normalize P_ngtdm[:, 0] (= n_i) to obtain p_i
+        self.coefficients["p_i"] = self.P_ngtdm[:, :, 0] / Nvp[:, None]
 
-    self.coefficients['s_i'] = self.P_ngtdm[:, :, 1]
-    self.coefficients['ivector'] = self.P_ngtdm[:, :, 2]
+        self.coefficients["s_i"] = self.P_ngtdm[:, :, 1]
+        self.coefficients["ivector"] = self.P_ngtdm[:, :, 2]
 
-    # Ngp = number of graylevels, for which p_i > 0
-    self.coefficients['Ngp'] = numpy.sum(self.P_ngtdm[:, :, 0] > 0, 1)
+        # Ngp = number of graylevels, for which p_i > 0
+        self.coefficients["Ngp"] = numpy.sum(self.P_ngtdm[:, :, 0] > 0, 1)
 
-    p_zero = numpy.where(self.coefficients['p_i'] == 0)
-    self.coefficients['p_zero'] = p_zero
+        p_zero = numpy.where(self.coefficients["p_i"] == 0)
+        self.coefficients["p_zero"] = p_zero
 
-  def getCoarsenessFeatureValue(self):
-    r"""
-    Calculate and return the coarseness.
+    def getCoarsenessFeatureValue(self):
+        r"""
+        Calculate and return the coarseness.
 
-    :math:`Coarseness = \frac{1}{\sum^{N_g}_{i=1}{p_{i}s_{i}}}`
+        :math:`Coarseness = \frac{1}{\sum^{N_g}_{i=1}{p_{i}s_{i}}}`
 
-    Coarseness is a measure of average difference between the center voxel and its neighbourhood and is an indication
-    of the spatial rate of change. A higher value indicates a lower spatial change rate and a locally more uniform texture.
+        Coarseness is a measure of average difference between the center voxel and its neighbourhood and is an indication
+        of the spatial rate of change. A higher value indicates a lower spatial change rate and a locally more uniform texture.
 
-    N.B. :math:`\sum^{N_g}_{i=1}{p_{i}s_{i}}` potentially evaluates to 0 (in case of a completely homogeneous image).
-    If this is the case, an arbitrary value of :math:`10^6` is returned.
-    """
-    p_i = self.coefficients['p_i']
-    s_i = self.coefficients['s_i']
-    sum_coarse = numpy.sum(p_i * s_i, 1)
+        N.B. :math:`\sum^{N_g}_{i=1}{p_{i}s_{i}}` potentially evaluates to 0 (in case of a completely homogeneous image).
+        If this is the case, an arbitrary value of :math:`10^6` is returned.
+        """
+        p_i = self.coefficients["p_i"]
+        s_i = self.coefficients["s_i"]
+        sum_coarse = numpy.sum(p_i * s_i, 1)
 
-    sum_coarse[sum_coarse != 0] = 1 / sum_coarse[sum_coarse != 0]
-    sum_coarse[sum_coarse == 0] = 1e6
-    return sum_coarse
+        sum_coarse[sum_coarse != 0] = 1 / sum_coarse[sum_coarse != 0]
+        sum_coarse[sum_coarse == 0] = 1e6
+        return sum_coarse
 
-  def getContrastFeatureValue(self):
-    r"""
-    Calculate and return the contrast.
+    def getContrastFeatureValue(self):
+        r"""
+        Calculate and return the contrast.
 
-    :math:`Contrast = \left(\frac{1}{N_{g,p}(N_{g,p}-1)}\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p_{i}p_{j}(i-j)^2}\right)
-    \left(\frac{1}{N_{v,p}}\displaystyle\sum^{N_g}_{i=1}{s_i}\right)\text{, where }p_i \neq 0, p_j \neq 0`
+        :math:`Contrast = \left(\frac{1}{N_{g,p}(N_{g,p}-1)}\displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{p_{i}p_{j}(i-j)^2}\right)
+        \left(\frac{1}{N_{v,p}}\displaystyle\sum^{N_g}_{i=1}{s_i}\right)\text{, where }p_i \neq 0, p_j \neq 0`
 
-    Contrast is a measure of the spatial intensity change, but is also dependent on the overall gray level dynamic range.
-    Contrast is high when both the dynamic range and the spatial change rate are high, i.e. an image with a large range
-    of gray levels, with large changes between voxels and their neighbourhood.
+        Contrast is a measure of the spatial intensity change, but is also dependent on the overall gray level dynamic range.
+        Contrast is high when both the dynamic range and the spatial change rate are high, i.e. an image with a large range
+        of gray levels, with large changes between voxels and their neighbourhood.
 
-    N.B. In case of a completely homogeneous image, :math:`N_{g,p} = 1`, which would result in a division by 0. In this
-    case, an arbitray value of 0 is returned.
-    """
-    Ngp = self.coefficients['Ngp']  # shape (Nvox,)
-    Nvp = self.coefficients['Nvp']  # shape (Nvox,)
-    p_i = self.coefficients['p_i']  # shape (Nvox, Ng)
-    s_i = self.coefficients['s_i']  # shape (Nvox, Ng)
-    i = self.coefficients['ivector']  # shape (Ng,)
+        N.B. In case of a completely homogeneous image, :math:`N_{g,p} = 1`, which would result in a division by 0. In this
+        case, an arbitray value of 0 is returned.
+        """
+        Ngp = self.coefficients["Ngp"]  # shape (Nvox,)
+        Nvp = self.coefficients["Nvp"]  # shape (Nvox,)
+        p_i = self.coefficients["p_i"]  # shape (Nvox, Ng)
+        s_i = self.coefficients["s_i"]  # shape (Nvox, Ng)
+        i = self.coefficients["ivector"]  # shape (Ng,)
 
-    div = Ngp * (Ngp - 1)
+        div = Ngp * (Ngp - 1)
 
-    # Terms where p_i = 0 or p_j = 0 will calculate as 0, and therefore do not affect the sum
-    contrast = (numpy.sum(p_i[:, :, None] * p_i[:, None, :] * (i[:, :, None] - i[:, None, :]) ** 2, (1, 2)) *
-                numpy.sum(s_i, 1) / Nvp)
+        # Terms where p_i = 0 or p_j = 0 will calculate as 0, and therefore do not affect the sum
+        contrast = (
+            numpy.sum(
+                p_i[:, :, None]
+                * p_i[:, None, :]
+                * (i[:, :, None] - i[:, None, :]) ** 2,
+                (1, 2),
+            )
+            * numpy.sum(s_i, 1)
+            / Nvp
+        )
 
-    contrast[div != 0] /= div[div != 0]
-    contrast[div == 0] = 0
+        contrast[div != 0] /= div[div != 0]
+        contrast[div == 0] = 0
 
-    return contrast
+        return contrast
 
-  def getBusynessFeatureValue(self):
-    r"""
-    Calculate and return the busyness.
+    def getBusynessFeatureValue(self):
+        r"""
+        Calculate and return the busyness.
 
-    :math:`Busyness = \frac{\sum^{N_g}_{i = 1}{p_{i}s_{i}}}{\sum^{N_g}_{i = 1}\sum^{N_g}_{j = 1}{|ip_i - jp_j|}}\text{, where }p_i \neq 0, p_j \neq 0`
+        :math:`Busyness = \frac{\sum^{N_g}_{i = 1}{p_{i}s_{i}}}{\sum^{N_g}_{i = 1}\sum^{N_g}_{j = 1}{|ip_i - jp_j|}}\text{, where }p_i \neq 0, p_j \neq 0`
 
-    A measure of the change from a pixel to its neighbour. A high value for busyness indicates a 'busy' image, with rapid
-    changes of intensity between pixels and its neighbourhood.
+        A measure of the change from a pixel to its neighbour. A high value for busyness indicates a 'busy' image, with rapid
+        changes of intensity between pixels and its neighbourhood.
 
-    N.B. if :math:`N_{g,p} = 1`, then :math:`busyness = \frac{0}{0}`. If this is the case, 0 is returned, as it concerns
-    a fully homogeneous region.
-    """
-    p_i = self.coefficients['p_i']  # shape (Nv, Ngp)
-    s_i = self.coefficients['s_i']  # shape (Nv, Ngp)
-    i = self.coefficients['ivector']  # shape (Nv, Ngp)
-    p_zero = self.coefficients['p_zero']  # shape (2, z)
+        N.B. if :math:`N_{g,p} = 1`, then :math:`busyness = \frac{0}{0}`. If this is the case, 0 is returned, as it concerns
+        a fully homogeneous region.
+        """
+        p_i = self.coefficients["p_i"]  # shape (Nv, Ngp)
+        s_i = self.coefficients["s_i"]  # shape (Nv, Ngp)
+        i = self.coefficients["ivector"]  # shape (Nv, Ngp)
+        p_zero = self.coefficients["p_zero"]  # shape (2, z)
 
-    i_pi = i * p_i
-    absdiff = numpy.abs(i_pi[:, :, None] - i_pi[:, None, :])
+        i_pi = i * p_i
+        absdiff = numpy.abs(i_pi[:, :, None] - i_pi[:, None, :])
 
-    # Remove terms from the sum where p_i = 0 or p_j = 0
-    absdiff[p_zero[0], :, p_zero[1]] = 0
-    absdiff[p_zero[0], p_zero[1], :] = 0
+        # Remove terms from the sum where p_i = 0 or p_j = 0
+        absdiff[p_zero[0], :, p_zero[1]] = 0
+        absdiff[p_zero[0], p_zero[1], :] = 0
 
-    absdiff = numpy.sum(absdiff, (1, 2))
+        absdiff = numpy.sum(absdiff, (1, 2))
 
-    busyness = numpy.sum(p_i * s_i, 1)
-    busyness[absdiff != 0] = busyness[absdiff != 0] / absdiff[absdiff != 0]
-    busyness[absdiff == 0] = 0
-    return busyness
+        busyness = numpy.sum(p_i * s_i, 1)
+        busyness[absdiff != 0] = busyness[absdiff != 0] / absdiff[absdiff != 0]
+        busyness[absdiff == 0] = 0
+        return busyness
 
-  def getComplexityFeatureValue(self):
-    r"""
-    Calculate and return the complexity.
+    def getComplexityFeatureValue(self):
+        r"""
+        Calculate and return the complexity.
 
-    :math:`Complexity = \frac{1}{N_{v,p}}\displaystyle\sum^{N_g}_{i = 1}\displaystyle\sum^{N_g}_{j = 1}{|i - j|
-    \frac{p_{i}s_{i} + p_{j}s_{j}}{p_i + p_j}}\text{, where }p_i \neq 0, p_j \neq 0`
+        :math:`Complexity = \frac{1}{N_{v,p}}\displaystyle\sum^{N_g}_{i = 1}\displaystyle\sum^{N_g}_{j = 1}{|i - j|
+        \frac{p_{i}s_{i} + p_{j}s_{j}}{p_i + p_j}}\text{, where }p_i \neq 0, p_j \neq 0`
 
-    An image is considered complex when there are many primitive components in the image, i.e. the image is non-uniform
-    and there are many rapid changes in gray level intensity.
-    """
-    Nvp = self.coefficients['Nvp']  # shape (Nv,)
-    p_i = self.coefficients['p_i']  # shape (Nv, Ngp)
-    s_i = self.coefficients['s_i']  # shape (Nv, Ngp)
-    i = self.coefficients['ivector']  # shape (Nv, Ngp)
-    p_zero = self.coefficients['p_zero']  # shape (2, z)
+        An image is considered complex when there are many primitive components in the image, i.e. the image is non-uniform
+        and there are many rapid changes in gray level intensity.
+        """
+        Nvp = self.coefficients["Nvp"]  # shape (Nv,)
+        p_i = self.coefficients["p_i"]  # shape (Nv, Ngp)
+        s_i = self.coefficients["s_i"]  # shape (Nv, Ngp)
+        i = self.coefficients["ivector"]  # shape (Nv, Ngp)
+        p_zero = self.coefficients["p_zero"]  # shape (2, z)
 
-    pi_si = p_i * s_i
-    numerator = pi_si[:, :, None] + pi_si[:, None, :]
+        pi_si = p_i * s_i
+        numerator = pi_si[:, :, None] + pi_si[:, None, :]
 
-    # Remove terms from the sum where p_i = 0 or p_j = 0
-    numerator[p_zero[0], :, p_zero[1]] = 0
-    numerator[p_zero[0], p_zero[1], :] = 0
+        # Remove terms from the sum where p_i = 0 or p_j = 0
+        numerator[p_zero[0], :, p_zero[1]] = 0
+        numerator[p_zero[0], p_zero[1], :] = 0
 
-    divisor = p_i[:, :, None] + p_i[:, None, :]
-    divisor[divisor == 0] = 1  # Prevent division by 0 errors. (Numerator is 0 at those indices too)
+        divisor = p_i[:, :, None] + p_i[:, None, :]
+        divisor[divisor == 0] = (
+            1  # Prevent division by 0 errors. (Numerator is 0 at those indices too)
+        )
 
-    complexity = numpy.sum(numpy.abs(i[:, :, None] - i[:, None, :]) * numerator / divisor, (1, 2)) / Nvp
+        complexity = (
+            numpy.sum(
+                numpy.abs(i[:, :, None] - i[:, None, :]) * numerator / divisor, (1, 2)
+            )
+            / Nvp
+        )
 
-    return complexity
+        return complexity
 
-  def getStrengthFeatureValue(self):
-    r"""
-    Calculate and return the strength.
+    def getStrengthFeatureValue(self):
+        r"""
+        Calculate and return the strength.
 
-    :math:`Strength = \frac{\sum^{N_g}_{i = 1}\sum^{N_g}_{j = 1}{(p_i + p_j)(i-j)^2}}{\sum^{N_g}_{i = 1}{s_i}}\text{, where }p_i \neq 0, p_j \neq 0`
+        :math:`Strength = \frac{\sum^{N_g}_{i = 1}\sum^{N_g}_{j = 1}{(p_i + p_j)(i-j)^2}}{\sum^{N_g}_{i = 1}{s_i}}\text{, where }p_i \neq 0, p_j \neq 0`
 
-    Strength is a measure of the primitives in an image. Its value is high when the primitives are easily defined and
-    visible, i.e. an image with slow change in intensity but more large coarse differences in gray level intensities.
+        Strength is a measure of the primitives in an image. Its value is high when the primitives are easily defined and
+        visible, i.e. an image with slow change in intensity but more large coarse differences in gray level intensities.
 
-    N.B. :math:`\sum^{N_g}_{i=1}{s_i}` potentially evaluates to 0 (in case of a completely homogeneous image).
-    If this is the case, 0 is returned.
-    """
-    p_i = self.coefficients['p_i']  # shape (Nv, Ngp)
-    s_i = self.coefficients['s_i']  # shape (Nv, Ngp)
-    i = self.coefficients['ivector']  # shape (Nv, Ngp)
-    p_zero = self.coefficients['p_zero']  # shape (2, z)
+        N.B. :math:`\sum^{N_g}_{i=1}{s_i}` potentially evaluates to 0 (in case of a completely homogeneous image).
+        If this is the case, 0 is returned.
+        """
+        p_i = self.coefficients["p_i"]  # shape (Nv, Ngp)
+        s_i = self.coefficients["s_i"]  # shape (Nv, Ngp)
+        i = self.coefficients["ivector"]  # shape (Nv, Ngp)
+        p_zero = self.coefficients["p_zero"]  # shape (2, z)
 
-    sum_s_i = numpy.sum(s_i, 1)
+        sum_s_i = numpy.sum(s_i, 1)
 
-    strength = (p_i[:, :, None] + p_i[:, None, :]) * (i[:, :, None] - i[:, None, :]) ** 2
+        strength = (p_i[:, :, None] + p_i[:, None, :]) * (
+            i[:, :, None] - i[:, None, :]
+        ) ** 2
 
-    # Remove terms from the sum where p_i = 0 or p_j = 0
-    strength[p_zero[0], :, p_zero[1]] = 0
-    strength[p_zero[0], p_zero[1], :] = 0
+        # Remove terms from the sum where p_i = 0 or p_j = 0
+        strength[p_zero[0], :, p_zero[1]] = 0
+        strength[p_zero[0], p_zero[1], :] = 0
 
-    strength = numpy.sum(strength, (1, 2))
-    strength[sum_s_i != 0] /= sum_s_i[sum_s_i != 0]
-    strength[sum_s_i == 0] = 0
+        strength = numpy.sum(strength, (1, 2))
+        strength[sum_s_i != 0] /= sum_s_i[sum_s_i != 0]
+        strength[sum_s_i == 0] = 0
 
-    return strength
+        return strength

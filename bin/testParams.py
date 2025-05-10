@@ -9,19 +9,25 @@ import pykwalify.core
 
 from radiomics import getParameterValidationFiles
 
+
 def main(paramsFile):
-  schemaFile, schemaFuncs = getParameterValidationFiles()
+    schemaFile, schemaFuncs = getParameterValidationFiles()
 
-  c = pykwalify.core.Core(source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs])
-  try:
-    params = c.validate()
-    print('Parameter validation successfull!\n\n'
-          '###Enabled Features###\n%s\n'
-          '###Enabled Image Types###\n%s\n'
-          '###Settings###\n%s' % (params['featureClass'], params['imageType'], params['setting']))
-  except Exception as e:
-    print('Parameter validation failed!\n%s' % e.message)
+    c = pykwalify.core.Core(
+        source_file=paramsFile, schema_files=[schemaFile], extensions=[schemaFuncs]
+    )
+    try:
+        params = c.validate()
+        print(
+            "Parameter validation successfull!\n\n"
+            "###Enabled Features###\n%s\n"
+            "###Enabled Image Types###\n%s\n"
+            "###Settings###\n%s"
+            % (params["featureClass"], params["imageType"], params["setting"])
+        )
+    except Exception as e:
+        print("Parameter validation failed!\n%s" % e.message)
 
 
-if __name__ == '__main__' and len(sys.argv) > 1:
+if __name__ == "__main__" and len(sys.argv) > 1:
     main(sys.argv[1])

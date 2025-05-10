@@ -26,7 +26,7 @@ def main(paramsFile):
             % (params["featureClass"], params["imageType"], params["setting"])
         )
     except Exception as e:
-        print("Parameter validation failed!\n%s" % e.message)
+        print(f"Parameter validation failed!\n{e.message}")
 
 
 if __name__ == "__main__" and len(sys.argv) > 1:

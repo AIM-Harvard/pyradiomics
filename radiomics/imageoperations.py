@@ -58,8 +58,7 @@ def getMask(mask, **kwargs):
         raise ValueError("No labels found in this mask (i.e. nothing is segmented)!")
     if label not in labels:
         raise ValueError(
-            "Label (%g) not present in mask. Choose from %s"
-            % (label, labels[labels != 0])
+            f"Label ({label:g}) not present in mask. Choose from {labels[labels != 0]}"
         )
 
     return mask
@@ -254,7 +253,7 @@ def checkMask(imageNode, maskNode, **kwargs):
         # If lsif fails, and mask is corrected, it includes a check whether the label is present. Therefore, perform
         # this test here only if lsif does not fail on the first attempt.
         if label not in lsif.GetLabels():
-            raise ValueError("Label (%g) not present in mask" % label)
+            raise ValueError(f"Label ({label:g}) not present in mask")
     except RuntimeError as e:
         # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
         if not kwargs.get("correctMask", False):
@@ -704,7 +703,7 @@ def resegmentMask(imageNode, maskNode, **kwargs):
         raise ValueError("resegmentRange is None.")
     if len(resegmentRange) == 0 or len(resegmentRange) > 2:
         raise ValueError(
-            "Length %i is not allowed for resegmentRange" % len(resegmentRange)
+            f"Length {len(resegmentRange)} is not allowed for resegmentRange"
         )
 
     logger.debug("Resegmenting mask (range %s, mode %s)", resegmentRange, resegmentMode)
@@ -727,7 +726,7 @@ def resegmentMask(imageNode, maskNode, **kwargs):
         logger.debug("Resegmenting in sigma mode, mean %g, std %g", mean_gl, sd_gl)
         thresholds = [mean_gl + sd_gl * th for th in sorted(resegmentRange)]
     else:
-        raise ValueError("Resegment mode %s not recognized." % resegmentMode)
+        raise ValueError(f"Resegment mode {resegmentMode} not recognized.")
 
     # Apply lower threshold
     logger.debug("Applying lower threshold (%g)", thresholds[0])
@@ -843,7 +842,7 @@ def getLoGImage(inputImage, inputMask, **kwargs):
                 lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
                 lrgif.SetNormalizeAcrossScale(True)
                 lrgif.SetSigma(sigma)
-                inputImageName = "log-sigma-%s-mm-3D" % (str(sigma).replace(".", "-"))
+                inputImageName = f"log-sigma-{str(sigma).replace('.', '-')}-mm-3D"
                 logger.debug("Yielding %s image", inputImageName)
                 yield lrgif.Execute(inputImage), inputImageName, kwargs
             else:
@@ -902,16 +901,16 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
             logger.info("Computing Wavelet %s", decompositionName)
 
             if idx == 1:
-                inputImageName = "wavelet-%s" % (decompositionName)
+                inputImageName = f"wavelet-{decompositionName}"
             else:
-                inputImageName = "wavelet{}-{}".format(idx, decompositionName)
+                inputImageName = f"wavelet{idx}-{decompositionName}"
             logger.debug("Yielding %s image", inputImageName)
             yield decompositionImage, inputImageName, kwargs
 
     if len(ret) == 1:
-        inputImageName = "wavelet-%s" % ("L" * len(axes))
+        inputImageName = f"wavelet-{'L' * len(axes)}"
     else:
-        inputImageName = "wavelet{}-{}".format(len(ret), ("L" * len(axes)))
+        inputImageName = f"wavelet{len(ret)}-{'L' * len(axes)}"
     logger.debug("Yielding approximation (%s) image", inputImageName)
     yield approx, inputImageName, kwargs
 

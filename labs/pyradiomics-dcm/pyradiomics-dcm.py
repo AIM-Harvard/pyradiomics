@@ -359,7 +359,7 @@ class TID1500Metadata:
             return
 
         try:
-            measurement["value"] = "%E" % Decimal(float(value))
+            measurement["value"] = f"{Decimal(float(value)):E}"
         except Exception as e:
             scriptlogger.error("Exception formatting %s as Decimal: %s", value, str(e))
             scriptlogger.error("type of value: %s", type(value))

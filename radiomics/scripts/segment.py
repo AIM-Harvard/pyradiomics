@@ -21,7 +21,7 @@ def extractSegment(case_idx, case, extractor, **kwargs):
     if out_dir is None:
         return _extractFeatures(case_idx, case, extractor)
 
-    filename = os.path.join(out_dir, "features_%s.csv" % case_idx)
+    filename = os.path.join(out_dir, f"features_{case_idx}.csv")
     if os.path.isfile(filename):
         # Output already generated, load result (prevents re-extraction in case of interrupted process)
         with open(filename) as outputFile:
@@ -93,7 +93,7 @@ def _extractFeatures(case_idx, case, extractor):
 def extractSegment_parallel(args, logging_config=None, **kwargs):
     try:
         # set thread name to patient name
-        threading.current_thread().name = "case %s" % args[0]  # args[0] = case_idx
+        threading.current_thread().name = f"case {args[0]}"  # args[0] = case_idx
 
         if logging_config is not None:
             _configureParallelExtraction(logging_config)

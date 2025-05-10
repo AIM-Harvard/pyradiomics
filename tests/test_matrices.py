@@ -45,7 +45,7 @@ class TestMatrices:
         baselineFile = os.path.join(
             testUtils.getDataDir(),
             "baseline",
-            "{}_{}.npy".format(testCase, featureClassName),
+            f"{testCase}_{featureClassName}.npy",
         )
         assert os.path.isfile(baselineFile)
 
@@ -61,7 +61,7 @@ class TestMatrices:
         )
         featureClass._initCalculation()
 
-        cMat = getattr(featureClass, "P_%s" % featureClassName)
+        cMat = getattr(featureClass, f"P_{featureClassName}")
         assert cMat is not None
 
         # Check if the calculated arrays match

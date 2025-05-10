@@ -51,10 +51,10 @@ for cls, features in extractor.enabledFeatures.items():
         ]
     for f in features:
         print(f)
-        print(getattr(featureClasses[cls], "get%sFeatureValue" % f).__doc__)
+        print(getattr(featureClasses[cls], f"get{f}FeatureValue").__doc__)
 
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)
 
 for featureName in featureVector.keys():
-    print("Computed {}: {}".format(featureName, featureVector[featureName]))
+    print(f"Computed {featureName}: {featureVector[featureName]}")

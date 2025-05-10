@@ -25,7 +25,7 @@ class AddBaseline:
     def generate_scenarios(self):
         for className, featureClass in self.featureClasses.items():
             if not os.path.exists(
-                os.path.join(self.baselineDir, "baseline_%s.csv" % className)
+                os.path.join(self.baselineDir, f"baseline_{className}.csv")
             ):
                 self.logger.debug("generate_scenarios: featureClass = %s", className)
                 for test in self.testCases:
@@ -49,12 +49,10 @@ class AddBaseline:
         featureClass.execute()
 
         if "_calculateMatrix" in dir(featureClass):
-            cMat = getattr(featureClass, "P_%s" % featureClassName)
+            cMat = getattr(featureClass, f"P_{featureClassName}")
             if cMat is not None:
                 numpy.save(
-                    os.path.join(
-                        self.baselineDir, "{}_{}.npy".format(test, featureClassName)
-                    ),
+                    os.path.join(self.baselineDir, f"{test}_{featureClassName}.npy"),
                     cMat,
                 )
 
@@ -67,7 +65,7 @@ class AddBaseline:
         self.new_baselines[featureClassName].configuration[test].update(versions)
 
         self.new_baselines[featureClassName].baseline[test] = {
-            "{}_{}_{}".format(imageTypeName, featureClassName, key): val
+            f"{imageTypeName}_{featureClassName}_{key}": val
             for key, val in featureClass.featureValues.items()
         }
 

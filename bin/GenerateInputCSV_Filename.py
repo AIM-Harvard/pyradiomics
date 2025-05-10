@@ -36,7 +36,7 @@ def main():
 
     datasetHierarchyDict = scanpatients(inputDirectory, filetype)
 
-    print("Found %s patients, writing csv" % (len(datasetHierarchyDict.keys())))
+    print(f"Found {len(datasetHierarchyDict.keys())} patients, writing csv")
 
     try:
         with open(outputFile, "w") as outFile:
@@ -60,11 +60,11 @@ def main():
 
                                     i_name = Study
                                     if i_idx > 0:
-                                        i_name += " (%s)" % (str(i_idx + 1))
+                                        i_name += f" ({str(i_idx + 1)})"
 
                                     s_name = Reader
                                     if s_idx > 0:
-                                        s_name += " (%s)" % (str(s_idx + 1))
+                                        s_name += f" ({str(s_idx + 1)})"
 
                                     cw.writerow(
                                         [patient, i_name, s_name, im_file, seg_file]

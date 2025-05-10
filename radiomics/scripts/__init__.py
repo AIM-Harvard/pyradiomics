@@ -537,7 +537,7 @@ class PyRadiomicsCommandLine:
             elif value_type == "bool":
                 return value == "1" or value.lower() == "true"
             else:
-                raise ValueError('Cannot understand value_type "%s"' % value_type)
+                raise ValueError(f'Cannot understand value_type "{value_type}"')
 
         for setting in self.args.setting:  # setting = "setting_key:setting_value"
             if ":" not in setting:
@@ -695,5 +695,5 @@ def parse_args():
         logging.getLogger().error(
             "Error executing PyRadiomics command line!", exc_info=True
         )
-        print("Error executing PyRadiomics command line!\n%s" % e)
+        print(f"Error executing PyRadiomics command line!\n{e}")
         return 4

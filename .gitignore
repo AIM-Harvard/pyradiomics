@@ -160,3 +160,6 @@ Thumbs.db
 # Common editor files
 *~
 *.swp
+
+# Ignore test outputs
+data/*.csv

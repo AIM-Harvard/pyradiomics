@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import numpy
 import SimpleITK as sitk
-import six
 
 from radiomics import firstorder, getTestCase, glcm, glrlm, glszm, imageoperations, shape
 
@@ -65,7 +64,7 @@ results = firstOrderFeatures.execute()
 print('done')
 
 print('Calculated first order features: ')
-for (key, val) in six.iteritems(results):
+for (key, val) in results.items():
   print('  ', key, ':', val)
 
 #
@@ -84,7 +83,7 @@ results = shapeFeatures.execute()
 print('done')
 
 print('Calculated Shape features: ')
-for (key, val) in six.iteritems(results):
+for (key, val) in results.items():
   print('  ', key, ':', val)
 
 #
@@ -103,7 +102,7 @@ results = glcmFeatures.execute()
 print('done')
 
 print('Calculated GLCM features: ')
-for (key, val) in six.iteritems(results):
+for (key, val) in results.items():
   print('  ', key, ':', val)
 
 #
@@ -122,7 +121,7 @@ results = glrlmFeatures.execute()
 print('done')
 
 print('Calculated GLRLM features: ')
-for (key, val) in six.iteritems(results):
+for (key, val) in results.items():
   print('  ', key, ':', val)
 
 #
@@ -141,7 +140,7 @@ results = glszmFeatures.execute()
 print('done')
 
 print('Calculated GLSZM features: ')
-for (key, val) in six.iteritems(results):
+for (key, val) in results.items():
   print('  ', key, ':', val)
 
 #
@@ -153,7 +152,7 @@ if applyLog:
     logFirstorderFeatures = firstorder.RadiomicsFirstOrder(logImage, mask, **inputKwargs)
     logFirstorderFeatures.enableAllFeatures()
     results = logFirstorderFeatures.execute()
-    for (key, val) in six.iteritems(results):
+    for (key, val) in results.items():
       laplacianFeatureName = '%s_%s' % (imageTypeName, key)
       print('  ', laplacianFeatureName, ':', val)
 #
@@ -165,6 +164,6 @@ if applyWavelet:
     waveletFirstOrderFeaturs.enableAllFeatures()
     results = waveletFirstOrderFeaturs.execute()
     print('Calculated firstorder features with wavelet ', decompositionName)
-    for (key, val) in six.iteritems(results):
+    for (key, val) in results.items():
       waveletFeatureName = '%s_%s' % (str(decompositionName), key)
       print('  ', waveletFeatureName, ':', val)

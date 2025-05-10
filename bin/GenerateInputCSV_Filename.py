@@ -3,8 +3,6 @@ from __future__ import print_function
 import csv
 import os
 
-import six
-
 SqDic = {}
 SqDic['T2-TSE-TRA'] = 't2tra'
 SqDic['T2-TRA'] = 't2tra'
@@ -43,16 +41,16 @@ def main():
   print("Found %s patients, writing csv" % (len(datasetHierarchyDict.keys())))
 
   try:
-    with open(outputFile, 'wb') as outFile:
+    with open(outputFile, 'w') as outFile:
       cw = csv.writer(outFile, lineterminator='\n')
       cw.writerow(['Patient', 'Sequence', 'Reader', 'Image', 'Mask'])
 
-      for patient, Studies in sorted(six.iteritems(datasetHierarchyDict), key=lambda t: t[0]):
-        for Study, im_fileList in sorted(six.iteritems(Studies['reconstructions']), key=lambda t: t[0]):
+      for patient, Studies in sorted(datasetHierarchyDict.items(), key=lambda t: t[0]):
+        for Study, im_fileList in sorted(Studies['reconstructions'].items(), key=lambda t: t[0]):
           for i_idx, im_file in enumerate(im_fileList):
 
-            if Studies['segmentations'].has_key(Study):
-              for Reader, seg_fileList in sorted(six.iteritems(Studies['segmentations'][Study]), key=lambda t: t[0]):
+            if Study in Studies['segmentations']:
+              for Reader, seg_fileList in sorted(Studies['segmentations'][Study].items(), key=lambda t: t[0]):
                 for s_idx, seg_file in enumerate(sorted(seg_fileList)):
 
                   i_name = Study
@@ -75,22 +73,22 @@ def scanpatients(f, filetype):
       if (fname[0:3] == "Pt-") & (fname.endswith(filetype)):
         PtNo = fname[3:7]
 
-        if not outputDict.has_key(PtNo):
+        if PtNo not in outputDict:
           outputDict[PtNo] = {'reconstructions': {}}
           outputDict[PtNo]['segmentations'] = {}
 
-        for SqKey, SqVal in six.iteritems(SqDic):
+        for SqKey, SqVal in SqDic.items():
           if ("ROI_" + SqVal) in fname:
-            for ReaderKey, ReaderVal in six.iteritems(LabelDic):
+            for ReaderKey, ReaderVal in LabelDic.items():
               if (ReaderKey + '_') in fname:
-                if not outputDict[PtNo]['segmentations'].has_key(SqVal):
+                if SqVal not in outputDict[PtNo]['segmentations']:
                   outputDict[PtNo]['segmentations'][SqVal] = {}
-                if not outputDict[PtNo]['segmentations'][SqVal].has_key(ReaderVal):
+                if ReaderVal not in outputDict[PtNo]['segmentations'][SqVal]:
                   outputDict[PtNo]['segmentations'][SqVal][ReaderVal] = set()
                 outputDict[PtNo]['segmentations'][SqVal][ReaderVal].add(os.path.join(dirpath, fname))
                 break
           elif SqKey in fname:
-            if not outputDict[PtNo]['reconstructions'].has_key(SqVal):
+            if SqVal not in outputDict[PtNo]['reconstructions']:
               outputDict[PtNo]['reconstructions'][SqVal] = set()
             outputDict[PtNo]['reconstructions'][SqVal].add(os.path.join(dirpath, fname))
             break

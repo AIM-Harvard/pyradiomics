@@ -22,14 +22,12 @@ requirements:
     - pykwalify >=1.6.0
     - pywavelets >=0.4.0
     - SimpleITK !=1.1.0
-    - six >=1.10.0
   run:
     - python
     - numpy >=1.9.2
     - pykwalify >=1.6.0
     - pywavelets >=0.4.0
     - SimpleITK !=1.1.0
-    - six >=1.10.0
     - scipy
     - scikit-learn
     - trimesh

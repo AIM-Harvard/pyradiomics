@@ -13,7 +13,6 @@ import threading
 import numpy
 from pykwalify.compat import yaml
 import pykwalify.core
-import six.moves
 
 import radiomics
 import radiomics.featureextractor
@@ -65,7 +64,7 @@ class PyRadiomicsCommandLine:
                                  'settings possible. N.B. Only works for customization\n'
                                  'type 3 ("setting").')
     inputGroup.add_argument('--jobs', '-j', metavar='N', type=int, default=1,
-                            choices=six.moves.range(1, cpu_count() + 1),
+                            choices=range(1, cpu_count() + 1),
                             help='(Batch mode only) Specifies the number of threads to use for\n'
                                  'parallel processing. This is applied at the case level;\n'
                                  'i.e. 1 thread per case. Actual number of workers used is\n'
@@ -325,7 +324,7 @@ class PyRadiomicsCommandLine:
           writer.writeheader()
         writer.writerow(case)  # if skip_nans is enabled, nan-values are written as empty strings
       elif self.args.format == 'txt':
-        for k, v in six.iteritems(case):
+        for k, v in case.items():
           self.args.out.write('Case-%d_%s: %s\n' % (case_idx, k, v))
 
     # JSON dump of cases is handled outside of the loop, otherwise the resultant document would be invalid.

@@ -6,7 +6,6 @@ import os
 
 import numpy
 import SimpleITK as sitk
-import six
 
 from radiomics import featureextractor, getTestCase, imageoperations
 
@@ -302,9 +301,9 @@ class PyRadiomicsBaseline:
     new_baseline = cls(featureClassName)
     new_baseline.logger.debug('Reading baseline for class %s', new_baseline.cls)
 
-    with open(baselineFile, 'r' if six.PY3 else 'rb') as baselineReader:
+    with open(baselineFile, 'r') as baselineReader:
       csvReader = csv.reader(baselineReader)
-      tests = six.next(csvReader)[1:]
+      tests = next(csvReader)[1:]
 
       for case in tests:
         new_baseline.configuration[case] = {}

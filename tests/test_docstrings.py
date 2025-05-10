@@ -1,7 +1,5 @@
 import logging
 
-import six
-
 from radiomics import getFeatureClasses
 
 featureClasses = getFeatureClasses()
@@ -16,7 +14,7 @@ class TestDocStrings:
   @staticmethod
   def generate_scenarios():
     global featureClasses
-    for featureClassName, featureClass in six.iteritems(featureClasses):
+    for featureClassName, featureClass in featureClasses.items():
       logging.info('generate_scenarios %s', featureClassName)
       doc = featureClass.__doc__
       assert (doc is not None)

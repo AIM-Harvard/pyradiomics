@@ -4,7 +4,6 @@ import sys
 
 import numpy
 import SimpleITK as sitk
-import six
 
 from radiomics import generalinfo, getFeatureClasses, getTestCase, imageoperations
 from testUtils import PyRadiomicsBaseline, RadiomicsTestUtils
@@ -24,7 +23,7 @@ class AddBaseline:
     self.baselineDir = os.path.join(dataDir, "baseline")
 
   def generate_scenarios(self):
-    for className, featureClass in six.iteritems(self.featureClasses):
+    for className, featureClass in self.featureClasses.items():
       if not os.path.exists(os.path.join(self.baselineDir, 'baseline_%s.csv' % className)):
         self.logger.debug('generate_scenarios: featureClass = %s', className)
         for test in self.testCases:
@@ -57,11 +56,11 @@ class AddBaseline:
     self.new_baselines[featureClassName].configuration[test].update(versions)
 
     self.new_baselines[featureClassName].baseline[test] = {'%s_%s_%s' % (imageTypeName, featureClassName, key): val
-                                                           for key, val in six.iteritems(featureClass.featureValues)}
+                                                           for key, val in featureClass.featureValues.items()}
 
   def run(self, featureClass=None):
     current_baseline = self.testUtils._baseline
-    config = current_baseline[current_baseline.keys()[0]].configuration
+    config = current_baseline[list(current_baseline.keys())[0]].configuration
     self.new_baselines = {}
     if featureClass is None:
       for test, newClass in self.generate_scenarios():

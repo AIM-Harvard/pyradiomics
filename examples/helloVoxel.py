@@ -6,7 +6,6 @@ import logging
 import os
 
 import SimpleITK as sitk
-import six
 
 import radiomics
 from radiomics import featureextractor, getFeatureClasses
@@ -106,9 +105,9 @@ tqdmProgressbar()
 # clickProgressbar()
 
 print("Active features:")
-for cls, features in six.iteritems(extractor.enabledFeatures):
+for cls, features in extractor.enabledFeatures.items():
   if features is None or len(features) == 0:
-    features = [f for f, deprecated in six.iteritems(featureClasses[cls].getFeatureNames()) if not deprecated]
+    features = [f for f, deprecated in featureClasses[cls].getFeatureNames().items() if not deprecated]
   for f in features:
     print(f)
     print(getattr(featureClasses[cls], 'get%sFeatureValue' % f).__doc__)
@@ -116,7 +115,7 @@ for cls, features in six.iteritems(extractor.enabledFeatures):
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName, voxelBased=True)
 
-for featureName, featureValue in six.iteritems(featureVector):
+for featureName, featureValue in featureVector.items():
   if isinstance(featureValue, sitk.Image):
     sitk.WriteImage(featureValue, '%s_%s.nrrd' % (testCase, featureName))
     print('Computed %s, stored as "%s_%s.nrrd"' % (featureName, testCase, featureName))

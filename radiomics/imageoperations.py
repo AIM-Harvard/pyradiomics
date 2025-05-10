@@ -5,8 +5,6 @@ import logging
 import numpy
 import pywt
 import SimpleITK as sitk
-import six
-from six.moves import range
 
 logger = logging.getLogger(__name__)
 
@@ -538,7 +536,7 @@ def resampleImage(imageNode, maskNode, **kwargs):
               maskSpacing, maskSize, resampledPixelSpacing, newSize)
 
   try:
-    if isinstance(interpolator, six.string_types):
+    if isinstance(interpolator, str):
       interpolator = getattr(sitk, interpolator)
   except Exception:
     logger.warning('interpolator "%s" not recognized, using sitkBSpline', interpolator)
@@ -868,7 +866,7 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
     data = dec['a' * len(axes)].copy()
 
     dec_im = {}  # initialize empty dict
-    for decName, decImage in six.iteritems(dec):
+    for decName, decImage in dec.items():
       # Returning the approximiation is done only for the last loop,
       # and is handled separately below (by building it from `data`)
       # There for, skip it here

@@ -146,7 +146,6 @@ available [here](https://github.com/AIM-Harvard/SlicerRadiomics).
 - numpy (Feature calculation)
 - PyWavelets (Wavelet filter)
 - pykwalify (Enabling yaml parameters file checking)
-- six (Python 3 Compatibility)
 - scipy (Only for LBP filter, install separately to enable this filter)
 - scikit-image (Only for LBP filter, install separately to enable this filter)
 - trimesh (Only for LBP filter, install separately to enable this filter)

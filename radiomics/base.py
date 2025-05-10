@@ -4,7 +4,6 @@ import traceback
 
 import numpy
 import SimpleITK as sitk
-import six
 
 from radiomics import getProgressReporter, imageoperations
 
@@ -139,7 +138,7 @@ class RadiomicsFeaturesBase(object):
       or in the parameter file (by specifying the feature by name, not when enabling all features).
       However, in most cases this will still result only in a deprecation warning.
     """
-    for featureName, is_deprecated in six.iteritems(self.featureNames):
+    for featureName, is_deprecated in self.featureNames.items():
       # only enable non-deprecated features here
       if not is_deprecated:
         self.enableFeatureByName(featureName, True)
@@ -191,7 +190,7 @@ class RadiomicsFeaturesBase(object):
     voxelBatch = self.settings.get('voxelBatch', -1)
 
     # Initialize the output with empty numpy arrays
-    for feature, enabled in six.iteritems(self.enabledFeatures):
+    for feature, enabled in self.enabledFeatures.items():
       if enabled:
         self.featureValues[feature] = numpy.full(list(self.inputImage.GetSize())[::-1], initValue, dtype='float')
 
@@ -214,7 +213,7 @@ class RadiomicsFeaturesBase(object):
         pbar.update(1)  # Update progress bar
 
     # Convert the output to simple ITK image objects
-    for feature, enabled in six.iteritems(self.enabledFeatures):
+    for feature, enabled in self.enabledFeatures.items():
       if enabled:
         self.featureValues[feature] = sitk.GetImageFromArray(self.featureValues[feature])
         self.featureValues[feature].CopyInformation(self.inputImage)
@@ -231,7 +230,7 @@ class RadiomicsFeaturesBase(object):
     self._initCalculation(voxelCoordinates)
 
     self.logger.debug('Calculating features')
-    for feature, enabled in six.iteritems(self.enabledFeatures):
+    for feature, enabled in self.enabledFeatures.items():
       if enabled:
         try:
           # Use getattr to get the feature calculation methods, then use '()' to evaluate those methods

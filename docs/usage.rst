@@ -127,7 +127,6 @@ Interactive Use
      import os
 
      import SimpleITK as sitk
-     import six
 
      from radiomics import featureextractor, getTestCase
 
@@ -152,13 +151,13 @@ Interactive Use
 * Calculate the features (segment-based)::
 
     result = extractor.execute(imageName, maskName)
-    for key, val in six.iteritems(result):
+    for key, val in result.items():
       print("\t%s: %s" %(key, val))
 
 * Calculate the features (voxel-based)::
 
     result = extractor.execute(imageName, maskName, voxelBased=True)
-    for key, val in six.iteritems(result):
+    for key, val in result.items():
       if isinstance(val, sitk.Image):  # Feature map
         sitk.WriteImage(val, key + '.nrrd', True)
         print("Stored feature %s in %s" % (key, key + ".nrrd"))

@@ -29,10 +29,9 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "numpy",
-    "SimpleITK ==2.3.1",
+    "SimpleITK ==2.4.1",
     "PyWavelets >= 1.6.0",
-    "pykwalify >= 1.6.0",
-    "six"
+    "pykwalify >= 1.6.0"
 ]
 
 [project.optional-dependencies]

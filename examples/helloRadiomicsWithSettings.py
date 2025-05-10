@@ -5,8 +5,6 @@ from __future__ import print_function
 import logging
 import os
 
-import six
-
 import radiomics
 from radiomics import featureextractor, getFeatureClasses
 
@@ -41,9 +39,9 @@ extractor = featureextractor.RadiomicsFeatureExtractor(paramsFile)
 featureClasses = getFeatureClasses()
 
 print("Active features:")
-for cls, features in six.iteritems(extractor.enabledFeatures):
+for cls, features in extractor.enabledFeatures.items():
   if features is None or len(features) == 0:
-    features = [f for f, deprecated in six.iteritems(featureClasses[cls].getFeatureNames()) if not deprecated]
+    features = [f for f, deprecated in featureClasses[cls].getFeatureNames().items() if not deprecated]
   for f in features:
     print(f)
     print(getattr(featureClasses[cls], 'get%sFeatureValue' % f).__doc__)

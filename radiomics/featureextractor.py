@@ -10,7 +10,6 @@ import pathlib
 
 import pykwalify.core
 import SimpleITK as sitk
-import six
 
 from radiomics import generalinfo, getFeatureClasses, getImageTypes, getParameterValidationFiles, imageoperations
 
@@ -56,7 +55,7 @@ class RadiomicsFeatureExtractor:
     if len(args) == 1 and isinstance(args[0], dict):
       logger.info("Loading parameter dictionary")
       self._applyParams(paramsDict=args[0])
-    elif len(args) == 1 and (isinstance(args[0], six.string_types) or isinstance(args[0], pathlib.PurePath)):
+    elif len(args) == 1 and (isinstance(args[0], str) or isinstance(args[0], pathlib.PurePath)):
       if not os.path.isfile(args[0]):
         raise IOError("Parameter file %s does not exist." % args[0])
       logger.info("Loading parameter file %s", str(args[0]))
@@ -316,7 +315,7 @@ class RadiomicsFeatureExtractor:
     # Make generators for all enabled image types
     logger.debug('Creating image type iterator')
     imageGenerators = []
-    for imageType, customKwargs in six.iteritems(self.enabledImagetypes):
+    for imageType, customKwargs in self.enabledImagetypes.items():
       args = _settings.copy()
       args.update(customKwargs)
       logger.info('Adding image type "%s" with custom settings: %s' % (imageType, str(customKwargs)))
@@ -367,14 +366,14 @@ class RadiomicsFeatureExtractor:
     label = kwargs.get('label', 1)
 
     logger.info('Loading image and mask')
-    if isinstance(ImageFilePath, six.string_types) and os.path.isfile(ImageFilePath):
+    if isinstance(ImageFilePath, str) and os.path.isfile(ImageFilePath):
       image = sitk.ReadImage(ImageFilePath)
     elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
       image = ImageFilePath
     else:
       raise ValueError('Error reading image Filepath or SimpleITK object')
 
-    if isinstance(MaskFilePath, six.string_types) and os.path.isfile(MaskFilePath):
+    if isinstance(MaskFilePath, str) and os.path.isfile(MaskFilePath):
       mask = sitk.ReadImage(MaskFilePath)
     elif isinstance(MaskFilePath, sitk.SimpleITK.Image):
       mask = MaskFilePath
@@ -442,7 +441,7 @@ class RadiomicsFeatureExtractor:
         for feature in featureNames:
           shapeClass.enableFeatureByName(feature)
 
-      for (featureName, featureValue) in six.iteritems(shapeClass.execute()):
+      for (featureName, featureValue) in shapeClass.execute().items():
         newFeatureName = 'original_%s_%s' % (shape_type, featureName)
         featureVector[newFeatureName] = featureValue
 
@@ -500,7 +499,7 @@ class RadiomicsFeatureExtractor:
     enabledFeatures = self.enabledFeatures
 
     # Calculate feature classes
-    for featureClassName, featureNames in six.iteritems(enabledFeatures):
+    for featureClassName, featureNames in enabledFeatures.items():
       # Handle calculation of shape features separately
       if featureClassName.startswith('shape'):
         continue
@@ -514,7 +513,7 @@ class RadiomicsFeatureExtractor:
           for feature in featureNames:
             featureClass.enableFeatureByName(feature)
 
-        for (featureName, featureValue) in six.iteritems(featureClass.execute()):
+        for (featureName, featureValue) in featureClass.execute().items():
           newFeatureName = '%s_%s_%s' % (imageTypeName, featureClassName, featureName)
           featureVector[newFeatureName] = featureValue
 

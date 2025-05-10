@@ -184,7 +184,6 @@ Using feature classes directly
 
      from radiomics import firstorder, glcm, imageoperations, shape, glrlm, glszm, getTestCase
      import SimpleITK as sitk
-     import six
      import sys, os
 
 * Set up a data directory variable::
@@ -204,7 +203,7 @@ Using feature classes directly
      firstOrderFeatures = firstorder.RadiomicsFirstOrder(image,mask)
      firstOrderFeatures.enableAllFeatures()  # On the feature class level, all features are disabled by default.
      firstOrderFeatures.calculateFeatures()
-     for (key,val) in six.iteritems(firstOrderFeatures.featureValues):
+     for (key,val) in firstOrderFeatures.featureValues.items():
        print("\t%s: %s" % (key, val))
 
 * See the :ref:`radiomics-features-label` section for more features that you can calculate.

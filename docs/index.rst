@@ -107,7 +107,6 @@ and filters, thereby enabling fully reproducible feature extraction. For more in
 * numpy (Feature calculation)
 * PyWavelets (Wavelet filter)
 * pykwalify (Enabling yaml parameters file checking)
-* six (Python 3 Compatibility)
 
 See also the `requirements file <https://github.com/Radiomics/pyradiomics/blob/master/requirements.txt>`_.
 

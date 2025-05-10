@@ -1,8 +1,6 @@
 import argparse
 import logging
 
-import six
-
 import radiomics
 from radiomics import featureextractor
 from testUtils import RadiomicsTestUtils
@@ -55,7 +53,7 @@ def main(argv=None):
     configuration = {}
     baselines = {}
 
-    for k, v in six.iteritems(featurevector):
+    for k, v in featurevector.items():
       if 'diagnostics' in k:
         configuration[k] = v
       else:

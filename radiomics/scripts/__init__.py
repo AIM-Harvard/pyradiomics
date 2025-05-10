@@ -264,7 +264,7 @@ class PyRadiomicsCommandLine:
         if self.args.input.endswith(".csv"):
             self.logger.debug('Loading batch file "%s"', self.args.input)
             self.relative_path_start = os.path.dirname(self.args.input)
-            with open(self.args.input, mode="r") as batchFile:
+            with open(self.args.input) as batchFile:
                 cr = csv.DictReader(batchFile, lineterminator="\n")
 
                 # Check if required Image and Mask columns are present

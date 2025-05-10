@@ -33,14 +33,14 @@ class TestFeatures:
                     continue
                 assert len(baselineFeatureNames) > 0
 
-                uniqueFeatures = set([f.split("_")[-1] for f in baselineFeatureNames])
+                uniqueFeatures = {f.split("_")[-1] for f in baselineFeatureNames}
 
                 # Get a list of all features for current class
                 featureNames = featureClasses[featureClassName].getFeatureNames()
                 # Get a list of all non-deprecated features
-                activeFeatures = set(
-                    [f for (f, deprecated) in featureNames.items() if not deprecated]
-                )
+                activeFeatures = {
+                    f for (f, deprecated) in featureNames.items() if not deprecated
+                }
                 # Check if all active features have a baseline (exclude deprecated features from this set)
                 if len(activeFeatures - uniqueFeatures) > 0:
                     raise AssertionError(

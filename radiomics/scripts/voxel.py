@@ -107,7 +107,7 @@ def _configureParallelExtraction(logging_config, add_info_filter=True):
         # other loggers.
         class info_filter(logging.Filter):
             def __init__(self, name):
-                super(info_filter, self).__init__(name)
+                super().__init__(name)
                 self.level = logging.WARNING
 
             def filter(self, record):

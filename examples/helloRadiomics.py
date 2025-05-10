@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 
 import logging
 
@@ -64,4 +63,4 @@ print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)
 
 for featureName in featureVector.keys():
-    print("Computed %s: %s" % (featureName, featureVector[featureName]))
+    print("Computed {}: {}".format(featureName, featureVector[featureName]))

@@ -12,7 +12,7 @@ def checkWavelet(value, rule_obj, path):
     wavelist = pywt.wavelist()
     if value not in wavelist:
         raise ValueError(
-            'Wavelet "%s" not available in pyWavelets %s' % (value, wavelist)
+            'Wavelet "{}" not available in pyWavelets {}'.format(value, wavelist)
         )
     return True
 
@@ -35,7 +35,9 @@ def checkInterpolator(value, rule_obj, path):
         }
         if value not in enum:
             raise ValueError(
-                'Interpolator value "%s" not valid, possible values: %s' % (value, enum)
+                'Interpolator value "{}" not valid, possible values: {}'.format(
+                    value, enum
+                )
             )
     elif isinstance(value, int):
         if value < 1 or value > 10:

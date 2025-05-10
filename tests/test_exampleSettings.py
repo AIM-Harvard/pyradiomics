@@ -13,7 +13,7 @@ def pytest_generate_tests(metafunc):
 
 
 def exampleSettings_name_func(testcase_func, param_num, param):
-    return "%s_%s" % (
+    return "{}_{}".format(
         testcase_func.__name__,
         os.path.splitext(os.path.basename(param.args[0]))[0],
     )

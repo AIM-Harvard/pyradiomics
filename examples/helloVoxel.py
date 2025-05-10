@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 
 import logging
 import os
@@ -136,9 +135,11 @@ featureVector = extractor.execute(imageName, maskName, voxelBased=True)
 
 for featureName, featureValue in featureVector.items():
     if isinstance(featureValue, sitk.Image):
-        sitk.WriteImage(featureValue, "%s_%s.nrrd" % (testCase, featureName))
+        sitk.WriteImage(featureValue, "{}_{}.nrrd".format(testCase, featureName))
         print(
-            'Computed %s, stored as "%s_%s.nrrd"' % (featureName, testCase, featureName)
+            'Computed {}, stored as "{}_{}.nrrd"'.format(
+                featureName, testCase, featureName
+            )
         )
     else:
-        print("%s: %s" % (featureName, featureValue))
+        print("{}: {}".format(featureName, featureValue))

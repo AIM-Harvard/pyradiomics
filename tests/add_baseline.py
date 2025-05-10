@@ -53,7 +53,7 @@ class AddBaseline:
             if cMat is not None:
                 numpy.save(
                     os.path.join(
-                        self.baselineDir, "%s_%s.npy" % (test, featureClassName)
+                        self.baselineDir, "{}_{}.npy".format(test, featureClassName)
                     ),
                     cMat,
                 )
@@ -67,7 +67,7 @@ class AddBaseline:
         self.new_baselines[featureClassName].configuration[test].update(versions)
 
         self.new_baselines[featureClassName].baseline[test] = {
-            "%s_%s_%s" % (imageTypeName, featureClassName, key): val
+            "{}_{}_{}".format(imageTypeName, featureClassName, key): val
             for key, val in featureClass.featureValues.items()
         }
 

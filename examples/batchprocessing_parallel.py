@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 
 from collections import OrderedDict
 import csv
@@ -63,7 +62,7 @@ rLogger.addHandler(logHandler)
 # loggers.
 class info_filter(logging.Filter):
     def __init__(self, name):
-        super(info_filter, self).__init__(name)
+        super().__init__(name)
         self.level = logging.WARNING
 
     def filter(self, record):
@@ -201,7 +200,7 @@ if __name__ == "__main__":
     # Extract List of cases
     cases = []
     try:
-        with open(INPUTCSV, "r") as inFile:
+        with open(INPUTCSV) as inFile:
             cr = csv.DictReader(inFile, lineterminator="\n")
             cases = []
             for row_idx, row in enumerate(cr, start=1):

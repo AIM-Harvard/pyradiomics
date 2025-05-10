@@ -348,7 +348,7 @@ class PyRadiomicsBaseline:
         new_baseline = cls(featureClassName)
         new_baseline.logger.debug("Reading baseline for class %s", new_baseline.cls)
 
-        with open(baselineFile, "r") as baselineReader:
+        with open(baselineFile) as baselineReader:
             csvReader = csv.reader(baselineReader)
             tests = next(csvReader)[1:]
 

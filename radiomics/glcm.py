@@ -98,7 +98,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
   """
 
     def __init__(self, inputImage, inputMask, **kwargs):
-        super(RadiomicsGLCM, self).__init__(inputImage, inputMask, **kwargs)
+        super().__init__(inputImage, inputMask, **kwargs)
 
         self.symmetricalGLCM = kwargs.get("symmetricalGLCM", True)
         self.weightingNorm = kwargs.get(

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 
 import numpy
 import SimpleITK as sitk
@@ -169,7 +168,7 @@ if applyLog:
         logFirstorderFeatures.enableAllFeatures()
         results = logFirstorderFeatures.execute()
         for key, val in results.items():
-            laplacianFeatureName = "%s_%s" % (imageTypeName, key)
+            laplacianFeatureName = "{}_{}".format(imageTypeName, key)
             print("  ", laplacianFeatureName, ":", val)
 #
 # Show FirstOrder features, calculated on a wavelet filtered image
@@ -187,5 +186,5 @@ if applyWavelet:
         results = waveletFirstOrderFeaturs.execute()
         print("Calculated firstorder features with wavelet ", decompositionName)
         for key, val in results.items():
-            waveletFeatureName = "%s_%s" % (str(decompositionName), key)
+            waveletFeatureName = "{}_{}".format(str(decompositionName), key)
             print("  ", waveletFeatureName, ":", val)

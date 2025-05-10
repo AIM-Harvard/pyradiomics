@@ -46,7 +46,7 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
     """
 
     def __init__(self, inputImage, inputMask, **kwargs):
-        super(RadiomicsShape2D, self).__init__(inputImage, inputMask, **kwargs)
+        super().__init__(inputImage, inputMask, **kwargs)
 
     def _initVoxelBasedCalculation(self):
         raise NotImplementedError(

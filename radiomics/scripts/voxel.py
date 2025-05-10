@@ -25,7 +25,7 @@ def extractVoxel(case_idx, case, extractor, **kwargs):
         if out_dir is None:
             out_dir = "."
         elif not os.path.isdir(out_dir):
-            caseLogger.debug("Creating output directory at %s" % out_dir)
+            caseLogger.debug(f"Creating output directory at {out_dir}")
             os.makedirs(out_dir)
 
         caseLogger.info("Processing case %s", case_idx)
@@ -76,7 +76,7 @@ def extractVoxel(case_idx, case, extractor, **kwargs):
 def extractVoxel_parallel(args, logging_config=None, **kwargs):
     try:
         # set thread name to patient name
-        threading.current_thread().name = "case %s" % args[0]  # args[0] = case_idx
+        threading.current_thread().name = f"case {args[0]}"  # args[0] = case_idx
 
         if logging_config is not None:
             _configureParallelExtraction(logging_config)

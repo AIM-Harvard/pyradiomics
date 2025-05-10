@@ -93,7 +93,7 @@ class RadiomicsTestUtils:
         containing the feature names (without image type and feature class specifiers, i.e. just the feature name).
         """
         if className not in self._baseline:
-            raise AssertionError("No baseline available for class %s." % className)
+            raise AssertionError(f"No baseline available for class {className}.")
         return self._baseline[className].getTestFeatures(test)
 
     def setFeatureClassAndTestCase(self, className, test):
@@ -441,7 +441,7 @@ class PyRadiomicsBaseline:
         return self.baseline[test].get(featureName, None)
 
     def writeBaselineFile(self, baselineDir):
-        baselineFile = os.path.join(baselineDir, "baseline_%s.csv" % self.cls)
+        baselineFile = os.path.join(baselineDir, f"baseline_{self.cls}.csv")
         cases = sorted(self.tests)
         with open(baselineFile, "w") as baseline:
             csvWriter = csv.writer(baseline, lineterminator="\n")

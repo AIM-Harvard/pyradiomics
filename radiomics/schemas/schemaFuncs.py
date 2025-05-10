@@ -11,9 +11,7 @@ def checkWavelet(value, rule_obj, path):
         raise TypeError("Wavelet not expected type (str)")
     wavelist = pywt.wavelist()
     if value not in wavelist:
-        raise ValueError(
-            'Wavelet "{}" not available in pyWavelets {}'.format(value, wavelist)
-        )
+        raise ValueError(f'Wavelet "{value}" not available in pyWavelets {wavelist}')
     return True
 
 
@@ -35,9 +33,7 @@ def checkInterpolator(value, rule_obj, path):
         }
         if value not in enum:
             raise ValueError(
-                'Interpolator value "{}" not valid, possible values: {}'.format(
-                    value, enum
-                )
+                f'Interpolator value "{value}" not valid, possible values: {enum}'
             )
     elif isinstance(value, int):
         if value < 1 or value > 10:
@@ -56,8 +52,7 @@ def checkWeighting(value, rule_obj, path):
         enum = ["euclidean", "manhattan", "infinity", "no_weighting"]
         if value not in enum:
             raise ValueError(
-                'WeightingNorm value "%s" not valid, possible values: %s'
-                % (value, enum)
+                f'WeightingNorm value "{value}" not valid, possible values: {enum}'
             )
     else:
         raise TypeError("WeightingNorm not expected type (str or None)")
@@ -77,7 +72,7 @@ def checkFeatureClass(value, rule_obj, path):
         if features is not None:
             if not isinstance(features, list):
                 raise TypeError(
-                    "Value of feature class %s not expected type (list)" % (className)
+                    f"Value of feature class {className} not expected type (list)"
                 )
             unrecognizedFeatures = set(features) - set(
                 featureClasses[className].getFeatureNames()

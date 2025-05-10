@@ -128,18 +128,14 @@ for cls, features in extractor.enabledFeatures.items():
         ]
     for f in features:
         print(f)
-        print(getattr(featureClasses[cls], "get%sFeatureValue" % f).__doc__)
+        print(getattr(featureClasses[cls], f"get{f}FeatureValue").__doc__)
 
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName, voxelBased=True)
 
 for featureName, featureValue in featureVector.items():
     if isinstance(featureValue, sitk.Image):
-        sitk.WriteImage(featureValue, "{}_{}.nrrd".format(testCase, featureName))
-        print(
-            'Computed {}, stored as "{}_{}.nrrd"'.format(
-                featureName, testCase, featureName
-            )
-        )
+        sitk.WriteImage(featureValue, f"{testCase}_{featureName}.nrrd")
+        print(f'Computed {featureName}, stored as "{testCase}_{featureName}.nrrd"')
     else:
-        print("{}: {}".format(featureName, featureValue))
+        print(f"{featureName}: {featureValue}")

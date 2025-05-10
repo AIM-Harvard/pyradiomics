@@ -21,7 +21,7 @@ def main():
     datasetReader = DatasetHierarchyReader(inputDirectory, filetype=filetype)
     datasetHierarchyDict = datasetReader.ReadDatasetHierarchy()
 
-    print("Found %s patients, writing csv" % (str(len(datasetHierarchyDict.keys()))))
+    print(f"Found {str(len(datasetHierarchyDict.keys()))} patients, writing csv")
 
     try:
         with open(outputFile, "wb") as outFile:

@@ -15,13 +15,20 @@ repos:
     rev: "v5.0.0"
     hooks:
       - id: check-added-large-files
+        args: ['--maxkb=1024']
       - id: check-case-conflict
+      - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
+      - id: check-toml
       #- id: check-yaml  # See Issue #899 (https://github.com/AIM-Harvard/pyradiomics/issues/899)
       - id: debug-statements
+      - id: detect-private-key
       - id: end-of-file-fixer
+        exclude: "\\.(md5|sha|sha512|svg|vtk|vtp)$|^Resources\\/[^\\/]+\\.h$|\\/ColorFiles\\/.+\\.txt$|Data\\/Input\\/.+$"
+      - id: forbid-new-submodules
       - id: mixed-line-ending
+        exclude: "\\.(sha|sha512|svg|vtk|vtp)$"
       #- id: name-tests-test  # See Issue #899 (https://github.com/AIM-Harvard/pyradiomics/issues/899)
       #  args: ["--pytest-test-first"]
       - id: requirements-txt-fixer

@@ -12,83 +12,105 @@ featureClasses = getFeatureClasses()
 
 
 def pytest_generate_tests(metafunc):
-  metafunc.parametrize(["testCase", "featureName"], metafunc.cls.generate_scenarios())
+    metafunc.parametrize(["testCase", "featureName"], metafunc.cls.generate_scenarios())
 
 
 class TestFeatures:
 
-  @staticmethod
-  def generate_scenarios():
-    global tests, featureClasses
+    @staticmethod
+    def generate_scenarios():
+        global tests, featureClasses
 
-    for test in tests:
-      for featureClassName in featureClasses:
-        # Get all feature names for which there is a baseline with current test case
-        # Raises an assertion error when the class is not yet present in the baseline
-        # Returns None if no baseline is present for this specific test case
-        # Returns a list of feature names for which baseline values are present for this test
-        baselineFeatureNames = testUtils.getFeatureNames(featureClassName, test)
+        for test in tests:
+            for featureClassName in featureClasses:
+                # Get all feature names for which there is a baseline with current test case
+                # Raises an assertion error when the class is not yet present in the baseline
+                # Returns None if no baseline is present for this specific test case
+                # Returns a list of feature names for which baseline values are present for this test
+                baselineFeatureNames = testUtils.getFeatureNames(featureClassName, test)
 
-        if baselineFeatureNames is None:
-          continue
-        assert (len(baselineFeatureNames) > 0)
+                if baselineFeatureNames is None:
+                    continue
+                assert len(baselineFeatureNames) > 0
 
-        uniqueFeatures = set([f.split('_')[-1] for f in baselineFeatureNames])
+                uniqueFeatures = set([f.split("_")[-1] for f in baselineFeatureNames])
 
-        # Get a list of all features for current class
-        featureNames = featureClasses[featureClassName].getFeatureNames()
-        # Get a list of all non-deprecated features
-        activeFeatures = set([f for (f, deprecated) in featureNames.items() if not deprecated])
-        # Check if all active features have a baseline (exclude deprecated features from this set)
-        if len(activeFeatures - uniqueFeatures) > 0:
-          raise AssertionError('Missing baseline for active features %s', activeFeatures - uniqueFeatures)
-        if len(uniqueFeatures - activeFeatures) > 0:
-          raise AssertionError('Missing function(s) for baseline feature(s) %s', uniqueFeatures - activeFeatures)
+                # Get a list of all features for current class
+                featureNames = featureClasses[featureClassName].getFeatureNames()
+                # Get a list of all non-deprecated features
+                activeFeatures = set(
+                    [f for (f, deprecated) in featureNames.items() if not deprecated]
+                )
+                # Check if all active features have a baseline (exclude deprecated features from this set)
+                if len(activeFeatures - uniqueFeatures) > 0:
+                    raise AssertionError(
+                        "Missing baseline for active features %s",
+                        activeFeatures - uniqueFeatures,
+                    )
+                if len(uniqueFeatures - activeFeatures) > 0:
+                    raise AssertionError(
+                        "Missing function(s) for baseline feature(s) %s",
+                        uniqueFeatures - activeFeatures,
+                    )
 
-        logging.debug('generate_scenarios: featureNames = %s', baselineFeatureNames)
-        for featureName in baselineFeatureNames:
-          yield test, featureName
+                logging.debug(
+                    "generate_scenarios: featureNames = %s", baselineFeatureNames
+                )
+                for featureName in baselineFeatureNames:
+                    yield test, featureName
 
-  def test_scenario(self, testCase, featureName):
-    print("")
-    global testUtils, featureClass, featureClasses
+    def test_scenario(self, testCase, featureName):
+        print("")
+        global testUtils, featureClass, featureClasses
 
-    featureName = featureName.split('_')
+        featureName = featureName.split("_")
 
-    logging.debug('test_scenario: test = %s, featureClassName = %s, featureName = %s', testCase, featureName[1],
-                  featureName[-1])
+        logging.debug(
+            "test_scenario: test = %s, featureClassName = %s, featureName = %s",
+            testCase,
+            featureName[1],
+            featureName[-1],
+        )
 
-    testOrClassChanged = testUtils.setFeatureClassAndTestCase(featureName[1], testCase)
+        testOrClassChanged = testUtils.setFeatureClassAndTestCase(
+            featureName[1], testCase
+        )
 
-    testImage = testUtils.getImage(featureName[0])
-    testMask = testUtils.getMask(featureName[0])
+        testImage = testUtils.getImage(featureName[0])
+        testMask = testUtils.getMask(featureName[0])
 
-    if featureClass is None or testOrClassChanged:
-      logging.debug('Init %s' % featureName[1])
-      featureClass = featureClasses[featureName[1]](testImage, testMask, **testUtils.getSettings())
+        if featureClass is None or testOrClassChanged:
+            logging.debug("Init %s" % featureName[1])
+            featureClass = featureClasses[featureName[1]](
+                testImage, testMask, **testUtils.getSettings()
+            )
 
-    assert (featureClass is not None)
+        assert featureClass is not None
 
-    featureClass.disableAllFeatures()
-    featureClass.enableFeatureByName(featureName[-1])
-    featureClass.execute()
-    # get the result and test it
-    val = featureClass.featureValues[featureName[-1]]
-    testUtils.checkResult(featureName, val)
+        featureClass.disableAllFeatures()
+        featureClass.enableFeatureByName(featureName[-1])
+        featureClass.execute()
+        # get the result and test it
+        val = featureClass.featureValues[featureName[-1]]
+        testUtils.checkResult(featureName, val)
 
 
 def teardown_module():
-  print("")
-  res = testUtils.getResults()
-  print('Results:')
-  print(res)
-  resultsFile = os.path.join(testUtils.getDataDir(), 'PyradiomicsFeatures.csv')
-  testUtils.writeCSV(res, resultsFile)
-  diff = testUtils.getDiffs()
-  print('Differences from baseline:')
-  print(diff)
-  diffFile = os.path.join(testUtils.getDataDir(), 'Baseline2PyradiomicsFeaturesDiff.csv')
-  testUtils.writeCSV(diff, diffFile)
-  logging.info(
-    "Wrote calculated features to %s, and the differences between the baseline features and the calculated ones to %s.",
-    resultsFile, diffFile)
+    print("")
+    res = testUtils.getResults()
+    print("Results:")
+    print(res)
+    resultsFile = os.path.join(testUtils.getDataDir(), "PyradiomicsFeatures.csv")
+    testUtils.writeCSV(res, resultsFile)
+    diff = testUtils.getDiffs()
+    print("Differences from baseline:")
+    print(diff)
+    diffFile = os.path.join(
+        testUtils.getDataDir(), "Baseline2PyradiomicsFeaturesDiff.csv"
+    )
+    testUtils.writeCSV(diff, diffFile)
+    logging.info(
+        "Wrote calculated features to %s, and the differences between the baseline features and the calculated ones to %s.",
+        resultsFile,
+        diffFile,
+    )

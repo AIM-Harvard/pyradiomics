@@ -33,6 +33,11 @@ repos:
       #  args: ["--pytest-test-first"]
       - id: requirements-txt-fixer
       #- id: trailing-whitespace  # See Issue #899 (https://github.com/AIM-Harvard/pyradiomics/issues/899)
+  - repo: https://github.com/psf/black
+    # need to keep version for black in .pre-commit-config.yaml, requirements_dev.txt, and .github/workflows/prostatid_ci.yml
+    rev: 24.2.0
+    hooks:
+      - id: black
 
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: "v1.10.0"

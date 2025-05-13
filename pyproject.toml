@@ -17,7 +17,7 @@ authors = [
 description = "Radiomics features library for python"
 readme = "README.md"
 requires-python =">=3.9"
-license = { file = "LICENSE.txt"}
+license-files = ["LICENSE.txt"]
 keywords = [ "radiomics", "cancerimaging", "medicalresearch", "computationalimaging" ]
 classifiers = [
     'Development Status :: 5 - Production/Stable',

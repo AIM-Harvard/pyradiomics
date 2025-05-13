@@ -1,17 +1,11 @@
 # pyradiomics v3.1.0
 
-## Build Status
+<-- ## Build Status
 
 | Linux / MacOS                 | Windows                       |
 | ----------------------------- | ----------------------------- |
-| [![][circleci]][circleci-lnk] | [![][appveyor]][appveyor-lnk] |
-
-[appveyor]:
-  https://ci.appveyor.com/api/projects/status/kvu7897q0v4imwdc?svg=true
-[appveyor-lnk]: https://ci.appveyor.com/project/AIM-Harvard/pyradiomics-k4sto
-[circleci]:
-  https://dl.circleci.com/status-badge/img/gh/AIM-Harvard/pyradiomics/tree/master.svg?style=shield
-[circleci-lnk]: https://circleci.com/gh/AIM-Harvard/pyradiomics
+|                               |                               |
+-->
 
 ## Radiomics feature extraction in Python
 

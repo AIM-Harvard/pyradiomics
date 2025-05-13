@@ -1,6 +1,12 @@
 [build-system]
-requires = ["scikit-build-core>=0.11.2", "numpy"]
-build-backend = "scikit_build_core.build"
+requires = [
+  "setuptools>=42",
+  "scikit-build>=0.13",
+  "cmake>=3.18",
+  "ninja",
+  "numpy",
+]
+build-backend = "setuptools.build_meta"
 
 
 [project]

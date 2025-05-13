@@ -15,14 +15,14 @@ readme = "README.md"
 # Currently only supports python 3.9 and 3.10
 # A segmentation fault occurs with python 3.11, 3.12, 3.13
 requires-python =">=3.9,<3.11"
-license = { file = "LICENSE.txt"}
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
 keywords = [ "radiomics", "cancerimaging", "medicalresearch", "computationalimaging" ]
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Environment :: Console',
     'Intended Audience :: Developers',
     'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: BSD License',
     'Operating System :: OS Independent',
     'Programming Language :: C',
     'Programming Language :: Python :: 3.9',

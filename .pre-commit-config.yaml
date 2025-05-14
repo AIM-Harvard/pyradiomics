@@ -68,14 +68,25 @@ repos:
   #    - id: clang-format
   #      types_or: [c++, c, cuda]
 
-  #- repo: https://github.com/pre-commit/mirrors-mypy
-  #  rev: "v1.14.1"
-  #  hooks:
-  #    - id: mypy
-  #      files: src|tests
-  #      args: []
-  #      additional_dependencies:
-  #        - pytest
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.15.0"
+    hooks:
+      - id: mypy
+        files: src|tests
+        # Ignore all current errors, these suppressions should be removed eventually
+        args: [ 
+          '--disable-error-code=no-redef',
+          '--disable-error-code=unreachable',
+          '--disable-error-code=assignment',
+          '--disable-error-code=index',
+          '--disable-error-code=attr-defined',
+          '--disable-error-code=no-untyped-call' , 
+          '--disable-error-code=var-annotated' ,
+          '--disable-error-code=no-untyped-def',
+          '--disable-error-code=import-not-found',
+        ]
+        additional_dependencies:
+          - pytest
 
   #- repo: https://github.com/codespell-project/codespell
   #  rev: "v2.3.0"

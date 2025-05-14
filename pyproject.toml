@@ -44,6 +44,7 @@ test = [
     "coverage >= 7.8.0",
 ]
 dev = [
+    "pre-commit >= 4.2.0",
     "pytest >=6",
     "pytest-cov >=3",
     "coverage >= 7.8.0",

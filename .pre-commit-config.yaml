@@ -95,6 +95,15 @@ repos:
         files: '^.*\.(py|c|h|md|rst|yml)$'
         args: [ "--ignore-words", ".codespellignore" ]
 
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.22  # Use the ref you want to point at
+    hooks:
+    - id: mdformat
+      # Optionally add plugins
+      additional_dependencies:
+      - mdformat-gfm
+      - mdformat-black
+
   #- repo: https://github.com/shellcheck-py/shellcheck-py
   #  rev: "v0.10.0.1"
   #  hooks:

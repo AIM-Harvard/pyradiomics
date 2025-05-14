@@ -1,4 +1,4 @@
-This folder contains the test cases and baseline used to ensure consistent results from features implemented in 
+This folder contains the test cases and baseline used to ensure consistent results from features implemented in
 PyRadioimcs.
 
 `baseline` contains calculated features in full-python mode for test cases brain1, brain2, breast1, lung1 and lung2 and

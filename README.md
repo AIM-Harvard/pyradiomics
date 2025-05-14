@@ -1,11 +1,11 @@
 # pyradiomics v3.1.0
 
-<-- ## Build Status
+\<-- ## Build Status
 
-| Linux / MacOS                 | Windows                       |
-| ----------------------------- | ----------------------------- |
-|                               |                               |
--->
+| Linux / MacOS | Windows |
+| ------------- | ------- |
+|               |         |
+| -->           |         |
 
 ## Radiomics feature extraction in Python
 
@@ -75,7 +75,9 @@ For more information, see the sphinx generated documentation available
 Alternatively, you can generate the documentation by checking out the master
 branch and running from the root directory:
 
-    python setup.py build_sphinx
+```
+python setup.py build_sphinx
+```
 
 The documentation can then be viewed in a browser by opening
 `PACKAGE_ROOT\build\sphinx\html\index.html`.
@@ -89,7 +91,9 @@ PyRadiomics is OS independent and compatible with Python >= 3.5. Pre-built
 binaries are available on PyPi and Conda. To install PyRadiomics, ensure you
 have python installed and run:
 
-    `python -m pip install pyradiomics`
+```
+`python -m pip install pyradiomics`
+```
 
 Detailed installation instructions, as well as instructions for building
 PyRadiomics from source, are available in the
@@ -105,17 +109,23 @@ pre-installed with example Notebooks.
 
 To get the Docker:
 
-    docker pull radiomics/pyradiomics:latest
+```
+docker pull radiomics/pyradiomics:latest
+```
 
 The `radiomics/notebook` Docker has an exposed volume (`/data`) that can be
 mapped to the host system directory. For example, to mount the current
 directory:
 
-    docker run --rm -it --publish 8888:8888 -v `pwd`:/data radiomics/notebook
+```
+docker run --rm -it --publish 8888:8888 -v `pwd`:/data radiomics/notebook
+```
 
 or for a less secure notebook, skip the randomly generated token
 
-    docker run --rm -it --publish 8888:8888 -v `pwd`:/data radiomics/notebook start-notebook.sh --NotebookApp.token=''
+```
+docker run --rm -it --publish 8888:8888 -v `pwd`:/data radiomics/notebook start-notebook.sh --NotebookApp.token=''
+```
 
 and open the local webpage at http://localhost:8888/ with the current directory
 at http://localhost:8888/tree/data.
@@ -123,11 +133,15 @@ at http://localhost:8888/tree/data.
 The second is a docker which exposes the PyRadiomics CLI interface. To get the
 CLI-Docker:
 
-    docker pull radiomics/pyradiomics:CLI
+```
+docker pull radiomics/pyradiomics:CLI
+```
 
 You can then use the PyRadiomics CLI as follows:
 
-    docker run radiomics/pyradiomics:CLI --help
+```
+docker run radiomics/pyradiomics:CLI --help
+```
 
 For more information on using docker, see
 [here](https://pyradiomics.readthedocs.io/en/latest/installation.html#use-pyradiomics-docker)

@@ -1,8 +1,10 @@
-from collections import OrderedDict
-from datetime import datetime
+from __future__ import annotations
+
 import logging.config
 import os
 import threading
+from collections import OrderedDict
+from datetime import datetime
 
 import SimpleITK as sitk
 
@@ -15,7 +17,7 @@ _parallel_extraction_configured = False
 def extractVoxel(case_idx, case, extractor, **kwargs):
     global caseLogger
 
-    out_dir = kwargs.get("out_dir", None)
+    out_dir = kwargs.get("out_dir")
     unix_path = kwargs.get("unix_path", False)
 
     # Instantiate the output

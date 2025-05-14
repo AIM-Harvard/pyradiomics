@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import traceback
@@ -112,7 +114,6 @@ class RadiomicsFeaturesBase:
         Last steps to prepare the class for extraction. This function calculates the texture matrices and coefficients in
         the respective feature classes
         """
-        pass
 
     def _applyBinning(self, matrix):
         matrix, _ = imageoperations.binImage(matrix, self.maskArray, **self.settings)

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
+from __future__ import annotations
 
-
-from collections import OrderedDict
 import csv
-from datetime import datetime
 import logging
-from multiprocessing import cpu_count, Pool
 import os
 import shutil
 import threading
+from collections import OrderedDict
+from datetime import datetime
+from multiprocessing import Pool, cpu_count
 
 import SimpleITK as sitk
 

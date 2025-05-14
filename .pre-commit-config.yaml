@@ -55,12 +55,11 @@ repos:
   #      types_or: [yaml, markdown, html, css, scss, javascript, json]
   #      args: [--prose-wrap=always]
 
-  #- repo: https://github.com/astral-sh/ruff-pre-commit
-  #  rev: "v0.9.2"
-  #  hooks:
-  #    - id: ruff
-  #      args: ["--fix", "--show-fixes"]
-  #    - id: ruff-format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.11.9"
+    hooks:
+      - id: ruff
+        args: ["--fix", "--show-fixes"]
 
   #- repo: https://github.com/pre-commit/mirrors-clang-format
   #  rev: "v19.1.7"

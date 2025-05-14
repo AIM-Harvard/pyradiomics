@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 import argparse
 import csv
-from decimal import Decimal
 import distutils.spawn
 import glob
 import json
 import logging
 import os
 import shutil
-from subprocess import call
 import sys
 import tempfile
+from decimal import Decimal
+from subprocess import call
 
 import numpy
 import pandas
@@ -245,15 +247,7 @@ class TID1500Metadata:
                 }
             )
 
-        elif re.match("exponential", prefix):
-            modifiers.append(
-                {
-                    "modifier": imageTransformationConcept,
-                    "modifierValue": self.makePrivateCode("Exponent transformation"),
-                }
-            )
-
-        elif re.match("exponential", prefix):
+        elif re.match("exponential", prefix) or re.match("exponential", prefix):
             modifiers.append(
                 {
                     "modifier": imageTransformationConcept,

@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import logging
 import os
 import sys
 
 import numpy
 import SimpleITK as sitk
+from testUtils import PyRadiomicsBaseline, RadiomicsTestUtils
 
 from radiomics import generalinfo, getFeatureClasses, getTestCase, imageoperations
-from testUtils import PyRadiomicsBaseline, RadiomicsTestUtils
 
 
 class AddBaseline:

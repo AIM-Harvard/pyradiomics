@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import annotations
 
 import numpy
 import SimpleITK as sitk
@@ -186,5 +186,5 @@ if applyWavelet:
         results = waveletFirstOrderFeaturs.execute()
         print("Calculated firstorder features with wavelet ", decompositionName)
         for key, val in results.items():
-            waveletFeatureName = f"{str(decompositionName)}_{key}"
+            waveletFeatureName = f"{decompositionName!s}_{key}"
             print("  ", waveletFeatureName, ":", val)

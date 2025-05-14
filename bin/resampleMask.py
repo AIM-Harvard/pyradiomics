@@ -7,6 +7,8 @@ This script can be used directly from the command line by calling ``python resam
 the reference image, mask to resample and a filename to store the result (the resampled mask).
 """
 
+from __future__ import annotations
+
 import argparse
 
 import SimpleITK as sitk

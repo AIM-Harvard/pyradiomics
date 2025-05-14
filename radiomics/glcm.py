@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy
 
 from radiomics import base, cMatrices, deprecated
@@ -102,7 +104,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
         self.symmetricalGLCM = kwargs.get("symmetricalGLCM", True)
         self.weightingNorm = kwargs.get(
-            "weightingNorm", None
+            "weightingNorm"
         )  # manhattan, euclidean, infinity
 
         self.P_glcm = None

@@ -1,16 +1,17 @@
 # For convenience, import collection and numpy
 # into the "pyradiomics" namespace
+from __future__ import annotations
 
-import collections  # noqa: F401
+import collections
 import inspect
 import logging
 import os
 import pkgutil
 import sys
 import tempfile
-
-import numpy  # noqa: F401
 import urllib.request
+
+import numpy
 
 from . import imageoperations
 
@@ -280,8 +281,7 @@ def getProgressReporter(*args, **kwargs):
     global handler, progressReporter
     if progressReporter is not None and logging.NOTSET < handler.level <= logging.INFO:
         return progressReporter(*args, **kwargs)
-    else:
-        return _DummyProgressReporter(*args, **kwargs)
+    return _DummyProgressReporter(*args, **kwargs)
 
 
 progressReporter = None
@@ -319,8 +319,8 @@ cMatrices = (
 )
 cShape = None
 try:
-    from radiomics import _cmatrices as cMatrices  # noqa: F401
-    from radiomics import _cshape as cShape  # noqa: F401
+    from radiomics import _cmatrices as cMatrices
+    from radiomics import _cshape as cShape
 except ImportError as e:
     if os.path.isdir(os.path.join(os.path.dirname(__file__), "..", "data")):
         # It looks like PyRadiomics is run from source (in which case "setup.py develop" must have been run)

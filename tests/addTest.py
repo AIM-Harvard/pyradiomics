@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import argparse
 import logging
 
+from testUtils import RadiomicsTestUtils
+
 import radiomics
 from radiomics import featureextractor
-from testUtils import RadiomicsTestUtils
 
 
 def main(argv=None):

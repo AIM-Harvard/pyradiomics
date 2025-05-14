@@ -135,6 +135,38 @@ disallow_incomplete_defs = true
 
 
 [tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    ".idea",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+
 
 [tool.ruff.lint]
 extend-select = [
@@ -164,7 +196,100 @@ ignore = [
     "PLR09",    # Too many <...>
     "PLR2004",  # Magic value used in comparison
     "ISC001",   # Conflicts with formatter
+# ----- The following are suppressions to allow initial passing of ruff linting
+    "PLW0602",   # TODO: Delay fixing until later
+    "ARG001", # Unused function argument: `param_num`
+    "B007", # Loop control variable `args` not used within loop body
+    "EM101", # Exception must not use a string literal, assign to variable first
+    "G004", # Logging statement uses f-string
+    "ICN001", # `numpy` should be imported as `np`
+    "PLW0603", # Using the global statement to update `featureClass` is discouraged
+    "PTH100", # `os.path.abspath()` should be replaced by `Path.resolve()`
+    "PTH113", # `os.path.isfile()` should be replaced by `Path.is_file()`
+    "PTH118", # `os.path.join()` should be replaced by `Path` with `/` operator
+    "PTH120", # `os.path.dirname()` should be replaced by `Path.parent`
+    "PTH123", # `open()` should be replaced by `Path.open()`
+    "PTH208", # Use `pathlib.Path.iterdir()` instead
+    "RUF005", # Consider `["featureName", *cases]` instead of concatenation
+    "RUF100", # (unused-noqa)
+    "ARG002",   # Unused methodargument:`total`
+    "B008",   # Do notperformfunctioncall`CodedValue`
+    "B904",   # Within an`except`clause,raiseexceptions
+    "C416",   # Unnecessary listcomprehension(rewriteusing`list()`)
+    "E402",   # Module levelimportnotattop
+    "EM102",   # Exception mustnotuseanf-string
+    "EXE001",   # Shebang ispresentbutfileis
+    "F401",   # `pykwalify.compat.yaml` importedbutunused
+    "G002",   # Logging statementuses`%`
+    "G003",   # Logging statementuses`+`
+    "G201",   # Logging `.exception(...)`shouldbeusedinstead
+    "PD011",   # Use `.to_numpy()`insteadof`.values`
+    "PIE810",   # Call `endswith`oncewitha`tuple`
+    "PLR1722",   # Use `sys.exit()`insteadof`exit`
+    "PLR1730",   # Replace `if`statementwith`level=
+    "PLR1730",   # Replace `if`statementwith`NUM_OF_WORKERS=
+    "PLW2901",   # `for` loopvariable`features`overwrittenby
+    "PLW2901",   # `for` loopvariable`inputImage`overwrittenby
+    "PTH102",   # `os.mkdir()` shouldbereplacedby`Path.mkdir()`
+    "PTH103",   # `os.makedirs()` shouldbereplacedby`Path.mkdir(parents=True)`
+    "PTH107",   # `os.remove()` shouldbereplacedby`Path.unlink()`
+    "PTH109",   # `os.getcwd()` shouldbereplacedby`Path.cwd()`
+    "PTH110",   # `os.path.exists()` shouldbereplacedby`Path.exists()`
+    "PTH112",   # `os.path.isdir()` shouldbereplacedby`Path.is_dir()`
+    "PTH117",   # `os.path.isabs()` shouldbereplacedby`Path.is_absolute()`
+    "PTH119",   # `os.path.basename()` shouldbereplacedby`Path.name`
+    "PTH122",   # `os.path.splitext()` shouldbereplacedby`Path.suffix`,
+    "PTH207",   # Replace `glob`with`Path.glob`or`Path.rglob`
+    "RET504",   # Unnecessary assignmentto`complexity`before`return`
+    "RET504",   # Unnecessary assignmentto`dn`before`return`
+    "RET504",   # Unnecessary assignmentto`dnn`before`return`
+    "RET504",   # Unnecessary assignmentto`dv`before`return`
+    "RET504",   # Unnecessary assignmentto`features`before`return`
+    "RET504",   # Unnecessary assignmentto`gln`before`return`
+    "RET504",   # Unnecessary assignmentto`glv`before`return`
+    "RET504",   # Unnecessary assignmentto`hgle`before`return`
+    "RET504",   # Unnecessary assignmentto`hie`before`return`
+    "RET504",   # Unnecessary assignmentto`hilae`before`return`
+    "RET504",   # Unnecessary assignmentto`hisae`before`return`
+    "RET504",   # Unnecessary assignmentto`iv`before`return`
+    "RET504",   # Unnecessary assignmentto`ivn`before`return`
+    "RET504",   # Unnecessary assignmentto`lae`before`return`
+    "RET504",   # Unnecessary assignmentto`ldhgle`before`return`
+    "RET504",   # Unnecessary assignmentto`ldlgle`before`return`
+    "RET504",   # Unnecessary assignmentto`lgle`before`return`
+    "RET504",   # Unnecessary assignmentto`lie`before`return`
+    "RET504",   # Unnecessary assignmentto`lilae`before`return`
+    "RET504",   # Unnecessary assignmentto`lisae`before`return`
+    "RET504",   # Unnecessary assignmentto`lre`before`return`
+    "RET504",   # Unnecessary assignmentto`P_glszm`before`return`
+    "RET504",   # Unnecessary assignmentto`P_ngtdm`before`return`
+    "RET504",   # Unnecessary assignmentto`sae`before`return`
+    "RET504",   # Unnecessary assignmentto`sde`before`return`
+    "RET504",   # Unnecessary assignmentto`sdhgle`before`return`
+    "RET504",   # Unnecessary assignmentto`sdlgle`before`return`
+    "RET504",   # Unnecessary assignmentto`szv`before`return`
+    "RET504",   # Unnecessary assignmentto`szvn`before`return`
+    "RET504",   # Unnecessary assignmentto`ze`before`return`
+    "RET504",   # Unnecessary assignmentto`zp`before`return`
+    "RET504",   # Unnecessary assignmentto`zv`before`return`
+    "RUF015",   # Prefer `next(iter(current_baseline.keys()))`oversingleelementslice
+    "RUF015",   # Prefer `next(...)`oversingleelementslice
+    "SIM101",   # Multiple `isinstance`callsforexpression,merge
+    "SIM103",   # Return theconditiondirectly
+    "SIM108",   # Use ternaryoperator`label=int(label)
+    "SIM108",   # Use ternaryoperator`percentDiff=0.0
+    "SIM115",   # Use acontextmanagerforopening
+    "SIM118",   # Use `keyindict`insteadof
+    "SIM118",   # Use `keynotindict`instead
+    "SIM210",   # Use `bool(...)`insteadof`Trueif
+    "T201",   # `print` found
+    "UP031",   # Use formatspecifiersinsteadofpercent
 ]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
 isort.required-imports = ["from __future__ import annotations"]
 # Uncomment if using a _compat.typing backport
 # typing-modules = ["pyradiomics._compat.typing"]

@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import logging
 import os
 
-from radiomics import getFeatureClasses
 from testUtils import RadiomicsTestUtils
+
+from radiomics import getFeatureClasses
 
 testUtils = RadiomicsTestUtils()
 tests = sorted(testUtils.getTests())

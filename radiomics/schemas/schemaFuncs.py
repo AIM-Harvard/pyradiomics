@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pywt
 
 from radiomics import getFeatureClasses, getImageTypes
@@ -48,7 +50,7 @@ def checkInterpolator(value, rule_obj, path):
 def checkWeighting(value, rule_obj, path):
     if value is None:
         return True
-    elif isinstance(value, str):
+    if isinstance(value, str):
         enum = ["euclidean", "manhattan", "infinity", "no_weighting"]
         if value not in enum:
             raise ValueError(

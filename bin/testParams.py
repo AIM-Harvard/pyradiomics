@@ -2,6 +2,7 @@
 # file as a command line argument (i.e. 'python testParams.py PATH/TO/PARAMFILE'). If successful, a message displaying
 # custom parameters specified will be printed. If validation fails, an error message specifying cause of validation
 # error will be printed.
+from __future__ import annotations
 
 import sys
 

@@ -111,6 +111,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv3*
 env/
 venv/
 ENV/
@@ -160,6 +161,8 @@ Thumbs.db
 # Common editor files
 *~
 *.swp
+# Ignore mergeconflict git files
+*.orig
 
 # Ignore test outputs
 data/*.csv

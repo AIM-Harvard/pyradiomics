@@ -88,10 +88,12 @@ repos:
         additional_dependencies:
           - pytest
 
-  #- repo: https://github.com/codespell-project/codespell
-  #  rev: "v2.3.0"
-  #  hooks:
-  #    - id: codespell
+  - repo: https://github.com/codespell-project/codespell
+    rev: "v2.4.1"
+    hooks:
+      - id: codespell
+        files: '^.*\.(py|c|h|md|rst|yml)$'
+        args: [ "--ignore-words", ".codespellignore" ]
 
   #- repo: https://github.com/shellcheck-py/shellcheck-py
   #  rev: "v0.10.0.1"

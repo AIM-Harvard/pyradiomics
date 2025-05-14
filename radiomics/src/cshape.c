@@ -114,7 +114,7 @@ int calculate_coefficients(char *mask, int *size, int *strides, double *spacing,
           }
         }
 
-        // Exlcude cubes entirely outside or inside the segmentation (cube_idx = 0).
+        // Exclude cubes entirely outside or inside the segmentation (cube_idx = 0).
         if (cube_idx == 0)
           continue;
 
@@ -469,7 +469,7 @@ int calculate_coefficients2D(char *mask, int *size, int *strides, double *spacin
           square_idx |= (1 << a_idx);
       }
 
-      // Exlcude squares entirely outside or inside the segmentation (square_idx = 0 or 0xF = B1111).
+      // Exclude squares entirely outside or inside the segmentation (square_idx = 0 or 0xF = B1111).
       if (square_idx == 0 || square_idx == 0xF)
         continue;
 

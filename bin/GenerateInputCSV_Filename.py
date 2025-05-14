@@ -27,7 +27,7 @@ LabelDic["Reader-11"] = "3 Semi-Auto_Exp-2"
 
 
 def main():
-    DATA_ROOT_PATH = r"T:/Research/07. Current Projects/2. Robust Radiomics/1. Slicer Dataset COMPLEET/"
+    DATA_ROOT_PATH = r"T:/Research/07. Current Projects/2. Robust Radiomics/1. Slicer Dataset COMPLETE/"
     inputDirectory = DATA_ROOT_PATH + r"/Included"
     outputFile = DATA_ROOT_PATH + r"/Included/FileList.csv"
     filetype = ".nrrd"

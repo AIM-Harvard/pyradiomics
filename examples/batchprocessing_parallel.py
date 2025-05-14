@@ -38,7 +38,7 @@ HEADERS = None  # headers of all extracted features
 
 # Assumes the input CSV has at least 2 columns: "Image" and "Mask"
 # These columns indicate the location of the image file and mask file, respectively
-# Additionally, this script uses 2 additonal Columns: "Patient" and "Reader"
+# Additionally, this script uses 2 additional Columns: "Patient" and "Reader"
 # These columns indicate the name of the patient (i.e. the image), the reader (i.e. the segmentation), if
 # these columns are omitted, a value is automatically generated ("Patient" = "Pt <Pt_index>", "Reader" = "N/A")
 
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     ###########################
 
     logger.info(
-        "Starting parralel pool with %d workers out of %d CPUs",
+        "Starting parallel pool with %d workers out of %d CPUs",
         NUM_OF_WORKERS,
         cpu_count(),
     )

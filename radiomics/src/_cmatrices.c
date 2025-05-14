@@ -8,7 +8,7 @@
 static char module_docstring[] = ("This module links to C-compiled code for efficient calculation of various matrices "
                                  "in the pyRadiomics package. It provides fast calculation for GLCM, GLDM, NGTDM, "
                                  "GLRLM and GLSZM. All functions are given names as follows: ""calculate_<Matrix>"", "
-                                 "where <Matrix> is the name of the matix, in lowercase. Arguments for these functions "
+                                 "where <Matrix> is the name of the matrix, in lowercase. Arguments for these functions "
                                  "are positional and start with 2-3 numpy arrays (image, mask and [distances]) and 3 integers "
                                  "(Ng number of gray levels, force2D and force2Ddimension). Optionally extra arguments "
                                  "may be required, see function docstrings for detailed information. "
@@ -377,7 +377,7 @@ static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args)
     set_bb(v, bb, size, voxels, Nd, Nvox, kernelRadius, force2Ddimension);
 
     region = calculate_glszm(image, mask, size, bb, strides, angles, Na, Nd, tempData + v * (2 * Ns + 1), Ng, Ns, Nvox);
-    if (region < 0) // Error occured
+    if (region < 0) // Error occurred
     {
       Py_XDECREF(image_arr);
       Py_XDECREF(mask_arr);

@@ -112,7 +112,7 @@ images must have the same dimensions and occupy the same physical space to ensur
 Progress Reporting
 ------------------
 
-When operating in full-python mode, the calculation of the texture matrices can take some time. Therefor PyRadiomics
+When operating in full-python mode, the calculation of the texture matrices can take some time. Therefore, PyRadiomics
 provides the possibility to report the progress for calculation of GLCM and GLSZM.
 This is only enabled in full-python mode when the verbosity (:py:func:`~radiomics.setVerbosity()`) is set to INFO or
 DEBUG. By default, none is provided and no progress of matrix calculation will be reported.
@@ -209,7 +209,7 @@ Using feature classes directly
 * See the :ref:`radiomics-features-label` section for more features that you can calculate.
 
 ------------------------------
-Addtional points for attention
+Additional points for attention
 ------------------------------
 
 Code style

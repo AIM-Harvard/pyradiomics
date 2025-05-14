@@ -192,7 +192,7 @@ Internal API
 
 - Refactor the commandline interface (`#481 <https://github.com/AIM-Harvard/pyradiomics/pull/481>`_)
 
-  - Extractor instantiated once (resulting in only 1 validation of the parameter file, outside of paralellization loop)
+  - Extractor instantiated once (resulting in only 1 validation of the parameter file, outside of parallelization loop)
   - Simplify construction of the python generator of the cases that are to be extracted
   - Remove now unnecessary functions
 
@@ -433,7 +433,7 @@ Documentation
   (`#342 <https://github.com/AIM-Harvard/pyradiomics/pull/342>`_)
 - Add documentation for the calculation of Laplacian of Gaussian.
   (`#345 <https://github.com/AIM-Harvard/pyradiomics/pull/345>`_)
-- Add refrences for the newly implemented filters
+- Add references for the newly implemented filters
   (`4464d1c <https://github.com/AIM-Harvard/pyradiomics/commit/4464d1c>`_)
 - Fix an error in the firstorder-Uniformity documentation.
   (`da7321d <https://github.com/AIM-Harvard/pyradiomics/commit/da7321d>`_)
@@ -720,7 +720,7 @@ New Parameters
   automatically extracted in 2D.
 - ``force2Ddimension``, int, range 0-2, default 0. Specifies the 'slice' dimension for a by-slice feature extraction.
   Value 0 identifies the 'z' dimension (axial plane feature extraction), and features will be extracted from the xy
-  plane. Similarly, 1 identifies the y dimension (coronal plane) and 2 the x dimension (saggital plane).
+  plane. Similarly, 1 identifies the y dimension (coronal plane) and 2 the x dimension (sagittal plane).
 - ``distances``, List of integers, default ``[1]``. This specifies the distances between the center voxel and the
   neighbor, for which angles should be generated.
 
@@ -813,7 +813,7 @@ New Parameters
 
 - ``additionalInfo`` Boolean, default ``True``. Enables additional information in the output if set to ``True``.
   (`#190 <https://github.com/AIM-Harvard/pyradiomics/pull/190>`_)
-- ``enableCExtensions`` Boolean, defailt ``True``. Enables enhanced performance for texture matrix calculation using C
+- ``enableCExtensions`` Boolean, default ``True``. Enables enhanced performance for texture matrix calculation using C
   extensions if set to ``True``. (`#202 <https://github.com/AIM-Harvard/pyradiomics/pull/202>`_)
 - ``normalize`` Boolean, default `` False``. If set to true, normalizes image before feeding it into the extraction
   pipeline. (`#209 <https://github.com/AIM-Harvard/pyradiomics/pull/209>`_)
@@ -925,7 +925,7 @@ Internal API
 
 - Different implementation of the various filters. No changes to calculation, but has a changed signature.
 
-  **N.B. This results in inputImages to be differently defined (different capitalization, e.g. "orginal" should now be
+  **N.B. This results in inputImages to be differently defined (different capitalization, e.g. "original" should now be
   "Original"). See documentation for definition of inputImages (featureextractor section).**
 
 ---------------

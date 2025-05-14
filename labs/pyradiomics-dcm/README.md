@@ -10,30 +10,30 @@ using either plastimatch or dcm2niix.
 
 # Why?
 
-* medical image data usually comes in DICOM, and pyradiomics users often ask for help working with DICOM data
-* there are public collections of data on TCIA where segmentations are stored as DICOM SEG
-* the use of DICOM representation for radiomics features
- * introduces standardized formalism for the attributes that should be stored to accompany the features
- * allows to link results of calculations with the various ontologies describing the anatomy of the regions
+- medical image data usually comes in DICOM, and pyradiomics users often ask for help working with DICOM data
+- there are public collections of data on TCIA where segmentations are stored as DICOM SEG
+- the use of DICOM representation for radiomics features
+- introduces standardized formalism for the attributes that should be stored to accompany the features
+- allows to link results of calculations with the various ontologies describing the anatomy of the regions
   analyzed, and the features itself (e.g., the SR document produced by the script will utilize IBSI nomenclature
   to describe those features implemented in pyradiomics that have correspondence in IBSI)
- * allows to reference (by unique identifiers) the DICOM image series and DICOM segmentation used for feature 
+- allows to reference (by unique identifiers) the DICOM image series and DICOM segmentation used for feature
   calculation
- * enables harmonized representation of data for images, segmentations and features (i.e., same data management
+- enables harmonized representation of data for images, segmentations and features (i.e., same data management
   system can be used for all data types)
- * does not prevent the use of the results in software tools that are not DICOM-aware - dcmqi can be used to 
-  convert DICOM segmentations and DICOM SR with the measurements into non-DICOM representation (ITK-readable 
-  image formats for segmentations, and JSON for measurements); a separate tool is available to generate 
+- does not prevent the use of the results in software tools that are not DICOM-aware - dcmqi can be used to
+  convert DICOM segmentations and DICOM SR with the measurements into non-DICOM representation (ITK-readable
+  image formats for segmentations, and JSON for measurements); a separate tool is available to generate
   tab-delimited representation for DICOM attributes and measurements stored in those SRs: https://github.com/QIICR/dcm2tables
 
 # Prerequisites
 
-* [plastimatch](http://plastimatch.org/plastimatch.html) or [dcm2niix](https://github.com/rordenlab/dcm2niix) for image volume reconstruction
-* dcmqi (build from https://github.com/QIICR/dcmqi/commit/3638930723bf1a239515409c1f9ec886a9fedb41 or later) for reading DICOM SEG and converting to a representation suitable by pyradiomics, and for storing the resulting features as a DICOM Structured Report, instantiating SR TID 1500
-* prior to using this script, you might want to sort your DICOM data such that individual series
-are stored in separate directories. You might find this tool useful for this purpose: https://github.com/pieper/dicomsort
-* if you segmentations are not stored as DICOM SEG, you can use dcmqi for generating standard representation
-of those segmentations: https://github.com/QIICR/dcmqi
+- [plastimatch](http://plastimatch.org/plastimatch.html) or [dcm2niix](https://github.com/rordenlab/dcm2niix) for image volume reconstruction
+- dcmqi (build from https://github.com/QIICR/dcmqi/commit/3638930723bf1a239515409c1f9ec886a9fedb41 or later) for reading DICOM SEG and converting to a representation suitable by pyradiomics, and for storing the resulting features as a DICOM Structured Report, instantiating SR TID 1500
+- prior to using this script, you might want to sort your DICOM data such that individual series
+  are stored in separate directories. You might find this tool useful for this purpose: https://github.com/pieper/dicomsort
+- if you segmentations are not stored as DICOM SEG, you can use dcmqi for generating standard representation
+  of those segmentations: https://github.com/QIICR/dcmqi
 
 # Usage
 
@@ -152,9 +152,9 @@ Content Date/Time   : 2018-10-09 15:38:01
 
 # Questions?
 
-* Andrey Fedorov andrey.fedorov@gmail.com
+- Andrey Fedorov andrey.fedorov@gmail.com
 
 # References
 
-* Herz C, Fillion-Robin J-C, Onken M, Riesmeier J, Lasso A, Pinter C, Fichtinger G, Pieper S, Clunie D, Kikinis R, Fedorov A. dcmqi: An Open Source Library for Standardized Communication of Quantitative Image Analysis Results Using DICOM. Cancer Research. 2017;77(21):e87–e90 http://cancerres.aacrjournals.org/content/77/21/e87
-* Fedorov A, Clunie D, Ulrich E, Bauer C, Wahle A, Brown B, Onken M, Riesmeier J, Pieper S, Kikinis R, Buatti J, Beichel RR. (2016) DICOM for quantitative imaging biomarker development: a standards based approach to sharing clinical data and structured PET/CT analysis results in head and neck cancer research. PeerJ 4:e2057 https://doi.org/10.7717/peerj.2057
+- Herz C, Fillion-Robin J-C, Onken M, Riesmeier J, Lasso A, Pinter C, Fichtinger G, Pieper S, Clunie D, Kikinis R, Fedorov A. dcmqi: An Open Source Library for Standardized Communication of Quantitative Image Analysis Results Using DICOM. Cancer Research. 2017;77(21):e87–e90 http://cancerres.aacrjournals.org/content/77/21/e87
+- Fedorov A, Clunie D, Ulrich E, Bauer C, Wahle A, Brown B, Onken M, Riesmeier J, Pieper S, Kikinis R, Buatti J, Beichel RR. (2016) DICOM for quantitative imaging biomarker development: a standards based approach to sharing clinical data and structured PET/CT analysis results in head and neck cancer research. PeerJ 4:e2057 https://doi.org/10.7717/peerj.2057

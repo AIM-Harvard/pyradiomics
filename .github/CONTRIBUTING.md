@@ -1,8 +1,6 @@
 See the [Scientific Python Developer Guide][spc-dev-intro] for a detailed
 description of best practices for developing scientific packages.
 
-[spc-dev-intro]: https://learn.scientific-python.org/development/
-
 # Quick development
 
 The fastest way to start with development is to use nox. If you don't have nox,
@@ -87,3 +85,5 @@ You can build the docs only with:
 ```bash
 nox -s docs --non-interactive
 ```
+
+[spc-dev-intro]: https://learn.scientific-python.org/development/

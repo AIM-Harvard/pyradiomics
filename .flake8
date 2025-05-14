@@ -7,7 +7,7 @@ show-source: True
 # Maximum cyclomatic complexity allowed
 max-complexity: 14
 format: pylint
-exclude: .git,.idea,.eggs,__pycache__,.tox,docs/conf.py,_skbuild,build,versioneer.py
+exclude: .git,.idea,.eggs,__pycache__,.tox,docs/conf.py,_skbuild,build
 ignore:
     # cycolmatic complexity check
     C901,

@@ -342,7 +342,7 @@ _imageTypes = None
 getFeatureClasses()
 getImageTypes()
 
-# 5. Set the version using the versioneer scripts
+# 5. Set the version dynamically using setuptools-scm
 from ._version import version as __version__
 
 __all__ = ["__version__"]

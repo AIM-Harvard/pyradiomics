@@ -44,7 +44,7 @@ Currently supports the following feature classes:
 - Gray Level Co-occurrence Matrix (GLCM)
 - Gray Level Run Length Matrix (GLRLM)
 - Gray Level Size Zone Matrix (GLSZM)
-- Gray Level Dependece Matrix (GLDM)
+- Gray Level Dependence Matrix (GLDM)
 - Neighboring Gray Tone Difference Matrix (NGTDM)
 
 ### Filter Classes

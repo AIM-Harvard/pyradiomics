@@ -115,7 +115,7 @@ class RadiomicsFeatureExtractor:
     @staticmethod
     def _getDefaultSettings():
         """
-        Returns a dictionary containg the default settings specified in this class. These settings cover global settings,
+        Returns a dictionary containing the default settings specified in this class. These settings cover global settings,
         such as ``additionalInfo``, as well as the image pre-processing settings (e.g. resampling). Feature class specific
         are defined in the respective feature classes and and not included here. Similarly, filter specific settings are
         defined in ``imageoperations.py`` and also not included here.

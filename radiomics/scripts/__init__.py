@@ -107,7 +107,7 @@ class PyRadiomicsCommandLine:
         inputGroup.add_argument(
             "--validate",
             action="store_true",
-            help="If specified, check if input is valid and check if file locations point to exisiting "
+            help="If specified, check if input is valid and check if file locations point to existing "
             "files",
         )
 

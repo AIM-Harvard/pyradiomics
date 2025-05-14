@@ -7,8 +7,8 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
     r"""
   A Neighbouring Gray Tone Difference Matrix quantifies the difference between a gray value and the average gray value
   of its neighbours within distance :math:`\delta`. The sum of absolute differences for gray level :math:`i` is stored in the matrix.
-  Let :math:`\textbf{X}_{gl}` be a set of segmented voxels and :math:`x_{gl}(j_x,j_y,j_z) \in \textbf{X}_{gl}` be the gray level of a voxel at postion
-  :math:`(j_x,j_y,j_z)`, then the average gray level of the neigbourhood is:
+  Let :math:`\textbf{X}_{gl}` be a set of segmented voxels and :math:`x_{gl}(j_x,j_y,j_z) \in \textbf{X}_{gl}` be the gray level of a voxel at position
+  :math:`(j_x,j_y,j_z)`, then the average gray level of the neighbourhood is:
 
   .. math::
 
@@ -162,7 +162,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         of gray levels, with large changes between voxels and their neighbourhood.
 
         N.B. In case of a completely homogeneous image, :math:`N_{g,p} = 1`, which would result in a division by 0. In this
-        case, an arbitray value of 0 is returned.
+        case, an arbitrary value of 0 is returned.
         """
         Ngp = self.coefficients["Ngp"]  # shape (Nvox,)
         Nvp = self.coefficients["Nvp"]  # shape (Nvox,)

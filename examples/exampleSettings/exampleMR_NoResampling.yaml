@@ -1,5 +1,5 @@
 # This is an example of settings that can be used as a starting point for analyzing MR data without resampling. This may
-# be especially usefull where there is a very large difference in in-plane spacing and slice thickness. This example
+# be especially useful where there is a very large difference in in-plane spacing and slice thickness. This example
 # uses forced 2D extraction to handle the anisotropic voxels. It assumes that the input are axial slices. If a different
 # orientation is used, update the force2Ddimension parameter accordingly.
 
@@ -65,7 +65,7 @@ setting:
   # footprint and speed up applying the filters.
   preCrop: true
 
-  # Forced 2D extracion:
+  # Forced 2D extraction:
   # This allows to calculate texture features using anisotropic voxels (although it assumes that voxels are isotropic
   # in-plane). This is an alternative to resampling the image to isotropic voxels.
   force2D: true

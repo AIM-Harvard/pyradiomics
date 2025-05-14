@@ -69,7 +69,9 @@ class TestWavelet:
         logger.debug("test_scenario: testCase = %s,", testCase)
 
         im_arr = sitk.GetArrayFromImage(image)
-        ma_arr = sitk.GetArrayFromImage(mask) == 1  # Conver to boolean array, label = 1
+        ma_arr = (
+            sitk.GetArrayFromImage(mask) == 1
+        )  # Convert to boolean array, label = 1
 
         voxelArray = im_arr[ma_arr]  # 1D array of all voxels inside mask
 

@@ -187,3 +187,10 @@ messages_control.disable = [
     "missing-function-docstring",
     "wrong-import-position",
 ]
+
+[tool.codespell]
+dictionary = ".codespellignore,-"
+ignore-words-list = 'bar,-foo'
+skip = '*.po,*.ts,./radiomics/src,./test'
+count = true
+quiet-level = 3

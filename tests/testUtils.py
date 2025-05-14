@@ -114,7 +114,7 @@ class RadiomicsTestUtils:
         self._test = test
         self._testedSet.add(self._test)
 
-        # First set featureClass if necessary, because if settings have changed, testCase needs te be reloaded
+        # First set featureClass if necessary, because if settings have changed, testCase needs to be reloaded
         if self._featureClassName != className:
             self._logger.debug("Setting feature class name to %s", className)
             assert (

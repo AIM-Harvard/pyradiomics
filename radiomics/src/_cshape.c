@@ -7,7 +7,7 @@
 
 static char module_docstring[] = "This module links to C-compiled code for efficient calculation of the surface area "
                                  "in the pyRadiomics package. It provides fast calculation using a marching cubes "
-                                 "algortihm, accessed via ""calculate_surfacearea"". Arguments for this function"
+                                 "algoritihm, accessed via ""calculate_surfacearea"". Arguments for this function"
                                  "are positional and consist of two numpy arrays, mask and pixelspacing, which must "
                                  "be supplied in this order. Pixelspacing is a 3 element vector containing the pixel"
                                  "spacing in z, y and x dimension, respectively. All non-zero elements in mask are "

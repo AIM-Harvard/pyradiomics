@@ -19,7 +19,7 @@ def main(paramsFile):
     try:
         params = c.validate()
         print(
-            "Parameter validation successfull!\n\n"
+            "Parameter validation successful!\n\n"
             "###Enabled Features###\n%s\n"
             "###Enabled Image Types###\n%s\n"
             "###Settings###\n%s"

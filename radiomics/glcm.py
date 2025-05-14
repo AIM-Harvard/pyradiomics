@@ -637,7 +637,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
         .. note::
 
-          Due to machine precision errors, it is possble that HXY > HXY2, which would result in returning complex numbers.
+          Due to machine precision errors, it is possible that HXY > HXY2, which would result in returning complex numbers.
           In these cases, a value of 0 is returned for IMC2. This is done on a per-angle basis (i.e. prior to any
           averaging).
         """
@@ -874,7 +874,7 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
 
           \textit{sum squares} = \displaystyle\sum^{N_g}_{i=1}\displaystyle\sum^{N_g}_{j=1}{(i-\mu_x)^2p(i,j)}
 
-        Sum of Squares or Variance is a measure in the distribution of neigboring intensity level pairs
+        Sum of Squares or Variance is a measure in the distribution of neighboring intensity level pairs
         about the mean intensity level in the GLCM.
 
         .. warning::

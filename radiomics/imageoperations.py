@@ -79,7 +79,7 @@ def getBinEdges(parameterValues, **kwargs):
     X_{b, i} = \lfloor \frac{X_{gl, i}}{W} \rfloor - \lfloor \frac {\min(X_{gl})}{W} \rfloor + 1
 
   Here, :math:`X_{gl, i}` and :math:`X_{b, i}` are gray level intensities before and after discretization, respectively.
-  :math:`{W}` is the bin width value (specfied in ``binWidth`` parameter). The first part of the formula ensures that
+  :math:`{W}` is the bin width value (specified in ``binWidth`` parameter). The first part of the formula ensures that
   the bins are equally spaced from 0, whereas the second part ensures that the minimum gray level intensity inside the
   ROI after binning is always 1.
 
@@ -358,7 +358,7 @@ def _checkROI(imageNode, maskNode, **kwargs):
 
     For the second check, a tolerance of 1e-3 is allowed.
 
-    If the ROI is valid, the bounding box (lower bounds, followd by size in all dimensions (X, Y, Z ordered)) is
+    If the ROI is valid, the bounding box (lower bounds, followed by size in all dimensions (X, Y, Z ordered)) is
     returned. Otherwise, a ValueError is raised.
     """
     global logger
@@ -370,7 +370,7 @@ def _checkROI(imageNode, maskNode, **kwargs):
     lssif = sitk.LabelShapeStatisticsImageFilter()
     lssif.Execute(maskNode)
 
-    logger.debug("Checking if label %d is persent in the mask", label)
+    logger.debug("Checking if label %d is persistent in the mask", label)
     if label not in lssif.GetLabels():
         raise ValueError("Label (%d) not present in mask", label)
 
@@ -682,7 +682,7 @@ def resegmentMask(imageNode, maskNode, **kwargs):
     2 thresholds, all voxels with a value inside the closed-range defined by these thresholds is included
     (i.e. a voxels is included if :math:`T_{lower} \leq X_gl \leq T_{upper}`).
     The resegmented mask is therefore always equal or smaller in size than the original mask.
-    In the case where either resegmentRange or resegmentMode contains illigal values, a ValueError is raised.
+    In the case where either resegmentRange or resegmentMode contains illegal values, a ValueError is raised.
 
     There are 3 modes for defining the threshold:
 
@@ -867,7 +867,7 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
     - level [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
     - wavelet ["coif1"]: string, type of wavelet decomposition. Enumerated value, validated against possible values
       present in the ``pyWavelet.wavelist()``. Current possible values (pywavelet version 0.4.0) (where an
-      aditional number is needed, range of values is indicated in []):
+      additional number is needed, range of values is indicated in []):
 
       - haar
       - dmey

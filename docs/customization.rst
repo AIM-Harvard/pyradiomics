@@ -118,7 +118,7 @@ Settings
 Besides customizing what to extract (image types, features), PyRadiomics exposes various settings customizing how the
 features are extracted. These settings operate at different levels. E.g. resampling is done just after the images are
 loaded (in the feature extractor), so settings controlling the resampling operate only on the feature extractor level.
-Settings are stored in the ``setttings`` dictionary in the feature extractor class instance, where the key is the case
+Settings are stored in the ``settings`` dictionary in the feature extractor class instance, where the key is the case
 sensitive setting name. Custom settings are provided as keyword arguments at initialization of the feature extractor
 (with the setting name as keyword and value as the argument value, e.g. ``binWidth=25``), or by interacting directly
 with the ``settings`` dictionary.
@@ -244,7 +244,7 @@ Filter Level
 - ``level`` [1]: integer, number of levels of wavelet decompositions from which a signature is calculated.
 - ``wavelet`` ["coif1"]: string, type of wavelet decomposition. Enumerated value, validated against possible values
   present in the ``pyWavelet.wavelist()``. Current possible values (pywavelet version 0.4.0) (where an
-  aditional number is needed, range of values is indicated in []):
+  additional number is needed, range of values is indicated in []):
 
     - haar
     - dmey

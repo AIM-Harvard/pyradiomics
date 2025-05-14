@@ -23,7 +23,7 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
 
     These lines are defined in such a way, that the normal of the triangle defined by these points and the origin
     is always oriented in the a consistent direction. This results in signed values for the surface area of each triangle,
-    so that when summed, the superfluous (postive) area included by triangles partly inside and outside the ROI is
+    so that when summed, the superfluous (positive) area included by triangles partly inside and outside the ROI is
     perfectly cancelled out by the (negative) area of triangles entirely outside the ROI.
 
     Let:

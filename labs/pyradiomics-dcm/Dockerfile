@@ -1,7 +1,7 @@
 FROM radiomics/pyradiomics:CLI
 MAINTAINER https://github.com/Radiomics
 
-# Install required dcm2niix converions tools
+# Install required dcm2niix conversion tools
 WORKDIR /usr/src
 RUN git clone https://github.com/rordenlab/dcm2niix.git && \
   cd dcm2niix && \

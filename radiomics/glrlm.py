@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy
 
 from radiomics import base, cMatrices
@@ -76,7 +78,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         super().__init__(inputImage, inputMask, **kwargs)
 
         self.weightingNorm = kwargs.get(
-            "weightingNorm", None
+            "weightingNorm"
         )  # manhattan, euclidean, infinity
 
         self.P_glrlm = None

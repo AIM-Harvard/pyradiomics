@@ -1,24 +1,26 @@
 #!/usr/bin/env python
+from __future__ import annotations
+
 import argparse
 import csv
-from functools import partial
 import json
 import logging.config
 import logging.handlers
-from multiprocessing import cpu_count, Manager, Pool
 import os
 import sys
 import threading
+from functools import partial
+from multiprocessing import Manager, Pool, cpu_count
 
 import numpy
-from pykwalify.compat import yaml
 import pykwalify.core
+from pykwalify.compat import yaml
+from ruamel.yaml import YAML
 
 import radiomics
 import radiomics.featureextractor
-from . import segment, voxel
 
-from ruamel.yaml import YAML
+from . import segment, voxel
 
 
 class PyRadiomicsCommandLine:
@@ -530,14 +532,13 @@ class PyRadiomicsCommandLine:
         def parse_value(value, value_type):
             if value_type == "str":
                 return value  # no conversion
-            elif value_type == "int":
+            if value_type == "int":
                 return int(value)
-            elif value_type == "float":
+            if value_type == "float":
                 return float(value)
-            elif value_type == "bool":
+            if value_type == "bool":
                 return value == "1" or value.lower() == "true"
-            else:
-                raise ValueError(f'Cannot understand value_type "{value_type}"')
+            raise ValueError(f'Cannot understand value_type "{value_type}"')
 
         for setting in self.args.setting:  # setting = "setting_key:setting_value"
             if ":" not in setting:

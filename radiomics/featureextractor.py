@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import collections
-from itertools import chain
 import json
 import logging
 import os
 import pathlib
+from itertools import chain
 
 import pykwalify.core
 import SimpleITK as sitk
@@ -15,7 +17,6 @@ from radiomics import (
     getParameterValidationFiles,
     imageoperations,
 )
-
 
 logger = logging.getLogger(__name__)
 geometryTolerance = None

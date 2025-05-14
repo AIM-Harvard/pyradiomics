@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import glob
 import os
@@ -172,8 +174,7 @@ class DatasetHierarchyReader:
 
         if (len(matchedImages) == 1) and (len(matchedMasks) == 1):
             return matchedImages[0], matchedMasks[0]
-        else:
-            return None, None
+        return None, None
 
     def testString(self, fileName, inclusionKeywords, exclusionKeywords):
         fileName = fileName.upper()

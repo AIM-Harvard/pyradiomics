@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 import numpy
@@ -241,7 +243,7 @@ def checkMask(imageNode, maskNode, **kwargs):
 
     label = int(kwargs.get("label", 1))
     minDims = kwargs.get("minimumROIDimensions", 2)
-    minSize = kwargs.get("minimumROISize", None)
+    minSize = kwargs.get("minimumROISize")
 
     logger.debug("Checking mask with label %d", label)
     logger.debug("Calculating bounding box")
@@ -266,15 +268,14 @@ def checkMask(imageNode, maskNode, **kwargs):
                     "Image/Mask datatype or size mismatch. Potential fix: enable correctMask, see "
                     "Documentation:Usage:Customizing the Extraction:Settings:correctMask for more information"
                 )
-            elif "Inputs do not occupy the same physical space!" in e.args[0]:
+            if "Inputs do not occupy the same physical space!" in e.args[0]:
                 logger.debug("Additional information on error.", exc_info=True)
                 raise ValueError(
                     "Image/Mask geometry mismatch. Potential fix: increase tolerance using geometryTolerance, "
                     "see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more "
                     "information"
                 )
-            else:
-                raise e  # unhandled error
+            raise e  # unhandled error
 
         logger.warning("Image/Mask geometry mismatch, attempting to correct Mask")
 
@@ -304,7 +305,7 @@ def checkMask(imageNode, maskNode, **kwargs):
         raise ValueError(
             "mask only contains 1 segmented voxel! Cannot extract features for a single voxel."
         )
-    elif ndims < minDims:
+    if ndims < minDims:
         raise ValueError(
             "mask has too few dimensions (number of dimensions %d, minimum required %d)"
             % (ndims, minDims)
@@ -941,7 +942,7 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
         wavelet = pywt.Wavelet(wavelet)
 
     for i in range(
-        0, start_level
+        start_level
     ):  # if start_level = 0 (default) this for loop never gets executed
         # compute all decompositions and saves them in "dec" dict
         dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0]
@@ -1231,9 +1232,9 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
         return
 
     try:
-        from scipy.stats import kurtosis
         from scipy.ndimage.interpolation import map_coordinates
         from scipy.special import sph_harm
+        from scipy.stats import kurtosis
         from trimesh.creation import icosphere
     except ImportError:
         logger.warning(

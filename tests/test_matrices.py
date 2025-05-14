@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 import logging
 import os
 
 import numpy
-
-from radiomics import getFeatureClasses, testCases
 from testUtils import RadiomicsTestUtils
 
+from radiomics import getFeatureClasses, testCases
 
 testUtils = RadiomicsTestUtils()
 

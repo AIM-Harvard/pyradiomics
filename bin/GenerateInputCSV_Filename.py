@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 import os
 
@@ -60,11 +62,11 @@ def main():
 
                                     i_name = Study
                                     if i_idx > 0:
-                                        i_name += f" ({str(i_idx + 1)})"
+                                        i_name += f" ({i_idx + 1!s})"
 
                                     s_name = Reader
                                     if s_idx > 0:
-                                        s_name += f" ({str(s_idx + 1)})"
+                                        s_name += f" ({s_idx + 1!s})"
 
                                     cw.writerow(
                                         [patient, i_name, s_name, im_file, seg_file]

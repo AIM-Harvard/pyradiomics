@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import csv
 import os
 
@@ -21,7 +23,7 @@ def main():
     datasetReader = DatasetHierarchyReader(inputDirectory, filetype=filetype)
     datasetHierarchyDict = datasetReader.ReadDatasetHierarchy()
 
-    print(f"Found {str(len(datasetHierarchyDict.keys()))} patients, writing csv")
+    print(f"Found {len(datasetHierarchyDict.keys())!s} patients, writing csv")
 
     try:
         with open(outputFile, "wb") as outFile:

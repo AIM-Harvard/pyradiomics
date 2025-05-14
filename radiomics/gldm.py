@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy
 
 from radiomics import base, cMatrices, deprecated

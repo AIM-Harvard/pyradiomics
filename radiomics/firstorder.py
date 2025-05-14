@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy
 
 from radiomics import base, cMatrices, deprecated
@@ -125,11 +127,10 @@ class RadiomicsFirstOrder(base.RadiomicsFeaturesBase):
         """
 
         if moment == 1:
-            return numpy.float(0.0)
-        else:
-            mn = numpy.nanmean(a, 1, keepdims=True)
-            s = numpy.power((a - mn), moment)
-            return numpy.nanmean(s, 1)
+            return 0.0
+        mn = numpy.nanmean(a, 1, keepdims=True)
+        s = numpy.power((a - mn), moment)
+        return numpy.nanmean(s, 1)
 
     def getEnergyFeatureValue(self):
         r"""

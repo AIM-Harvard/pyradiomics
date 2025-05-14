@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import os
 
 import pykwalify.core
 
 from radiomics import getParameterValidationFiles
-
 
 schemaFile, schemaFuncs = getParameterValidationFiles()
 
@@ -13,10 +14,7 @@ def pytest_generate_tests(metafunc):
 
 
 def exampleSettings_name_func(testcase_func, param_num, param):
-    return "{}_{}".format(
-        testcase_func.__name__,
-        os.path.splitext(os.path.basename(param.args[0]))[0],
-    )
+    return f"{testcase_func.__name__}_{os.path.splitext(os.path.basename(param.args[0]))[0]}"
 
 
 class TestExampleSettings:

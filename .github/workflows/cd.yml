@@ -45,7 +45,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
+        # ERROR: Failed building wheel for SimpleITK on windows-latest and ubuntu-latest
+        # Failed to build SimpleITK
+        os: [macos-13, macos-14]
 
     steps:
       - uses: actions/checkout@v4

@@ -36,6 +36,10 @@ jobs:
           path: dist/*.tar.gz
 
   build_wheels:
+    env:
+      CIBW_BUILD: cp310-*   # only build for CPython 3.10
+      CIBW_SKIP: ''         # do not skip any tags
+
     name: Wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -49,6 +53,7 @@ jobs:
           fetch-depth: 0
 
       - uses: pypa/cibuildwheel@v2.23
+      # - uses: ./.github/pypa_cibuildwheel_py310
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4

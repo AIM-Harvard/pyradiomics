@@ -32,8 +32,8 @@ static PyObject *cmatrices_calculate_ngtdm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_gldm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args);
 
-// Function to check if array input is valid. Additionally extracts size and stride values
-int build_angles_arr(PyObject *distances_obj, PyArrayObject **angles_arr, int *size, int Nd, int force2Ddimension, int bidirectional, int *Na);
+// Function to check if array input is valid. Additionally, extracts size and stride values
+static int build_angles_arr(PyObject *distances_obj, PyArrayObject **angles_arr, int *size, int Nd, int force2Ddimension, char bidirectional, int *Na);
 int try_parse_arrays(PyObject *image_obj, PyObject *mask_obj, PyArrayObject **image_arr, PyArrayObject **mask_arr, int *Nd, int **size, int **strides, int mask_flags);
 int try_parse_voxels_arr(PyObject *voxels_obj, PyArrayObject **voxels_arr, int Nd, int *vox_cnt, int kernelRadius);
 void set_bb(int v, int *bb, int *size, int *voxels, int Nd, int Nvox, int kernelRadius, int force2Ddimension);
@@ -963,7 +963,7 @@ static PyObject *cmatrices_generate_angles(PyObject *self, PyObject *args)
   return PyArray_Return(angles_arr);
 }
 
-int build_angles_arr(PyObject *distances_obj, PyArrayObject **angles_arr, int *size, int Nd, int force2Ddimension, int bidirectional, int *Na)
+static int build_angles_arr(PyObject *distances_obj, PyArrayObject **angles_arr, int *size, int Nd, int force2Ddimension, char bidirectional, int *Na)
 {
   PyArrayObject *distances_arr;
   int *distances, *angles;

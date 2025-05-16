@@ -5,7 +5,7 @@
 #include <numpy/arrayobject.h>
 #include "cmatrices.h"
 
-static char module_docstring[] = ("This module links to C-compiled code for efficient calculation of various matrices "
+static const char module_docstring[] = ("This module links to C-compiled code for efficient calculation of various matrices "
                                  "in the pyRadiomics package. It provides fast calculation for GLCM, GLDM, NGTDM, "
                                  "GLRLM and GLSZM. All functions are given names as follows: ""calculate_<Matrix>"", "
                                  "where <Matrix> is the name of the matrix, in lowercase. Arguments for these functions "
@@ -13,12 +13,12 @@ static char module_docstring[] = ("This module links to C-compiled code for effi
                                  "(Ng number of gray levels, force2D and force2Ddimension). Optionally extra arguments "
                                  "may be required, see function docstrings for detailed information. "
                                  "Functions return a tuple with the calculated matrix and angles.");
-static char glcm_docstring[] = "Arguments: Image, Mask, Ng, force2D, for2Ddimension.";
-static char glszm_docstring[] = "Arguments: Image, Mask, Ng, Ns, force2D, for2Ddimension, matrix is cropped to maximum size encountered.";
-static char glrlm_docstring[] = "Arguments: Image, Mask, Ng, Nr, force2D, for2Ddimension.";
-static char ngtdm_docstring[] = "Arguments: Image, Mask, Ng, force2D, for2Ddimension.";
-static char gldm_docstring[] = "Arguments: Image, Mask, Ng, Alpha, force2D, for2Ddimension.";
-static char generate_angles_docstring[] = "Arguments: Boundingbox Size, distances, bidirectional, force2Ddimension.";
+static const char glcm_docstring[] = "Arguments: Image, Mask, Ng, force2D, for2Ddimension.";
+static const char glszm_docstring[] = "Arguments: Image, Mask, Ng, Ns, force2D, for2Ddimension, matrix is cropped to maximum size encountered.";
+static const char glrlm_docstring[] = "Arguments: Image, Mask, Ng, Nr, force2D, for2Ddimension.";
+static const char ngtdm_docstring[] = "Arguments: Image, Mask, Ng, force2D, for2Ddimension.";
+static const char gldm_docstring[] = "Arguments: Image, Mask, Ng, Alpha, force2D, for2Ddimension.";
+static const char generate_angles_docstring[] = "Arguments: Boundingbox Size, distances, bidirectional, force2Ddimension.";
 
 static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args);
 static PyObject *cmatrices_calculate_glszm(PyObject *self, PyObject *args);

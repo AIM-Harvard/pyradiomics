@@ -5,18 +5,18 @@
 #include <numpy/arrayobject.h>
 #include "cshape.h"
 
-static char module_docstring[] = "This module links to C-compiled code for efficient calculation of the surface area "
+static const char module_docstring[] = "This module links to C-compiled code for efficient calculation of the surface area "
                                  "in the pyRadiomics package. It provides fast calculation using a marching cubes "
                                  "algoritihm, accessed via ""calculate_surfacearea"". Arguments for this function"
                                  "are positional and consist of two numpy arrays, mask and pixelspacing, which must "
                                  "be supplied in this order. Pixelspacing is a 3 element vector containing the pixel"
                                  "spacing in z, y and x dimension, respectively. All non-zero elements in mask are "
                                  "considered to be a part of the segmentation and are included in the algorithm.";
-static char coefficients_docstring[] = "Arguments: Mask, PixelSpacing. Uses a marching cubes algorithm to calculate an "
+static const char coefficients_docstring[] = "Arguments: Mask, PixelSpacing. Uses a marching cubes algorithm to calculate an "
                                        "approximation to the total surface area, volume and maximum diameters. "
                                        "The isovalue is considered to be situated midway between a voxel that is part "
                                        "of the segmentation and a voxel that is not.";
-static char coefficients2D_docstring[] = "Arguments: Mask, PixelSpacing. Uses an adapted 2D marching cubes algorithm "
+static const char coefficients2D_docstring[] = "Arguments: Mask, PixelSpacing. Uses an adapted 2D marching cubes algorithm "
                                          "to calculate an approximation to the total perimeter, surface and maximum "
                                          "diameter. The isovalue is considered to be situated midway between a pixel "
                                          "that is part of the segmentation and a pixel that is not.";

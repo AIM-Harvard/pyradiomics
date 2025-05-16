@@ -1,4 +1,3 @@
-#NOTE: numpy 2.0 is the last to support python 3.9-3.12
 #NOTE: numpy 2.1 is only supported by 3.10 and greater
 [build-system]
 requires = ["scikit-build-core>=0.11.2", "numpy>=2.0"]

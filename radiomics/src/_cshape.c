@@ -1,4 +1,9 @@
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NPY_NO_DEPRECATED_API NPY_2_1_API_VERSION
+#include <numpy/ndarrayobject.h>
+
+#if NPY_API_VERSION < NPY_2_1_API_VERSION
+#error "NUMPY less than 2.0 is not compatible with pyradiomics"
+#endif
 
 #include <stdlib.h>
 #include <Python.h>

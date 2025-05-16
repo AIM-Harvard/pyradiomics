@@ -1,8 +1,13 @@
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NPY_NO_DEPRECATED_API NPY_2_1_API_VERSION
+#include <numpy/ndarrayobject.h>
 
-#include <stdlib.h>
+#if NPY_API_VERSION < NPY_2_1_API_VERSION
+#error "NUMPY less than 2.0 is not compatible with pyradiomics"
+#endif
+
+
 #include <Python.h>
-#include <numpy/arrayobject.h>
+#include <stdlib.h>
 #include "cmatrices.h"
 
 static const char module_docstring[] = ("This module links to C-compiled code for efficient calculation of various matrices "

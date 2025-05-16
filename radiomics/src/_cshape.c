@@ -7,7 +7,6 @@
 
 #include <stdlib.h>
 #include <Python.h>
-#include <numpy/arrayobject.h>
 #include "cshape.h"
 
 static const char module_docstring[] = "This module links to C-compiled code for efficient calculation of the surface area "
@@ -74,28 +73,26 @@ moduleinit(void)
 static PyObject *cshape_calculate_coefficients(PyObject *self, PyObject *args)
 {
   PyObject *mask_obj, *spacing_obj;
-  PyArrayObject *mask_arr, *spacing_arr;
   int size[3];
   int strides[3];
-  char *mask;
-  double *spacing;
+
   double SA, Volume;
   double diameters[4];
-  PyObject *diameter_obj;
+
 
   // Parse the input tuple
   if (!PyArg_ParseTuple(args, "OO", &mask_obj, &spacing_obj))
     return NULL;
 
   // Interpret the input as numpy arrays
-  mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BYTE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
-  spacing_arr = (PyArrayObject *)PyArray_FROM_OTF(spacing_obj, NPY_DOUBLE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
+  PyArrayObject * mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BYTE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
+  PyArrayObject * spacing_arr = (PyArrayObject *)PyArray_FROM_OTF(spacing_obj, NPY_DOUBLE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
 
   if (check_arrays(mask_arr, spacing_arr, size, strides, 3) > 0) return NULL;
 
   // Get arrays in Ctype
-  mask = (char *)PyArray_DATA(mask_arr);
-  spacing = (double *)PyArray_DATA(spacing_arr);
+  char * mask = (char *)PyArray_DATA(mask_arr);
+  double *spacing = (double *)PyArray_DATA(spacing_arr);
 
   //Calculate Surface Area and volume
   if (calculate_coefficients(mask, size, strides, spacing, &SA, &Volume, diameters))
@@ -111,18 +108,17 @@ static PyObject *cshape_calculate_coefficients(PyObject *self, PyObject *args)
   Py_XDECREF(mask_arr);
   Py_XDECREF(spacing_arr);
 
-  diameter_obj = Py_BuildValue("ffff", diameters[0], diameters[1], diameters[2], diameters[3]);
+  PyObject *diameter_obj = Py_BuildValue("ffff", diameters[0], diameters[1], diameters[2], diameters[3]);
   return Py_BuildValue("ffN", SA, Volume, diameter_obj);
 }
 
 static PyObject *cshape_calculate_coefficients2D(PyObject *self, PyObject *args)
 {
   PyObject *mask_obj, *spacing_obj;
-  PyArrayObject *mask_arr, *spacing_arr;
+
   int size[2];
   int strides[2];
-  char *mask;
-  double *spacing;
+
   double perimeter, surface, diameter;
 
   // Parse the input tuple
@@ -130,14 +126,14 @@ static PyObject *cshape_calculate_coefficients2D(PyObject *self, PyObject *args)
     return NULL;
 
   // Interpret the input as numpy arrays
-  mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BYTE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
-  spacing_arr = (PyArrayObject *)PyArray_FROM_OTF(spacing_obj, NPY_DOUBLE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
+  PyArrayObject *mask_arr = (PyArrayObject *)PyArray_FROM_OTF(mask_obj, NPY_BYTE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
+  PyArrayObject *spacing_arr = (PyArrayObject *)PyArray_FROM_OTF(spacing_obj, NPY_DOUBLE, NPY_ARRAY_FORCECAST | NPY_ARRAY_IN_ARRAY);
 
   if (check_arrays(mask_arr, spacing_arr, size, strides, 2) > 0) return NULL;
 
   // Get arrays in Ctype
-  mask = (char *)PyArray_DATA(mask_arr);
-  spacing = (double *)PyArray_DATA(spacing_arr);
+  char * mask = (char *)PyArray_DATA(mask_arr);
+  double * spacing = (double *)PyArray_DATA(spacing_arr);
 
   //Calculate Surface Area and volume
   if (calculate_coefficients2D(mask, size, strides, spacing, &perimeter, &surface, &diameter))
@@ -158,8 +154,6 @@ static PyObject *cshape_calculate_coefficients2D(PyObject *self, PyObject *args)
 
 int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size, int *strides, int dimension)
 {
-  int i;
-
   if (mask_arr == NULL || spacing_arr == NULL)
   {
     Py_XDECREF(mask_arr);
@@ -193,7 +187,7 @@ int check_arrays(PyArrayObject *mask_arr, PyArrayObject *spacing_arr, int *size,
   }
 
   // Get sizes and strides of the arrays
-  for (i = 0; i < dimension; i++)
+  for (int i = 0; i < dimension; i++)
   {
     size[i] = (int)PyArray_DIM(mask_arr, i);
     strides[i] = (int)(PyArray_STRIDE(mask_arr, i) / PyArray_ITEMSIZE(mask_arr));

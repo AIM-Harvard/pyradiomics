@@ -318,8 +318,9 @@ messages_control.disable = [
 ]
 
 [tool.codespell]
-dictionary = ".codespellignore,-"
+#dictionary = ".codespellignore,-"
 ignore-words-list = 'bar,-foo'
+ignore-words = "./.codespellignore"
 skip = '*.po,*.ts,./radiomics/src,./test'
 count = true
 quiet-level = 3

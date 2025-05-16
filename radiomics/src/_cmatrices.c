@@ -49,8 +49,6 @@ static PyMethodDef module_methods[] = {
   { NULL, NULL, 0, NULL }
 };
 
-#if PY_MAJOR_VERSION >= 3
-
 static struct PyModuleDef moduledef = {
   PyModuleDef_HEAD_INIT,
   "_cmatrices",        /* m_name */
@@ -63,19 +61,10 @@ static struct PyModuleDef moduledef = {
   NULL,                /* m_free */
 };
 
-#endif
-
 static PyObject *
 moduleinit(void)
 {
-    PyObject *m;
-
-#if PY_MAJOR_VERSION >= 3
-    m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule3("_cmatrices",
-                       module_methods, module_docstring);
-#endif
+    PyObject *m = PyModule_Create(&moduledef);
 
   if (!m)
       return NULL;
@@ -83,17 +72,6 @@ moduleinit(void)
   return m;
 }
 
-#if PY_MAJOR_VERSION < 3
-  PyMODINIT_FUNC
-  init_cmatrices(void)
-  {
-    // Initialize numpy functionality
-    import_array();
-
-    moduleinit();
-
-  }
-#else
   PyMODINIT_FUNC
   PyInit__cmatrices(void)
   {
@@ -102,7 +80,6 @@ moduleinit(void)
 
     return moduleinit();
   }
-#endif
 
 static PyObject *cmatrices_calculate_glcm(PyObject *self, PyObject *args)
 {

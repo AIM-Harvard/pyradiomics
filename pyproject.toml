@@ -101,8 +101,12 @@ minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
-    "error",
+    #   "error", # <- NOTE: this causes a segmentation fault during testing
     "ignore:the load_module\\(\\) method is deprecated:DeprecationWarning",
+    # The following are issued by many versions of SimpleITK with newer Python versions
+    "ignore:.*builtin type SwigPyPacked has no __module__ attribute:DeprecationWarning",
+    "ignore:.*builtin type SwigPyObject has no __module__ attribute:DeprecationWarning",
+    "ignore:.*builtin type swigvarlink has no __module__ attribute:DeprecationWarning",
 ]
 log_cli_level = "INFO"
 testpaths = [

@@ -94,6 +94,15 @@ dev-dependencies = [
 [tool.cibuildwheel]
 test-command = "pytest {project}/tests"
 test-extras = ["test"]
+# Only builds that are supported by SimpleITK are allowed. Get list of SimpleITK builds from https://pypi.org/project/SimpleITK/#files
+# Match to environments in https://cibuildwheel.pypa.io/en/stable/options/#build-skip
+build = "cp3*-manylinux_x86_64 cp3*-manylinux_aarch64 cp3*-win_amd64 cp3*-macosx* "
+
+[tool.cibuildwheel.linux]
+
+[tool.cibuildwheel.macos]
+
+[tool.cibuildwheel.windows]
 
 
 [tool.pytest.ini_options]

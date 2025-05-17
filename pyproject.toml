@@ -1,7 +1,7 @@
 #NOTE: numpy 2.0 is the last to support python 3.9-3.12
 #NOTE: numpy 2.1 is only supported by 3.10 and greater
 [build-system]
-requires = ["scikit-build-core>=0.11.2", "numpy==2.0"]
+requires = ["scikit-build-core>=0.11.2", "numpy>=2.0"]
 build-backend = "scikit_build_core.build"
 
 
@@ -31,8 +31,8 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "numpy==2.0",
-    "SimpleITK ==2.4.0",
+    "numpy>=2.0",
+    "SimpleITK",
     "PyWavelets >= 1.6.0",
     "pykwalify >= 1.6.0"
 ]
@@ -94,6 +94,15 @@ dev-dependencies = [
 [tool.cibuildwheel]
 test-command = "pytest {project}/tests"
 test-extras = ["test"]
+# Only builds that are supported by SimpleITK are allowed. Get list of SimpleITK builds from https://pypi.org/project/SimpleITK/#files
+# Match to environments in https://cibuildwheel.pypa.io/en/stable/options/#build-skip
+build = "cp3*-manylinux_x86_64 cp3*-manylinux_aarch64 cp3*-win_amd64 cp3*-macosx* "
+
+[tool.cibuildwheel.linux]
+
+[tool.cibuildwheel.macos]
+
+[tool.cibuildwheel.windows]
 
 
 [tool.pytest.ini_options]
@@ -101,8 +110,12 @@ minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 filterwarnings = [
-    "error",
+    #   "error", # <- NOTE: this causes a segmentation fault during testing
     "ignore:the load_module\\(\\) method is deprecated:DeprecationWarning",
+    # The following are issued by many versions of SimpleITK with newer Python versions
+    "ignore:.*builtin type SwigPyPacked has no __module__ attribute:DeprecationWarning",
+    "ignore:.*builtin type SwigPyObject has no __module__ attribute:DeprecationWarning",
+    "ignore:.*builtin type swigvarlink has no __module__ attribute:DeprecationWarning",
 ]
 log_cli_level = "INFO"
 testpaths = [
@@ -314,8 +327,9 @@ messages_control.disable = [
 ]
 
 [tool.codespell]
-dictionary = ".codespellignore,-"
+#dictionary = ".codespellignore,-"
 ignore-words-list = 'bar,-foo'
+ignore-words = "./.codespellignore"
 skip = '*.po,*.ts,./radiomics/src,./test'
 count = true
 quiet-level = 3

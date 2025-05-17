@@ -1,7 +1,7 @@
 #NOTE: numpy 2.0 is the last to support python 3.9-3.12
 #NOTE: numpy 2.1 is only supported by 3.10 and greater
 [build-system]
-requires = ["scikit-build-core>=0.11.2", "numpy==2.0"]
+requires = ["scikit-build-core>=0.11.2", "numpy>=2.0"]
 build-backend = "scikit_build_core.build"
 
 
@@ -31,7 +31,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "numpy==2.0",
+    "numpy>=2.0",
     "SimpleITK ==2.4.0",
     "PyWavelets >= 1.6.0",
     "pykwalify >= 1.6.0"

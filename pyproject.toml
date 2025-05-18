@@ -225,7 +225,7 @@ ignore = [
     "PTH120", # `os.path.dirname()` should be replaced by `Path.parent`
     "PTH123", # `open()` should be replaced by `Path.open()`
     "PTH208", # Use `pathlib.Path.iterdir()` instead
-    "RUF005", # Consider `["featureName", *cases]` instead of concatenation
+    # "RUF005", # Consider `["featureName", *cases]` instead of concatenation
     "RUF100", # (unused-noqa)
     "ARG002",   # Unused methodargument:`total`
     "B008",   # Do notperformfunctioncall`CodedValue`

@@ -242,9 +242,7 @@ ignore = [
     "PIE810",   # Call `endswith`oncewitha`tuple`
     "PLR1722",   # Use `sys.exit()`insteadof`exit`
     "PLR1730",   # Replace `if`statementwith`level=
-    "PLR1730",   # Replace `if`statementwith`NUM_OF_WORKERS=
     "PLW2901",   # `for` loopvariable`features`overwrittenby
-    "PLW2901",   # `for` loopvariable`inputImage`overwrittenby
     "PTH102",   # `os.mkdir()` shouldbereplacedby`Path.mkdir()`
     "PTH103",   # `os.makedirs()` shouldbereplacedby`Path.mkdir(parents=True)`
     "PTH107",   # `os.remove()` shouldbereplacedby`Path.unlink()`
@@ -256,46 +254,12 @@ ignore = [
     "PTH122",   # `os.path.splitext()` shouldbereplacedby`Path.suffix`,
     "PTH207",   # Replace `glob`with`Path.glob`or`Path.rglob`
     "RET504",   # Unnecessary assignmentto`complexity`before`return`
-    "RET504",   # Unnecessary assignmentto`dn`before`return`
-    "RET504",   # Unnecessary assignmentto`dnn`before`return`
-    "RET504",   # Unnecessary assignmentto`dv`before`return`
-    "RET504",   # Unnecessary assignmentto`features`before`return`
-    "RET504",   # Unnecessary assignmentto`gln`before`return`
-    "RET504",   # Unnecessary assignmentto`glv`before`return`
-    "RET504",   # Unnecessary assignmentto`hgle`before`return`
-    "RET504",   # Unnecessary assignmentto`hie`before`return`
-    "RET504",   # Unnecessary assignmentto`hilae`before`return`
-    "RET504",   # Unnecessary assignmentto`hisae`before`return`
-    "RET504",   # Unnecessary assignmentto`iv`before`return`
-    "RET504",   # Unnecessary assignmentto`ivn`before`return`
-    "RET504",   # Unnecessary assignmentto`lae`before`return`
-    "RET504",   # Unnecessary assignmentto`ldhgle`before`return`
-    "RET504",   # Unnecessary assignmentto`ldlgle`before`return`
-    "RET504",   # Unnecessary assignmentto`lgle`before`return`
-    "RET504",   # Unnecessary assignmentto`lie`before`return`
-    "RET504",   # Unnecessary assignmentto`lilae`before`return`
-    "RET504",   # Unnecessary assignmentto`lisae`before`return`
-    "RET504",   # Unnecessary assignmentto`lre`before`return`
-    "RET504",   # Unnecessary assignmentto`P_glszm`before`return`
-    "RET504",   # Unnecessary assignmentto`P_ngtdm`before`return`
-    "RET504",   # Unnecessary assignmentto`sae`before`return`
-    "RET504",   # Unnecessary assignmentto`sde`before`return`
-    "RET504",   # Unnecessary assignmentto`sdhgle`before`return`
-    "RET504",   # Unnecessary assignmentto`sdlgle`before`return`
-    "RET504",   # Unnecessary assignmentto`szv`before`return`
-    "RET504",   # Unnecessary assignmentto`szvn`before`return`
-    "RET504",   # Unnecessary assignmentto`ze`before`return`
-    "RET504",   # Unnecessary assignmentto`zp`before`return`
-    "RET504",   # Unnecessary assignmentto`zv`before`return`
     "RUF015",   # Prefer `next(iter(current_baseline.keys()))`oversingleelementslice
-    "RUF015",   # Prefer `next(...)`oversingleelementslice
     "SIM101",   # Multiple `isinstance`callsforexpression,merge
-    "SIM103",   # Return theconditiondirectly
-    "SIM108",   # Use ternaryoperator`label=int(label)
-    "SIM108",   # Use ternaryoperator`percentDiff=0.0
+    # "SIM103",   # Return theconditiondirectly
+    # "SIM108",   # Use ternaryoperator`label=int(label)
     # "SIM115",   # Use acontextmanagerforopening
     # "SIM118",   # Use `keyindict`insteadof
-    # "SIM118",   # Use `keynotindict`instead
     # "SIM210",   # Use `bool(...)`insteadof`Trueif
     # "UP031",   # Use formatspecifiersinsteadofpercent
 ]

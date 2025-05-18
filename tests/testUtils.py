@@ -255,10 +255,7 @@ class RadiomicsTestUtils:
 
         if baselineValue == 0.0:
             # avoid divide by zero, the difference is either 0% if the value is also zero, or 100%
-            if value - baselineValue == 0.0:
-                percentDiff = 0.0
-            else:
-                percentDiff = 1.0
+            percentDiff = 0.0 if value - baselineValue == 0.0 else 1.0
         else:
             percentDiff = abs(1.0 - (value / baselineValue))
 

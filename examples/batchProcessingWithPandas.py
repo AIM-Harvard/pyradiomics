@@ -85,10 +85,7 @@ def main():
         maskFilepath = flists[entry]["Mask"]
         label = flists[entry].get("Label", None)
 
-        if str(label).isdigit():
-            label = int(label)
-        else:
-            label = None
+        label = int(label) if str(label).isdigit() else None
 
         if (imageFilepath is not None) and (maskFilepath is not None):
             featureVector = flists[entry]  # This is a pandas Series

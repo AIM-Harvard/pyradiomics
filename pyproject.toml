@@ -294,8 +294,8 @@ ignore = [
     "SIM108",   # Use ternaryoperator`label=int(label)
     "SIM108",   # Use ternaryoperator`percentDiff=0.0
     "SIM115",   # Use acontextmanagerforopening
-    "SIM118",   # Use `keyindict`insteadof
-    "SIM118",   # Use `keynotindict`instead
+    # "SIM118",   # Use `keyindict`insteadof
+    # "SIM118",   # Use `keynotindict`instead
     # "SIM210",   # Use `bool(...)`insteadof`Trueif
     # "UP031",   # Use formatspecifiersinsteadofpercent
 ]

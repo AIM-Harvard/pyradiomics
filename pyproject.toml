@@ -212,47 +212,50 @@ ignore = [
     "ISC001",   # Conflicts with formatter
     "T201",   # `print` found ## See https://docs.astral.sh/ruff/rules/print
 # ----- The following are suppressions to allow initial passing of ruff linting
-    # "PLW0602",   # TODO: Delay fixing until later
-    "ARG001", # Unused function argument: `param_num`
-    # "B007", # Loop control variable `args` not used within loop body
-    # "EM101", # Exception must not use a string literal, assign to variable first
-    "G004", # Logging statement uses f-string
-    # "ICN001", # `numpy` should be imported as `np`
-    "PLW0603", # Using the global statement to update `featureClass` is discouraged
-    "PTH100", # `os.path.abspath()` should be replaced by `Path.resolve()`
-    "PTH113", # `os.path.isfile()` should be replaced by `Path.is_file()`
-    "PTH118", # `os.path.join()` should be replaced by `Path` with `/` operator
-    "PTH120", # `os.path.dirname()` should be replaced by `Path.parent`
-    "PTH123", # `open()` should be replaced by `Path.open()`
-    "PTH208", # Use `pathlib.Path.iterdir()` instead
-    # "RUF005", # Consider `["featureName", *cases]` instead of concatenation
-    "RUF100", # (unused-noqa)
-    "ARG002",   # Unused methodargument:`total`
-    "B008",   # Do notperformfunctioncall`CodedValue`
-    "B904",   # Within an`except`clause,raiseexceptions
-    "C416",   # Unnecessary listcomprehension(rewriteusing`list()`)
-    "E402",   # Module levelimportnotattop
+    "B008",   # Do not perform function call`CodedValue`
+    "B904",   # Within an`except`clause,raise exceptions
+    "C416",   # Unnecessary list comprehension(rewrite using`list()`)
+    "E402",   # Module level import not at top
     "EM102",   # Exception mustnotuseanf-string
-    "EXE001",   # Shebang ispresentbutfileis
-    "F401",   # `pykwalify.compat.yaml` importedbutunused
-    "G002",   # Logging statementuses`%`
-    "G003",   # Logging statementuses`+`
-    "G201",   # Logging `.exception(...)`shouldbeusedinstead
+    "EXE001",   # Shebang is present but file is not executable
+    "F401",   # `pykwalify.compat.yaml` imported but unused
     "PD011",   # Use `.to_numpy()`insteadof`.values`
-    "PIE810",   # Call `endswith`oncewitha`tuple`
+    "PIE810",   # Call `ends with` once with a`tuple`
     "PLR1722",   # Use `sys.exit()`insteadof`exit`
     "PLR1730",   # Replace `if`statementwith`level=
+    "PLW0603", # Using the global statement to update `featureClass` is discouraged
     "PLW2901",   # `for` loopvariable`features`overwrittenby
+    # Logging fixes likely need manual work, and need 'msg' variables created
+    "G002",   # Logging statementuses`%`
+    "G003",   # Logging statementuses`+`
+    "G004", # Logging statement uses f-string
+    "G201",   # Logging `.exception(...)`shouldbeusedinstead
+    # Unused method arguments require manual interventions
+    "ARG001", # Unused function argument: `param_num`
+    "ARG002",   # Unused methodargument:`total`
+    # Moving to pathlib is recommended, but requires manual updating
+    "PTH100", # `os.path.abspath()` should be replaced by `Path.resolve()`
     "PTH102",   # `os.mkdir()` shouldbereplacedby`Path.mkdir()`
     "PTH103",   # `os.makedirs()` shouldbereplacedby`Path.mkdir(parents=True)`
     "PTH107",   # `os.remove()` shouldbereplacedby`Path.unlink()`
     "PTH109",   # `os.getcwd()` shouldbereplacedby`Path.cwd()`
     "PTH110",   # `os.path.exists()` shouldbereplacedby`Path.exists()`
     "PTH112",   # `os.path.isdir()` shouldbereplacedby`Path.is_dir()`
+    "PTH113", # `os.path.isfile()` should be replaced by `Path.is_file()`
     "PTH117",   # `os.path.isabs()` shouldbereplacedby`Path.is_absolute()`
+    "PTH118", # `os.path.join()` should be replaced by `Path` with `/` operator
     "PTH119",   # `os.path.basename()` shouldbereplacedby`Path.name`
+    "PTH120", # `os.path.dirname()` should be replaced by `Path.parent`
     "PTH122",   # `os.path.splitext()` shouldbereplacedby`Path.suffix`,
+    "PTH123", # `open()` should be replaced by `Path.open()`
     "PTH207",   # Replace `glob`with`Path.glob`or`Path.rglob`
+    "PTH208", # Use `pathlib.Path.iterdir()` instead
+    # "PLW0602",   # TODO: Delay fixing until later
+    # "B007", # Loop control variable `args` not used within loop body
+    # "EM101", # Exception must not use a string literal, assign to variable first
+    # "ICN001", # `numpy` should be imported as `np`
+    # "RUF005", # Consider `["featureName", *cases]` instead of concatenation
+    # "RUF100", # (unused-noqa)
     # "RET504",   # Unnecessary assignmentto`complexity`before`return`
     # "RUF015",   # Prefer `next(iter(current_baseline.keys()))`oversingleelementslice
     # "SIM101",   # Multiple `isinstance`callsforexpression,merge

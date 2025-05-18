@@ -296,14 +296,14 @@ class RadiomicsTestUtils:
                 csvFileWriter = csv.writer(csvFile, lineterminator="\n")
                 testedCases = sorted(self._testedSet)
                 header = sorted(data[testedCases[0]].keys())
-                header = ["testCase"] + header
+                header = ["testCase", *header]
                 csvFileWriter.writerow(header)
                 for testCase in testedCases:
                     thisCase = data[testCase]
                     thisCase["testCase"] = testCase
                     row = []
                     for h in header:
-                        row = row + [thisCase.get(h, "N/A")]
+                        row = [*row, thisCase.get(h, "N/A")]
                     csvFileWriter.writerow(row)
                 self._logger.info("Wrote to file %s", fileName)
         else:
@@ -444,7 +444,7 @@ class PyRadiomicsBaseline:
         cases = sorted(self.tests)
         with open(baselineFile, "w") as baseline:
             csvWriter = csv.writer(baseline, lineterminator="\n")
-            header = ["featureName"] + cases
+            header = ["featureName", *cases]
             csvWriter.writerow(header)
 
             config = self.configuration[cases[0]].keys()

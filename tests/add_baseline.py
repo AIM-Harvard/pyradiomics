@@ -73,7 +73,7 @@ class AddBaseline:
 
     def run(self, featureClass=None):
         current_baseline = self.testUtils._baseline
-        config = current_baseline[list(current_baseline.keys())[0]].configuration
+        config = current_baseline[next(iter(current_baseline.keys()))].configuration
         self.new_baselines = {}
         if featureClass is None:
             for test, newClass in self.generate_scenarios():

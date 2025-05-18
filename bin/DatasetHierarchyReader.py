@@ -62,11 +62,11 @@ class DatasetHierarchyReader:
         images = []
         recDirectory = "NONE"
         try:
-            recDirectory = [
+            recDirectory = next(
                 item
                 for item in subfolders
                 if "reconstructions" in os.path.basename(item).lower()
-            ][0]
+            )
             images = [
                 item
                 for item in glob.glob(os.path.join(recDirectory, "*"))
@@ -85,11 +85,11 @@ class DatasetHierarchyReader:
         labels = []
         segDirectory = "NONE"
         try:
-            segDirectory = [
+            segDirectory = next(
                 item
                 for item in subfolders
                 if "segmentations" in os.path.basename(item).lower()
-            ][0]
+            )
             labels = [
                 item
                 for item in glob.glob(os.path.join(segDirectory, "*"))
@@ -108,11 +108,11 @@ class DatasetHierarchyReader:
         resources = []
         resDirectory = "NONE"
         try:
-            resDirectory = [
+            resDirectory = next(
                 item
                 for item in subfolders
                 if "resources" in os.path.basename(item).lower()
-            ][0]
+            )
             resources = [item for item in glob.glob(os.path.join(resDirectory, "*"))]
         except IndexError:
             if create:

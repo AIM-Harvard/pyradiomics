@@ -254,7 +254,7 @@ ignore = [
     "PTH122",   # `os.path.splitext()` shouldbereplacedby`Path.suffix`,
     "PTH207",   # Replace `glob`with`Path.glob`or`Path.rglob`
     "RET504",   # Unnecessary assignmentto`complexity`before`return`
-    "RUF015",   # Prefer `next(iter(current_baseline.keys()))`oversingleelementslice
+    # "RUF015",   # Prefer `next(iter(current_baseline.keys()))`oversingleelementslice
     # "SIM101",   # Multiple `isinstance`callsforexpression,merge
     # "SIM103",   # Return theconditiondirectly
     # "SIM108",   # Use ternaryoperator`label=int(label)

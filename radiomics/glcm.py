@@ -147,21 +147,14 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
         self.logger.debug("Process calculated matrix")
 
         # Delete rows and columns that specify gray levels not present in the ROI
-        NgVector = range(1, Ng + 1)  # All possible gray values
         GrayLevels = self.coefficients["grayLevels"]  # Gray values present in ROI
-        emptyGrayLevels = numpy.array(
-            list(set(NgVector) - set(GrayLevels)), dtype=int
-        )  # Gray values NOT present in ROI
-
-        P_glcm = numpy.delete(P_glcm, emptyGrayLevels - 1, 1)
-        P_glcm = numpy.delete(P_glcm, emptyGrayLevels - 1, 2)
+        P_glcm = P_glcm[:, GrayLevels - 1, :, :]
+        P_glcm = P_glcm[:, :, GrayLevels - 1, :]
 
         # Optionally make GLCMs symmetrical for each angle
         if self.symmetricalGLCM:
             self.logger.debug("Create symmetrical matrix")
-            # Transpose and copy GLCM and add it to P_glcm. Numpy.transpose returns a view if possible, use .copy() to ensure
-            # a copy of the array is used and not just a view (otherwise erroneous additions can occur)
-            P_glcm += numpy.transpose(P_glcm, (0, 2, 1, 3)).copy()
+            P_glcm = P_glcm + numpy.transpose(P_glcm, (0, 2, 1, 3))
 
         # Optionally apply a weighting factor
         if self.weightingNorm is not None:

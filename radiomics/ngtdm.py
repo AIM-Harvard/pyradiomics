@@ -111,9 +111,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
 
         # Delete empty grey levels
         emptyGrayLevels = numpy.where(numpy.sum(P_ngtdm[:, :, 0], 0) == 0)
-        P_ngtdm = numpy.delete(P_ngtdm, emptyGrayLevels, 1)
-
-        return P_ngtdm
+        return numpy.delete(P_ngtdm, emptyGrayLevels, 1)
 
     def _calculateCoefficients(self):
         # No of voxels that have a valid region, lesser equal to Np
@@ -250,14 +248,12 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
             1  # Prevent division by 0 errors. (Numerator is 0 at those indices too)
         )
 
-        complexity = (
+        return (
             numpy.sum(
                 numpy.abs(i[:, :, None] - i[:, None, :]) * numerator / divisor, (1, 2)
             )
             / Nvp
         )
-
-        return complexity
 
     def getStrengthFeatureValue(self):
         r"""

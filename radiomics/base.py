@@ -171,12 +171,11 @@ class RadiomicsFeaturesBase:
         This function is called at initialization, found features are stored in the ``featureNames`` variable.
         """
         attributes = inspect.getmembers(cls)
-        features = {
+        return {
             a[0][3:-12]: getattr(a[1], "_is_deprecated", False)
             for a in attributes
             if a[0].startswith("get") and a[0].endswith("FeatureValue")
         }
-        return features
 
     def execute(self):
         """

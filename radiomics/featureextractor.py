@@ -417,14 +417,16 @@ class RadiomicsFeatureExtractor:
         elif isinstance(ImageFilePath, sitk.SimpleITK.Image):
             image = ImageFilePath
         else:
-            raise ValueError("Error reading image Filepath or SimpleITK object")
+            msg = "Error reading image Filepath or SimpleITK object"
+            raise ValueError(msg)
 
         if isinstance(MaskFilePath, str) and os.path.isfile(MaskFilePath):
             mask = sitk.ReadImage(MaskFilePath)
         elif isinstance(MaskFilePath, sitk.SimpleITK.Image):
             mask = MaskFilePath
         else:
-            raise ValueError("Error reading mask Filepath or SimpleITK object")
+            msg = "Error reading mask Filepath or SimpleITK object"
+            raise ValueError(msg)
 
         # process the mask
         mask = imageoperations.getMask(mask, **kwargs)
@@ -452,7 +454,8 @@ class RadiomicsFeatureExtractor:
                 mask = correctedMask
             if bb is None:
                 # Mask checks failed
-                raise ValueError("Mask checks failed during pre-crop")
+                msg = "Mask checks failed during pre-crop"
+                raise ValueError(msg)
 
             image, mask = imageoperations.cropToTumorMask(image, mask, bb, **kwargs)
 

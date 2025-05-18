@@ -62,7 +62,8 @@ class RadiomicsFeaturesBase:
         self.logger.debug("Initializing feature class")
 
         if inputImage is None or inputMask is None:
-            raise ValueError("Missing input image or mask")
+            msg = "Missing input image or mask"
+            raise ValueError(msg)
 
         self.progressReporter = getProgressReporter
 

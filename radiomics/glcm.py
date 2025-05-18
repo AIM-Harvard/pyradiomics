@@ -471,10 +471,11 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           See :ref:`here <radiomics-excluded-dissimilarity-label>` for the proof. **Enabling this feature will result in the
           logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
         """
-        raise DeprecationWarning(
+        msg = (
             "GLCM - Dissimilarity is mathematically equal to GLCM - Difference Average, "
             "see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details"
         )
+        raise DeprecationWarning(msg)
 
     def getJointEnergyFeatureValue(self):
         r"""
@@ -525,10 +526,11 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           :py:func:`~radiomics.glcm.RadiomicsGLCM.getIdFeatureValue()`. **Enabling this feature will result in the
           logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
         """
-        raise DeprecationWarning(
+        msg = (
             "GLCM - Homogeneity 1 is mathematically equal to GLCM - Inverse Difference, "
             'see documentation of the GLCM feature class (section "Radiomic Features") for more details'
         )
+        raise DeprecationWarning(msg)
 
     @deprecated
     def getHomogeneity2FeatureValue(self):
@@ -544,10 +546,11 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           :py:func:`~radiomics.glcm.RadiomicsGLCM.getIdmFeatureValue()`. **Enabling this feature will result in the
           logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
         """
-        raise DeprecationWarning(
+        msg = (
             "GLCM - Homogeneity 2 is mathematically equal to GLCM - Inverse Difference Moment, "
             'see documentation of the GLCM feature class (section "Radiomic Features") for more details'
         )
+        raise DeprecationWarning(msg)
 
     def getImc1FeatureValue(self):
         r"""
@@ -832,10 +835,11 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
           See :ref:`here <radiomics-excluded-sumvariance-label>` for the proof. **Enabling this feature will result in the
           logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for this features**
         """
-        raise DeprecationWarning(
+        msg = (
             "GLCM - Sum Variance is mathematically equal to GLCM - Cluster Tendency, "
             "see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details"
         )
+        raise DeprecationWarning(msg)
 
     def getSumEntropyFeatureValue(self):
         r"""

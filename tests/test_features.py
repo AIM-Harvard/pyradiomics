@@ -46,15 +46,11 @@ class TestFeatures:
                 }
                 # Check if all active features have a baseline (exclude deprecated features from this set)
                 if len(activeFeatures - uniqueFeatures) > 0:
-                    raise AssertionError(
-                        "Missing baseline for active features %s",
-                        activeFeatures - uniqueFeatures,
-                    )
+                    msg = f"Missing baseline for active features {activeFeatures - uniqueFeatures}"
+                    raise AssertionError(msg)
                 if len(uniqueFeatures - activeFeatures) > 0:
-                    raise AssertionError(
-                        "Missing function(s) for baseline feature(s) %s",
-                        uniqueFeatures - activeFeatures,
-                    )
+                    msg = f"Missing function(s) for baseline feature(s) {uniqueFeatures - activeFeatures}"
+                    raise AssertionError(msg)
 
                 logging.debug(
                     "generate_scenarios: featureNames = %s", baselineFeatureNames

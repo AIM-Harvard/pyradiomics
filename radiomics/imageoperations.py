@@ -54,7 +54,8 @@ def getMask(mask, **kwargs):
 
     labels = np.unique(sitk.GetArrayFromImage(mask))
     if len(labels) == 1 and labels[0] == 0:
-        raise ValueError("No labels found in this mask (i.e. nothing is segmented)!")
+        msg = "No labels found in this mask (i.e. nothing is segmented)!"
+        raise ValueError(msg)
     if label not in labels:
         raise ValueError(
             f"Label ({label:g}) not present in mask. Choose from {labels[labels != 0]}"
@@ -258,17 +259,19 @@ def checkMask(imageNode, maskNode, **kwargs):
                 in e.args[0]
             ):
                 logger.debug("Additional information on error.", exc_info=True)
-                raise ValueError(
+                msg = (
                     "Image/Mask datatype or size mismatch. Potential fix: enable correctMask, see "
                     "Documentation:Usage:Customizing the Extraction:Settings:correctMask for more information"
                 )
+                raise ValueError(msg)
             if "Inputs do not occupy the same physical space!" in e.args[0]:
                 logger.debug("Additional information on error.", exc_info=True)
-                raise ValueError(
+                msg = (
                     "Image/Mask geometry mismatch. Potential fix: increase tolerance using geometryTolerance, "
                     "see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more "
                     "information"
                 )
+                raise ValueError(msg)
             raise e  # unhandled error
 
         logger.warning("Image/Mask geometry mismatch, attempting to correct Mask")
@@ -284,9 +287,8 @@ def checkMask(imageNode, maskNode, **kwargs):
             logger.debug(
                 "Bounding box calculation with resampled mask failed", exc_info=True
             )
-            raise ValueError(
-                "Calculation of bounding box failed, for more information run with DEBUG logging and check log"
-            )
+            msg = "Calculation of bounding box failed, for more information run with DEBUG logging and check log"
+            raise ValueError(msg)
 
     # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
     boundingBox = np.array(lsif.GetBoundingBox(label))
@@ -296,9 +298,8 @@ def checkMask(imageNode, maskNode, **kwargs):
         (boundingBox[1::2] - boundingBox[0::2] + 1) > 1
     )  # UBound - LBound + 1 = Size
     if ndims == 0:
-        raise ValueError(
-            "mask only contains 1 segmented voxel! Cannot extract features for a single voxel."
-        )
+        msg = "mask only contains 1 segmented voxel! Cannot extract features for a single voxel."
+        raise ValueError(msg)
     if ndims < minDims:
         raise ValueError(
             f"mask has too few dimensions (number of dimensions {ndims}, minimum required {minDims})"
@@ -492,7 +493,8 @@ def resampleImage(imageNode, maskNode, **kwargs):
     logger.debug("Resampling image and mask")
 
     if imageNode is None or maskNode is None:
-        raise ValueError("Requires both image and mask to resample")
+        msg = "Requires both image and mask to resample"
+        raise ValueError(msg)
 
     maskSpacing = np.array(maskNode.GetSpacing())
     imageSpacing = np.array(imageNode.GetSpacing())
@@ -682,7 +684,8 @@ def resegmentMask(imageNode, maskNode, **kwargs):
     label = kwargs.get("label", 1)
 
     if resegmentRange is None:
-        raise ValueError("resegmentRange is None.")
+        msg = "resegmentRange is None."
+        raise ValueError(msg)
     if len(resegmentRange) == 0 or len(resegmentRange) > 2:
         raise ValueError(
             f"Length {len(resegmentRange)} is not allowed for resegmentRange"

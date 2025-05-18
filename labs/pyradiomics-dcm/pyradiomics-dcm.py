@@ -550,7 +550,8 @@ Support for DICOM Radiotherapy Structure Sets for defining region of interest ma
 
         featuresFileName = os.path.join(featuresDir, segmentNumber + ".csv")
         scriptlogger.debug("Will save features as %s", featuresFileName)
-        writer = csv.writer(open(featuresFileName, "w"), lineterminator="\n")
+        with open(featuresFileName, "w") as fid:
+            writer = csv.writer(fid, lineterminator="\n")
         headers = list(featureVector.keys())
         writer.writerow(headers)
 

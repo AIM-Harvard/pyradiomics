@@ -498,7 +498,7 @@ class RadiomicsFeatureExtractor:
                 featureVector[newFeatureName] = featureValue
 
         Nd = mask.GetDimension()
-        if "shape" in enabledFeatures.keys():
+        if "shape" in enabledFeatures:
             if Nd == 3:
                 compute("shape")
             else:
@@ -507,7 +507,7 @@ class RadiomicsFeatureExtractor:
                     Nd,
                 )
 
-        if "shape2D" in enabledFeatures.keys():
+        if "shape2D" in enabledFeatures:
             if Nd == 3:
                 force2D = kwargs.get("force2D", False)
                 force2Ddimension = kwargs.get("force2Ddimension", 0)

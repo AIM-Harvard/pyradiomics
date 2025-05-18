@@ -66,7 +66,7 @@ firstOrderFeatures.enableFeatureByName("Mean", True)
 # firstOrderFeatures.enableAllFeatures()
 
 print("Will calculate the following first order features: ")
-for f in firstOrderFeatures.enabledFeatures.keys():
+for f in firstOrderFeatures.enabledFeatures:
     print("  ", f)
     print(getattr(firstOrderFeatures, f"get{f}FeatureValue").__doc__)
 
@@ -85,7 +85,7 @@ shapeFeatures = shape.RadiomicsShape(image, mask, **settings)
 shapeFeatures.enableAllFeatures()
 
 print("Will calculate the following Shape features: ")
-for f in shapeFeatures.enabledFeatures.keys():
+for f in shapeFeatures.enabledFeatures:
     print("  ", f)
     print(getattr(shapeFeatures, f"get{f}FeatureValue").__doc__)
 
@@ -104,7 +104,7 @@ glcmFeatures = glcm.RadiomicsGLCM(image, mask, **settings)
 glcmFeatures.enableAllFeatures()
 
 print("Will calculate the following GLCM features: ")
-for f in glcmFeatures.enabledFeatures.keys():
+for f in glcmFeatures.enabledFeatures:
     print("  ", f)
     print(getattr(glcmFeatures, f"get{f}FeatureValue").__doc__)
 
@@ -123,7 +123,7 @@ glrlmFeatures = glrlm.RadiomicsGLRLM(image, mask, **settings)
 glrlmFeatures.enableAllFeatures()
 
 print("Will calculate the following GLRLM features: ")
-for f in glrlmFeatures.enabledFeatures.keys():
+for f in glrlmFeatures.enabledFeatures:
     print("  ", f)
     print(getattr(glrlmFeatures, f"get{f}FeatureValue").__doc__)
 
@@ -142,7 +142,7 @@ glszmFeatures = glszm.RadiomicsGLSZM(image, mask, **settings)
 glszmFeatures.enableAllFeatures()
 
 print("Will calculate the following GLSZM features: ")
-for f in glszmFeatures.enabledFeatures.keys():
+for f in glszmFeatures.enabledFeatures:
     print("  ", f)
     print(getattr(glszmFeatures, f"get{f}FeatureValue").__doc__)
 

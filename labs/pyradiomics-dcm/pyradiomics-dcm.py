@@ -563,7 +563,7 @@ Support for DICOM Radiotherapy Structure Sets for defining region of interest ma
         m.addMeasurementGroup()
 
         includedFeatureVectorItems = 0
-        for featureName in featureVector.keys():
+        for featureName in featureVector:
             if featureName == "diagnostics_Versions_PyRadiomics":
                 pyradiomicsVersion = featureVector[featureName]
                 continue

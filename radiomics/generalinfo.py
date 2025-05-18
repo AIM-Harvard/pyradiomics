@@ -50,7 +50,7 @@ class GeneralInfo:
             pywt.__version__
         )
         self.generalInfo[self.generalInfo_prefix + "Versions_Python"] = (
-            f"{'.'.join(sys.version_info[:3])}"
+            f"{'.'.join([str(x) for x in sys.version_info[:3]])}"
         )
 
     def addImageElements(self, image, prefix="original"):

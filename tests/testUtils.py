@@ -120,7 +120,7 @@ class RadiomicsTestUtils:
         if self._featureClassName != className:
             self._logger.debug("Setting feature class name to %s", className)
             assert (
-                className in self._baseline.keys()
+                className in self._baseline
             )  # Check if a baseline has been read for this class
 
             self._featureClassName = className

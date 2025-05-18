@@ -56,5 +56,5 @@ for cls, features in extractor.enabledFeatures.items():
 print("Calculating features")
 featureVector = extractor.execute(imageName, maskName)
 
-for featureName in featureVector.keys():
+for featureName in featureVector:
     print(f"Computed {featureName}: {featureVector[featureName]}")

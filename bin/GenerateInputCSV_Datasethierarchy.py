@@ -30,7 +30,7 @@ def main():
             cw = csv.writer(outFile, lineterminator="\n")
             cw.writerow(["Patient", "StudyDate", "Image", "Mask"])
 
-            for patientIndex, patientDirectory in enumerate(datasetHierarchyDict):
+            for _patientIndex, patientDirectory in enumerate(datasetHierarchyDict):
                 patientID = os.path.basename(patientDirectory)
 
                 for studyDirectory in datasetHierarchyDict[patientDirectory]:

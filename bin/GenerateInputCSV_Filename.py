@@ -78,7 +78,7 @@ def main():
 def scanpatients(f, filetype):
     outputDict = {}
 
-    for dirpath, dirnames, filenames in os.walk(f):
+    for dirpath, _dirnames, filenames in os.walk(f):
         # list of all filenames. check pt number, check if roi, check sq
         for fname in filenames:
             if (fname[0:3] == "Pt-") & (fname.endswith(filetype)):

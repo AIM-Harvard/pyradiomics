@@ -45,7 +45,7 @@ class TestWavelet:
             assert bb is not None  # Check mask should pass normally
 
             waveletGenerator = imageoperations.getWaveletImage(image, mask)
-            for wavelet_image, wavelet_name, args in waveletGenerator:
+            for _wavelet_image, wavelet_name, _args in waveletGenerator:
                 level = wavelet_name.split("-")[1]
                 yield "_".join((testCase, wavelet_name)), image, mask, baselineDict[
                     level
@@ -59,7 +59,7 @@ class TestWavelet:
             )
 
             waveletGenerator = imageoperations.getWaveletImage(image, mask)
-            for wavelet_image, wavelet_name, args in waveletGenerator:
+            for _wavelet_image, wavelet_name, _args in waveletGenerator:
                 level = wavelet_name.split("-")[1]
                 yield "_".join(
                     (testCase, "preCropped", wavelet_name)

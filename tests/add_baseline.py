@@ -25,7 +25,7 @@ class AddBaseline:
         self.baselineDir = os.path.join(dataDir, "baseline")
 
     def generate_scenarios(self):
-        for className, featureClass in self.featureClasses.items():
+        for className, _featureClass in self.featureClasses.items():
             if not os.path.exists(
                 os.path.join(self.baselineDir, f"baseline_{className}.csv")
             ):
@@ -132,7 +132,7 @@ def generateWaveletBaseline():
     assert bb is not None  # Check mask should pass normally
 
     waveletGenerator = imageoperations.getWaveletImage(image, mask)
-    for wavelet_image, wavelet_name, args in waveletGenerator:
+    for _wavelet_image, wavelet_name, _args in waveletGenerator:
         level = wavelet_name.split("-")[1]
 
         im_arr = sitk.GetArrayFromImage(image)

@@ -15,8 +15,6 @@ _parallel_extraction_configured = False
 
 
 def extractVoxel(case_idx, case, extractor, **kwargs):
-    global caseLogger
-
     out_dir = kwargs.get("out_dir")
     unix_path = kwargs.get("unix_path", False)
 

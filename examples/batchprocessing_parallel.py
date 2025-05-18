@@ -87,7 +87,6 @@ logging.getLogger("radiomics.batch").debug("Logging init")
 
 
 def run(case):
-    global PARAMS, ROOT, TEMP_DIR
     ptLogger = logging.getLogger("radiomics.batch")
 
     feature_vector = OrderedDict(case)
@@ -161,7 +160,7 @@ def run(case):
 
 
 def _writeResults(featureVector):
-    global HEADERS, OUTPUTCSV
+    global HEADERS
 
     # Use the lock to prevent write access conflicts
     try:

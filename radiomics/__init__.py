@@ -55,7 +55,6 @@ def setVerbosity(level):
       has been set to the correct level. *Exception: In case the verbosity is set to DEBUG, the level of the logger is
       also lowered to DEBUG. If the verbosity level is then raised again, the logger level will remain DEBUG.*
     """
-    global logger, handler
     if level < 10:  # Lowest level: DEBUG
         level = 10
     if level > 60:  # Highest level = 50 (CRITICAL), level 60 results in a 'quiet' mode
@@ -152,7 +151,6 @@ def getTestCase(testCase, dataDirectory=None):
       To get the testcase with the corresponding single-slice label, append "_2D" to the testCase.
 
     """
-    global logger, testCases
     label2D = False
     testCase = testCase.lower()
     if testCase.endswith("_2d"):
@@ -278,7 +276,6 @@ def getProgressReporter(*args, **kwargs):
     `__next__` function of the iterable (i.e. `return self.iterable.__next__()`). Any prints/progress reporting calls can
     then be inserted in this function prior to the return statement.
     """
-    global handler, progressReporter
     if progressReporter is not None and logging.NOTSET < handler.level <= logging.INFO:
         return progressReporter(*args, **kwargs)
     return _DummyProgressReporter(*args, **kwargs)

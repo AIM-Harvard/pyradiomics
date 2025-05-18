@@ -212,7 +212,7 @@ ignore = [
     "ISC001",   # Conflicts with formatter
     "T201",   # `print` found ## See https://docs.astral.sh/ruff/rules/print
 # ----- The following are suppressions to allow initial passing of ruff linting
-    "PLW0602",   # TODO: Delay fixing until later
+    # "PLW0602",   # TODO: Delay fixing until later
     "ARG001", # Unused function argument: `param_num`
     # "B007", # Loop control variable `args` not used within loop body
     # "EM101", # Exception must not use a string literal, assign to variable first

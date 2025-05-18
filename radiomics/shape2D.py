@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import numpy
+import numpy as np
 import SimpleITK as sitk
 
 from radiomics import base, cShape, deprecated
@@ -71,7 +71,7 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
             axes = [0, 1, 2]
             axes.remove(force2DDimension)
 
-            self.pixelSpacing = numpy.array(self.inputImage.GetSpacing()[::-1])[(axes,)]
+            self.pixelSpacing = np.array(self.inputImage.GetSpacing()[::-1])[(axes,)]
 
             if self.maskArray.shape[force2DDimension] > 1:
                 raise ValueError(
@@ -79,9 +79,9 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
                 )
 
             # Drop the 2D axis, ensuring the input is truly 2D
-            self.maskArray = numpy.squeeze(self.maskArray, axis=force2DDimension)
+            self.maskArray = np.squeeze(self.maskArray, axis=force2DDimension)
         elif Nd == 2:
-            self.pixelSpacing = numpy.array(self.inputImage.GetSpacing()[::-1])
+            self.pixelSpacing = np.array(self.inputImage.GetSpacing()[::-1])
         else:
             raise ValueError(
                 "Shape2D is can only be calculated when input is 2D or 3D with `force2D=True`"
@@ -89,11 +89,11 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
 
         # Pad maskArray to prevent index-out-of-range errors
         self.logger.debug("Padding the mask with 0s")
-        self.maskArray = numpy.pad(
+        self.maskArray = np.pad(
             self.maskArray, pad_width=1, mode="constant", constant_values=0
         )
 
-        self.labelledPixelCoordinates = numpy.where(self.maskArray != 0)
+        self.labelledPixelCoordinates = np.where(self.maskArray != 0)
 
         self.logger.debug("Pre-calculate surface, perimeter, diameter and eigenvalues")
 
@@ -106,23 +106,21 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
 
         # Compute eigenvalues and -vectors
         Np = len(self.labelledPixelCoordinates[0])
-        coordinates = numpy.array(self.labelledPixelCoordinates, dtype="int").transpose(
+        coordinates = np.array(self.labelledPixelCoordinates, dtype="int").transpose(
             (1, 0)
         )  # Transpose equals zip(*a)
         physicalCoordinates = coordinates * self.pixelSpacing[None, :]
-        physicalCoordinates -= numpy.mean(physicalCoordinates, axis=0)  # Centered at 0
-        physicalCoordinates /= numpy.sqrt(Np)
-        covariance = numpy.dot(physicalCoordinates.T.copy(), physicalCoordinates)
-        self.eigenValues = numpy.linalg.eigvals(covariance)
+        physicalCoordinates -= np.mean(physicalCoordinates, axis=0)  # Centered at 0
+        physicalCoordinates /= np.sqrt(Np)
+        covariance = np.dot(physicalCoordinates.T.copy(), physicalCoordinates)
+        self.eigenValues = np.linalg.eigvals(covariance)
 
         # Correct machine precision errors causing very small negative eigen values in case of some 2D segmentations
-        machine_errors = numpy.bitwise_and(
-            self.eigenValues < 0, self.eigenValues > -1e-10
-        )
-        if numpy.sum(machine_errors) > 0:
+        machine_errors = np.bitwise_and(self.eigenValues < 0, self.eigenValues > -1e-10)
+        if np.sum(machine_errors) > 0:
             self.logger.warning(
                 "Encountered %d eigenvalues < 0 and > -1e-10, rounding to 0",
-                numpy.sum(machine_errors),
+                np.sum(machine_errors),
             )
             self.eigenValues[machine_errors] = 0
 
@@ -217,7 +215,7 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
         .. note::
           This feature is correlated to Spherical Disproportion. Therefore, only this feature is enabled by default.
         """
-        return (2 * numpy.sqrt(numpy.pi * self.Surface)) / self.Perimeter
+        return (2 * np.sqrt(np.pi * self.Surface)) / self.Perimeter
 
     @deprecated
     def getSphericalDisproportionFeatureValue(self):
@@ -266,8 +264,8 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
             self.logger.warning(
                 "Major axis eigenvalue negative! (%g)", self.eigenValues[1]
             )
-            return numpy.nan
-        return numpy.sqrt(self.eigenValues[1]) * 4
+            return np.nan
+        return np.sqrt(self.eigenValues[1]) * 4
 
     def getMinorAxisLengthFeatureValue(self):
         r"""
@@ -286,8 +284,8 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
             self.logger.warning(
                 "Minor axis eigenvalue negative! (%g)", self.eigenValues[0]
             )
-            return numpy.nan
-        return numpy.sqrt(self.eigenValues[0]) * 4
+            return np.nan
+        return np.sqrt(self.eigenValues[0]) * 4
 
     def getElongationFeatureValue(self):
         r"""
@@ -313,5 +311,5 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
                 self.eigenValues[0],
                 self.eigenValues[1],
             )
-            return numpy.nan
-        return numpy.sqrt(self.eigenValues[0] / self.eigenValues[1])
+            return np.nan
+        return np.sqrt(self.eigenValues[0] / self.eigenValues[1])

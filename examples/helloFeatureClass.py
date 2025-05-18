@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import annotations
 
-import numpy
+import numpy as np
 import SimpleITK as sitk
 
 from radiomics import (
@@ -158,7 +158,7 @@ for key, val in results.items():
 # Show FirstOrder features, calculated on a LoG filtered image
 #
 if applyLog:
-    sigmaValues = numpy.arange(5.0, 0.0, -0.5)[::1]
+    sigmaValues = np.arange(5.0, 0.0, -0.5)[::1]
     for logImage, imageTypeName, inputKwargs in imageoperations.getLoGImage(
         image, mask, sigma=sigmaValues
     ):

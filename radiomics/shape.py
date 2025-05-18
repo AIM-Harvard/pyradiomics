@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import numpy
+import numpy as np
 import SimpleITK as sitk
 
 from radiomics import base, cShape, deprecated
@@ -52,14 +52,14 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
     def _initSegmentBasedCalculation(self):
 
-        self.pixelSpacing = numpy.array(self.inputImage.GetSpacing()[::-1])
+        self.pixelSpacing = np.array(self.inputImage.GetSpacing()[::-1])
 
         # Pad inputMask to prevent index-out-of-range errors
         self.logger.debug("Padding the mask with 0s")
 
         cpif = sitk.ConstantPadImageFilter()
 
-        padding = numpy.tile(1, 3)
+        padding = np.tile(1, 3)
         try:
             cpif.SetPadLowerBound(padding)
             cpif.SetPadUpperBound(padding)
@@ -72,7 +72,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
         # Reassign self.maskArray using the now-padded self.inputMask
         self.maskArray = sitk.GetArrayFromImage(self.inputMask) == self.label
-        self.labelledVoxelCoordinates = numpy.where(self.maskArray != 0)
+        self.labelledVoxelCoordinates = np.where(self.maskArray != 0)
 
         self.logger.debug("Pre-calculate Volume, Surface Area and Eigenvalues")
 
@@ -85,23 +85,21 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
 
         # Compute eigenvalues and -vectors
         Np = len(self.labelledVoxelCoordinates[0])
-        coordinates = numpy.array(self.labelledVoxelCoordinates, dtype="int").transpose(
+        coordinates = np.array(self.labelledVoxelCoordinates, dtype="int").transpose(
             (1, 0)
         )  # Transpose equals zip(*a)
         physicalCoordinates = coordinates * self.pixelSpacing[None, :]
-        physicalCoordinates -= numpy.mean(physicalCoordinates, axis=0)  # Centered at 0
-        physicalCoordinates /= numpy.sqrt(Np)
-        covariance = numpy.dot(physicalCoordinates.T.copy(), physicalCoordinates)
-        self.eigenValues = numpy.linalg.eigvals(covariance)
+        physicalCoordinates -= np.mean(physicalCoordinates, axis=0)  # Centered at 0
+        physicalCoordinates /= np.sqrt(Np)
+        covariance = np.dot(physicalCoordinates.T.copy(), physicalCoordinates)
+        self.eigenValues = np.linalg.eigvals(covariance)
 
         # Correct machine precision errors causing very small negative eigen values in case of some 2D segmentations
-        machine_errors = numpy.bitwise_and(
-            self.eigenValues < 0, self.eigenValues > -1e-10
-        )
-        if numpy.sum(machine_errors) > 0:
+        machine_errors = np.bitwise_and(self.eigenValues < 0, self.eigenValues > -1e-10)
+        if np.sum(machine_errors) > 0:
             self.logger.warning(
                 "Encountered %d eigenvalues < 0 and > -1e-10, rounding to 0",
-                numpy.sum(machine_errors),
+                np.sum(machine_errors),
             )
             self.eigenValues[machine_errors] = 0
 
@@ -201,7 +199,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
           parameter file provided in the ``pyradiomics/examples/exampleSettings`` folder, Compactness 1 and Compactness 2
           are therefore disabled.
         """
-        return (36 * numpy.pi * self.Volume**2) ** (1.0 / 3.0) / self.SurfaceArea
+        return (36 * np.pi * self.Volume**2) ** (1.0 / 3.0) / self.SurfaceArea
 
     @deprecated
     def getCompactness1FeatureValue(self):
@@ -226,7 +224,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
           specified, including this feature). To include this feature in the extraction, specify it by name in the enabled
           features.
         """
-        return self.Volume / (self.SurfaceArea ** (3.0 / 2.0) * numpy.sqrt(numpy.pi))
+        return self.Volume / (self.SurfaceArea ** (3.0 / 2.0) * np.sqrt(np.pi))
 
     @deprecated
     def getCompactness2FeatureValue(self):
@@ -249,7 +247,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
           specified, including this feature). To include this feature in the extraction, specify it by name in the enabled
           features.
         """
-        return (36.0 * numpy.pi) * (self.Volume**2.0) / (self.SurfaceArea**3.0)
+        return (36.0 * np.pi) * (self.Volume**2.0) / (self.SurfaceArea**3.0)
 
     @deprecated
     def getSphericalDisproportionFeatureValue(self):
@@ -273,7 +271,7 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
           specified, including this feature). To include this feature in the extraction, specify it by name in the enabled
           features.
         """
-        return self.SurfaceArea / (36 * numpy.pi * self.Volume**2) ** (1.0 / 3.0)
+        return self.SurfaceArea / (36 * np.pi * self.Volume**2) ** (1.0 / 3.0)
 
     def getMaximum3DDiameterFeatureValue(self):
         r"""
@@ -330,8 +328,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
             self.logger.warning(
                 "Major axis eigenvalue negative! (%g)", self.eigenValues[2]
             )
-            return numpy.nan
-        return numpy.sqrt(self.eigenValues[2]) * 4
+            return np.nan
+        return np.sqrt(self.eigenValues[2]) * 4
 
     def getMinorAxisLengthFeatureValue(self):
         r"""
@@ -350,8 +348,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
             self.logger.warning(
                 "Minor axis eigenvalue negative! (%g)", self.eigenValues[1]
             )
-            return numpy.nan
-        return numpy.sqrt(self.eigenValues[1]) * 4
+            return np.nan
+        return np.sqrt(self.eigenValues[1]) * 4
 
     def getLeastAxisLengthFeatureValue(self):
         r"""
@@ -370,8 +368,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
             self.logger.warning(
                 "Least axis eigenvalue negative! (%g)", self.eigenValues[0]
             )
-            return numpy.nan
-        return numpy.sqrt(self.eigenValues[0]) * 4
+            return np.nan
+        return np.sqrt(self.eigenValues[0]) * 4
 
     def getElongationFeatureValue(self):
         r"""
@@ -397,8 +395,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
                 self.eigenValues[1],
                 self.eigenValues[2],
             )
-            return numpy.nan
-        return numpy.sqrt(self.eigenValues[1] / self.eigenValues[2])
+            return np.nan
+        return np.sqrt(self.eigenValues[1] / self.eigenValues[2])
 
     def getFlatnessFeatureValue(self):
         r"""
@@ -423,5 +421,5 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
                 self.eigenValues[0],
                 self.eigenValues[2],
             )
-            return numpy.nan
-        return numpy.sqrt(self.eigenValues[0] / self.eigenValues[2])
+            return np.nan
+        return np.sqrt(self.eigenValues[0] / self.eigenValues[2])

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 
-import numpy
+import numpy as np
 import SimpleITK as sitk
 
 from radiomics import getTestCase, imageoperations
@@ -27,7 +27,7 @@ class TestWavelet:
 
         assert os.path.isfile(baselineFile)
 
-        baseline = numpy.load(baselineFile)
+        baseline = np.load(baselineFile)
         wavelets = ("HHH", "HHL", "HLH", "HLL", "LHH", "LHL", "LLH", "LLL")
         baselineDict = {wavelets[idx]: b for idx, b in enumerate(baseline)}
 
@@ -81,4 +81,4 @@ class TestWavelet:
 
         diff = voxelArray - baseline
 
-        assert numpy.max(numpy.abs(diff)) < 1e-3
+        assert np.max(np.abs(diff)) < 1e-3

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import numpy
+import numpy as np
 
 from radiomics import base, cMatrices
 
@@ -98,7 +98,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         self.logger.debug("Calculating GLRLM matrix in C")
 
         Ng = self.coefficients["Ng"]
-        Nr = numpy.max(self.imageArray.shape)
+        Nr = np.max(self.imageArray.shape)
 
         matrix_args = [
             self.imageArray,
@@ -120,27 +120,25 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         # Delete rows that specify gray levels not present in the ROI
         NgVector = range(1, Ng + 1)  # All possible gray values
         GrayLevels = self.coefficients["grayLevels"]  # Gray values present in ROI
-        emptyGrayLevels = numpy.array(
+        emptyGrayLevels = np.array(
             list(set(NgVector) - set(GrayLevels)), dtype=int
         )  # Gray values NOT present in ROI
 
-        P_glrlm = numpy.delete(P_glrlm, emptyGrayLevels - 1, 1)
+        P_glrlm = np.delete(P_glrlm, emptyGrayLevels - 1, 1)
 
         # Optionally apply a weighting factor
         if self.weightingNorm is not None:
             self.logger.debug("Applying weighting (%s)", self.weightingNorm)
 
             pixelSpacing = self.inputImage.GetSpacing()[::-1]
-            weights = numpy.empty(len(angles))
+            weights = np.empty(len(angles))
             for a_idx, a in enumerate(angles):
                 if self.weightingNorm == "infinity":
-                    weights[a_idx] = max(numpy.abs(a) * pixelSpacing)
+                    weights[a_idx] = max(np.abs(a) * pixelSpacing)
                 elif self.weightingNorm == "euclidean":
-                    weights[a_idx] = numpy.sqrt(
-                        numpy.sum((numpy.abs(a) * pixelSpacing) ** 2)
-                    )
+                    weights[a_idx] = np.sqrt(np.sum((np.abs(a) * pixelSpacing) ** 2))
                 elif self.weightingNorm == "manhattan":
-                    weights[a_idx] = numpy.sum(numpy.abs(a) * pixelSpacing)
+                    weights[a_idx] = np.sum(np.abs(a) * pixelSpacing)
                 elif self.weightingNorm == "no_weighting":
                     weights[a_idx] = 1
                 else:
@@ -150,27 +148,25 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
                     )
                     weights[a_idx] = 1
 
-            P_glrlm = numpy.sum(
-                P_glrlm * weights[None, None, None, :], 3, keepdims=True
-            )
+            P_glrlm = np.sum(P_glrlm * weights[None, None, None, :], 3, keepdims=True)
 
-        Nr = numpy.sum(P_glrlm, (1, 2))
+        Nr = np.sum(P_glrlm, (1, 2))
 
         # Delete empty angles if no weighting is applied
         if P_glrlm.shape[3] > 1:
-            emptyAngles = numpy.where(numpy.sum(Nr, 0) == 0)
+            emptyAngles = np.where(np.sum(Nr, 0) == 0)
             if len(emptyAngles[0]) > 0:  # One or more angles are 'empty'
                 self.logger.debug(
                     "Deleting %d empty angles:\n%s",
                     len(emptyAngles[0]),
                     angles[emptyAngles],
                 )
-                P_glrlm = numpy.delete(P_glrlm, emptyAngles, 3)
-                Nr = numpy.delete(Nr, emptyAngles, 1)
+                P_glrlm = np.delete(P_glrlm, emptyAngles, 3)
+                Nr = np.delete(Nr, emptyAngles, 1)
             else:
                 self.logger.debug("No empty angles")
 
-        Nr[Nr == 0] = numpy.nan  # set sum to numpy.spacing(1) if sum is 0?
+        Nr[Nr == 0] = np.nan  # set sum to numpy.spacing(1) if sum is 0?
         self.coefficients["Nr"] = Nr
 
         return P_glrlm
@@ -178,19 +174,19 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
     def _calculateCoefficients(self):
         self.logger.debug("Calculating GLRLM coefficients")
 
-        pr = numpy.sum(self.P_glrlm, 1)  # shape (Nvox, Nr, Na)
-        pg = numpy.sum(self.P_glrlm, 2)  # shape (Nvox, Ng, Na)
+        pr = np.sum(self.P_glrlm, 1)  # shape (Nvox, Nr, Na)
+        pg = np.sum(self.P_glrlm, 2)  # shape (Nvox, Ng, Na)
 
         ivector = self.coefficients["grayLevels"].astype(float)  # shape (Ng,)
-        jvector = numpy.arange(
-            1, self.P_glrlm.shape[2] + 1, dtype=numpy.float64
+        jvector = np.arange(
+            1, self.P_glrlm.shape[2] + 1, dtype=np.float64
         )  # shape (Nr,)
 
         # Delete columns that run lengths not present in the ROI
-        emptyRunLenghts = numpy.where(numpy.sum(pr, (0, 2)) == 0)
-        self.P_glrlm = numpy.delete(self.P_glrlm, emptyRunLenghts, 2)
-        jvector = numpy.delete(jvector, emptyRunLenghts)
-        pr = numpy.delete(pr, emptyRunLenghts, 1)
+        emptyRunLenghts = np.where(np.sum(pr, (0, 2)) == 0)
+        self.P_glrlm = np.delete(self.P_glrlm, emptyRunLenghts, 2)
+        jvector = np.delete(jvector, emptyRunLenghts)
+        pr = np.delete(pr, emptyRunLenghts, 1)
 
         self.coefficients["pr"] = pr
         self.coefficients["pg"] = pg
@@ -211,8 +207,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nr = self.coefficients["Nr"]
 
-        sre = numpy.sum((pr / (jvector[None, :, None] ** 2)), 1) / Nr
-        return numpy.nanmean(sre, 1)
+        sre = np.sum((pr / (jvector[None, :, None] ** 2)), 1) / Nr
+        return np.nanmean(sre, 1)
 
     def getLongRunEmphasisFeatureValue(self):
         r"""
@@ -228,8 +224,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nr = self.coefficients["Nr"]
 
-        lre = numpy.sum((pr * (jvector[None, :, None] ** 2)), 1) / Nr
-        return numpy.nanmean(lre, 1)
+        lre = np.sum((pr * (jvector[None, :, None] ** 2)), 1) / Nr
+        return np.nanmean(lre, 1)
 
     def getGrayLevelNonUniformityFeatureValue(self):
         r"""
@@ -244,8 +240,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         pg = self.coefficients["pg"]
         Nr = self.coefficients["Nr"]
 
-        gln = numpy.sum((pg**2), 1) / Nr
-        return numpy.nanmean(gln, 1)
+        gln = np.sum((pg**2), 1) / Nr
+        return np.nanmean(gln, 1)
 
     def getGrayLevelNonUniformityNormalizedFeatureValue(self):
         r"""
@@ -260,8 +256,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         pg = self.coefficients["pg"]
         Nr = self.coefficients["Nr"]
 
-        glnn = numpy.sum(pg**2, 1) / (Nr**2)
-        return numpy.nanmean(glnn, 1)
+        glnn = np.sum(pg**2, 1) / (Nr**2)
+        return np.nanmean(glnn, 1)
 
     def getRunLengthNonUniformityFeatureValue(self):
         r"""
@@ -276,8 +272,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         pr = self.coefficients["pr"]
         Nr = self.coefficients["Nr"]
 
-        rln = numpy.sum((pr**2), 1) / Nr
-        return numpy.nanmean(rln, 1)
+        rln = np.sum((pr**2), 1) / Nr
+        return np.nanmean(rln, 1)
 
     def getRunLengthNonUniformityNormalizedFeatureValue(self):
         r"""
@@ -292,8 +288,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         pr = self.coefficients["pr"]
         Nr = self.coefficients["Nr"]
 
-        rlnn = numpy.sum((pr**2), 1) / Nr**2
-        return numpy.nanmean(rlnn, 1)
+        rlnn = np.sum((pr**2), 1) / Nr**2
+        return np.nanmean(rlnn, 1)
 
     def getRunPercentageFeatureValue(self):
         r"""
@@ -315,10 +311,10 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nr = self.coefficients["Nr"]
 
-        Np = numpy.sum(pr * jvector[None, :, None], 1)  # shape (Nvox, Na)
+        Np = np.sum(pr * jvector[None, :, None], 1)  # shape (Nvox, Na)
 
         rp = Nr / Np
-        return numpy.nanmean(rp, 1)
+        return np.nanmean(rp, 1)
 
     def getGrayLevelVarianceFeatureValue(self):
         r"""
@@ -337,9 +333,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
             self.coefficients["pg"] / Nr[:, None, :]
         )  # divide by Nr to get the normalized matrix
 
-        u_i = numpy.sum(pg * ivector[None, :, None], 1, keepdims=True)
-        glv = numpy.sum(pg * (ivector[None, :, None] - u_i) ** 2, 1)
-        return numpy.nanmean(glv, 1)
+        u_i = np.sum(pg * ivector[None, :, None], 1, keepdims=True)
+        glv = np.sum(pg * (ivector[None, :, None] - u_i) ** 2, 1)
+        return np.nanmean(glv, 1)
 
     def getRunVarianceFeatureValue(self):
         r"""
@@ -358,9 +354,9 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
             self.coefficients["pr"] / Nr[:, None, :]
         )  # divide by Nr to get the normalized matrix
 
-        u_j = numpy.sum(pr * jvector[None, :, None], 1, keepdims=True)
-        rv = numpy.sum(pr * (jvector[None, :, None] - u_j) ** 2, 1)
-        return numpy.nanmean(rv, 1)
+        u_j = np.sum(pr * jvector[None, :, None], 1, keepdims=True)
+        rv = np.sum(pr * (jvector[None, :, None] - u_j) ** 2, 1)
+        return np.nanmean(rv, 1)
 
     def getRunEntropyFeatureValue(self):
         r"""
@@ -375,14 +371,14 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         RE measures the uncertainty/randomness in the distribution of run lengths and gray levels. A higher value indicates
         more heterogeneity in the texture patterns.
         """
-        eps = numpy.spacing(1)
+        eps = np.spacing(1)
         Nr = self.coefficients["Nr"]
         p_glrlm = (
             self.P_glrlm / Nr[:, None, None, :]
         )  # divide by Nr to get the normalized matrix
 
-        re = -numpy.sum(p_glrlm * numpy.log2(p_glrlm + eps), (1, 2))
-        return numpy.nanmean(re, 1)
+        re = -np.sum(p_glrlm * np.log2(p_glrlm + eps), (1, 2))
+        return np.nanmean(re, 1)
 
     def getLowGrayLevelRunEmphasisFeatureValue(self):
         r"""
@@ -398,8 +394,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         ivector = self.coefficients["ivector"]
         Nr = self.coefficients["Nr"]
 
-        lglre = numpy.sum((pg / (ivector[None, :, None] ** 2)), 1) / Nr
-        return numpy.nanmean(lglre, 1)
+        lglre = np.sum((pg / (ivector[None, :, None] ** 2)), 1) / Nr
+        return np.nanmean(lglre, 1)
 
     def getHighGrayLevelRunEmphasisFeatureValue(self):
         r"""
@@ -415,8 +411,8 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         ivector = self.coefficients["ivector"]
         Nr = self.coefficients["Nr"]
 
-        hglre = numpy.sum((pg * (ivector[None, :, None] ** 2)), 1) / Nr
-        return numpy.nanmean(hglre, 1)
+        hglre = np.sum((pg * (ivector[None, :, None] ** 2)), 1) / Nr
+        return np.nanmean(hglre, 1)
 
     def getShortRunLowGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -432,7 +428,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         Nr = self.coefficients["Nr"]
 
         srlgle = (
-            numpy.sum(
+            np.sum(
                 (
                     self.P_glrlm
                     / (
@@ -444,7 +440,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
             )
             / Nr
         )
-        return numpy.nanmean(srlgle, 1)
+        return np.nanmean(srlgle, 1)
 
     def getShortRunHighGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -460,7 +456,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         Nr = self.coefficients["Nr"]
 
         srhgle = (
-            numpy.sum(
+            np.sum(
                 (
                     self.P_glrlm
                     * (ivector[None, :, None, None] ** 2)
@@ -470,7 +466,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
             )
             / Nr
         )
-        return numpy.nanmean(srhgle, 1)
+        return np.nanmean(srhgle, 1)
 
     def getLongRunLowGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -486,7 +482,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         Nr = self.coefficients["Nr"]
 
         lrlgle = (
-            numpy.sum(
+            np.sum(
                 (
                     self.P_glrlm
                     * (jvector[None, None, :, None] ** 2)
@@ -496,7 +492,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
             )
             / Nr
         )
-        return numpy.nanmean(lrlgle, 1)
+        return np.nanmean(lrlgle, 1)
 
     def getLongRunHighGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -512,7 +508,7 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
         Nr = self.coefficients["Nr"]
 
         lrhgle = (
-            numpy.sum(
+            np.sum(
                 (
                     self.P_glrlm
                     * (
@@ -524,4 +520,4 @@ class RadiomicsGLRLM(base.RadiomicsFeaturesBase):
             )
             / Nr
         )
-        return numpy.nanmean(lrhgle, 1)
+        return np.nanmean(lrhgle, 1)

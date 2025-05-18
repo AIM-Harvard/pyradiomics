@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import numpy
+import numpy as np
 
 from radiomics import base, cMatrices
 
@@ -99,7 +99,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         matrix_args = [
             self.imageArray,
             self.maskArray,
-            numpy.array(self.settings.get("distances", [1])),
+            np.array(self.settings.get("distances", [1])),
             self.coefficients["Ng"],
             self.settings.get("force2D", False),
             self.settings.get("force2Ddimension", 0),
@@ -110,12 +110,12 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         P_ngtdm = cMatrices.calculate_ngtdm(*matrix_args)  # shape (Nvox, Ng, 3)
 
         # Delete empty grey levels
-        emptyGrayLevels = numpy.where(numpy.sum(P_ngtdm[:, :, 0], 0) == 0)
-        return numpy.delete(P_ngtdm, emptyGrayLevels, 1)
+        emptyGrayLevels = np.where(np.sum(P_ngtdm[:, :, 0], 0) == 0)
+        return np.delete(P_ngtdm, emptyGrayLevels, 1)
 
     def _calculateCoefficients(self):
         # No of voxels that have a valid region, lesser equal to Np
-        Nvp = numpy.sum(self.P_ngtdm[:, :, 0], 1)  # shape (Nvox,)
+        Nvp = np.sum(self.P_ngtdm[:, :, 0], 1)  # shape (Nvox,)
         self.coefficients["Nvp"] = Nvp  # shape (Nv,)
 
         # Normalize P_ngtdm[:, 0] (= n_i) to obtain p_i
@@ -125,9 +125,9 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         self.coefficients["ivector"] = self.P_ngtdm[:, :, 2]
 
         # Ngp = number of graylevels, for which p_i > 0
-        self.coefficients["Ngp"] = numpy.sum(self.P_ngtdm[:, :, 0] > 0, 1)
+        self.coefficients["Ngp"] = np.sum(self.P_ngtdm[:, :, 0] > 0, 1)
 
-        p_zero = numpy.where(self.coefficients["p_i"] == 0)
+        p_zero = np.where(self.coefficients["p_i"] == 0)
         self.coefficients["p_zero"] = p_zero
 
     def getCoarsenessFeatureValue(self):
@@ -144,7 +144,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         """
         p_i = self.coefficients["p_i"]
         s_i = self.coefficients["s_i"]
-        sum_coarse = numpy.sum(p_i * s_i, 1)
+        sum_coarse = np.sum(p_i * s_i, 1)
 
         sum_coarse[sum_coarse != 0] = 1 / sum_coarse[sum_coarse != 0]
         sum_coarse[sum_coarse == 0] = 1e6
@@ -174,13 +174,13 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
 
         # Terms where p_i = 0 or p_j = 0 will calculate as 0, and therefore do not affect the sum
         contrast = (
-            numpy.sum(
+            np.sum(
                 p_i[:, :, None]
                 * p_i[:, None, :]
                 * (i[:, :, None] - i[:, None, :]) ** 2,
                 (1, 2),
             )
-            * numpy.sum(s_i, 1)
+            * np.sum(s_i, 1)
             / Nvp
         )
 
@@ -207,15 +207,15 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         p_zero = self.coefficients["p_zero"]  # shape (2, z)
 
         i_pi = i * p_i
-        absdiff = numpy.abs(i_pi[:, :, None] - i_pi[:, None, :])
+        absdiff = np.abs(i_pi[:, :, None] - i_pi[:, None, :])
 
         # Remove terms from the sum where p_i = 0 or p_j = 0
         absdiff[p_zero[0], :, p_zero[1]] = 0
         absdiff[p_zero[0], p_zero[1], :] = 0
 
-        absdiff = numpy.sum(absdiff, (1, 2))
+        absdiff = np.sum(absdiff, (1, 2))
 
-        busyness = numpy.sum(p_i * s_i, 1)
+        busyness = np.sum(p_i * s_i, 1)
         busyness[absdiff != 0] = busyness[absdiff != 0] / absdiff[absdiff != 0]
         busyness[absdiff == 0] = 0
         return busyness
@@ -249,9 +249,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         )
 
         return (
-            numpy.sum(
-                numpy.abs(i[:, :, None] - i[:, None, :]) * numerator / divisor, (1, 2)
-            )
+            np.sum(np.abs(i[:, :, None] - i[:, None, :]) * numerator / divisor, (1, 2))
             / Nvp
         )
 
@@ -272,7 +270,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         i = self.coefficients["ivector"]  # shape (Nv, Ngp)
         p_zero = self.coefficients["p_zero"]  # shape (2, z)
 
-        sum_s_i = numpy.sum(s_i, 1)
+        sum_s_i = np.sum(s_i, 1)
 
         strength = (p_i[:, :, None] + p_i[:, None, :]) * (
             i[:, :, None] - i[:, None, :]
@@ -282,7 +280,7 @@ class RadiomicsNGTDM(base.RadiomicsFeaturesBase):
         strength[p_zero[0], :, p_zero[1]] = 0
         strength[p_zero[0], p_zero[1], :] = 0
 
-        strength = numpy.sum(strength, (1, 2))
+        strength = np.sum(strength, (1, 2))
         strength[sum_s_i != 0] /= sum_s_i[sum_s_i != 0]
         strength[sum_s_i == 0] = 0
 

@@ -11,7 +11,7 @@ import sys
 import tempfile
 import urllib.request
 
-import numpy
+import numpy as np
 
 from . import imageoperations
 

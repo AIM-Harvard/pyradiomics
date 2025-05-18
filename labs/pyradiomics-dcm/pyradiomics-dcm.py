@@ -526,7 +526,7 @@ Support for DICOM Radiotherapy Structure Sets for defining region of interest ma
             scriptlogger.debug("Initializing extractor")
             extractionSettings = {
                 "geometryTolerance": float(args.geometryTolerance),
-                "correctMask": True if args.correctMask else False,
+                "correctMask": bool(args.correctMask),
             }
             params = []
             if args.parameters is not None:

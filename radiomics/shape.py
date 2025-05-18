@@ -46,9 +46,8 @@ class RadiomicsShape(base.RadiomicsFeaturesBase):
         super().__init__(inputImage, inputMask, **kwargs)
 
     def _initVoxelBasedCalculation(self):
-        raise NotImplementedError(
-            "Shape features are not available in voxel-based mode"
-        )
+        msg = "Shape features are not available in voxel-based mode"
+        raise NotImplementedError(msg)
 
     def _initSegmentBasedCalculation(self):
 

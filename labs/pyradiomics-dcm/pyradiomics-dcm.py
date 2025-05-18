@@ -114,7 +114,8 @@ class SEGMetadataAccessor(DICOMMetadataAccessor):
         DICOMMetadataAccessor.__init__(self, segFileName)
 
         if self.dcm.SOPClassUID != "1.2.840.10008.5.1.4.1.1.66.4":
-            raise ValueError("SEGMetadataAccessor: DICOM object is not Segmentation!")
+            msg = "SEGMetadataAccessor: DICOM object is not Segmentation!"
+            raise ValueError(msg)
 
     def getSegmentSegmentationTypeCode(self, segmentNumber):
         try:

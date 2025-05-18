@@ -198,7 +198,8 @@ def getTestCase(testCase, dataDirectory=None):
         _, headers = urllib.request.urlretrieve(url, target)
 
         if headers.get("status", "") == "404 Not Found":
-            raise ValueError("Unable to download image file at %s!", url)
+            msg = f"Unable to download image file at {url}!"
+            raise ValueError(msg)
 
         logger.info("File %s downloaded", fname)
         return target
@@ -327,10 +328,11 @@ except ImportError as e:
             "Apparently running from root, but unable to load C extensions... "
             'Did you run "python setup.py build_ext --inplace"?'
         )
-        raise Exception(
+        msg = (
             "Apparently running from root, but unable to load C extensions... "
             'Did you run "python setup.py build_ext --inplace"?'
         )
+        raise Exception(msg)
     else:
         logger.critical("Error loading C extensions", exc_info=True)
         raise e

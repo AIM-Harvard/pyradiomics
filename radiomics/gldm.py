@@ -197,11 +197,12 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
           logging of a DeprecationWarning (does not interrupt extraction of other features), no value is calculated for
           this feature**
         """
-        raise DeprecationWarning(
+        msg = (
             "GLDM - Gray Level Non-Uniformity Normalized is mathematically equal to First Order - "
             "Uniformity, see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more"
             "details"
         )
+        raise DeprecationWarning(msg)
 
     def getDependenceNonUniformityFeatureValue(self):
         r"""
@@ -300,10 +301,11 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
           result in the logging of a DeprecationWarning (does not interrupt extraction of other features), no value is
           calculated for this features**
         """
-        raise DeprecationWarning(
+        msg = (
             "GLDM - Dependence Percentage always computes 1, "
             "see http://pyradiomics.readthedocs.io/en/latest/removedfeatures.html for more details"
         )
+        raise DeprecationWarning(msg)
 
     def getLowGrayLevelEmphasisFeatureValue(self):
         r"""

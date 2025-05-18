@@ -10,7 +10,8 @@ imageTypes = getImageTypes()
 
 def checkWavelet(value, rule_obj, path):
     if not isinstance(value, str):
-        raise TypeError("Wavelet not expected type (str)")
+        msg = "Wavelet not expected type (str)"
+        raise TypeError(msg)
     wavelist = pywt.wavelist()
     if value not in wavelist:
         raise ValueError(f'Wavelet "{value}" not available in pyWavelets {wavelist}')
@@ -43,7 +44,8 @@ def checkInterpolator(value, rule_obj, path):
                 f"Intepolator value {int(value)}, must be in range of [1-10]"
             )
     else:
-        raise TypeError("Interpolator not expected type (str or int)")
+        msg = "Interpolator not expected type (str or int)"
+        raise TypeError(msg)
     return True
 
 
@@ -57,14 +59,16 @@ def checkWeighting(value, rule_obj, path):
                 f'WeightingNorm value "{value}" not valid, possible values: {enum}'
             )
     else:
-        raise TypeError("WeightingNorm not expected type (str or None)")
+        msg = "WeightingNorm not expected type (str or None)"
+        raise TypeError(msg)
     return True
 
 
 def checkFeatureClass(value, rule_obj, path):
     global featureClasses
     if value is None:
-        raise TypeError("featureClass dictionary cannot be None value")
+        msg = "featureClass dictionary cannot be None value"
+        raise TypeError(msg)
     for className, features in value.items():
         if className not in featureClasses:
             msg = f"Feature Class {className} is not recognized. Available feature classes are {list(featureClasses.keys())}"
@@ -87,7 +91,8 @@ def checkFeatureClass(value, rule_obj, path):
 def checkImageType(value, rule_obj, path):
     global imageTypes
     if value is None:
-        raise TypeError("imageType dictionary cannot be None value")
+        msg = "imageType dictionary cannot be None value"
+        raise TypeError(msg)
 
     for im_type in value:
         if im_type not in imageTypes:

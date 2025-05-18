@@ -51,9 +51,8 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
         super().__init__(inputImage, inputMask, **kwargs)
 
     def _initVoxelBasedCalculation(self):
-        raise NotImplementedError(
-            "Shape features are not available in pixel-based mode"
-        )
+        msg = "Shape features are not available in pixel-based mode"
+        raise NotImplementedError(msg)
 
     def _initSegmentBasedCalculation(self):
         self.maskArray = (
@@ -63,9 +62,8 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
         Nd = self.inputMask.GetDimension()
         if Nd == 3:
             if not self.settings.get("force2D", False):
-                raise ValueError(
-                    "Shape2D is can only be calculated when input is 2D or 3D with `force2D=True`"
-                )
+                msg = "Shape2D is can only be calculated when input is 2D or 3D with `force2D=True`"
+                raise ValueError(msg)
 
             force2DDimension = self.settings.get("force2Ddimension", 0)
             axes = [0, 1, 2]
@@ -74,18 +72,16 @@ class RadiomicsShape2D(base.RadiomicsFeaturesBase):
             self.pixelSpacing = np.array(self.inputImage.GetSpacing()[::-1])[(axes,)]
 
             if self.maskArray.shape[force2DDimension] > 1:
-                raise ValueError(
-                    "Size of the mask in dimension %i is more than 1, cannot compute 2D shape"
-                )
+                msg = "Size of the mask in dimension %i is more than 1, cannot compute 2D shape"
+                raise ValueError(msg)
 
             # Drop the 2D axis, ensuring the input is truly 2D
             self.maskArray = np.squeeze(self.maskArray, axis=force2DDimension)
         elif Nd == 2:
             self.pixelSpacing = np.array(self.inputImage.GetSpacing()[::-1])
         else:
-            raise ValueError(
-                "Shape2D is can only be calculated when input is 2D or 3D with `force2D=True`"
-            )
+            msg = "Shape2D is can only be calculated when input is 2D or 3D with `force2D=True`"
+            raise ValueError(msg)
 
         # Pad maskArray to prevent index-out-of-range errors
         self.logger.debug("Padding the mask with 0s")

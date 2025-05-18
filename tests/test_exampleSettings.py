@@ -38,8 +38,6 @@ class TestExampleSettings:
                 yield os.path.join(dataDir, fname)
 
     def test_scenarios(self, settingsFile):
-        global schemaFile, schemaFuncs
-
         assert os.path.isfile(schemaFile)
         assert os.path.isfile(schemaFuncs)
         c = pykwalify.core.Core(

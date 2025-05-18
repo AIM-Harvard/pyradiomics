@@ -48,7 +48,6 @@ class RadiomicsFeatureExtractor:
     """
 
     def __init__(self, *args, **kwargs):
-        global logger
 
         self.settings = {}
         self.enabledImagetypes = {}
@@ -93,7 +92,7 @@ class RadiomicsFeatureExtractor:
         self._setTolerance()
 
     def _setTolerance(self):
-        global geometryTolerance, logger
+        global geometryTolerance
         geometryTolerance = self.settings.get("geometryTolerance")
         if geometryTolerance is not None:
             logger.debug("Setting SimpleITK tolerance to %s", geometryTolerance)
@@ -164,7 +163,6 @@ class RadiomicsFeatureExtractor:
         """
         Validates and applies a parameter dictionary. See :py:func:`loadParams` and :py:func:`loadJSONParams` for more info.
         """
-        global logger
 
         # Ensure pykwalify.core has a log handler (needed when parameter validation fails)
         if (
@@ -251,7 +249,6 @@ class RadiomicsFeatureExtractor:
             In case of segment-based extraction, value type for features is float, if voxel-based, type is SimpleITK.Image.
             Type of diagnostic features differs, but can always be represented as a string.
         """
-        global geometryTolerance, logger
         _settings = self.settings.copy()
 
         tolerance = _settings.get("geometryTolerance")
@@ -398,7 +395,6 @@ class RadiomicsFeatureExtractor:
         :param kwargs: Dictionary containing the settings to use for this particular image type.
         :return: 2 SimpleITK.Image objects representing the loaded image and mask, respectively.
         """
-        global logger
 
         normalize = kwargs.get("normalize", False)
         interpolator = kwargs.get("interpolator")
@@ -473,7 +469,6 @@ class RadiomicsFeatureExtractor:
         :return: collections.OrderedDict containing the calculated shape features. If no features are calculated, an empty
           OrderedDict will be returned.
         """
-        global logger
         featureVector = collections.OrderedDict()
 
         enabledFeatures = self.enabledFeatures
@@ -557,7 +552,6 @@ class RadiomicsFeatureExtractor:
           shape descriptors are independent of gray level and therefore calculated separately (handled in `execute`). In
           this function, no shape features are calculated.
         """
-        global logger
         featureVector = collections.OrderedDict()
         featureClasses = getFeatureClasses()
 
@@ -588,7 +582,6 @@ class RadiomicsFeatureExtractor:
         """
         Enable all possible image types without any custom settings.
         """
-        global logger
 
         logger.debug("Enabling all image types")
         for imageType in getImageTypes():
@@ -599,8 +592,6 @@ class RadiomicsFeatureExtractor:
         """
         Disable all image types.
         """
-        global logger
-
         logger.debug("Disabling all image types")
         self.enabledImagetypes = {}
 
@@ -643,8 +634,6 @@ class RadiomicsFeatureExtractor:
         :py:func:`~radiomics.imageoperations.getLBP3DImage`,
         respectively).
         """
-        global logger
-
         if imageType not in getImageTypes():
             logger.warning("Image type %s is not recognized", imageType)
             return
@@ -685,8 +674,6 @@ class RadiomicsFeatureExtractor:
         :param enabledImagetypes: dictionary, key is imagetype (original, wavelet or log) and value is custom settings
           (dictionary)
         """
-        global logger
-
         logger.debug("Updating enabled images types with %s", enabledImagetypes)
         self.enabledImagetypes.update(enabledImagetypes)
         logger.debug("Enabled images types: %s", self.enabledImagetypes)
@@ -702,8 +689,6 @@ class RadiomicsFeatureExtractor:
           or in the parameter file (by specifying the feature by name, not when enabling all features).
           However, in most cases this will still result only in a deprecation warning.
         """
-        global logger
-
         logger.debug("Enabling all features in all feature classes")
         for featureClassName in self.featureClassNames:
             self.enabledFeatures[featureClassName] = []
@@ -713,8 +698,6 @@ class RadiomicsFeatureExtractor:
         """
         Disable all classes.
         """
-        global logger
-
         logger.debug("Disabling all feature classes")
         self.enabledFeatures = {}
 
@@ -729,8 +712,6 @@ class RadiomicsFeatureExtractor:
           or in the parameter file (by specifying the feature by name, not when enabling all features).
           However, in most cases this will still result only in a deprecation warning.
         """
-        global logger
-
         if featureClass not in self.featureClassNames:
             logger.warning("Feature class %s is not recognized", featureClass)
             return
@@ -752,8 +733,6 @@ class RadiomicsFeatureExtractor:
         not yet present in enabledFeatures.keys are added.
         To disable the entire class, use :py:func:`disableAllFeatures` or :py:func:`enableFeatureClassByName` instead.
         """
-        global logger
-
         logger.debug("Updating enabled features with %s", enabledFeatures)
         self.enabledFeatures.update(enabledFeatures)
         logger.debug("Enabled features: %s", self.enabledFeatures)

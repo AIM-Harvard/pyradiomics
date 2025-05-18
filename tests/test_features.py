@@ -22,8 +22,6 @@ class TestFeatures:
 
     @staticmethod
     def generate_scenarios():
-        global tests, featureClasses
-
         for test in tests:
             for featureClassName in featureClasses:
                 # Get all feature names for which there is a baseline with current test case
@@ -60,7 +58,7 @@ class TestFeatures:
 
     def test_scenario(self, testCase, featureName):
         print("")
-        global testUtils, featureClass, featureClasses
+        global featureClass
 
         featureName = featureName.split("_")
 

@@ -23,7 +23,6 @@ class TestWavelet:
 
     @staticmethod
     def generate_scenarios():
-        global logger, testCases, baselineFile
 
         assert os.path.isfile(baselineFile)
 
@@ -66,8 +65,6 @@ class TestWavelet:
                 ), image, mask, baselineDict[level]
 
     def test_scenario(self, testCase, image, mask, baseline):
-        global logger, testUtils, featureClasses
-
         logger.debug("test_scenario: testCase = %s,", testCase)
 
         im_arr = sitk.GetArrayFromImage(image)

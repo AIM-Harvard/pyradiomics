@@ -16,8 +16,6 @@ _parallel_extraction_configured = False
 
 
 def extractSegment(case_idx, case, extractor, **kwargs):
-    global caseLogger
-
     out_dir = kwargs.get("out_dir")
 
     if out_dir is None:
@@ -51,8 +49,6 @@ def extractSegment(case_idx, case, extractor, **kwargs):
 
 
 def _extractFeatures(case_idx, case, extractor):
-    global caseLogger
-
     # Instantiate the output
     feature_vector = OrderedDict(case)
 

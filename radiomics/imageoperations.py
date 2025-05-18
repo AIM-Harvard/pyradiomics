@@ -32,7 +32,6 @@ def getMask(mask, **kwargs):
       Otherwise label_channel ``0`` is assumed.
     :return: SimpleITK.Image with pixel type UInt32 representing the mask volume
     """
-    global logger
     label = kwargs.get("label", 1)
     label_channel = kwargs.get("label_channel", 0)
     if "vector" in mask.GetPixelIDTypeAsString().lower():
@@ -116,7 +115,6 @@ def getBinEdges(parameterValues, **kwargs):
   - Leijenaar RTH, Nalbantov G, Carvalho S, et al. The effect of SUV discretization in quantitative FDG-PET Radiomics:
     the need for standardized methodology in tumor texture analysis. Sci Rep. 2015;5(August):11075.
   """
-    global logger
     binWidth = kwargs.get("binWidth", 25)
     binCount = kwargs.get("binCount")
 
@@ -162,7 +160,6 @@ def binImage(parameterMatrix, parameterMatrixCoordinates=None, **kwargs):
     using :py:func:`getBinEdges`. Only voxels defined by parameterMatrixCoordinates (defining the segmentation) are used
     for calculation of histogram and subsequently discretized. Voxels outside segmentation are left unchanged.
     """
-    global logger
     logger.debug("Discretizing gray levels inside ROI")
 
     discretizedParameterMatrix = np.zeros(parameterMatrix.shape, dtype="int")
@@ -232,8 +229,6 @@ def checkMask(imageNode, maskNode, **kwargs):
           and mask before features can be extracted. This can be achieved by enabling mask correction using the
           ``correctMask`` parameter.
     """
-    global logger
-
     correctedMask = None
 
     label = int(kwargs.get("label", 1))
@@ -328,7 +323,6 @@ def _correctMask(imageNode, maskNode, **kwargs):
 
     If the ROI is valid, the resampled mask is returned, otherwise ``None`` is returned.
     """
-    global logger
     logger.debug("Resampling mask to image geometry")
 
     _checkROI(imageNode, maskNode, **kwargs)  # Raises a value error if ROI is invalid
@@ -354,7 +348,6 @@ def _checkROI(imageNode, maskNode, **kwargs):
     If the ROI is valid, the bounding box (lower bounds, followed by size in all dimensions (X, Y, Z ordered)) is
     returned. Otherwise, a ValueError is raised.
     """
-    global logger
     label = int(kwargs.get("label", 1))
 
     logger.debug("Checking ROI validity")
@@ -419,7 +412,6 @@ def cropToTumorMask(imageNode, maskNode, boundingBox, **kwargs):
     :return: Cropped image and mask (SimpleITK image instances).
 
     """
-    global logger
     padDistance = kwargs.get("padDistance", 0)
 
     size = np.array(maskNode.GetSize())
@@ -484,7 +476,6 @@ def resampleImage(imageNode, maskNode, **kwargs):
       these will be assigned a value of 0. It is therefore recommended, but not enforced, to use an input mask which has
       the same or a smaller physical space than the image.
     """
-    global logger
     resampledPixelSpacing = kwargs["resampledPixelSpacing"]
     interpolator = kwargs.get("interpolator", sitk.sitkBSpline)
     padDistance = kwargs.get("padDistance", 5)
@@ -636,7 +627,6 @@ def normalizeImage(image, **kwargs):
     Here, :math:`n>0` and defined by ``outliers``. This, in turn, is controlled by the ``removeOutliers`` parameter.
     Removal of outliers is done after the values of the image are normalized, but before ``scale`` is applied.
     """
-    global logger
     scale = kwargs.get("normalizeScale", 1)
     outliers = kwargs.get("removeOutliers")
 
@@ -678,7 +668,6 @@ def resegmentMask(imageNode, maskNode, **kwargs):
        all voxels that have a value that differs 3 or less standard deviations from the mean).
 
     """
-    global logger
     resegmentRange = kwargs["resegmentRange"]
     resegmentMode = kwargs.get("resegmentMode", "absolute")
     label = kwargs.get("label", 1)
@@ -750,7 +739,6 @@ def getOriginalImage(inputImage, inputMask, **kwargs):
 
     :return: Yields original image, 'original' and ``kwargs``
     """
-    global logger
     logger.debug("Yielding original image")
     yield inputImage, "original", kwargs
 
@@ -803,7 +791,6 @@ def getLoGImage(inputImage, inputMask, **kwargs):
     :return: Yields log filtered image for each specified sigma, corresponding image type name and ``kwargs`` (customized
       settings).
     """
-    global logger
 
     logger.debug("Generating LoG images")
 
@@ -865,8 +852,6 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
     :return: Yields each wavelet decomposition and final approximation, corresponding imaget type name and ``kwargs``
       (customized settings).
     """
-    global logger
-
     logger.debug("Generating Wavelet images")
 
     Nd = inputImage.GetDimension()
@@ -982,8 +967,6 @@ def getSquareImage(inputImage, inputMask, **kwargs):
 
     :return: Yields square filtered image, 'square' and ``kwargs`` (customized settings).
     """
-    global logger
-
     im = sitk.GetArrayFromImage(inputImage)
     im = im.astype("float64")
     coeff = 1 / np.sqrt(np.max(np.abs(im)))
@@ -1010,8 +993,6 @@ def getSquareRootImage(inputImage, inputMask, **kwargs):
 
   :return: Yields square root filtered image, 'squareroot' and ``kwargs`` (customized settings).
   """
-    global logger
-
     im = sitk.GetArrayFromImage(inputImage)
     im = im.astype("float64")
     coeff = np.max(np.abs(im))
@@ -1039,8 +1020,6 @@ def getLogarithmImage(inputImage, inputMask, **kwargs):
 
   :return: Yields logarithm filtered image, 'logarithm' and ``kwargs`` (customized settings)
   """
-    global logger
-
     im = sitk.GetArrayFromImage(inputImage)
     im = im.astype("float64")
     im_max = np.max(np.abs(im))
@@ -1066,8 +1045,6 @@ def getExponentialImage(inputImage, inputMask, **kwargs):
 
     :return: Yields exponential filtered image, 'exponential' and ``kwargs`` (customized settings)
     """
-    global logger
-
     im = sitk.GetArrayFromImage(inputImage)
     im = im.astype("float64")
     im_max = np.max(np.abs(im))
@@ -1128,7 +1105,6 @@ def getLBP2DImage(inputImage, inputMask, **kwargs):
     - T. Ojala, M. Pietikainen, and D. Harwood (1996), "A Comparative Study of Texture Measures with Classification Based
       on Feature Distributions", Pattern Recognition, vol. 29, pp. 51-59.
     """
-    global logger
     try:
         from skimage.feature import local_binary_pattern
     except ImportError:
@@ -1202,7 +1178,6 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
       description." In: Park JI., Kim J. (eds) Computer Vision - ACCV 2012 Workshops. ACCV 2012. Lecture Notes in Computer
       Science, vol 7728. Springer, Berlin, Heidelberg. doi:10.1007/978-3-642-37410-4_3
     """
-    global logger
     Nd = inputImage.GetDimension()
     if Nd != 3:
         logger.warning(

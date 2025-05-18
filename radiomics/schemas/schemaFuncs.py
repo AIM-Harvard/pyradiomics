@@ -65,7 +65,6 @@ def checkWeighting(value, rule_obj, path):
 
 
 def checkFeatureClass(value, rule_obj, path):
-    global featureClasses
     if value is None:
         msg = "featureClass dictionary cannot be None value"
         raise TypeError(msg)
@@ -89,7 +88,6 @@ def checkFeatureClass(value, rule_obj, path):
 
 
 def checkImageType(value, rule_obj, path):
-    global imageTypes
     if value is None:
         msg = "imageType dictionary cannot be None value"
         raise TypeError(msg)

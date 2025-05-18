@@ -23,8 +23,6 @@ class TestMatrices:
 
     @staticmethod
     def generate_scenarios():
-        global featureClasses
-
         for testCase in testCases:
             if testCase.startswith("test"):
                 continue
@@ -35,8 +33,6 @@ class TestMatrices:
                     yield testCase, className
 
     def test_scenario(self, testCase, featureClassName):
-        global testUtils, featureClasses
-
         logging.debug(
             "test_scenario: testCase = %s, featureClassName = %s",
             testCase,

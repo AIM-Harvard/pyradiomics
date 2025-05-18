@@ -18,7 +18,6 @@ def tqdmProgressbar():
 
     N.B. This function will only work if the 'click' package is installed (not included in the PyRadiomics requirements)
     """
-    global extractor
 
     radiomics.setVerbosity(
         logging.INFO
@@ -41,7 +40,6 @@ def clickProgressbar():
 
     N.B. This function will only work if the 'click' package is installed (not included in the PyRadiomics requirements)
     """
-    global extractor
 
     # Enable the GLCM class to show the progress bar
     extractor.enableFeatureClassByName("glcm")

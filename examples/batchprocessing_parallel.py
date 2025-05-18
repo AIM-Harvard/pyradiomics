@@ -68,9 +68,7 @@ class info_filter(logging.Filter):
     def filter(self, record):
         if record.levelno >= self.level:
             return True
-        if record.name == self.name and record.levelno >= logging.INFO:
-            return True
-        return False
+        return bool(record.name == self.name and record.levelno >= logging.INFO)
 
 
 # Adding the filter to the first handler of the radiomics logger limits the info messages on the output to just those

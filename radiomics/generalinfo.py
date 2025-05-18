@@ -50,7 +50,7 @@ class GeneralInfo:
             pywt.__version__
         )
         self.generalInfo[self.generalInfo_prefix + "Versions_Python"] = (
-            "%i.%i.%i" % sys.version_info[:3]
+            f"{'.'.join(sys.version_info[:3])}"
         )
 
     def addImageElements(self, image, prefix="original"):
@@ -79,7 +79,7 @@ class GeneralInfo:
             )
             self.generalInfo[
                 self.generalInfo_prefix + "Image-original_Dimensionality"
-            ] = ("%iD" % image.GetDimension())
+            ] = f"{int(image.GetDimension())}D"
 
         self.generalInfo[self.generalInfo_prefix + "Image-" + prefix + "_Spacing"] = (
             image.GetSpacing()

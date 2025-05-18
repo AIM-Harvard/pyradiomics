@@ -500,7 +500,7 @@ class PyRadiomicsCommandLine:
                 )  # if skip_nans is enabled, nan-values are written as empty strings
             elif self.args.format == "txt":
                 for k, v in case.items():
-                    self.args.out.write("Case-%d_%s: %s\n" % (case_idx, k, v))
+                    self.args.out.write(f"Case-{int(case_idx)}_{k}: {v}\n")
 
         # JSON dump of cases is handled outside of the loop, otherwise the resultant document would be invalid.
         if self.args.format == "json":

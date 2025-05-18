@@ -49,7 +49,7 @@ def extractVoxel(case_idx, case, extractor, **kwargs):
 
         for k in result:
             if isinstance(result[k], sitk.Image):
-                target = os.path.join(out_dir, "Case-%i_%s.nrrd" % (case_idx, k))
+                target = os.path.join(out_dir, f"Case-{int(case_idx)}_{k}.nrrd")
                 sitk.WriteImage(result[k], target, True)
                 if unix_path and os.path.sep != "/":
                     target = target.replace(os.path.sep, "/")

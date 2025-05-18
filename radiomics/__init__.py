@@ -191,8 +191,7 @@ def getTestCase(testCase, dataDirectory=None):
 
         # Download the test case files (image and label)
         url = (
-            r"https://github.com/Radiomics/pyradiomics/releases/download/v1.0/%s"
-            % fname
+            rf"https://github.com/Radiomics/pyradiomics/releases/download/v1.0/{fname}"
         )
 
         logger.debug("Retrieving file at %s", url)

@@ -149,8 +149,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nz = self.coefficients["Nz"]  # Nz = Np, see class docstring
 
-        sde = numpy.sum(pd / (jvector[None, :] ** 2), 1) / Nz
-        return sde
+        return numpy.sum(pd / (jvector[None, :] ** 2), 1) / Nz
 
     def getLargeDependenceEmphasisFeatureValue(self):
         r"""
@@ -166,8 +165,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nz = self.coefficients["Nz"]
 
-        lre = numpy.sum(pd * (jvector[None, :] ** 2), 1) / Nz
-        return lre
+        return numpy.sum(pd * (jvector[None, :] ** 2), 1) / Nz
 
     def getGrayLevelNonUniformityFeatureValue(self):
         r"""
@@ -182,8 +180,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         pg = self.coefficients["pg"]
         Nz = self.coefficients["Nz"]
 
-        gln = numpy.sum(pg**2, 1) / Nz
-        return gln
+        return numpy.sum(pg**2, 1) / Nz
 
     @deprecated
     def getGrayLevelNonUniformityNormalizedFeatureValue(self):
@@ -219,8 +216,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         pd = self.coefficients["pd"]
         Nz = self.coefficients["Nz"]
 
-        dn = numpy.sum(pd**2, 1) / Nz
-        return dn
+        return numpy.sum(pd**2, 1) / Nz
 
     def getDependenceNonUniformityNormalizedFeatureValue(self):
         r"""
@@ -235,8 +231,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         pd = self.coefficients["pd"]
         Nz = self.coefficients["Nz"]
 
-        dnn = numpy.sum(pd**2, 1) / Nz**2
-        return dnn
+        return numpy.sum(pd**2, 1) / Nz**2
 
     def getGrayLevelVarianceFeatureValue(self):
         r"""
@@ -255,8 +250,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         )  # divide by Nz to get the normalized matrix
 
         u_i = numpy.sum(pg * ivector[None, :], 1, keepdims=True)
-        glv = numpy.sum(pg * (ivector[None, :] - u_i) ** 2, 1)
-        return glv
+        return numpy.sum(pg * (ivector[None, :] - u_i) ** 2, 1)
 
     def getDependenceVarianceFeatureValue(self):
         r"""
@@ -275,8 +269,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         )  # divide by Nz to get the normalized matrix
 
         u_j = numpy.sum(pd * jvector[None, :], 1, keepdims=True)
-        dv = numpy.sum(pd * (jvector[None, :] - u_j) ** 2, 1)
-        return dv
+        return numpy.sum(pd * (jvector[None, :] - u_j) ** 2, 1)
 
     def getDependenceEntropyFeatureValue(self):
         r"""
@@ -326,8 +319,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         ivector = self.coefficients["ivector"]
         Nz = self.coefficients["Nz"]
 
-        lgle = numpy.sum(pg / (ivector[None, :] ** 2), 1) / Nz
-        return lgle
+        return numpy.sum(pg / (ivector[None, :] ** 2), 1) / Nz
 
     def getHighGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -343,8 +335,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         ivector = self.coefficients["ivector"]
         Nz = self.coefficients["Nz"]
 
-        hgle = numpy.sum(pg * (ivector[None, :] ** 2), 1) / Nz
-        return hgle
+        return numpy.sum(pg * (ivector[None, :] ** 2), 1) / Nz
 
     def getSmallDependenceLowGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -359,7 +350,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nz = self.coefficients["Nz"]
 
-        sdlgle = (
+        return (
             numpy.sum(
                 self.P_gldm
                 / ((ivector[None, :, None] ** 2) * (jvector[None, None, :] ** 2)),
@@ -367,7 +358,6 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
             )
             / Nz
         )
-        return sdlgle
 
     def getSmallDependenceHighGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -382,7 +372,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nz = self.coefficients["Nz"]
 
-        sdhgle = (
+        return (
             numpy.sum(
                 self.P_gldm
                 * (ivector[None, :, None] ** 2)
@@ -391,7 +381,6 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
             )
             / Nz
         )
-        return sdhgle
 
     def getLargeDependenceLowGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -406,7 +395,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nz = self.coefficients["Nz"]
 
-        ldlgle = (
+        return (
             numpy.sum(
                 self.P_gldm
                 * (jvector[None, None, :] ** 2)
@@ -415,7 +404,6 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
             )
             / Nz
         )
-        return ldlgle
 
     def getLargeDependenceHighGrayLevelEmphasisFeatureValue(self):
         r"""
@@ -430,7 +418,7 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
         jvector = self.coefficients["jvector"]
         Nz = self.coefficients["Nz"]
 
-        ldhgle = (
+        return (
             numpy.sum(
                 self.P_gldm
                 * ((jvector[None, None, :] ** 2) * (ivector[None, :, None] ** 2)),
@@ -438,4 +426,3 @@ class RadiomicsGLDM(base.RadiomicsFeaturesBase):
             )
             / Nz
         )
-        return ldhgle

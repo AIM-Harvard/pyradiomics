@@ -917,7 +917,7 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
     if not isinstance(wavelet, pywt.Wavelet):
         wavelet = pywt.Wavelet(wavelet)
 
-    for i in range(
+    for _i in range(
         start_level
     ):  # if start_level = 0 (default) this for loop never gets executed
         # compute all decompositions and saves them in "dec" dict
@@ -926,7 +926,7 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
         data = dec["a" * len(axes)].copy()
 
     ret = []  # initialize empty list
-    for i in range(start_level, start_level + level):
+    for _i in range(start_level, start_level + level):
         # compute the n-dimensional stationary wavelet transform
         dec = pywt.swtn(data, wavelet, level=1, start_level=0, axes=axes)[0]
         # Copy the approximation into data (approximation in output / input for next levels)

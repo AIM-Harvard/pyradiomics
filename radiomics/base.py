@@ -245,7 +245,7 @@ class RadiomicsFeaturesBase:
 
     def _calculateSegment(self):
         # Get the feature values using the current segment.
-        for success, featureName, featureValue in self._calculateFeatures():
+        for _success, featureName, featureValue in self._calculateFeatures():
             # Always store the result. In case of an error, featureValue will be NaN
             self.featureValues[featureName] = np.squeeze(featureValue)
 

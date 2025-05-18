@@ -13,8 +13,8 @@ import tempfile
 from decimal import Decimal
 from subprocess import call
 
-import numpy
-import pandas
+import numpy as np
+import pandas as pd
 import pydicom
 
 from radiomics import featureextractor
@@ -187,7 +187,7 @@ class TID1500Metadata:
 
     @staticmethod
     def readDictionary(featuresDictFile):
-        return pandas.read_csv(featuresDictFile, sep="\t", low_memory=False)
+        return pd.read_csv(featuresDictFile, sep="\t", low_memory=False)
 
     @staticmethod
     def makeHash(text, length=6):
@@ -345,7 +345,7 @@ class TID1500Metadata:
             ).getDict()
 
         try:
-            if numpy.isnan(value):
+            if np.isnan(value):
                 scriptlogger.info("Skipping NaN value for feature %s", quantityCode)
                 return
         except Exception as e:

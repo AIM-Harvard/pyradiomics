@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 
-import numpy
+import numpy as np
 from testUtils import RadiomicsTestUtils
 
 from radiomics import getFeatureClasses, testCases
@@ -50,7 +50,7 @@ class TestMatrices:
         )
         assert os.path.isfile(baselineFile)
 
-        baselineMatrix = numpy.load(baselineFile)
+        baselineMatrix = np.load(baselineFile)
 
         testUtils.setFeatureClassAndTestCase(featureClassName, testCase)
 
@@ -66,4 +66,4 @@ class TestMatrices:
         assert cMat is not None
 
         # Check if the calculated arrays match
-        assert numpy.max(numpy.abs(baselineMatrix - cMat)) < 1e-3
+        assert np.max(np.abs(baselineMatrix - cMat)) < 1e-3

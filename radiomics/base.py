@@ -4,7 +4,7 @@ import inspect
 import logging
 import traceback
 
-import numpy
+import numpy as np
 import SimpleITK as sitk
 
 from radiomics import getProgressReporter, imageoperations
@@ -100,14 +100,14 @@ class RadiomicsFeaturesBase:
         maskArray = (
             sitk.GetArrayFromImage(self.inputMask) == self.label
         )  # boolean array
-        self.labelledVoxelCoordinates = numpy.array(numpy.where(maskArray))
+        self.labelledVoxelCoordinates = np.array(np.where(maskArray))
 
         # Set up the mask array for the gray value discretization
         if self.masked:
             self.maskArray = maskArray
         else:
             # This will cause the discretization to use the entire image
-            self.maskArray = numpy.ones(self.imageArray.shape, dtype="bool")
+            self.maskArray = np.ones(self.imageArray.shape, dtype="bool")
 
     def _initCalculation(self, voxelCoordinates=None):
         """
@@ -117,9 +117,9 @@ class RadiomicsFeaturesBase:
 
     def _applyBinning(self, matrix):
         matrix, _ = imageoperations.binImage(matrix, self.maskArray, **self.settings)
-        self.coefficients["grayLevels"] = numpy.unique(matrix[self.maskArray])
+        self.coefficients["grayLevels"] = np.unique(matrix[self.maskArray])
         self.coefficients["Ng"] = int(
-            numpy.max(self.coefficients["grayLevels"])
+            np.max(self.coefficients["grayLevels"])
         )  # max gray level in the ROI
         return matrix
 
@@ -203,7 +203,7 @@ class RadiomicsFeaturesBase:
         # Initialize the output with empty numpy arrays
         for feature, enabled in self.enabledFeatures.items():
             if enabled:
-                self.featureValues[feature] = numpy.full(
+                self.featureValues[feature] = np.full(
                     list(self.inputImage.GetSize())[::-1], initValue, dtype="float"
                 )
 
@@ -212,7 +212,7 @@ class RadiomicsFeaturesBase:
         voxel_batch_idx = 0
         if voxelBatch < 0:
             voxelBatch = voxel_count
-        n_batches = numpy.ceil(float(voxel_count) / voxelBatch)
+        n_batches = np.ceil(float(voxel_count) / voxelBatch)
         with self.progressReporter(total=n_batches, desc="batch") as pbar:
             while voxel_batch_idx < voxel_count:
                 self.logger.debug(
@@ -247,7 +247,7 @@ class RadiomicsFeaturesBase:
         # Get the feature values using the current segment.
         for success, featureName, featureValue in self._calculateFeatures():
             # Always store the result. In case of an error, featureValue will be NaN
-            self.featureValues[featureName] = numpy.squeeze(featureValue)
+            self.featureValues[featureName] = np.squeeze(featureValue)
 
     def _calculateFeatures(self, voxelCoordinates=None):
         # Initialize the calculation
@@ -269,4 +269,4 @@ class RadiomicsFeaturesBase:
                     )
                 except Exception:
                     self.logger.error("FAILED: %s", traceback.format_exc())
-                    yield False, feature, numpy.nan
+                    yield False, feature, np.nan

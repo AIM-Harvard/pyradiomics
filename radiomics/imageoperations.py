@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-import numpy
+import numpy as np
 import pywt
 import SimpleITK as sitk
 
@@ -52,7 +52,7 @@ def getMask(mask, **kwargs):
     logger.debug("Force casting mask to UInt32 to ensure correct datatype.")
     mask = sitk.Cast(mask, sitk.sitkUInt32)
 
-    labels = numpy.unique(sitk.GetArrayFromImage(mask))
+    labels = np.unique(sitk.GetArrayFromImage(mask))
     if len(labels) == 1 and labels[0] == 0:
         raise ValueError("No labels found in this mask (i.e. nothing is segmented)!")
     if label not in labels:
@@ -120,7 +120,7 @@ def getBinEdges(parameterValues, **kwargs):
     binCount = kwargs.get("binCount")
 
     if binCount is not None:
-        binEdges = numpy.histogram(parameterValues, binCount)[1]
+        binEdges = np.histogram(parameterValues, binCount)[1]
         binEdges[
             -1
         ] += 1  # Ensures that the maximum value is included in the topmost bin when using numpy.digitize
@@ -136,7 +136,7 @@ def getBinEdges(parameterValues, **kwargs):
         # which will assign len(bins) + 1 to values equal to rightmost bin edge, treating all bins as half-open)
         highBound = maximum + 2 * binWidth
 
-        binEdges = numpy.arange(lowBound, highBound, binWidth)
+        binEdges = np.arange(lowBound, highBound, binWidth)
 
         # if min(parameterValues) % binWidth = 0 and min(parameterValues) = max(parameterValues), binEdges will only contain
         # 1 value. If this is the case (flat region) ensure that numpy.histogram creates 1 bin (requires 2 edges). For
@@ -164,13 +164,13 @@ def binImage(parameterMatrix, parameterMatrixCoordinates=None, **kwargs):
     global logger
     logger.debug("Discretizing gray levels inside ROI")
 
-    discretizedParameterMatrix = numpy.zeros(parameterMatrix.shape, dtype="int")
+    discretizedParameterMatrix = np.zeros(parameterMatrix.shape, dtype="int")
     if parameterMatrixCoordinates is None:
         binEdges = getBinEdges(parameterMatrix.flatten(), **kwargs)
-        discretizedParameterMatrix = numpy.digitize(parameterMatrix, binEdges)
+        discretizedParameterMatrix = np.digitize(parameterMatrix, binEdges)
     else:
         binEdges = getBinEdges(parameterMatrix[parameterMatrixCoordinates], **kwargs)
-        discretizedParameterMatrix[parameterMatrixCoordinates] = numpy.digitize(
+        discretizedParameterMatrix[parameterMatrixCoordinates] = np.digitize(
             parameterMatrix[parameterMatrixCoordinates], binEdges
         )
 
@@ -289,10 +289,10 @@ def checkMask(imageNode, maskNode, **kwargs):
             )
 
     # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
-    boundingBox = numpy.array(lsif.GetBoundingBox(label))
+    boundingBox = np.array(lsif.GetBoundingBox(label))
 
     logger.debug(f"Checking minimum number of dimensions requirements ({minDims})")
-    ndims = numpy.sum(
+    ndims = np.sum(
         (boundingBox[1::2] - boundingBox[0::2] + 1) > 1
     )  # UBound - LBound + 1 = Size
     if ndims == 0:
@@ -367,7 +367,7 @@ def _checkROI(imageNode, maskNode, **kwargs):
         raise ValueError(f"Label ({label}) not present in mask")
 
     # LBound and size of the bounding box, as (L_X, L_Y, [L_Z], S_X, S_Y, [S_Z])
-    bb = numpy.array(lssif.GetBoundingBox(label))
+    bb = np.array(lssif.GetBoundingBox(label))
     Nd = maskNode.GetDimension()
 
     # Determine if the ROI is within the physical space of the image
@@ -391,9 +391,8 @@ def _checkROI(imageNode, maskNode, **kwargs):
     # Check if any of the ROI bounds are outside the image indices (i.e. -0.5 < ROI < Im.Size -0.5)
     # The additional 0.5 is to allow for different spacings (defines the edges, not the centers of the edge-voxels
     tolerance = 1e-3  # Define a tolerance to correct for machine precision errors
-    if numpy.any(numpy.min(ROIBounds, axis=0) < (-0.5 - tolerance)) or numpy.any(
-        numpy.max(ROIBounds, axis=0)
-        > (numpy.array(imageNode.GetSize()) - 0.5 + tolerance)
+    if np.any(np.min(ROIBounds, axis=0) < (-0.5 - tolerance)) or np.any(
+        np.max(ROIBounds, axis=0) > (np.array(imageNode.GetSize()) - 0.5 + tolerance)
     ):
         msg = (
             "Bounding box of ROI is larger than image space:\n\t"
@@ -422,14 +421,14 @@ def cropToTumorMask(imageNode, maskNode, boundingBox, **kwargs):
     global logger
     padDistance = kwargs.get("padDistance", 0)
 
-    size = numpy.array(maskNode.GetSize())
+    size = np.array(maskNode.GetSize())
 
     ijkMinBounds = boundingBox[0::2] - padDistance
     ijkMaxBounds = size - boundingBox[1::2] - padDistance - 1
 
     # Ensure cropped area is not outside original image bounds
-    ijkMinBounds = numpy.maximum(ijkMinBounds, 0)
-    ijkMaxBounds = numpy.maximum(ijkMaxBounds, 0)
+    ijkMinBounds = np.maximum(ijkMinBounds, 0)
+    ijkMaxBounds = np.maximum(ijkMaxBounds, 0)
 
     # Crop Image
     logger.debug(f"Cropping to size {(boundingBox[1::2] - boundingBox[0::2]) + 1}")
@@ -495,8 +494,8 @@ def resampleImage(imageNode, maskNode, **kwargs):
     if imageNode is None or maskNode is None:
         raise ValueError("Requires both image and mask to resample")
 
-    maskSpacing = numpy.array(maskNode.GetSpacing())
-    imageSpacing = numpy.array(imageNode.GetSpacing())
+    maskSpacing = np.array(maskNode.GetSpacing())
+    imageSpacing = np.array(imageNode.GetSpacing())
 
     Nd_resampled = len(resampledPixelSpacing)
     Nd_mask = len(maskSpacing)
@@ -508,8 +507,8 @@ def resampleImage(imageNode, maskNode, **kwargs):
     logger.debug(
         "Where resampled spacing is set to 0, set it to the original spacing (mask)"
     )
-    resampledPixelSpacing = numpy.array(resampledPixelSpacing)
-    resampledPixelSpacing = numpy.where(
+    resampledPixelSpacing = np.array(resampledPixelSpacing)
+    resampledPixelSpacing = np.where(
         resampledPixelSpacing == 0, maskSpacing, resampledPixelSpacing
     )
 
@@ -518,15 +517,15 @@ def resampleImage(imageNode, maskNode, **kwargs):
     bb = _checkROI(imageNode, maskNode, **kwargs)
 
     # Do not resample in those directions where labelmap spans only one slice.
-    maskSize = numpy.array(maskNode.GetSize())
-    resampledPixelSpacing = numpy.where(
+    maskSize = np.array(maskNode.GetSize())
+    resampledPixelSpacing = np.where(
         bb[Nd_mask:] != 1, resampledPixelSpacing, maskSpacing
     )
 
     # If current spacing is equal to resampledPixelSpacing, no interpolation is needed
     # Tolerance = 1e-5 + 1e-8*abs(resampledSpacing)
     logger.debug("Comparing resampled spacing to original spacing (image")
-    if numpy.allclose(imageSpacing, resampledPixelSpacing):
+    if np.allclose(imageSpacing, resampledPixelSpacing):
         logger.info(
             "New spacing equal to original image spacing, just resampling the mask"
         )
@@ -540,9 +539,9 @@ def resampleImage(imageNode, maskNode, **kwargs):
         # re-calculate the bounding box of the mask
         lssif = sitk.LabelShapeStatisticsImageFilter()
         lssif.Execute(maskNode)
-        bb = numpy.array(lssif.GetBoundingBox(label))
+        bb = np.array(lssif.GetBoundingBox(label))
 
-        low_up_bb = numpy.empty(Nd_mask * 2, dtype=int)
+        low_up_bb = np.empty(Nd_mask * 2, dtype=int)
         low_up_bb[::2] = bb[:Nd_mask]
         low_up_bb[1::2] = bb[:Nd_mask] + bb[Nd_mask:] - 1
         return cropToTumorMask(imageNode, maskNode, low_up_bb, **kwargs)
@@ -552,18 +551,18 @@ def resampleImage(imageNode, maskNode, **kwargs):
     # Determine bounds of cropped volume in terms of new Index coordinate space,
     # round down for lowerbound and up for upperbound to ensure entire segmentation is captured (prevent data loss)
     # Pad with an extra .5 to prevent data loss in case of upsampling. For Ubound this is (-1 + 0.5 = -0.5)
-    bbNewLBound = numpy.floor((bb[:Nd_mask] - 0.5) * spacingRatio - padDistance)
-    bbNewUBound = numpy.ceil(
+    bbNewLBound = np.floor((bb[:Nd_mask] - 0.5) * spacingRatio - padDistance)
+    bbNewUBound = np.ceil(
         (bb[:Nd_mask] + bb[Nd_mask:] - 0.5) * spacingRatio + padDistance
     )
 
     # Ensure resampling is not performed outside bounds of original image
-    maxUbound = numpy.ceil(maskSize * spacingRatio) - 1
-    bbNewLBound = numpy.where(bbNewLBound < 0, 0, bbNewLBound)
-    bbNewUBound = numpy.where(bbNewUBound > maxUbound, maxUbound, bbNewUBound)
+    maxUbound = np.ceil(maskSize * spacingRatio) - 1
+    bbNewLBound = np.where(bbNewLBound < 0, 0, bbNewLBound)
+    bbNewUBound = np.where(bbNewUBound > maxUbound, maxUbound, bbNewUBound)
 
     # Calculate the new size. Cast to int to prevent error in sitk.
-    newSize = numpy.array(bbNewUBound - bbNewLBound + 1, dtype="int").tolist()
+    newSize = np.array(bbNewUBound - bbNewLBound + 1, dtype="int").tolist()
 
     # Determine continuous index of bbNewLBound in terms of the original Index coordinate space
     bbOriginalLBound = bbNewLBound / spacingRatio
@@ -575,16 +574,14 @@ def resampleImage(imageNode, maskNode, **kwargs):
     # in terms of the original spacing, and add the minimum bounds of the cropped area to
     # get the new Index coordinate space of the cropped volume in terms of the original Index coordinate space.
     # Then use the ITK functionality to bring the continuous index into the physical space (mm)
-    newOriginIndex = numpy.array(
-        0.5 * (resampledPixelSpacing - maskSpacing) / maskSpacing
-    )
+    newOriginIndex = np.array(0.5 * (resampledPixelSpacing - maskSpacing) / maskSpacing)
     newCroppedOriginIndex = newOriginIndex + bbOriginalLBound
     newOrigin = maskNode.TransformContinuousIndexToPhysicalPoint(newCroppedOriginIndex)
 
     imagePixelType = imageNode.GetPixelID()
     maskPixelType = maskNode.GetPixelID()
 
-    direction = numpy.array(maskNode.GetDirection())
+    direction = np.array(maskNode.GetDirection())
 
     logger.info(
         f"Applying resampling from spacing {maskSpacing} and size {maskSize} to spacing {resampledPixelSpacing} and size {newSize}"
@@ -696,18 +693,18 @@ def resegmentMask(imageNode, maskNode, **kwargs):
     im_arr = sitk.GetArrayFromImage(imageNode)
     ma_arr = sitk.GetArrayFromImage(maskNode) == label  # boolean array
 
-    oldSize = numpy.sum(ma_arr)
+    oldSize = np.sum(ma_arr)
 
     if resegmentMode == "absolute":
         logger.debug("Resegmenting in absolute mode")
         thresholds = sorted(resegmentRange)
     elif resegmentMode == "relative":
-        max_gl = numpy.max(im_arr[ma_arr])
+        max_gl = np.max(im_arr[ma_arr])
         logger.debug(f"Resegmenting in relative mode, max {max_gl}")
         thresholds = [max_gl * th for th in sorted(resegmentRange)]
     elif resegmentMode == "sigma":
-        mean_gl = numpy.mean(im_arr[ma_arr])
-        sd_gl = numpy.std(im_arr[ma_arr])
+        mean_gl = np.mean(im_arr[ma_arr])
+        sd_gl = np.std(im_arr[ma_arr])
         logger.debug(f"Resegmenting in sigma mode, mean {mean_gl}, std {sd_gl}")
         thresholds = [mean_gl + sd_gl * th for th in sorted(resegmentRange)]
     else:
@@ -722,7 +719,7 @@ def resegmentMask(imageNode, maskNode, **kwargs):
         logger.debug(f"Applying upper threshold ({thresholds[1]})")
         ma_arr[ma_arr] = im_arr[ma_arr] <= thresholds[1]
 
-    roiSize = numpy.sum(ma_arr)
+    roiSize = np.sum(ma_arr)
 
     if roiSize <= 1:
         raise ValueError(
@@ -731,7 +728,7 @@ def resegmentMask(imageNode, maskNode, **kwargs):
         )
 
     # Transform the boolean array back to an image with the correct voxels set to the label value
-    newMask_arr = numpy.zeros(ma_arr.shape, dtype="int")
+    newMask_arr = np.zeros(ma_arr.shape, dtype="int")
     newMask_arr[ma_arr] = label
 
     newMask = sitk.GetImageFromArray(newMask_arr)
@@ -808,10 +805,10 @@ def getLoGImage(inputImage, inputMask, **kwargs):
     logger.debug("Generating LoG images")
 
     # Check if size of image is > 4 in all 3D directions (otherwise, LoG filter will fail)
-    size = numpy.array(inputImage.GetSize())
-    spacing = numpy.array(inputImage.GetSpacing())
+    size = np.array(inputImage.GetSize())
+    spacing = np.array(inputImage.GetSpacing())
 
-    if numpy.min(size) < 4:
+    if np.min(size) < 4:
         logger.warning(f"Image too small to apply LoG filter, size: {size}")
         return
 
@@ -821,7 +818,7 @@ def getLoGImage(inputImage, inputMask, **kwargs):
         logger.info(f"Computing LoG with sigma {sigma}")
 
         if sigma > 0.0:
-            if numpy.all(size >= numpy.ceil(sigma / spacing) + 1):
+            if np.all(size >= np.ceil(sigma / spacing) + 1):
                 lrgif = sitk.LaplacianRecursiveGaussianImageFilter()
                 lrgif.SetNormalizeAcrossScale(True)
                 lrgif.SetSigma(sigma)
@@ -903,7 +900,7 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
     matrix = sitk.GetArrayFromImage(
         inputImage
     )  # This function gets a numpy array from the SimpleITK Image "inputImage"
-    matrix = numpy.asarray(
+    matrix = np.asarray(
         matrix
     )  # The function np.asarray converts "matrix" (which could be also a tuple) into an array.
 
@@ -913,7 +910,7 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
     padding = tuple([(0, 1 if dim % 2 != 0 else 0) for dim in original_shape])
     # padding is necessary because of pywt.swtn (see function Notes)
     data = matrix.copy()  # creates a modifiable copy of "matrix" and we call it "data"
-    data = numpy.pad(
+    data = np.pad(
         data, padding, "wrap"
     )  # padding the tuple "padding" previously computed
 
@@ -986,7 +983,7 @@ def getSquareImage(inputImage, inputMask, **kwargs):
 
     im = sitk.GetArrayFromImage(inputImage)
     im = im.astype("float64")
-    coeff = 1 / numpy.sqrt(numpy.max(numpy.abs(im)))
+    coeff = 1 / np.sqrt(np.max(np.abs(im)))
     im = (coeff * im) ** 2
     im = sitk.GetImageFromArray(im)
     im.CopyInformation(inputImage)
@@ -1014,9 +1011,9 @@ def getSquareRootImage(inputImage, inputMask, **kwargs):
 
     im = sitk.GetArrayFromImage(inputImage)
     im = im.astype("float64")
-    coeff = numpy.max(numpy.abs(im))
-    im[im > 0] = numpy.sqrt(im[im > 0] * coeff)
-    im[im < 0] = -numpy.sqrt(-im[im < 0] * coeff)
+    coeff = np.max(np.abs(im))
+    im[im > 0] = np.sqrt(im[im > 0] * coeff)
+    im[im < 0] = -np.sqrt(-im[im < 0] * coeff)
     im = sitk.GetImageFromArray(im)
     im.CopyInformation(inputImage)
 
@@ -1043,10 +1040,10 @@ def getLogarithmImage(inputImage, inputMask, **kwargs):
 
     im = sitk.GetArrayFromImage(inputImage)
     im = im.astype("float64")
-    im_max = numpy.max(numpy.abs(im))
-    im[im > 0] = numpy.log(im[im > 0] + 1)
-    im[im < 0] = -numpy.log(-(im[im < 0] - 1))
-    im = im * (im_max / numpy.max(numpy.abs(im)))
+    im_max = np.max(np.abs(im))
+    im[im > 0] = np.log(im[im > 0] + 1)
+    im[im < 0] = -np.log(-(im[im < 0] - 1))
+    im = im * (im_max / np.max(np.abs(im)))
     im = sitk.GetImageFromArray(im)
     im.CopyInformation(inputImage)
 
@@ -1070,9 +1067,9 @@ def getExponentialImage(inputImage, inputMask, **kwargs):
 
     im = sitk.GetArrayFromImage(inputImage)
     im = im.astype("float64")
-    im_max = numpy.max(numpy.abs(im))
-    coeff = numpy.log(im_max) / im_max
-    im = numpy.exp(coeff * im)
+    im_max = np.max(np.abs(im))
+    coeff = np.log(im_max) / im_max
+    im = np.exp(coeff * im)
     im = sitk.GetImageFromArray(im)
     im.CopyInformation(inputImage)
 
@@ -1241,32 +1238,30 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
     # Nv Number of vertices
 
     # Vertices icosahedron for spherical sampling
-    coords_icosahedron = numpy.array(
+    coords_icosahedron = np.array(
         icosphere(lbp_icosphereSubdivision, lbp_icosphereRadius).vertices
     )  # shape(Nv, 3)
 
     # Corresponding polar coordinates
-    theta = numpy.arccos(
-        numpy.true_divide(coords_icosahedron[:, 2], lbp_icosphereRadius)
-    )
-    phi = numpy.arctan2(coords_icosahedron[:, 1], coords_icosahedron[:, 0])
+    theta = np.arccos(np.true_divide(coords_icosahedron[:, 2], lbp_icosphereRadius))
+    phi = np.arctan2(coords_icosahedron[:, 1], coords_icosahedron[:, 0])
 
     # Corresponding spherical harmonics coefficients Y_{m, n, theta, phi}
     Y = sph_harm(0, 0, theta, phi)  # shape(Nv,)
-    n_ix = numpy.array(0)
+    n_ix = np.array(0)
 
     for n in range(1, lbp_levels):
         for m in range(-n, n + 1):
-            n_ix = numpy.append(n_ix, n)
-            Y = numpy.column_stack((Y, sph_harm(m, n, theta, phi)))
+            n_ix = np.append(n_ix, n)
+            Y = np.column_stack((Y, sph_harm(m, n, theta, phi)))
     # shape (Nv, x) where x is the number of iterations in the above loops + 1
 
     # Get labelled coordinates
-    ROI_coords = numpy.where(ma_arr == label)  # shape(3, Np)
+    ROI_coords = np.where(ma_arr == label)  # shape(3, Np)
 
     # Interpolate f (samples on the spheres across the entire volume)
     coords = (
-        numpy.array(ROI_coords).T[None, :, :] + coords_icosahedron[:, None, :]
+        np.array(ROI_coords).T[None, :, :] + coords_icosahedron[:, None, :]
     )  # shape(Nv, Np, 3)
     f = map_coordinates(
         im_arr, coords.T, order=3
@@ -1277,22 +1272,20 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
 
     # Apply sign function
     f_centroids = im_arr[ROI_coords]  # Shape(Np,)
-    f = numpy.greater_equal(f, f_centroids[:, None]).astype(int)  # Shape(Np, Nv)
+    f = np.greater_equal(f, f_centroids[:, None]).astype(int)  # Shape(Np, Nv)
 
     # Compute c_{m,n} coefficients
-    c = numpy.multiply(f[:, :, None], Y[None, :, :])  # Shape(Np, Nv, x)
+    c = np.multiply(f[:, :, None], Y[None, :, :])  # Shape(Np, Nv, x)
     c = c.sum(axis=1)  # Shape(Np, x)
 
     # Integrate over m
-    f = numpy.multiply(
-        c[:, None, n_ix == 0], Y[None, :, n_ix == 0]
-    )  # Shape (Np, Nv, 1)
+    f = np.multiply(c[:, None, n_ix == 0], Y[None, :, n_ix == 0])  # Shape (Np, Nv, 1)
     for n in range(1, lbp_levels):
-        f = numpy.concatenate(
+        f = np.concatenate(
             (
                 f,
-                numpy.sum(
-                    numpy.multiply(c[:, None, n_ix == n], Y[None, :, n_ix == n]),
+                np.sum(
+                    np.multiply(c[:, None, n_ix == n], Y[None, :, n_ix == n]),
                     axis=2,
                     keepdims=True,
                 ),
@@ -1302,14 +1295,14 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
     # Shape f (Np, Nv, levels)
 
     # Compute L2-Norm
-    f = numpy.sqrt(numpy.sum(f**2, axis=1))  # shape(Np, levels)
+    f = np.sqrt(np.sum(f**2, axis=1))  # shape(Np, levels)
 
     # Keep only Real Part
-    f = numpy.real(f)  # shape(Np, levels)
-    k = numpy.real(k)  # shape(Np,)
+    f = np.real(f)  # shape(Np, levels)
+    k = np.real(k)  # shape(Np,)
 
     # Yield the derived images for each level
-    result = numpy.ndarray(im_arr.shape)
+    result = np.ndarray(im_arr.shape)
     for l_idx in range(lbp_levels):
         result[ROI_coords] = f[:, l_idx]
 

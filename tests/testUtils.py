@@ -6,7 +6,7 @@ import logging
 import math
 import os
 
-import numpy
+import numpy as np
 import SimpleITK as sitk
 
 from radiomics import featureextractor, getTestCase, imageoperations
@@ -233,8 +233,8 @@ class RadiomicsTestUtils:
         assert value is not None
 
         if math.isnan(value):
-            self._diffs[self._test][longName] = numpy.nan
-            self._results[self._test][longName] = numpy.nan
+            self._diffs[self._test][longName] = np.nan
+            self._results[self._test][longName] = np.nan
         assert not math.isnan(value)
 
         # save the result using the baseline class and feature names

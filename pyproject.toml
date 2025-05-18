@@ -217,7 +217,7 @@ ignore = [
     "B007", # Loop control variable `args` not used within loop body
     "EM101", # Exception must not use a string literal, assign to variable first
     "G004", # Logging statement uses f-string
-    "ICN001", # `numpy` should be imported as `np`
+    # "ICN001", # `numpy` should be imported as `np`
     "PLW0603", # Using the global statement to update `featureClass` is discouraged
     "PTH100", # `os.path.abspath()` should be replaced by `Path.resolve()`
     "PTH113", # `os.path.isfile()` should be replaced by `Path.is_file()`

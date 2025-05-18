@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 
-import numpy
+import numpy as np
 import SimpleITK as sitk
 from testUtils import PyRadiomicsBaseline, RadiomicsTestUtils
 
@@ -53,7 +53,7 @@ class AddBaseline:
         if "_calculateMatrix" in dir(featureClass):
             cMat = getattr(featureClass, f"P_{featureClassName}")
             if cMat is not None:
-                numpy.save(
+                np.save(
                     os.path.join(self.baselineDir, f"{test}_{featureClassName}.npy"),
                     cMat,
                 )
@@ -144,8 +144,8 @@ def generateWaveletBaseline():
         baselineDict[level] = voxelArray
 
     baseline = [baselineDict[wl] for wl in wavelets]
-    baseline = numpy.array(baseline)
-    numpy.save(baselineFile, baseline)
+    baseline = np.array(baseline)
+    np.save(baselineFile, baseline)
 
 
 if __name__ == "__main__":

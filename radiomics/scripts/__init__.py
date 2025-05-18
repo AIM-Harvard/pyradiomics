@@ -12,7 +12,7 @@ import threading
 from functools import partial
 from multiprocessing import Manager, Pool, cpu_count
 
-import numpy
+import numpy as np
 import pykwalify.core
 from pykwalify.compat import yaml
 from ruamel.yaml import YAML
@@ -472,7 +472,7 @@ class PyRadiomicsCommandLine:
             # if specified, skip NaN values
             if self.args.skip_nans:
                 for key in list(case.keys()):
-                    if isinstance(case[key], float) and numpy.isnan(case[key]):
+                    if isinstance(case[key], float) and np.isnan(case[key]):
                         self.logger.debug(
                             "Case %d, feature %s computed NaN, removing from results",
                             case_idx,
@@ -508,7 +508,7 @@ class PyRadiomicsCommandLine:
             # Therefore, use this encoder, which first casts numpy arrays to python lists, which are JSON serializable
             class NumpyEncoder(json.JSONEncoder):
                 def default(self, obj):
-                    if isinstance(obj, numpy.ndarray):
+                    if isinstance(obj, np.ndarray):
                         return obj.tolist()
                     return json.JSONEncoder.default(self, obj)
 

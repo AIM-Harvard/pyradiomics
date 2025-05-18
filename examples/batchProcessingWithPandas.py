@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import os
 
-import pandas
+import pandas as pd
 import SimpleITK as sitk
 
 import radiomics
@@ -45,7 +45,7 @@ def main():
         # Use pandas to read and transpose ('.T') the input data
         # The transposition is needed so that each column represents one test case. This is easier for iteration over
         # the input cases
-        flists = pandas.read_csv(inputCSV).T
+        flists = pd.read_csv(inputCSV).T
     except Exception:
         logger.error("CSV READ FAILED", exc_info=True)
         exit(-1)
@@ -70,7 +70,7 @@ def main():
     logger.info("Current settings: %s", extractor.settings)
 
     # Instantiate a pandas data frame to hold the results of all patients
-    results = pandas.DataFrame()
+    results = pd.DataFrame()
 
     for entry in flists:  # Loop over all columns (i.e. the test cases)
         logger.info(
@@ -96,7 +96,7 @@ def main():
                 # PyRadiomics returns the result as an ordered dictionary, which can be easily converted to a pandas Series
                 # The keys in the dictionary will be used as the index (labels for the rows), with the values of the features
                 # as the values in the rows.
-                result = pandas.Series(
+                result = pd.Series(
                     extractor.execute(imageFilepath, maskFilepath, label)
                 )
                 featureVector = featureVector.append(result)

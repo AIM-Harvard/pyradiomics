@@ -4,7 +4,7 @@ import collections
 import logging
 import sys
 
-import numpy
+import numpy as np
 import pywt
 import SimpleITK as sitk
 
@@ -42,7 +42,7 @@ class GeneralInfo:
         self.generalInfo[self.generalInfo_prefix + "Versions_PyRadiomics"] = (
             radiomics.__version__
         )
-        self.generalInfo[self.generalInfo_prefix + "Versions_Numpy"] = numpy.__version__
+        self.generalInfo[self.generalInfo_prefix + "Versions_Numpy"] = np.__version__
         self.generalInfo[self.generalInfo_prefix + "Versions_SimpleITK"] = (
             sitk.Version().VersionString()
         )
@@ -89,13 +89,13 @@ class GeneralInfo:
         )
         im_arr = sitk.GetArrayFromImage(image).astype("float")
         self.generalInfo[self.generalInfo_prefix + "Image-" + prefix + "_Mean"] = (
-            numpy.mean(im_arr)
+            np.mean(im_arr)
         )
         self.generalInfo[self.generalInfo_prefix + "Image-" + prefix + "_Minimum"] = (
-            numpy.min(im_arr)
+            np.min(im_arr)
         )
         self.generalInfo[self.generalInfo_prefix + "Image-" + prefix + "_Maximum"] = (
-            numpy.max(im_arr)
+            np.max(im_arr)
         )
 
     def addMaskElements(self, image, mask, label, prefix="original"):
@@ -159,9 +159,9 @@ class GeneralInfo:
         )
 
         ma_arr = sitk.GetArrayFromImage(labelMap) == 1
-        maskCoordinates = numpy.array(numpy.where(ma_arr))
+        maskCoordinates = np.array(np.where(ma_arr))
         center_index = tuple(
-            numpy.mean(maskCoordinates, axis=1)[::-1]
+            np.mean(maskCoordinates, axis=1)[::-1]
         )  # also convert z, y, x to x, y, z order
 
         self.generalInfo[
@@ -178,13 +178,13 @@ class GeneralInfo:
         im_arr = sitk.GetArrayFromImage(image)
         targetvoxels = im_arr[ma_arr].astype("float")
         self.generalInfo[self.generalInfo_prefix + "Mask-" + prefix + "_Mean"] = (
-            numpy.mean(targetvoxels)
+            np.mean(targetvoxels)
         )
         self.generalInfo[self.generalInfo_prefix + "Mask-" + prefix + "_Minimum"] = (
-            numpy.min(targetvoxels)
+            np.min(targetvoxels)
         )
         self.generalInfo[self.generalInfo_prefix + "Mask-" + prefix + "_Maximum"] = (
-            numpy.max(targetvoxels)
+            np.max(targetvoxels)
         )
 
     def addGeneralSettings(self, settings):

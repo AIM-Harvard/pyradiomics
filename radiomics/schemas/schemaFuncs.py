@@ -40,7 +40,7 @@ def checkInterpolator(value, rule_obj, path):
     elif isinstance(value, int):
         if value < 1 or value > 10:
             raise ValueError(
-                "Intepolator value %i, must be in range of [1-10]" % (value)
+                f"Intepolator value {int(value)}, must be in range of [1-10]"
             )
     else:
         raise TypeError("Interpolator not expected type (str or int)")
@@ -67,10 +67,8 @@ def checkFeatureClass(value, rule_obj, path):
         raise TypeError("featureClass dictionary cannot be None value")
     for className, features in value.items():
         if className not in featureClasses.keys():
-            raise ValueError(
-                "Feature Class %s is not recognized. Available feature classes are %s"
-                % (className, list(featureClasses.keys()))
-            )
+            msg = f"Feature Class {className} is not recognized. Available feature classes are {list(featureClasses.keys())}"
+            raise ValueError(msg)
         if features is not None:
             if not isinstance(features, list):
                 raise TypeError(
@@ -80,10 +78,8 @@ def checkFeatureClass(value, rule_obj, path):
                 featureClasses[className].getFeatureNames()
             )
             if len(unrecognizedFeatures) > 0:
-                raise ValueError(
-                    "Feature Class %s contains unrecognized features: %s"
-                    % (className, str(unrecognizedFeatures))
-                )
+                msg = f"Feature Class {className} contains unrecognized features: {unrecognizedFeatures!s}"
+                raise ValueError(msg)
 
     return True
 
@@ -95,9 +91,7 @@ def checkImageType(value, rule_obj, path):
 
     for im_type in value:
         if im_type not in imageTypes:
-            raise ValueError(
-                "Image Type %s is not recognized. Available image types are %s"
-                % (im_type, imageTypes)
-            )
+            msg = f"Image Type {im_type} is not recognized. Available image types are {imageTypes}"
+            raise ValueError(msg)
 
     return True

@@ -351,8 +351,7 @@ class RadiomicsFeatureExtractor:
             args = _settings.copy()
             args.update(customKwargs)
             logger.info(
-                'Adding image type "%s" with custom settings: %s'
-                % (imageType, str(customKwargs))
+                f'Adding image type "{imageType}" with custom settings: {customKwargs!s}'
             )
             imageGenerators = chain(
                 imageGenerators,

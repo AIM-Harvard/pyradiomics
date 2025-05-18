@@ -296,7 +296,7 @@ ignore = [
     "SIM118",   # Use `keynotindict`instead
     "SIM210",   # Use `bool(...)`insteadof`Trueif
     "T201",   # `print` found
-    "UP031",   # Use formatspecifiersinsteadofpercent
+    # "UP031",   # Use formatspecifiersinsteadofpercent
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.

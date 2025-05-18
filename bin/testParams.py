@@ -21,10 +21,11 @@ def main(paramsFile):
         params = c.validate()
         print(
             "Parameter validation successful!\n\n"
-            "###Enabled Features###\n%s\n"
-            "###Enabled Image Types###\n%s\n"
-            "###Settings###\n%s"
-            % (params["featureClass"], params["imageType"], params["setting"])
+            "###Enabled Features###\n{}\n"
+            "###Enabled Image Types###\n{}\n"
+            "###Settings###\n{}".format(
+                params["featureClass"], params["imageType"], params["setting"]
+            )
         )
     except Exception as e:
         print(f"Parameter validation failed!\n{e.message}")

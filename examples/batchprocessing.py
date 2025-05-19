@@ -44,7 +44,7 @@ def main():
     try:
         with open(inputCSV) as inFile:
             cr = csv.DictReader(inFile, lineterminator="\n")
-            flists = [row for row in cr]
+            flists = list(cr)
     except Exception:
         logger.error("CSV READ FAILED", exc_info=True)
 

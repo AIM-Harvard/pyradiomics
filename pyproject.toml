@@ -217,7 +217,7 @@ ignore = [
 # ----- The following are suppressions to allow initial passing of ruff linting
     # "B008",   # Do not perform function call`CodedValue`
     # "B904",   # Within an`except`clause,raise exceptions
-    "C416",   # Unnecessary list comprehension(rewrite using`list()`)
+    # "C416",   # Unnecessary list comprehension(rewrite using`list()`)
     "E402",   # Module level import not at top
     "EM102",   # Exception mustnotuseanf-string
     "EXE001",   # Shebang is present but file is not executable

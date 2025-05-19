@@ -113,7 +113,7 @@ class DatasetHierarchyReader:
                 for item in subfolders
                 if "resources" in os.path.basename(item).lower()
             )
-            resources = [item for item in glob.glob(os.path.join(resDirectory, "*"))]
+            resources = list(glob.glob(os.path.join(resDirectory, "*")))
         except IndexError:
             if create:
                 resDirectory = os.path.join(studyDirectory, "Resources")

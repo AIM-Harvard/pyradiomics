@@ -319,14 +319,11 @@ try:
 except ImportError as e:
     if os.path.isdir(os.path.join(os.path.dirname(__file__), "..", "data")):
         # It looks like PyRadiomics is run from source (in which case "setup.py develop" must have been run)
-        logger.critical(
-            "Apparently running from root, but unable to load C extensions... "
-            'Did you run "python setup.py build_ext --inplace"?'
-        )
         msg = (
             "Apparently running from root, but unable to load C extensions... "
-            'Did you run "python setup.py build_ext --inplace"?'
+            'Did you run "pip install -e ".[dev,docs,test]"?'
         )
+        logger.critical(msg)
         raise Exception(msg) from e
     else:
         logger.critical("Error loading C extensions", exc_info=True)

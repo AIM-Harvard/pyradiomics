@@ -30,10 +30,9 @@ REMOVE_TEMP_DIR = True  # Remove temporary directory when results have been succ
 NUM_OF_WORKERS = (
     cpu_count() - 1
 )  # Number of processors to use, keep one processor free for other work
-if (
-    NUM_OF_WORKERS < 1
-):  # in case only one processor is available, ensure that it is used
-    NUM_OF_WORKERS = 1
+
+# in case only one processor is available, ensure that it is used
+NUM_OF_WORKERS = max(NUM_OF_WORKERS, 1)
 HEADERS = None  # headers of all extracted features
 
 # Assumes the input CSV has at least 2 columns: "Image" and "Mask"

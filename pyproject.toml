@@ -227,7 +227,7 @@ ignore = [
     # "PD011",   # Use `.to_numpy()`insteadof`.values`
     # "PIE810",   # Call `ends with` once with a`tuple`
     # "PLR1722",   # Use `sys.exit()`insteadof`exit`
-    "PLR1730",   # Replace `if`statementwith`level=
+    # "PLR1730",   # Replace `if`statementwith`level=
     "PLW0603", # Using the global statement to update `featureClass` is discouraged
     "PLW2901",   # `for` loopvariable`features`overwrittenby
     # Logging fixes likely need manual work, and need 'msg' variables created

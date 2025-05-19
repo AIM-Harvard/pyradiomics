@@ -52,10 +52,10 @@ def setVerbosity(level):
       has been set to the correct level. *Exception: In case the verbosity is set to DEBUG, the level of the logger is
       also lowered to DEBUG. If the verbosity level is then raised again, the logger level will remain DEBUG.*
     """
-    if level < 10:  # Lowest level: DEBUG
-        level = 10
-    if level > 60:  # Highest level = 50 (CRITICAL), level 60 results in a 'quiet' mode
-        level = 60
+    # Lowest level: DEBUG
+    level = max(level, 10)
+    # Highest level = 50 (CRITICAL), level 60 results in a 'quiet' mode
+    level = min(level, 60)
 
     handler.setLevel(level)
     if handler.level < logger.level:  # reduce level of logger if necessary

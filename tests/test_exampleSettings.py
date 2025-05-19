@@ -13,12 +13,11 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize("settingsFile", metafunc.cls.generate_scenarios())
 
 
-def exampleSettings_name_func(testcase_func, param_num, param):
+def exampleSettings_name_func(testcase_func, param):
     return f"{testcase_func.__name__}_{os.path.splitext(os.path.basename(param.args[0]))[0]}"
 
 
 class TestExampleSettings:
-
     @staticmethod
     def generate_scenarios():
         dataDir = os.path.join(

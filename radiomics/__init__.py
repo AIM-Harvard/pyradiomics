@@ -266,7 +266,7 @@ class _DummyProgressReporter:
     The __enter__ and __exit__ functions enable usage in a 'with' statement
     """
 
-    def __init__(self, iterable=None, desc="", total=None):
+    def __init__(self, iterable=None, desc="", _total=None):
         self.desc = (
             desc  # A description is not required, but is provided by PyRadiomics
         )

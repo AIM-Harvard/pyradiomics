@@ -742,7 +742,7 @@ def resegmentMask(imageNode, maskNode, **kwargs):
     return newMask
 
 
-def getOriginalImage(inputImage, inputMask, **kwargs):
+def getOriginalImage(inputImage, _inputMask, **kwargs):
     """
     This function does not apply any filter, but returns the original image. This function is needed to
     dynamically expose the original image as a valid image type.
@@ -753,7 +753,7 @@ def getOriginalImage(inputImage, inputMask, **kwargs):
     yield inputImage, "original", kwargs
 
 
-def getLoGImage(inputImage, inputMask, **kwargs):
+def getLoGImage(inputImage, _inputMask, **kwargs):
     r"""
     Applies a Laplacian of Gaussian filter to the input image and yields a derived image for each sigma value specified.
 
@@ -836,7 +836,7 @@ def getLoGImage(inputImage, inputMask, **kwargs):
             logger.warning(msg)
 
 
-def getWaveletImage(inputImage, inputMask, **kwargs):
+def getWaveletImage(inputImage, _inputMask, **kwargs):
     """
     Applies wavelet filter to the input image and yields the decompositions and the approximation.
 
@@ -970,7 +970,7 @@ def _swt3(inputImage, axes, **kwargs):  # Stationary Wavelet Transform 3D
     )  # returns the approximation and the detail (ret) coefficients of the stationary wavelet decomposition
 
 
-def getSquareImage(inputImage, inputMask, **kwargs):
+def getSquareImage(inputImage, _inputMask, **kwargs):
     r"""
     Computes the square of the image intensities.
 
@@ -994,7 +994,7 @@ def getSquareImage(inputImage, inputMask, **kwargs):
     yield im, "square", kwargs
 
 
-def getSquareRootImage(inputImage, inputMask, **kwargs):
+def getSquareRootImage(inputImage, _inputMask, **kwargs):
     r"""
   Computes the square root of the absolute value of image intensities.
 
@@ -1021,7 +1021,7 @@ def getSquareRootImage(inputImage, inputMask, **kwargs):
     yield im, "squareroot", kwargs
 
 
-def getLogarithmImage(inputImage, inputMask, **kwargs):
+def getLogarithmImage(inputImage, _inputMask, **kwargs):
     r"""
   Computes the logarithm of the absolute value of the original image + 1.
 
@@ -1049,7 +1049,7 @@ def getLogarithmImage(inputImage, inputMask, **kwargs):
     yield im, "logarithm", kwargs
 
 
-def getExponentialImage(inputImage, inputMask, **kwargs):
+def getExponentialImage(inputImage, _inputMask, **kwargs):
     r"""
     Computes the exponential of the original image.
 
@@ -1073,7 +1073,7 @@ def getExponentialImage(inputImage, inputMask, **kwargs):
     yield im, "exponential", kwargs
 
 
-def getGradientImage(inputImage, inputMask, **kwargs):
+def getGradientImage(inputImage, _inputMask, **kwargs):
     r"""
     Compute and return the Gradient Magnitude in the image.
     By default, takes into account the image spacing, this can be switched off by specifying
@@ -1091,7 +1091,7 @@ def getGradientImage(inputImage, inputMask, **kwargs):
     yield im, "gradient", kwargs
 
 
-def getLBP2DImage(inputImage, inputMask, **kwargs):
+def getLBP2DImage(inputImage, _inputMask, **kwargs):
     """
     Compute and return the Local Binary Pattern (LBP) in 2D. If ``force2D`` is set to false (= feature extraction in 3D) a
     warning is logged, as this filter processes the image in a by-slice operation. The plane in which the LBP is

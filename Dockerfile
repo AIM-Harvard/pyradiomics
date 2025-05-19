@@ -19,8 +19,7 @@ ADD . /root/pyradiomics
 # Install in Python 3
 RUN /bin/bash -c "source activate root \
     && cd /root/pyradiomics \
-    && python -m pip install --no-cache-dir -r requirements.txt \
-    && python setup.py install"
+    && python3 -m pip install ."
 
 # Install sample data and notebooks
 ADD data/ /home/jovyan/work/data/

@@ -76,7 +76,7 @@ Alternatively, you can generate the documentation by checking out the master
 branch and running from the root directory:
 
 ```
-python setup.py build_sphinx
+sphinx-build docs docs/_build/
 ```
 
 The documentation can then be viewed in a browser by opening

@@ -159,7 +159,8 @@ def getTestCase(testCase, dataDirectory=None):
         testCase = testCase[:-3]
 
     if testCase not in testCases:
-        raise ValueError(f'Testcase "{testCase}" not recognized!')
+        msg = f'Testcase "{testCase}" not recognized!'
+        raise ValueError(msg)
 
     logger.debug("Getting test case %s", testCase)
 

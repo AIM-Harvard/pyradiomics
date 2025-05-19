@@ -538,7 +538,8 @@ class PyRadiomicsCommandLine:
                 return float(value)
             if value_type == "bool":
                 return value == "1" or value.lower() == "true"
-            raise ValueError(f'Cannot understand value_type "{value_type}"')
+            msg = f'Cannot understand value_type "{value_type}"'
+            raise ValueError(msg)
 
         for setting in self.args.setting:  # setting = "setting_key:setting_value"
             if ":" not in setting:

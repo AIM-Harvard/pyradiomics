@@ -14,7 +14,8 @@ def checkWavelet(value, rule_obj, path):
         raise TypeError(msg)
     wavelist = pywt.wavelist()
     if value not in wavelist:
-        raise ValueError(f'Wavelet "{value}" not available in pyWavelets {wavelist}')
+        msg = f'Wavelet "{value}" not available in pyWavelets {wavelist}'
+        raise ValueError(msg)
     return True
 
 
@@ -35,14 +36,12 @@ def checkInterpolator(value, rule_obj, path):
             "sitkBlackmanWindowedSinc",
         }
         if value not in enum:
-            raise ValueError(
-                f'Interpolator value "{value}" not valid, possible values: {enum}'
-            )
+            msg = f'Interpolator value "{value}" not valid, possible values: {enum}'
+            raise ValueError(msg)
     elif isinstance(value, int):
         if value < 1 or value > 10:
-            raise ValueError(
-                f"Intepolator value {int(value)}, must be in range of [1-10]"
-            )
+            msg = f"Intepolator value {int(value)}, must be in range of [1-10]"
+            raise ValueError(msg)
     else:
         msg = "Interpolator not expected type (str or int)"
         raise TypeError(msg)
@@ -55,9 +54,8 @@ def checkWeighting(value, rule_obj, path):
     if isinstance(value, str):
         enum = ["euclidean", "manhattan", "infinity", "no_weighting"]
         if value not in enum:
-            raise ValueError(
-                f'WeightingNorm value "{value}" not valid, possible values: {enum}'
-            )
+            msg = f'WeightingNorm value "{value}" not valid, possible values: {enum}'
+            raise ValueError(msg)
     else:
         msg = "WeightingNorm not expected type (str or None)"
         raise TypeError(msg)
@@ -74,9 +72,8 @@ def checkFeatureClass(value, rule_obj, path):
             raise ValueError(msg)
         if features is not None:
             if not isinstance(features, list):
-                raise TypeError(
-                    f"Value of feature class {className} not expected type (list)"
-                )
+                msg = f"Value of feature class {className} not expected type (list)"
+                raise TypeError(msg)
             unrecognizedFeatures = set(features) - set(
                 featureClasses[className].getFeatureNames()
             )

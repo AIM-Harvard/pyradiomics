@@ -329,7 +329,7 @@ except ImportError as e:
             "Apparently running from root, but unable to load C extensions... "
             'Did you run "python setup.py build_ext --inplace"?'
         )
-        raise Exception(msg)
+        raise Exception(msg) from e
     else:
         logger.critical("Error loading C extensions", exc_info=True)
         raise e

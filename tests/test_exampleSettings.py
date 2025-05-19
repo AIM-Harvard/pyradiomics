@@ -31,7 +31,7 @@ class TestExampleSettings:
             settingsFiles = [
                 fname
                 for fname in os.listdir(dataDir)
-                if fname.endswith(".yaml") or fname.endswith(".yml")
+                if fname.endswith((".yaml", ".yml"))
             ]
 
             for fname in settingsFiles:

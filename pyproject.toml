@@ -52,6 +52,8 @@ dev = [
 docs = [
     "sphinx>=7.0",
     "myst_parser>=0.13",
+    "sphinx-pyproject",
+    "sphinx_rtd_theme",
     "sphinx_copybutton",
     "sphinx_autodoc_typehints",
     "furo>=2023.08.17",
@@ -304,3 +306,7 @@ ignore-words = "./.codespellignore"
 skip = '*.po,*.ts,./radiomics/src,./test'
 count = true
 quiet-level = 3
+
+[tool.sphinx]
+source-dir = "docs"
+builder = "html"

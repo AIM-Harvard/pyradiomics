@@ -73,7 +73,6 @@ docs/_build/
 
 # IDE junk
 .idea/*
-*.swp
 
 # PyBuilder
 .pybuilder/

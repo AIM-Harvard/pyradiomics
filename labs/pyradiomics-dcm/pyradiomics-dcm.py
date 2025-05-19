@@ -364,9 +364,9 @@ class TID1500Metadata:
         self.m["Measurements"][-1]["measurementItems"].append(measurement)
 
         if len(mpTuple[0]):
-            measurement["measurementModifiers"] = [m for m in mpTuple[0]]
+            measurement["measurementModifiers"] = list(mpTuple[0])
         if len(mpTuple[1]):
-            measurement["measurementDerivationParameters"] = [d for d in mpTuple[1]]
+            measurement["measurementDerivationParameters"] = list(mpTuple[1])
 
         return
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 
 import pandas as pd
 import SimpleITK as sitk
@@ -48,7 +49,7 @@ def main():
         flists = pd.read_csv(inputCSV).T
     except Exception:
         logger.error("CSV READ FAILED", exc_info=True)
-        exit(-1)
+        sys.exit(-1)
 
     logger.info("Loading Done")
     logger.info("Patients: %d", len(flists.columns))

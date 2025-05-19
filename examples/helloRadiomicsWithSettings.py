@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 
 import radiomics
 from radiomics import featureextractor, getFeatureClasses
@@ -20,7 +21,7 @@ if (
     imageName is None or maskName is None
 ):  # Something went wrong, in this case PyRadiomics will also log an error
     print("Error getting testcase!")
-    exit()
+    sys.exit()
 
 # Regulate verbosity with radiomics.verbosity
 # radiomics.setVerbosity(logging.INFO)

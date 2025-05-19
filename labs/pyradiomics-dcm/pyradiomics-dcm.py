@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import distutils.spawn
 import glob
 import json
 import logging
@@ -11,6 +10,7 @@ import shutil
 import sys
 import tempfile
 from decimal import Decimal
+from shutil import which
 from subprocess import call
 
 import numpy as np
@@ -498,6 +498,7 @@ Support for DICOM Radiotherapy Structure Sets for defining region of interest ma
 
     # find a valid DICOM file in the input image DICOM directory
     dicomImage = None
+    f: str = ""
     for f in os.listdir(args.inputDICOMImageDir):
         try:
             pydicom.read_file(os.path.join(args.inputDICOMImageDir, f))
@@ -689,7 +690,7 @@ Support for DICOM Radiotherapy Structure Sets for defining region of interest ma
 if __name__ == "__main__":
     exeFound = {}
     for exe in ["tid1500writer", "dcm2niix", "plastimatch", "segimage2itkimage"]:
-        if distutils.spawn.find_executable(exe) is None:
+        if which(exe) is None:
             exeFound[exe] = False
         else:
             exeFound[exe] = True

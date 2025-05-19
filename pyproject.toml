@@ -55,6 +55,9 @@ docs = [
     "sphinx_copybutton",
     "sphinx_autodoc_typehints",
     "furo>=2023.08.17",
+    # -- not strictly docs, but examples and scripts depend on these
+    "pandas",
+    "pydicom",
 ]
 
 [project.scripts]

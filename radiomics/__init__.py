@@ -1,8 +1,6 @@
-# For convenience, import collection and numpy
 # into the "pyradiomics" namespace
 from __future__ import annotations
 
-import collections
 import inspect
 import logging
 import os
@@ -10,8 +8,6 @@ import pkgutil
 import sys
 import tempfile
 import urllib.request
-
-import numpy as np
 
 from . import imageoperations
 from ._version import version as __version__
@@ -344,4 +340,4 @@ getImageTypes()
 
 # 5. Set the version dynamically using setuptools-scm
 
-__all__ = ["__version__"]
+__all__ = ["__version__", "cMatrices", "cShape"]

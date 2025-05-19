@@ -14,7 +14,6 @@ from multiprocessing import Manager, Pool, cpu_count
 
 import numpy as np
 import pykwalify.core
-from pykwalify.compat import yaml
 from ruamel.yaml import YAML
 
 import radiomics

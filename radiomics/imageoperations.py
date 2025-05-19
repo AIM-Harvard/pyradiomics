@@ -258,7 +258,7 @@ def checkMask(imageNode, maskNode, **kwargs):
                     "Image/Mask datatype or size mismatch. Potential fix: enable correctMask, see "
                     "Documentation:Usage:Customizing the Extraction:Settings:correctMask for more information"
                 )
-                raise ValueError(msg)
+                raise ValueError(msg) from e
             if "Inputs do not occupy the same physical space!" in e.args[0]:
                 logger.debug("Additional information on error.", exc_info=True)
                 msg = (
@@ -266,7 +266,7 @@ def checkMask(imageNode, maskNode, **kwargs):
                     "see Documentation:Usage:Customizing the Extraction:Settings:geometryTolerance for more "
                     "information"
                 )
-                raise ValueError(msg)
+                raise ValueError(msg) from e
             raise e  # unhandled error
 
         logger.warning("Image/Mask geometry mismatch, attempting to correct Mask")
@@ -278,12 +278,12 @@ def checkMask(imageNode, maskNode, **kwargs):
         # Resampling successful, try to calculate boundingbox
         try:
             lsif.Execute(imageNode, correctedMask)
-        except RuntimeError:
+        except RuntimeError as e:
             logger.debug(
                 "Bounding box calculation with resampled mask failed", exc_info=True
             )
             msg = "Calculation of bounding box failed, for more information run with DEBUG logging and check log"
-            raise ValueError(msg)
+            raise ValueError(msg) from e
 
     # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
     boundingBox = np.array(lsif.GetBoundingBox(label))

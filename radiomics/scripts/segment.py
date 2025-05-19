@@ -79,11 +79,12 @@ def _extractFeatures(case_idx, case, extractor):
         SystemExit,
     ):  # Cancel extraction by forwarding this 'error'
         raise
-    except SystemError:
+    except SystemError as e:
         # Occurs when Keyboard Interrupt is caught while the thread is processing a SimpleITK call
-        raise KeyboardInterrupt()
-    except Exception:
-        caseLogger.error("Feature extraction failed!", exc_info=True)
+        raise KeyboardInterrupt() from e
+    except Exception as e:
+        caseLogger.error(f"Feature extraction failed! : {e}", exc_info=True)
+        # log but do not raise exception
 
     return feature_vector
 

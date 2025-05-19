@@ -165,9 +165,7 @@ class CodedValue:
 
 
 class TID1500Metadata:
-
     def __init__(self, featuresDictFile, seriesDescription="Radiomics features"):
-
         self.featuresDict = self.readDictionary(featuresDictFile)
 
         self.m = {}
@@ -203,7 +201,6 @@ class TID1500Metadata:
     # returns None if prefix is not recognized, otherwise returns a tuple of
     # (measurementModifiers, derivationParameters)
     def prefix2codes(self, prefix):
-
         modifiers = []
         derivationParameters = []
 
@@ -340,9 +337,9 @@ class TID1500Metadata:
                 sys.exit()
         else:
             measurement["quantity"] = CodedValue(
-                featureTuple["IBSI_code"].values[0],
+                featureTuple["IBSI_code"].to_numpy()[0],
                 "IBSI",
-                featureTuple["IBSI_meaning"].values[0],
+                featureTuple["IBSI_meaning"].to_numpy()[0],
             ).getDict()
 
         try:

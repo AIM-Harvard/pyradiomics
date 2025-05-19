@@ -212,7 +212,7 @@ ignore = [
     "ISC001",   # Conflicts with formatter
     "T201",   # `print` found ## See https://docs.astral.sh/ruff/rules/print
 # ----- The following are suppressions to allow initial passing of ruff linting
-    "B008",   # Do not perform function call`CodedValue`
+    # "B008",   # Do not perform function call`CodedValue`
     "B904",   # Within an`except`clause,raise exceptions
     "C416",   # Unnecessary list comprehension(rewrite using`list()`)
     "E402",   # Module level import not at top

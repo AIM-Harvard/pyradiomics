@@ -48,7 +48,7 @@ def main():
         # the input cases
         flists = pd.read_csv(inputCSV).T
     except Exception:
-        logger.error("CSV READ FAILED", exc_info=True)
+        logger.exception("CSV READ FAILED")
         sys.exit(-1)
 
     logger.info("Loading Done")
@@ -102,7 +102,7 @@ def main():
                 )
                 featureVector = featureVector.append(result)
             except Exception:
-                logger.error("FEATURE EXTRACTION FAILED:", exc_info=True)
+                logger.exception("FEATURE EXTRACTION FAILED:")
 
             # To add the calculated features for this case to our data frame, the series must have a name (which will be the
             # name of the column.

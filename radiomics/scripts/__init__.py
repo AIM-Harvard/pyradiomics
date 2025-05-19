@@ -23,7 +23,6 @@ from . import segment, voxel
 
 
 class PyRadiomicsCommandLine:
-
     def __init__(self, custom_arguments=None):
         self.logger = logging.getLogger(
             "radiomics.script"
@@ -214,8 +213,7 @@ class PyRadiomicsCommandLine:
             metavar="N",
             default=None,
             type=int,
-            help="(DEPRECATED) Value of label in mask to use for\n"
-            "feature extraction.",
+            help="(DEPRECATED) Value of label in mask to use for\nfeature extraction.",
         )
 
         parser.add_argument(
@@ -248,7 +246,7 @@ class PyRadiomicsCommandLine:
             self.logger.info("Cancelling Extraction")
             return -1
         except Exception:
-            self.logger.error("Error extracting features!", exc_info=True)
+            self.logger.exception("Error extracting features!")
             return 3  # Unknown error
         finally:
             if self.queue_listener is not None:
@@ -345,7 +343,7 @@ class PyRadiomicsCommandLine:
                     except (KeyboardInterrupt, SystemExit):
                         raise
                     except Exception:
-                        self.logger.error("Parameter validation failed!", exc_info=True)
+                        self.logger.exception("Parameter validation failed!")
                         self.logger.debug(
                             "Validating case (%i/%i): %s",
                             case_idx,
@@ -693,8 +691,6 @@ def parse_args():
     try:
         return PyRadiomicsCommandLine().run()
     except Exception as e:
-        logging.getLogger().error(
-            "Error executing PyRadiomics command line!", exc_info=True
-        )
+        logging.getLogger().exception("Error executing PyRadiomics command line!")
         print(f"Error executing PyRadiomics command line!\n{e}")
         return 4

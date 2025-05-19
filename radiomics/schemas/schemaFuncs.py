@@ -8,7 +8,7 @@ featureClasses = getFeatureClasses()
 imageTypes = getImageTypes()
 
 
-def checkWavelet(value, rule_obj, path):
+def checkWavelet(value, _rule_obj, _path):
     if not isinstance(value, str):
         msg = "Wavelet not expected type (str)"
         raise TypeError(msg)
@@ -19,7 +19,7 @@ def checkWavelet(value, rule_obj, path):
     return True
 
 
-def checkInterpolator(value, rule_obj, path):
+def checkInterpolator(value, _rule_obj, _path):
     if value is None:
         return True
     if isinstance(value, str):
@@ -48,7 +48,7 @@ def checkInterpolator(value, rule_obj, path):
     return True
 
 
-def checkWeighting(value, rule_obj, path):
+def checkWeighting(value, _rule_obj, _path):
     if value is None:
         return True
     if isinstance(value, str):
@@ -62,7 +62,7 @@ def checkWeighting(value, rule_obj, path):
     return True
 
 
-def checkFeatureClass(value, rule_obj, path):
+def checkFeatureClass(value, _rule_obj, _path):
     if value is None:
         msg = "featureClass dictionary cannot be None value"
         raise TypeError(msg)
@@ -84,7 +84,7 @@ def checkFeatureClass(value, rule_obj, path):
     return True
 
 
-def checkImageType(value, rule_obj, path):
+def checkImageType(value, _rule_obj, _path):
     if value is None:
         msg = "imageType dictionary cannot be None value"
         raise TypeError(msg)

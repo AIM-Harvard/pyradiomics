@@ -154,7 +154,9 @@ class RadiomicsGLCM(base.RadiomicsFeaturesBase):
         # Optionally make GLCMs symmetrical for each angle
         if self.symmetricalGLCM:
             self.logger.debug("Create symmetrical matrix")
-            P_glcm = P_glcm + numpy.transpose(P_glcm, (0, 2, 1, 3))
+            # Since numpy 1.13.0, the result of ufunc for overlapping inputs is guaranteed.
+            # https://numpy.org/doc/stable/release/1.13.0-notes.html#ufunc-behavior-for-overlapping-inputs
+            P_glcm += numpy.transpose(P_glcm, (0, 2, 1, 3))
 
         # Optionally apply a weighting factor
         if self.weightingNorm is not None:

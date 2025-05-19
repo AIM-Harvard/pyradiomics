@@ -85,7 +85,8 @@ def writeSR(inputSEG, inputJSON, inputDICOMImageDir, outputSR):
         "--outputDICOM",
         outputSR,
     ]
-    scriptlogger.debug("Writing SR with: " + str(cmd))
+    msg = f"Writing SR with: {cmd!s}"
+    scriptlogger.debug(msg)
     call(cmd)
 
 
@@ -454,7 +455,8 @@ Support for DICOM Radiotherapy Structure Sets for defining region of interest ma
     if not tempDir:
         tempDir = tempfile.mkdtemp()
 
-    scriptlogger.info("Temporary directory: " + tempDir)
+    msg = f"Temporary directory: {tempDir}"
+    scriptlogger.info(msg)
 
     # convert input DICOM series into a scalar volume
     # plastimatch fails for prostate DWI Data! Need to report

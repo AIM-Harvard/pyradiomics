@@ -75,7 +75,8 @@ class TestFeatures:
         testMask = testUtils.getMask(featureName[0])
 
         if featureClass is None or testOrClassChanged:
-            logging.debug(f"Init {featureName[1]}")
+            msg = f"Init {featureName[1]}"
+            logging.debug(msg)
             featureClass = featureClasses[featureName[1]](
                 testImage, testMask, **testUtils.getSettings()
             )

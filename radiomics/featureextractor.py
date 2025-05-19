@@ -381,10 +381,10 @@ class RadiomicsFeatureExtractor:
 
         logger.debug("Extracting features")
         # Calculate features for all (filtered) images in the generator
-        for inputImage, imageTypeName, inputKwargs in imageGenerators:
+        for originputImage, imageTypeName, inputKwargs in imageGenerators:
             logger.info("Calculating features for %s image", imageTypeName)
             inputImage, inputMask = imageoperations.cropToTumorMask(
-                inputImage, mask, boundingBox, padDistance=kernelRadius
+                originputImage, mask, boundingBox, padDistance=kernelRadius
             )
             featureVector.update(
                 self.computeFeatures(

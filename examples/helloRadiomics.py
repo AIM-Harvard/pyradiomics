@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 
 import SimpleITK as sitk
 
@@ -18,7 +19,7 @@ if (
     imageName is None or maskName is None
 ):  # Something went wrong, in this case PyRadiomics will also log an error
     print("Error getting testcase!")
-    exit()
+    sys.exit()
 
 # Regulate verbosity with radiomics.verbosity (default verbosity level = WARNING)
 # radiomics.setVerbosity(logging.INFO)

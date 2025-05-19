@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 
 from testUtils import RadiomicsTestUtils
 
@@ -62,7 +63,7 @@ def main(argv=None):
             assert args.TestCase.lower().replace("_2d", "") in radiomics.testCases
         except AssertionError:
             logger.error("Input not valid, cancelling addTest!")
-            exit(1)
+            sys.exit(1)
 
         logger.debug("Initializing extractor")
         extractor = featureextractor.RadiomicsFeatureExtractor(args.Configuration)

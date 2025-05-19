@@ -305,9 +305,9 @@ class TID1500Metadata:
         return modifiers, derivationParameters
 
     # adds a single measurement to the last measurement group
-    def addMeasurement(
-        self, value, quantityCode, unitsCode=CodedValue("1", "UCUM", "no units")
-    ):
+    def addMeasurement(self, value, quantityCode, unitsCode=None):
+        if unitsCode is None:
+            unitsCode = CodedValue("1", "UCUM", "no units")
         if self.measurementGroupCount < 1:
             scriptlogger.error(
                 "Cannot add measurement - no measurement groups initialized!"

@@ -42,8 +42,8 @@ def getMask(mask, **kwargs):
         assert (
             label_channel < n_components
         ), f"Mask {label_channel} requested, but segmentation object only contains {n_components} objects"
-
-        logger.info(f"Extracting mask at index {label_channel}")
+        msg = f"Extracting mask at index {label_channel}"
+        logger.info(msg)
         selector = sitk.VectorIndexSelectionCastImageFilter()
         selector.SetIndex(int(label_channel))
         mask = selector.Execute(mask)
@@ -147,10 +147,8 @@ def getBinEdges(parameterValues, **kwargs):
                 binEdges[0] - 0.5,
                 binEdges[0] + 0.5,
             ]  # Simulates binEdges returned by numpy.histogram if bins = 1
-
-        logger.debug(
-            f"Calculated {len(binEdges) - 1} bins for bin width {binWidth} with edges: {binEdges})"
-        )
+        msg = f"Calculated {len(binEdges) - 1} bins for bin width {binWidth} with edges: {binEdges})"
+        logger.debug(msg)
 
     return binEdges  # numpy.histogram(parameterValues, bins=binedges)
 
@@ -236,7 +234,8 @@ def checkMask(imageNode, maskNode, **kwargs):
     minDims = kwargs.get("minimumROIDimensions", 2)
     minSize = kwargs.get("minimumROISize")
 
-    logger.debug(f"Checking mask with label {label}")
+    msg = f"Checking mask with label {label}"
+    logger.debug(msg)
     logger.debug("Calculating bounding box")
     # Determine bounds
     lsif = sitk.LabelStatisticsImageFilter()
@@ -290,7 +289,8 @@ def checkMask(imageNode, maskNode, **kwargs):
     # LBound and UBound of the bounding box, as (L_X, U_X, L_Y, U_Y, L_Z, U_Z)
     boundingBox = np.array(lsif.GetBoundingBox(label))
 
-    logger.debug(f"Checking minimum number of dimensions requirements ({minDims})")
+    msg = f"Checking minimum number of dimensions requirements ({minDims})"
+    logger.debug(msg)
     ndims = np.sum(
         (boundingBox[1::2] - boundingBox[0::2] + 1) > 1
     )  # UBound - LBound + 1 = Size
@@ -302,7 +302,8 @@ def checkMask(imageNode, maskNode, **kwargs):
         raise ValueError(msg)
 
     if minSize is not None:
-        logger.debug(f"Checking minimum size requirements (minimum size: {minSize})")
+        msg = f"Checking minimum size requirements (minimum size: {minSize})"
+        logger.debug(msg)
         roiSize = lsif.GetCount(label)
         if roiSize <= minSize:
             msg = f"Size of the ROI is too small (minimum size: {minSize:g}, ROI size: {roiSize:g}"
@@ -357,7 +358,8 @@ def _checkROI(imageNode, maskNode, **kwargs):
     lssif = sitk.LabelShapeStatisticsImageFilter()
     lssif.Execute(maskNode)
 
-    logger.debug(f"Checking if label {label} is persistent in the mask")
+    msg = f"Checking if label {label} is persistent in the mask"
+    logger.debug(msg)
     if label not in lssif.GetLabels():
         msg = f"Label ({label}) not present in mask"
         raise ValueError(msg)
@@ -382,7 +384,8 @@ def _checkROI(imageNode, maskNode, **kwargs):
         imageNode.TransformPhysicalPointToContinuousIndex(ROIBounds[1]),
     )
 
-    logger.debug(f"ROI bounds (image coordinate space): {ROIBounds}")
+    msg = f"ROI bounds (image coordinate space): {ROIBounds}"
+    logger.debug(msg)
 
     # Check if any of the ROI bounds are outside the image indices (i.e. -0.5 < ROI < Im.Size -0.5)
     # The additional 0.5 is to allow for different spacings (defines the edges, not the centers of the edge-voxels
@@ -426,7 +429,8 @@ def cropToTumorMask(imageNode, maskNode, boundingBox, **kwargs):
     ijkMaxBounds = np.maximum(ijkMaxBounds, 0)
 
     # Crop Image
-    logger.debug(f"Cropping to size {(boundingBox[1::2] - boundingBox[0::2]) + 1}")
+    msg = f"Cropping to size {(boundingBox[1::2] - boundingBox[0::2]) + 1}"
+    logger.debug(msg)
     cif = sitk.CropImageFilter()
     try:
         cif.SetLowerBoundaryCropSize(ijkMinBounds)
@@ -577,18 +581,15 @@ def resampleImage(imageNode, maskNode, **kwargs):
     maskPixelType = maskNode.GetPixelID()
 
     direction = np.array(maskNode.GetDirection())
-
-    logger.info(
-        f"Applying resampling from spacing {maskSpacing} and size {maskSize} to spacing {resampledPixelSpacing} and size {newSize}"
-    )
+    msg = f"Applying resampling from spacing {maskSpacing} and size {maskSize} to spacing {resampledPixelSpacing} and size {newSize}"
+    logger.info(msg)
 
     try:
         if isinstance(interpolator, str):
             interpolator = getattr(sitk, interpolator)
     except Exception:
-        logger.warning(
-            f'interpolator "{interpolator}" not recognized, using sitkBSpline'
-        )
+        msg = f'interpolator "{interpolator}" not recognized, using sitkBSpline'
+        logger.warning(msg)
         interpolator = sitk.sitkBSpline
 
     rif = sitk.ResampleImageFilter()
@@ -632,11 +633,13 @@ def normalizeImage(image, **kwargs):
     scale = kwargs.get("normalizeScale", 1)
     outliers = kwargs.get("removeOutliers")
 
-    logger.debug(f"Normalizing image with scale {scale}")
+    msg = f"Normalizing image with scale {scale}"
+    logger.debug(msg)
     image = sitk.Normalize(image)
 
     if outliers is not None:
-        logger.debug(f"Removing outliers > {outliers} standard deviations")
+        msg = f"Removing outliers > {outliers} standard deviations"
+        logger.debug(msg)
         imageArr = sitk.GetArrayFromImage(image)
 
         imageArr[imageArr > outliers] = outliers
@@ -681,7 +684,8 @@ def resegmentMask(imageNode, maskNode, **kwargs):
         msg = f"Length {len(resegmentRange)} is not allowed for resegmentRange"
         raise ValueError(msg)
 
-    logger.debug(f"Resegmenting mask (range {resegmentRange}, mode {resegmentMode})")
+    msg = f"Resegmenting mask (range {resegmentRange}, mode {resegmentMode})"
+    logger.debug(msg)
 
     im_arr = sitk.GetArrayFromImage(imageNode)
     ma_arr = sitk.GetArrayFromImage(maskNode) == label  # boolean array
@@ -693,24 +697,28 @@ def resegmentMask(imageNode, maskNode, **kwargs):
         thresholds = sorted(resegmentRange)
     elif resegmentMode == "relative":
         max_gl = np.max(im_arr[ma_arr])
-        logger.debug(f"Resegmenting in relative mode, max {max_gl}")
+        msg = f"Resegmenting in relative mode, max {max_gl}"
+        logger.debug(msg)
         thresholds = [max_gl * th for th in sorted(resegmentRange)]
     elif resegmentMode == "sigma":
         mean_gl = np.mean(im_arr[ma_arr])
         sd_gl = np.std(im_arr[ma_arr])
-        logger.debug(f"Resegmenting in sigma mode, mean {mean_gl}, std {sd_gl}")
+        msg = f"Resegmenting in sigma mode, mean {mean_gl}, std {sd_gl}"
+        logger.debug(msg)
         thresholds = [mean_gl + sd_gl * th for th in sorted(resegmentRange)]
     else:
         msg = f"Resegment mode {resegmentMode} not recognized."
         raise ValueError(msg)
 
     # Apply lower threshold
-    logger.debug(f"Applying lower threshold ({thresholds[0]})")
+    msg = f"Applying lower threshold ({thresholds[0]})"
+    logger.debug(msg)
     ma_arr[ma_arr] = im_arr[ma_arr] >= thresholds[0]
 
     # If 2 thresholds are defined, also apply an upper threshold
     if len(thresholds) == 2:
-        logger.debug(f"Applying upper threshold ({thresholds[1]})")
+        msg = f"Applying upper threshold ({thresholds[1]})"
+        logger.debug(msg)
         ma_arr[ma_arr] = im_arr[ma_arr] <= thresholds[1]
 
     roiSize = np.sum(ma_arr)
@@ -728,9 +736,8 @@ def resegmentMask(imageNode, maskNode, **kwargs):
 
     newMask = sitk.GetImageFromArray(newMask_arr)
     newMask.CopyInformation(maskNode)
-    logger.debug(
-        f"Resegmentation complete, new size: {roiSize} voxels (excluded {oldSize - roiSize} voxels)"
-    )
+    msg = f"Resegmentation complete, new size: {roiSize} voxels (excluded {oldSize - roiSize} voxels)"
+    logger.debug(msg)
 
     return newMask
 
@@ -802,13 +809,15 @@ def getLoGImage(inputImage, inputMask, **kwargs):
     spacing = np.array(inputImage.GetSpacing())
 
     if np.min(size) < 4:
-        logger.warning(f"Image too small to apply LoG filter, size: {size}")
+        msg = f"Image too small to apply LoG filter, size: {size}"
+        logger.warning(msg)
         return
 
     sigmaValues = kwargs.get("sigma", [])
 
     for sigma in sigmaValues:
-        logger.info(f"Computing LoG with sigma {sigma}")
+        msg = f"Computing LoG with sigma {sigma}"
+        logger.info(msg)
 
         if sigma > 0.0:
             if np.all(size >= np.ceil(sigma / spacing) + 1):
@@ -816,14 +825,15 @@ def getLoGImage(inputImage, inputMask, **kwargs):
                 lrgif.SetNormalizeAcrossScale(True)
                 lrgif.SetSigma(sigma)
                 inputImageName = f"log-sigma-{str(sigma).replace('.', '-')}-mm-3D"
-                logger.debug(f"Yielding {inputImageName} image")
+                msg = f"Yielding {inputImageName} image"
+                logger.debug(msg)
                 yield lrgif.Execute(inputImage), inputImageName, kwargs
             else:
-                logger.warning(
-                    f"applyLoG: sigma({sigma})/spacing({spacing}) + 1 must be greater than the size({size}) of the inputImage"
-                )
+                msg = f"applyLoG: sigma({sigma})/spacing({spacing}) + 1 must be greater than the size({size}) of the inputImage"
+                logger.warning(msg)
         else:
-            logger.warning(f"applyLoG: sigma must be greater than 0.0: {sigma}")
+            msg = f"applyLoG: sigma must be greater than 0.0: {sigma}"
+            logger.warning(msg)
 
 
 def getWaveletImage(inputImage, inputMask, **kwargs):
@@ -866,20 +876,23 @@ def getWaveletImage(inputImage, inputMask, **kwargs):
 
     for idx, wl in enumerate(ret, start=1):
         for decompositionName, decompositionImage in wl.items():
-            logger.info(f"Computing Wavelet {decompositionName}")
+            msg = f"Computing Wavelet {decompositionName}"
+            logger.info(msg)
 
             if idx == 1:
                 inputImageName = f"wavelet-{decompositionName}"
             else:
                 inputImageName = f"wavelet{idx}-{decompositionName}"
-            logger.debug(f"Yielding {inputImageName} image")
+            msg = f"Yielding {inputImageName} image"
+            logger.debug(msg)
             yield decompositionImage, inputImageName, kwargs
 
     if len(ret) == 1:
         inputImageName = f"wavelet-{'L' * len(axes)}"
     else:
         inputImageName = f"wavelet{len(ret)}-{'L' * len(axes)}"
-    logger.debug(f"Yielding approximation ({inputImageName}) image")
+    msg = f"Yielding approximation ({inputImageName}) image"
+    logger.debug(msg)
     yield approx, inputImageName, kwargs
 
 
@@ -1183,9 +1196,8 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
     """
     Nd = inputImage.GetDimension()
     if Nd != 3:
-        logger.warning(
-            f"LBP 3D only available for 3 dimensional images, found {Nd} dimensions"
-        )
+        msg = f"LBP 3D only available for 3 dimensional images, found {Nd} dimensions"
+        logger.warning(msg)
         return
 
     try:
@@ -1194,9 +1206,8 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
         from scipy.stats import kurtosis
         from trimesh.creation import icosphere
     except ImportError:
-        logger.warning(
-            'Could not load required package "scipy" or "trimesh", cannot implement filter LBP 3D'
-        )
+        msg = 'Could not load required package "scipy" or "trimesh", cannot implement filter LBP 3D'
+        logger.warning(msg)
         return
 
     # Warn the user if features are extracted in 2D, as this function calculates LBP in 3D

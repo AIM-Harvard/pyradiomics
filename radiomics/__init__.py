@@ -1,13 +1,12 @@
 # into the "pyradiomics" namespace
 from __future__ import annotations
 
-import inspect
 import logging
 import os
-import pkgutil
-import sys
 import tempfile
+import threading
 import urllib.request
+from typing import Any, Callable
 
 from . import imageoperations
 from ._version import version as __version__
@@ -62,6 +61,46 @@ def setVerbosity(level):
         logger.setLevel(level)
 
 
+class _SingletonFeatureClasses:
+    _instance = None
+    _initialized = False
+    _lock = threading.Lock()
+
+    def __new__(cls, *_args, **_kwargs):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if not self._initialized:
+            with self._lock:
+                if not self._initialized:
+                    import inspect
+                    import pkgutil
+                    import sys
+
+                    self._featureClasses = {}
+                    for _, mod, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
+                        if str(mod).startswith(
+                            "_"
+                        ):  # Skip loading of 'private' classes, these don't contain feature classes
+                            continue
+                        __import__("radiomics." + mod)
+                        module = sys.modules["radiomics." + mod]
+                        attributes = inspect.getmembers(module, inspect.isclass)
+                        for a in attributes:
+                            if a[0].startswith("Radiomics"):
+                                for parentClass in inspect.getmro(a[1])[
+                                    1:
+                                ]:  # only include classes that inherit from RadiomicsFeaturesBase
+                                    if parentClass.__name__ == "RadiomicsFeaturesBase":
+                                        self._featureClasses[mod] = a[1]
+                                        break
+                    _SingletonFeatureClasses._initialized = True
+
+
 def getFeatureClasses():
     """
     Iterates over all modules of the radiomics package using pkgutil and subsequently imports those modules.
@@ -75,29 +114,31 @@ def getFeatureClasses():
     This iteration only runs once (at initialization of toolbox), subsequent calls return the dictionary created by the
     first call.
     """
-    global _featureClasses
-    if (
-        _featureClasses is None
-    ):  # On first call, enumerate possible feature classes and import PyRadiomics modules
-        _featureClasses = {}
-        for _, mod, _ in pkgutil.iter_modules([os.path.dirname(__file__)]):
-            if str(mod).startswith(
-                "_"
-            ):  # Skip loading of 'private' classes, these don't contain feature classes
-                continue
-            __import__("radiomics." + mod)
-            module = sys.modules["radiomics." + mod]
-            attributes = inspect.getmembers(module, inspect.isclass)
-            for a in attributes:
-                if a[0].startswith("Radiomics"):
-                    for parentClass in inspect.getmro(a[1])[
-                        1:
-                    ]:  # only include classes that inherit from RadiomicsFeaturesBase
-                        if parentClass.__name__ == "RadiomicsFeaturesBase":
-                            _featureClasses[mod] = a[1]
-                            break
+    return _SingletonFeatureClasses()._featureClasses
 
-    return _featureClasses
+
+class _SingletonImageTypes:
+    _instance = None
+    _initialized = False
+    _lock = threading.Lock()
+
+    def __new__(cls, *_args, **_kwargs):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if not self._initialized:
+            with self._lock:
+                if not self._initialized:
+                    self._imageTypes = [
+                        member[3:-5]
+                        for member in dir(imageoperations)
+                        if member.startswith("get") and member.endswith("Image")
+                    ]
+                    _SingletonImageTypes._initialized = True
 
 
 def getImageTypes():
@@ -110,17 +151,7 @@ def getImageTypes():
     This iteration only occurs once, at initialization of the toolbox. Found results are stored and returned on subsequent
     calls.
     """
-    global _imageTypes
-    if (
-        _imageTypes is None
-    ):  # On first cal, enumerate possible input image types (original and any filters)
-        _imageTypes = [
-            member[3:-5]
-            for member in dir(imageoperations)
-            if member.startswith("get") and member.endswith("Image")
-        ]
-
-    return _imageTypes
+    return _SingletonImageTypes()._imageTypes
 
 
 def getTestCase(testCase, dataDirectory=None):
@@ -279,7 +310,7 @@ def getProgressReporter(*args, **kwargs):
     return _DummyProgressReporter(*args, **kwargs)
 
 
-progressReporter = None
+progressReporter: Callable[[Any, Any], None] | None = None
 
 # 1. Set up logging
 debugging = True
@@ -331,11 +362,7 @@ except ImportError as e:
         raise e
 
 # 4. Enumerate implemented feature classes and input image types available in PyRadiomics
-_featureClasses = None
-_imageTypes = None
-getFeatureClasses()
-getImageTypes()
 
 # 5. Set the version dynamically using setuptools-scm
 
-__all__ = ["__version__", "cMatrices", "cShape"]
+__all__ = ["__version__", "cMatrices", "cShape", "getImageTypes"]

@@ -33,7 +33,6 @@ NUM_OF_WORKERS = (
 
 # in case only one processor is available, ensure that it is used
 NUM_OF_WORKERS = max(NUM_OF_WORKERS, 1)
-HEADERS = None  # headers of all extracted features
 
 # Assumes the input CSV has at least 2 columns: "Image" and "Mask"
 # These columns indicate the location of the image file and mask file, respectively
@@ -158,25 +157,25 @@ def run(case):
     return feature_vector
 
 
-def _writeResults(featureVector):
-    global HEADERS
-
-    # Use the lock to prevent write access conflicts
-    try:
-        with open(OUTPUTCSV, "a") as outputFile:
-            writer = csv.writer(outputFile, lineterminator="\n")
-            if HEADERS is None:
-                HEADERS = list(featureVector.keys())
-                writer.writerow(HEADERS)
-
-            row = []
-            for h in HEADERS:
-                row.append(featureVector.get(h, "N/A"))
-            writer.writerow(row)
-    except Exception:
-        logging.getLogger("radiomics.batch").error(
-            "Error writing the results!", exc_info=True
-        )
+# def _writeResults(featureVector):
+#     HEADERS = None  # headers of all extracted features
+#
+#     # Use the lock to prevent write access conflicts
+#     try:
+#         with open(OUTPUTCSV, "a") as outputFile:
+#             writer = csv.writer(outputFile, lineterminator="\n")
+#             if HEADERS is None:
+#                 HEADERS = list(featureVector.keys())
+#                 writer.writerow(HEADERS)
+#
+#             row = []
+#             for h in HEADERS:
+#                 row.append(featureVector.get(h, "N/A"))
+#             writer.writerow(row)
+#     except Exception:
+#         logging.getLogger("radiomics.batch").error(
+#             "Error writing the results!", exc_info=True
+#         )
 
 
 if __name__ == "__main__":

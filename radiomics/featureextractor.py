@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import pathlib
+import threading
 from itertools import chain
 
 import pykwalify.core
@@ -19,7 +20,26 @@ from radiomics import (
 )
 
 logger = logging.getLogger(__name__)
-geometryTolerance = None
+
+
+class _SingletonGeometryTolerance:
+    _instance = None
+    _initialized = False
+    _lock = threading.Lock()
+
+    def __new__(cls, *_args, **_kwargs):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, tolerance=None):
+        if not self._initialized:
+            with self._lock:
+                if not self._initialized:
+                    self.geometryTolerance = tolerance
+                    _SingletonGeometryTolerance._initialized = True
 
 
 class RadiomicsFeatureExtractor:
@@ -48,7 +68,6 @@ class RadiomicsFeatureExtractor:
     """
 
     def __init__(self, *args, **kwargs):
-
         self.settings = {}
         self.enabledImagetypes = {}
         self.enabledFeatures = {}
@@ -93,12 +112,18 @@ class RadiomicsFeatureExtractor:
         self._setTolerance()
 
     def _setTolerance(self):
-        global geometryTolerance
-        geometryTolerance = self.settings.get("geometryTolerance")
-        if geometryTolerance is not None:
-            logger.debug("Setting SimpleITK tolerance to %s", geometryTolerance)
-            sitk.ProcessObject.SetGlobalDefaultCoordinateTolerance(geometryTolerance)
-            sitk.ProcessObject.SetGlobalDefaultDirectionTolerance(geometryTolerance)
+        _SingletonGeometryTolerance(self.settings.get("geometryTolerance"))
+        if _SingletonGeometryTolerance().geometryTolerance is not None:
+            logger.debug(
+                "Setting SimpleITK tolerance to %s",
+                _SingletonGeometryTolerance().geometryTolerance,
+            )
+            sitk.ProcessObject.SetGlobalDefaultCoordinateTolerance(
+                _SingletonGeometryTolerance().geometryTolerance
+            )
+            sitk.ProcessObject.SetGlobalDefaultDirectionTolerance(
+                _SingletonGeometryTolerance().geometryTolerance
+            )
 
     def addProvenance(self, provenance_on=True):
         """
@@ -264,7 +289,7 @@ class RadiomicsFeatureExtractor:
         if label_channel is not None:
             _settings["label_channel"] = label_channel
 
-        if geometryTolerance != tolerance:
+        if _SingletonGeometryTolerance().geometryTolerance != tolerance:
             self._setTolerance()
 
         if additionalInfo:

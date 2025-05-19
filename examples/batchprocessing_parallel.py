@@ -207,7 +207,7 @@ if __name__ == "__main__":
                 cases.append(row)
 
     except Exception:
-        logger.error("CSV READ FAILED", exc_info=True)
+        logger.exception("CSV READ FAILED")
 
     logger.info("Loaded %d jobs", len(cases))
 
@@ -250,4 +250,4 @@ if __name__ == "__main__":
             )
             shutil.rmtree(os.path.join(ROOT, TEMP_DIR))
     except Exception:
-        logger.error("Error storing results into single file!", exc_info=True)
+        logger.exception("Error storing results into single file!")

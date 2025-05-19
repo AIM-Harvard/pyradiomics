@@ -35,7 +35,7 @@ def main(argv=None):
         "TestCase",
         type=str,
         choices=testcases,
-        help="Test image and segmentation to " "use in the new test",
+        help="Test image and segmentation to use in the new test",
     )
     parser.add_argument(
         "Configuration",
@@ -56,7 +56,6 @@ def main(argv=None):
     logger.info("Input accepted, starting addTest...")
 
     try:
-
         testutils = RadiomicsTestUtils()
 
         try:
@@ -90,7 +89,7 @@ def main(argv=None):
         logger.info("addTest Done")
 
     except Exception:
-        logger.error("Error running addTest!", exc_info=True)
+        logger.exception("Error running addTest!")
 
 
 if __name__ == "__main__":

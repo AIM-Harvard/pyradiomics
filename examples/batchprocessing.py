@@ -46,7 +46,7 @@ def main():
             cr = csv.DictReader(inFile, lineterminator="\n")
             flists = list(cr)
     except Exception:
-        logger.error("CSV READ FAILED", exc_info=True)
+        logger.exception("CSV READ FAILED")
 
     logger.info("Loading Done")
     logger.info("Patients: %d", len(flists))
@@ -70,7 +70,6 @@ def main():
     headers = None
 
     for idx, entry in enumerate(flists, start=1):
-
         logger.info(
             "(%d/%d) Processing Patient (Image: %s, Mask: %s)",
             idx,
@@ -106,7 +105,7 @@ def main():
                         row.append(featureVector.get(h, "N/A"))
                     writer.writerow(row)
             except Exception:
-                logger.error("FEATURE EXTRACTION FAILED", exc_info=True)
+                logger.exception("FEATURE EXTRACTION FAILED")
 
 
 if __name__ == "__main__":

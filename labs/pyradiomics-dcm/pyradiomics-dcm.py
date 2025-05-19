@@ -537,9 +537,8 @@ Support for DICOM Radiotherapy Structure Sets for defining region of interest ma
             )
 
         except Exception:
-            scriptlogger.error(
-                "Initialization of the pyradimics feature extraction failed.",
-                exc_info=True,
+            scriptlogger.exception(
+                "Initialization of the pyradimics feature extraction failed."
             )
             return -1
 

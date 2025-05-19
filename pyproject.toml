@@ -234,7 +234,7 @@ ignore = [
     # "G002",   # Logging statementuses`%`
     # "G003",   # Logging statementuses`+`
     # "G004", # Logging statement uses f-string
-    "G201",   # Logging `.exception(...)`shouldbeusedinstead
+    # "G201",   # Logging `.exception(...)`shouldbeusedinstead
     # Unused method arguments require manual interventions
     "ARG001", # Unused function argument: `param_num`
     "ARG002",   # Unused methodargument:`total`

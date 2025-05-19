@@ -208,12 +208,12 @@ Using feature classes directly
 
 * See the :ref:`radiomics-features-label` section for more features that you can calculate.
 
-------------------------------
+--------------------------------
 Additional points for attention
-------------------------------
+--------------------------------
 
 Code style
-**********
+***********
 
 To keep the PyRadiomics code consistent and as readable as possible, some style rules are enforced. These are part of
 the continuous testing and implemented using flake8. See also the ``.flake8`` configuration file in the root of the
@@ -226,7 +226,7 @@ consistent with the python style for marking them as 'private', and will automat
 documentation.
 
 Documentation
-*************
+**************
 
 The documentation of PyRadiomics is auto-generated from static files contained in the ``docs`` folder and the docstrings
 of the Python code files. When a new feature class is added, this has to be added to the static file (``features.rst``)

@@ -225,7 +225,7 @@ ignore = [
     # "EXE001",   # Shebang is present but file is not executable
     # "F401",   # `pykwalify.compat.yaml` imported but unused
     # "PD011",   # Use `.to_numpy()`insteadof`.values`
-    "PIE810",   # Call `ends with` once with a`tuple`
+    # "PIE810",   # Call `ends with` once with a`tuple`
     "PLR1722",   # Use `sys.exit()`insteadof`exit`
     "PLR1730",   # Replace `if`statementwith`level=
     "PLW0603", # Using the global statement to update `featureClass` is discouraged

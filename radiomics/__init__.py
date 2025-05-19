@@ -318,7 +318,8 @@ try:
     from radiomics import _cshape as cShape
 except ImportError as e:
     if os.path.isdir(os.path.join(os.path.dirname(__file__), "..", "data")):
-        # It looks like PyRadiomics is run from source (in which case "setup.py develop" must have been run)
+        # It looks like PyRadiomics is run from source
+        # (in which case "pip install -e ".[dev,docs,test]" must have been run)
         msg = (
             "Apparently running from root, but unable to load C extensions... "
             'Did you run "pip install -e ".[dev,docs,test]"?'

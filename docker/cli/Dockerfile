@@ -107,7 +107,7 @@ WORKDIR /usr/src
 ADD . /usr/src/pyradiomics
 RUN cd pyradiomics && \
     pip3 install --no-cache-dir -r requirements.txt && \
-    python3 setup.py install && \
+    python3 -m pip install . && \
     cd .. && rm -rf pyradiomics
 
 WORKDIR /usr/src

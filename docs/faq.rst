@@ -354,7 +354,7 @@ the source code directly (i.e. runs in development mode). You can check this by 
 field, which will be something like ``['radiomics']`` when it is running in development mode and
 ``['path/to/python/Lib/site-packages']`` when running from the installed folder. If running in development mode, the C
 extensions are not available by default. To make them available in development mode, run
-``python setup.py build_ext --inplace`` from the commandline, which is similar to the ``install`` command, but just
+``python3 -m pip install .`` from the commandline, which is similar to the ``install`` command, but just
 compiles the C extensions end copies them to the source folder (making them available when running from the source tree).
 
 Miscellaneous

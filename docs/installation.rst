@@ -54,12 +54,11 @@ of texture matrices and some shape features.
 * For unix like systems (MacOSX, linux)::
 
       cd pyradiomics
-      python -m pip install -r requirements.txt
-      python setup.py install
+      python -m pip install .
 
   * To use your build for interactive use and development::
 
-      python setup.py build_ext --inplace
+      python -m pip install -e ".[dev,test,docs]"
 
   * If you don't have sudo/admin rights on your machine, you need to locally install numpy, nose, tqdm, PyWavelets, SimpleITK (specified in requirements.txt).
     In a bash shell::
@@ -72,8 +71,7 @@ of texture matrices and some shape features.
 * For Windows::
 
     cd pyradiomics
-    python -m pip install -r requirements.txt
-    python setup.py install
+    python install .
 
 * If the installation fails, check out the :ref:`radiomics-faq-label`. If your error is not listed there,
   contact us by `creating an issue <https://github.com/Radiomics/pyradiomics/issues/new>`_ on the PyRadiomics

@@ -118,7 +118,8 @@ tqdmProgressbar()
 # clickProgressbar()
 
 print("Active features:")
-for cls, features in extractor.enabledFeatures.items():
+for cls, orig_features in extractor.enabledFeatures.items():
+    features = orig_features
     if features is None or len(features) == 0:
         features = [
             f

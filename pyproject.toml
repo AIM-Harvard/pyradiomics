@@ -229,7 +229,7 @@ ignore = [
     # "PLR1722",   # Use `sys.exit()`insteadof`exit`
     # "PLR1730",   # Replace `if`statementwith`level=
     # "PLW0603", # Using the global statement to update `featureClass` is discouraged
-    "PLW2901",   # `for` loopvariable`features`overwrittenby
+    # "PLW2901",   # `for` loop variable` features` overwritten by
     # Logging fixes likely need manual work, and need 'msg' variables created
     "G002",   # Logging statementuses`%`
     "G003",   # Logging statementuses`+`

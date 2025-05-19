@@ -12,7 +12,26 @@ import SimpleITK as sitk
 import radiomics
 
 caseLogger = logging.getLogger("radiomics.script")
-_parallel_extraction_configured = False
+
+
+class _SingletonSegmentParallelExtractionConfig:
+    _instance = None
+    _initialized = False
+    _lock = threading.Lock()
+
+    def __new__(cls, *_args, **_kwargs):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, configured=False):
+        if not self._initialized:
+            with self._lock:
+                if not self._initialized:
+                    self.parallel_extraction_configured = configured
+                    _SingletonSegmentParallelExtractionConfig._initialized = True
 
 
 def extractSegment(case_idx, case, extractor, **kwargs):
@@ -109,8 +128,7 @@ def _configureParallelExtraction(logging_config, add_info_filter=True):
     Initialize logging for parallel extraction. This needs to be done here, as it needs to be done for each thread that is
     created.
     """
-    global _parallel_extraction_configured
-    if _parallel_extraction_configured:
+    if _SingletonSegmentParallelExtractionConfig().parallel_extraction_configured:
         return
 
     # Configure logging
@@ -142,5 +160,5 @@ def _configureParallelExtraction(logging_config, add_info_filter=True):
 
     sitk.ProcessObject_SetGlobalDefaultNumberOfThreads(1)
 
-    _parallel_extraction_configured = True
+    _SingletonSegmentParallelExtractionConfig().parallel_extraction_configured = True
     radiomics.logger.debug("parallel extraction configured")

@@ -10,7 +10,6 @@ from radiomics import getFeatureClasses
 testUtils = RadiomicsTestUtils()
 tests = sorted(testUtils.getTests())
 
-featureClass = None
 featureClasses = getFeatureClasses()
 
 
@@ -19,7 +18,6 @@ def pytest_generate_tests(metafunc):
 
 
 class TestFeatures:
-
     @staticmethod
     def generate_scenarios():
         for test in tests:
@@ -58,7 +56,7 @@ class TestFeatures:
 
     def test_scenario(self, testCase, featureName):
         print("")
-        global featureClass
+        featureClass = None
 
         featureName = featureName.split("_")
 

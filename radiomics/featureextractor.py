@@ -60,7 +60,8 @@ class RadiomicsFeatureExtractor:
             self._applyParams(paramsDict=args[0])
         elif len(args) == 1 and (isinstance(args[0], (str, pathlib.PurePath))):
             if not os.path.isfile(args[0]):
-                raise OSError(f"Parameter file {args[0]} does not exist.")
+                msg = f"Parameter file {args[0]} does not exist."
+                raise OSError(msg)
             logger.info("Loading parameter file %s", str(args[0]))
             self._applyParams(paramsFile=args[0])
         else:

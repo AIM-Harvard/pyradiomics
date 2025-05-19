@@ -95,7 +95,8 @@ class RadiomicsTestUtils:
         containing the feature names (without image type and feature class specifiers, i.e. just the feature name).
         """
         if className not in self._baseline:
-            raise AssertionError(f"No baseline available for class {className}.")
+            msg = f"No baseline available for class {className}."
+            raise AssertionError(msg)
         return self._baseline[className].getTestFeatures(test)
 
     def setFeatureClassAndTestCase(self, className, test):

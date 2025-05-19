@@ -56,9 +56,10 @@ def getMask(mask, **kwargs):
         msg = "No labels found in this mask (i.e. nothing is segmented)!"
         raise ValueError(msg)
     if label not in labels:
-        raise ValueError(
+        msg = (
             f"Label ({label:g}) not present in mask. Choose from {labels[labels != 0]}"
         )
+        raise ValueError(msg)
 
     return mask
 
@@ -245,7 +246,8 @@ def checkMask(imageNode, maskNode, **kwargs):
         # If lsif fails, and mask is corrected, it includes a check whether the label is present. Therefore, perform
         # this test here only if lsif does not fail on the first attempt.
         if label not in lsif.GetLabels():
-            raise ValueError(f"Label ({label:g}) not present in mask")
+            msg = f"Label ({label:g}) not present in mask"
+            raise ValueError(msg)
     except RuntimeError as e:
         # If correctMask = True, try to resample the mask to the image geometry, otherwise return None ("fail")
         if not kwargs.get("correctMask", False):
@@ -296,9 +298,8 @@ def checkMask(imageNode, maskNode, **kwargs):
         msg = "mask only contains 1 segmented voxel! Cannot extract features for a single voxel."
         raise ValueError(msg)
     if ndims < minDims:
-        raise ValueError(
-            f"mask has too few dimensions (number of dimensions {ndims}, minimum required {minDims})"
-        )
+        msg = f"mask has too few dimensions (number of dimensions {ndims}, minimum required {minDims})"
+        raise ValueError(msg)
 
     if minSize is not None:
         logger.debug(f"Checking minimum size requirements (minimum size: {minSize})")
@@ -358,7 +359,8 @@ def _checkROI(imageNode, maskNode, **kwargs):
 
     logger.debug(f"Checking if label {label} is persistent in the mask")
     if label not in lssif.GetLabels():
-        raise ValueError(f"Label ({label}) not present in mask")
+        msg = f"Label ({label}) not present in mask"
+        raise ValueError(msg)
 
     # LBound and size of the bounding box, as (L_X, L_Y, [L_Z], S_X, S_Y, [S_Z])
     bb = np.array(lssif.GetBoundingBox(label))
@@ -676,9 +678,8 @@ def resegmentMask(imageNode, maskNode, **kwargs):
         msg = "resegmentRange is None."
         raise ValueError(msg)
     if len(resegmentRange) == 0 or len(resegmentRange) > 2:
-        raise ValueError(
-            f"Length {len(resegmentRange)} is not allowed for resegmentRange"
-        )
+        msg = f"Length {len(resegmentRange)} is not allowed for resegmentRange"
+        raise ValueError(msg)
 
     logger.debug(f"Resegmenting mask (range {resegmentRange}, mode {resegmentMode})")
 
@@ -700,7 +701,8 @@ def resegmentMask(imageNode, maskNode, **kwargs):
         logger.debug(f"Resegmenting in sigma mode, mean {mean_gl}, std {sd_gl}")
         thresholds = [mean_gl + sd_gl * th for th in sorted(resegmentRange)]
     else:
-        raise ValueError(f"Resegment mode {resegmentMode} not recognized.")
+        msg = f"Resegment mode {resegmentMode} not recognized."
+        raise ValueError(msg)
 
     # Apply lower threshold
     logger.debug(f"Applying lower threshold ({thresholds[0]})")
@@ -714,10 +716,11 @@ def resegmentMask(imageNode, maskNode, **kwargs):
     roiSize = np.sum(ma_arr)
 
     if roiSize <= 1:
-        raise ValueError(
+        msg = (
             f"Resegmentation excluded too many voxels with label {label} "
             f"(retained {roiSize} voxel(s))! Cannot extract features"
         )
+        raise ValueError(msg)
 
     # Transform the boolean array back to an image with the correct voxels set to the label value
     newMask_arr = np.zeros(ma_arr.shape, dtype="int")

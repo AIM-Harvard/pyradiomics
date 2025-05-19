@@ -15,8 +15,6 @@ from __future__ import annotations
 import os
 import sys
 
-import sphinx_rtd_theme
-
 import radiomics
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -74,7 +72,7 @@ release = radiomics.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -127,7 +125,7 @@ html_theme = "sphinx_rtd_theme"
 # html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+# html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.

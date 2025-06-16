@@ -52,7 +52,7 @@ jobs:
       # Used to host cibuildwheel
       - uses: actions/setup-python@v5
 
-      - uses: pypa/cibuildwheel@v2.23
+      - uses: pypa/cibuildwheel@v3.0
       #- name: Install cibuildwheel
       #  run: python -m pip install cibuildwheel==2.23.3
 
@@ -87,7 +87,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2.3.0
+        uses: actions/attest-build-provenance@v2.4.0
         with:
           subject-path: "dist/*"
 

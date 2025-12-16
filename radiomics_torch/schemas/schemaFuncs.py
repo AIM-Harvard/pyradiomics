@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pywt
 
-from radiomics import getFeatureClasses, getImageTypes
+from radiomics_torch import getFeatureClasses, getImageTypes
 
 featureClasses = getFeatureClasses()
 imageTypes = getImageTypes()

@@ -1,11 +1,10 @@
-#NOTE: numpy 2.1 is only supported by 3.10 and greater
 [build-system]
 requires = ["scikit-build-core>=0.11.2", "numpy>=2.0"]
 build-backend = "scikit_build_core.build"
 
 
 [project]
-name = "pyradiomics"
+name = "pyradiomics-torch"
 authors = [
     { name = "PyRadiomics Community", email = "pyradiomics@googlegroups.com"}
 ]
@@ -34,7 +33,8 @@ dependencies = [
     "numpy>=2.0",
     "SimpleITK>=2.4.0",
     "PyWavelets >= 1.6.0",
-    "pykwalify >= 1.6.0"
+    "pykwalify >= 1.6.0",
+    "torch>=2.0"
 ]
 
 [project.optional-dependencies]

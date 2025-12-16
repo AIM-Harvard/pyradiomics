@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import SimpleITK as sitk
 
-from radiomics import base, cShape, deprecated
+from radiomics_torch import base, cShape, deprecated
 
 
 class RadiomicsShape2D(base.RadiomicsFeaturesBase):

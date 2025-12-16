@@ -16,8 +16,8 @@ import numpy as np
 import pykwalify.core
 from ruamel.yaml import YAML
 
-import radiomics
-import radiomics.featureextractor
+import radiomics_torch
+import radiomics_torch.featureextractor
 
 from . import segment, voxel
 
@@ -220,7 +220,7 @@ class PyRadiomicsCommandLine:
             "--version",
             action="version",
             help="Print version and exit",
-            version="%(prog)s " + radiomics.__version__,
+            version="%(prog)s " + radiomics_torch.__version__,
         )
         return parser
 
@@ -228,7 +228,7 @@ class PyRadiomicsCommandLine:
         # Run the extraction
         try:
             self.logger.info(
-                "Starting PyRadiomics (version: %s)", radiomics.__version__
+                "Starting PyRadiomics (version: %s)", radiomics_torch.__version__
             )
             caseGenerator = self._processInput()
             if caseGenerator is not None:
@@ -331,7 +331,7 @@ class PyRadiomicsCommandLine:
                         "Path for specified parameter file does not exist!"
                     )
                 else:
-                    schemaFile, schemaFuncs = radiomics.getParameterValidationFiles()
+                    schemaFile, schemaFuncs = radiomics_torch.getParameterValidationFiles()
 
                     c = pykwalify.core.Core(
                         source_file=self.args.param,
@@ -377,7 +377,7 @@ class PyRadiomicsCommandLine:
     def _processCases(self, case_generator):
         setting_overrides = self._parseOverrides()
 
-        extractor = radiomics.featureextractor.RadiomicsFeatureExtractor(
+        extractor = radiomics_torch.featureextractor.RadiomicsFeatureExtractor(
             self.args.param, **setting_overrides
         )
 
@@ -520,7 +520,7 @@ class PyRadiomicsCommandLine:
             return setting_overrides
 
         self.logger.debug("Reading parameter schema")
-        schemaFile, schemaFuncs = radiomics.getParameterValidationFiles()
+        schemaFile, schemaFuncs = radiomics_torch.getParameterValidationFiles()
         with open(schemaFile) as schema:
             yaml = YAML(typ="safe", pure=True)
             settingsSchema = yaml.load(schema)["mapping"]["setting"]["mapping"]

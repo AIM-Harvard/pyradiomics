@@ -87,8 +87,8 @@ class _SingletonFeatureClasses:
                             "_"
                         ):  # Skip loading of 'private' classes, these don't contain feature classes
                             continue
-                        __import__("radiomics." + mod)
-                        module = sys.modules["radiomics." + mod]
+                        __import__("radiomics_torch." + mod)
+                        module = sys.modules["radiomics_torch." + mod]
                         attributes = inspect.getmembers(module, inspect.isclass)
                         for a in attributes:
                             if a[0].startswith("Radiomics"):
@@ -266,7 +266,7 @@ class _DummyProgressReporter:
     The __enter__ and __exit__ functions enable usage in a 'with' statement
     """
 
-    def __init__(self, iterable=None, desc="", _total=None):
+    def __init__(self, iterable=None, desc="", total=None):
         self.desc = (
             desc  # A description is not required, but is provided by PyRadiomics
         )
@@ -344,22 +344,22 @@ cMatrices = (
     None  # set cMatrices to None to prevent an import error in the feature classes.
 )
 cShape = None
-try:
-    from radiomics import _cmatrices as cMatrices
-    from radiomics import _cshape as cShape
-except ImportError as e:
-    if os.path.isdir(os.path.join(os.path.dirname(__file__), "..", "data")):
-        # It looks like PyRadiomics is run from source
-        # (in which case "pip install -e ".[dev,docs,test]" must have been run)
-        msg = (
-            "Apparently running from root, but unable to load C extensions... "
-            'Did you run "pip install -e ".[dev,docs,test]"?'
-        )
-        logger.critical(msg)
-        raise Exception(msg) from e
-    else:
-        logger.critical("Error loading C extensions", exc_info=True)
-        raise e
+# try:
+#     from radiomics_torch import _cmatrices as cMatrices
+#     from radiomics_torch import _cshape as cShape
+# except ImportError as e:
+#     if os.path.isdir(os.path.join(os.path.dirname(__file__), "..", "data")):
+#         # It looks like PyRadiomics is run from source
+#         # (in which case "pip install -e ".[dev,docs,test]" must have been run)
+#         msg = (
+#             "Apparently running from root, but unable to load C extensions... "
+#             'Did you run "pip install -e ".[dev,docs,test]"?'
+#         )
+#         logger.critical(msg)
+#         raise Exception(msg) from e
+#     else:
+#         logger.critical("Error loading C extensions", exc_info=True)
+#         raise e
 
 # 4. Enumerate implemented feature classes and input image types available in PyRadiomics
 

@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*code-workspace
 
 # C extensions
 *.so
@@ -165,3 +166,5 @@ Thumbs.db
 
 # Ignore test outputs
 data/*.csv
+
+.vscode

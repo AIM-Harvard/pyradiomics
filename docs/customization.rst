@@ -19,7 +19,7 @@ There are 4 ways in which the feature extraction can be customized in PyRadiomic
 .. warning::
     At initialization of the feature extractor or an individual feature class, settings can be provided as keyword
     arguments in ``**kwargs``. These consist *only* of type 3 parameters (setting). Parameters of type 1 (image type)
-    and 2 (feature class) can only provided at initialization when using the parameter file. When the parameter file is
+    and 2 (feature class) can only be provided at initialization when using the parameter file. When the parameter file is
     not used, or when these parameters have to be changed after initialization, use the respective function calls.
 
 .. _radiomics-image-types-label:

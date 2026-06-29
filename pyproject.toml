@@ -11,7 +11,7 @@ authors = [
 ]
 description = "Radiomics features library for python"
 readme = "README.md"
-requires-python =">=3.9"
+requires-python =">=3.10"
 license = "BSD-3-Clause"
 license-files = ["LICENSE.txt"]
 keywords = [ "radiomics", "cancerimaging", "medicalresearch", "computationalimaging" ]
@@ -22,7 +22,6 @@ classifiers = [
     'Intended Audience :: Science/Research',
     'Operating System :: OS Independent',
     'Programming Language :: C',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
@@ -34,10 +33,15 @@ dependencies = [
     "numpy>=2.0",
     "SimpleITK>=2.4.0",
     "PyWavelets >= 1.6.0",
-    "pykwalify >= 1.6.0"
+    "pykwalify >= 1.6.0",
+    "ruamel.yaml >= 0.17",
 ]
 
 [project.optional-dependencies]
+lbp3d = [
+    "scipy >= 1.11",
+    "trimesh >= 4.0",
+]
 test = [
     "pytest >=6",
     "pytest-cov >=3",
@@ -138,7 +142,7 @@ report.exclude_also = [
 
 [tool.mypy]
 files = ["radiomics", "tests"]
-python_version = "3.9"
+python_version = "3.10"
 warn_unused_configs = true
 strict = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
@@ -286,7 +290,7 @@ isort.required-imports = ["from __future__ import annotations"]
 
 
 [tool.pylint]
-py-version = "3.9"
+py-version = "3.10"
 ignore-paths = [".*/_version.py"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"

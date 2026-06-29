@@ -1201,8 +1201,16 @@ def getLBP3DImage(inputImage, inputMask, **kwargs):
         return
 
     try:
-        from scipy.ndimage.interpolation import map_coordinates
-        from scipy.special import sph_harm
+        from scipy.ndimage import map_coordinates
+
+        try:
+            from scipy.special import sph_harm_y as _sph_harm_y
+
+            def sph_harm(m, n, theta, phi):  # type: ignore[misc]
+                return _sph_harm_y(n, m, theta, phi)
+
+        except ImportError:
+            from scipy.special import sph_harm  # type: ignore[assignment]
         from scipy.stats import kurtosis
         from trimesh.creation import icosphere
     except ImportError:

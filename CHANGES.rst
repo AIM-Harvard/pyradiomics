@@ -6,6 +6,21 @@ Release Notes
 Next Release
 ------------
 
+Bug Fixes / Testing / Continuous Integration
+############################################
+
+- Add ``ruamel.yaml`` as explicit dependency (was used by CLI but undeclared).
+- Fix deprecated ``scipy.ndimage.interpolation`` import (use ``scipy.ndimage``).
+- Add ``sph_harm``/``sph_harm_y`` wrapper for SciPy ≥ 1.15 compatibility.
+- Raise ``requires-python`` to ``>=3.10`` (consistent with NumPy 2.1 requirements).
+- Add ``[lbp3d]`` optional extra for ``scipy``/``trimesh`` (LBP-3D filter dependencies).
+- Add cross-version feature-equivalence test suite (``tests/version_equivalence``):
+  a broad panel (Original + LoG + Wavelet x all 7 feature classes = 944 features)
+  over a deterministic synthetic phantom and the canonical ``brain1`` case,
+  checked against a frozen reference baseline (3.0.1 / NumPy 1.26) to verify the
+  modernized (scikit-build-core + NumPy 2 + CPython 3.10-3.13) build reproduces
+  established feature values within floating-point tolerance.
+
 -----------------
 PyRadiomics 3.1.0
 -----------------

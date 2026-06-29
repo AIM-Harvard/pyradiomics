@@ -1,0 +1,32 @@
+# Equivalence test parameters — deliberately BROAD to exercise the full
+# numpy2 / new-build computation surface (not the production v1.1 panel).
+#
+# Image types: Original + LoG (sigma 1.0) + Wavelet  -> covers the C-extension
+#   filtering path, scipy LoG path, and PyWavelets path.
+# Feature classes: ALL (firstorder/glcm/glrlm/glszm/gldm/ngtdm/shape) -> covers
+#   every _cmatrices / _cshape C kernel plus the pure-numpy first-order path.
+imageType:
+  Original: {}
+  LoG:
+    sigma: [1.0]
+  Wavelet: {}
+featureClass:
+  firstorder:
+  glcm:
+  glrlm:
+  glszm:
+  gldm:
+  ngtdm:
+  shape:
+setting:
+  binWidth: 25
+  resampledPixelSpacing: [2.0, 2.0, 2.0]
+  interpolator: sitkBSpline
+  normalize: false
+  removeOutliers: null
+  padDistance: 5
+  distances: [1]
+  symmetricalGLCM: true
+  correctMask: true
+  minimumROIDimensions: 2
+  minimumROISize: null

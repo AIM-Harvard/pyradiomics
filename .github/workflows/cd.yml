@@ -92,7 +92,3 @@ jobs:
           subject-path: "dist/*"
 
       - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          # Remember to tell (test-)pypi about this repo before publishing
-          # Remove this line to publish to PyPI
-          repository-url: https://test.pypi.org/legacy/

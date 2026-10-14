@@ -48,7 +48,7 @@ of texture matrices and some shape features.
 
 * Clone the repository::
 
-    git clone git://github.com/Radiomics/pyradiomics
+    git clone https://github.com/AIM-Harvard/pyradiomics.git
 
 
 * For unix like systems (MacOSX, linux)::

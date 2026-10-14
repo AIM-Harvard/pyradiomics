@@ -11,7 +11,7 @@ import sys
 import tempfile
 from decimal import Decimal
 from shutil import which
-from subprocess import call
+from subprocess import check_call
 
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ scriptlogger.setLevel(logging.DEBUG)
 def dcmImageToNRRD(inputDICOMImageDir, tempDir):
     scanNRRDFile = os.path.join(tempDir, "image.nrrd")
     if not os.path.isfile(scanNRRDFile):
-        call(
+        check_call(
             [
                 "plastimatch",
                 "convert",
@@ -46,7 +46,7 @@ def dcmImageToNIfTI(inputDICOMImageDir, tempDir):
     # will save to volume.nii
     if not os.path.isfile(destScanNIfTIFile):
         cmd = ["dcm2niix", "-m", "y", "-f", "volume", inputDICOMImageDir]
-        call(cmd)
+        check_call(cmd)
         shutil.move(scanNIfTIFile, destScanNIfTIFile)
         if os.path.isfile(scanJSONFile):
             os.remove(scanJSONFile)
@@ -61,7 +61,7 @@ def dcmSEGToNRRDs(inputSEG, tempDir):
     segmentsDir = os.path.join(tempDir, "Segments")
     if not os.path.isdir(segmentsDir):
         os.mkdir(segmentsDir)
-    call(
+    check_call(
         [
             "segimage2itkimage",
             "--inputDICOM",
@@ -87,7 +87,7 @@ def writeSR(inputSEG, inputJSON, inputDICOMImageDir, outputSR):
     ]
     msg = f"Writing SR with: {cmd!s}"
     scriptlogger.debug(msg)
-    call(cmd)
+    check_call(cmd)
 
 
 def getCTSeriesUID(imageDICOMDir):

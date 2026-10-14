@@ -118,13 +118,13 @@ mapped to the host system directory. For example, to mount the current
 directory:
 
 ```
-docker run --rm -it --publish 8888:8888 -v `pwd`:/data radiomics/notebook
+docker run --rm -it --publish 127.0.0.1:8888:8888 -v `pwd`:/data radiomics/notebook
 ```
 
 or for a less secure notebook, skip the randomly generated token
 
 ```
-docker run --rm -it --publish 8888:8888 -v `pwd`:/data radiomics/notebook start-notebook.sh --NotebookApp.token=''
+docker run --rm -it --publish 127.0.0.1:8888:8888 -v `pwd`:/data radiomics/notebook start-notebook.sh --NotebookApp.token=''
 ```
 
 and open the local webpage at http://localhost:8888/ with the current directory

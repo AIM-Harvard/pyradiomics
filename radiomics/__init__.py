@@ -222,11 +222,15 @@ def getTestCase(testCase, dataDirectory=None):
         )
 
         logger.debug("Retrieving file at %s", url)
-        _, headers = urllib.request.urlretrieve(url, target)
+        with tempfile.TemporaryDirectory(dir=dataDirectory) as downloadDirectory:
+            downloadTarget = os.path.join(downloadDirectory, fname)
+            _, headers = urllib.request.urlretrieve(url, downloadTarget)
 
-        if headers.get("status", "") == "404 Not Found":
-            msg = f"Unable to download image file at {url}!"
-            raise ValueError(msg)
+            if headers.get("status", "") == "404 Not Found":
+                msg = f"Unable to download image file at {url}!"
+                raise ValueError(msg)
+
+            os.replace(downloadTarget, target)
 
         logger.info("File %s downloaded", fname)
         return target
